@@ -26,7 +26,11 @@ docker compose up -d
 ```
 
 ### B. Serviços Disponíveis
+<<<<<<< HEAD
+* **PostgreSQL:** `localhost:5432` (`user: alaska`, `pass: alaskapassword`, `db: alaska_local`)
+=======
 * **PostgreSQL:** `localhost:5432` (`user: alaska_admin`, `pass: alaska_secret_2026`, `db: alaska_local_db`)
+>>>>>>> 610ac774d950081b2a217871a380b881ae14f0b0
 * **Pgweb (Web UI):** `http://localhost:8081` (Painel visual para inspeção de tabelas e queries)
 * **Redis:** `localhost:6379` (Fila BullMQ)
 
