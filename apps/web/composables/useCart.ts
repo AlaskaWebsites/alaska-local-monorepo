@@ -1,7 +1,6 @@
 // composables/useCart.ts
 import { computed, isRef, type Ref } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
-import { useRoute } from '#app'
 import { useHaptic } from './useHaptic'
 import type { CartItem, Tenant } from '~/types'
 
@@ -26,9 +25,11 @@ export function useCart(tenantSource?: Ref<Tenant | string | null | undefined> |
     if (typeof raw === 'string' && raw.trim()) {
       return raw.toLowerCase()
     }
-    // 3. Fallback síncrono imediato pela rota ativa
+    // 3. Fallback síncrono seguro pela rota global do Nuxt (se disponível no runtime)
     try {
+      // @ts-ignore
       if (typeof useRoute === 'function') {
+        // @ts-ignore
         const route = useRoute()
         if (route?.params?.slug) {
           return String(route.params.slug).toLowerCase()
