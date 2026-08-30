@@ -1,0 +1,159 @@
+{
+  "slug": "barbearia-style",
+  "name": "Barbearia Style",
+  "description": "Cortes modernos, barba com toalha quente, pigmentação e estética masculina.",
+  "logo": "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=200&h=200&fit=crop&q=80",
+  "banner": "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1200&h=400&fit=crop&q=80",
+  "phoneWhatsApp": "11977776666",
+  "address": "Rua das Barbearias, 456 - Centro",
+  "currency": "R$",
+  "deliveryFee": 0.0,
+  "minOrderValue": 0.0,
+  "theme": "barber",
+  "businessCategory": "hub",
+  "category": "Barbearia & Estética Masculina",
+  "distance": "0,4 km",
+  "priceRange": "$$",
+  "paymentMethods": [
+    "Pix",
+    "Cartão de Crédito",
+    "Cartão de Débito",
+    "Dinheiro"
+  ],
+  "openingHours": {
+    "open": "09:00",
+    "close": "20:00"
+  },
+  "pixConfig": {
+    "key": "7e3ed5e6-6097-4b15-88a3-221caba64141",
+    "keyType": "random",
+    "beneficiary": "Barbearia Style",
+    "city": "SAO PAULO",
+    "allowTestCent": true,
+    "depositPercentage": 30
+  },
+  "professionals": [
+    {
+      "id": "prof-lucas",
+      "name": "Lucas Silva (Master Barber)",
+      "role": "Especialista em Degradê e Barboterapia"
+    },
+    {
+      "id": "prof-marcos",
+      "name": "Marcos Paulo",
+      "role": "Barbeiro Clássico e Pigmentação"
+    }
+  ],
+  "categories": [
+    {
+      "id": "cat-cortes",
+      "name": "Cortes & Cabelo",
+      "icon": "scissors",
+      "products": [
+        {
+          "id": "prod-corte-degrade",
+          "name": "Corte Degradê / Fade Navalhado",
+          "description": "Corte moderno com acabamento navalhado impecável, lavagem e finalização com pomada modeladora.",
+          "price": 45.0,
+          "durationMinutes": 35,
+          "image": "https://images.unsplash.com/photo-1599351431202-1e0f0137899a?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-corte-social",
+          "name": "Corte Social Tradicional na Tesoura",
+          "description": "Corte clássico e elegante todo na tesoura e máquina suave, ideal para ambientes executivos.",
+          "price": 40.0,
+          "durationMinutes": 30,
+          "image": "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cat-barba",
+      "name": "Barboterapia & Tratamentos",
+      "icon": "sparkles",
+      "products": [
+        {
+          "id": "prod-barboterapia",
+          "name": "Barba Terapia com Toalha Quente",
+          "description": "Alinhamento de barba, esfoliação facial, aplicação de óleo essencial com toalha quente e massagem relaxante.",
+          "price": 40.0,
+          "durationMinutes": 30,
+          "image": "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-combo-corte-barba",
+          "name": "Combo VIP: Corte + Barba + Sobrancelha",
+          "description": "Experiência completa! Corte degradê, barboterapia relaxante e alinhamento de sobrancelha na navalha.",
+          "price": 80.0,
+          "durationMinutes": 60,
+          "image": "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    }
+  ],
+  "reviews": {
+    "score": 4.9,
+    "totalReviews": 412,
+    "serviceQuality": {
+      "level": 4,
+      "experienceLabel": "Cortes impecáveis",
+      "description": "Com base nos atendimentos dos últimos 3 meses, a barbearia oferece cortes modernos com barboterapia relaxante.",
+      "badges": [
+        {
+          "icon": "star",
+          "label": "Profissionais qualificados",
+          "status": "success"
+        },
+        {
+          "icon": "chat-alert",
+          "label": "Ambiente limpo",
+          "status": "success"
+        },
+        {
+          "icon": "check-doc",
+          "label": "Pontualidade",
+          "status": "success"
+        }
+      ]
+    },
+    "distribution": {
+      "5": 90,
+      "4": 7,
+      "3": 2,
+      "2": 1,
+      "1": 0
+    },
+    "comments": [
+      {
+        "id": "rev-1",
+        "author": "André Silva",
+        "rating": 5,
+        "date": "Há 1 dia",
+        "comment": "Corte degradê navalhado perfeito! O Lucas (Master) tem uma mão incrível, ficou exatamente como eu queria. Barboterapia super relaxante com toalha quente.",
+        "itemsOrdered": [
+          "1x Corte Degradê / Fade Navalhado",
+          "1x Barba Terapia com Toalha Quente"
+        ]
+      },
+      {
+        "id": "rev-2",
+        "author": "Marcos Paulo",
+        "rating": 5,
+        "date": "Há 3 dias",
+        "comment": "Combo VIP excelente value! Corte, barba e sobrancelha por um preço justo. O Marcos é especialista em fade e realmente entrega. Ambiente muito organizado.",
+        "itemsOrdered": [
+          "1x Combo VIP: Corte + Barba + Sobrancelha"
+        ]
+      }
+    ]
+  }
+}

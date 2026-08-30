@@ -1,0 +1,180 @@
+{
+  "slug": "karine-finardi",
+  "name": "Karine Finardi | Semijoias & Revenda",
+  "description": "Semijoias femininas delicadas, hipoalergênicas, banhadas a ouro 18k e prata 925 com garantia, peças personalizadas com foto/inicial e programa de revenda.",
+  "logo": "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=200&h=200&fit=crop&q=80",
+  "banner": "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=1200&h=400&fit=crop&q=80",
+  "phoneWhatsApp": "11999998888",
+  "address": "Francisco Morato – SP",
+  "currency": "R$",
+  "deliveryFee": 0.0,
+  "minOrderValue": 0.0,
+  "template": "shop",
+  "businessCategory": "shop",
+  "theme": "barber",
+  "category": "Semijoias & Acessórios",
+  "distance": "0,5 km",
+  "priceRange": "$$",
+  "paymentMethods": [
+    "Pix",
+    "Cartão de Crédito",
+    "Cartão de Débito",
+    "Dinheiro"
+  ],
+  "openingHours": {
+    "open": "09:00",
+    "close": "19:00"
+  },
+  "pixConfig": {
+    "key": "7e3ed5e6-6097-4b15-88a3-221caba64141",
+    "keyType": "random",
+    "beneficiary": "Karine Finardi Semijoias",
+    "city": "FRANCISCO MORATO",
+    "allowTestCent": true,
+    "depositPercentage": 30
+  },
+  "categories": [
+    {
+      "id": "personalizados-gravacao",
+      "name": "✨ Personalizados & Gravação Especial",
+      "icon": "sparkles",
+      "products": [
+        {
+          "id": "colar-gravacao-foto",
+          "name": "Colar Medalha com Gravação de Foto Afetiva",
+          "description": "Medalha com gravação a laser de alta precisão da sua foto favorita. Hipoalergênico e acompanha certificado de garantia de 1 ano.",
+          "price": 89.9,
+          "image": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "tipo-banho-foto",
+              "title": "Escolha o Banho da Peça",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "ouro-18k",
+                  "name": "Banhado a Ouro 18k (Dourado)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "prata-925",
+                  "name": "Banhado a Prata 925 (Prateado)",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "colar-inicial-lumiere",
+          "name": "Colar Inicial Lumière com Micro Zircônias",
+          "description": "Pingente de letra cravejado com micro zircônias brilhantes. Design exclusivo e delicado para usar sozinho ou em mix.",
+          "price": 69.9,
+          "image": "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "pulseira-plaquinha-nome",
+          "name": "Pulseira Elos com Plaquinha Gravada",
+          "description": "Pulseira de elos delicados com placa personalizada para gravação de nomes, datas especiais ou palavras afetivas.",
+          "price": 59.9,
+          "image": "https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "colares-chokers",
+      "name": "💎 Colares & Chokers Delicados",
+      "icon": "sparkles",
+      "products": [
+        {
+          "id": "choker-fita-espelhada",
+          "name": "Choker Fita Espelhada Banhada a Ouro 18k",
+          "description": "A fita espelhada mais desejada! Brilho intenso, caimento maleável perfeito no pescoço e fecho com extensor de 5cm.",
+          "price": 54.9,
+          "image": "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "mix-colares-ponto-luz",
+          "name": "Mix Duplo: Ponto de Luz Zircônia + Corrente Veneziana",
+          "description": "Combo pronto e harmonioso de 2 colares sobrepostos. Visual elegante e atemporal para valorizar qualquer produção.",
+          "price": 78.0,
+          "image": "https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "buques-presentes",
+      "name": "🎁 Buquês de Semijoias & Kits Presente",
+      "icon": "sparkles",
+      "products": [
+        {
+          "id": "buque-semijoias-rosas",
+          "name": "Buquê Especial de Semijoias (3 Peças + Rosas Aveludadas)",
+          "description": "O presente mais surpreendente e romântico! Buquê montado artesanalmente com rosas de cetim aveludadas contendo 1 Colar, 1 Par de Brincos e 1 Pulseira à sua escolha.",
+          "price": 179.9,
+          "image": "https://images.unsplash.com/photo-1582794543139-8ac9cb0f7b11?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    }
+  ],
+  "reviews": {
+    "score": 4.9,
+    "totalReviews": 318,
+    "serviceQuality": {
+      "level": 4,
+      "experienceLabel": "Semijoias finas com garantia",
+      "description": "Mais de 4 anos de atuação em Francisco Morato – SP. Peças hipoalergênicas com banho de alta durabilidade e personalização de fotos.",
+      "badges": [
+        {
+          "icon": "star",
+          "label": "Peças hipoalergênicas com garantia",
+          "status": "success"
+        },
+        {
+          "icon": "chat-alert",
+          "label": "Gravação de fotos impecável",
+          "status": "success"
+        },
+        {
+          "icon": "check-doc",
+          "label": "Embalagem e buquês presenteáveis",
+          "status": "success"
+        }
+      ]
+    },
+    "distribution": {
+      "5": 92,
+      "4": 6,
+      "3": 1,
+      "2": 1,
+      "1": 0
+    },
+    "comments": [
+      {
+        "id": "rev-kf-1",
+        "author": "Aline Ferreira",
+        "rating": 5,
+        "date": "Há 1 dia",
+        "comment": "O colar personalizado com a foto dos meus filhos ficou perfeito demais!",
+        "itemsOrdered": [
+          "1x Colar Medalha com Gravação de Foto Afetiva"
+        ]
+      }
+    ]
+  }
+}

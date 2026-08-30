@@ -1,0 +1,223 @@
+{
+  "slug": "hamburgueria-x",
+  "name": "Hamburgueria X",
+  "description": "Burgers artesanais grelhados na brasa, smashs crocantes e porções exclusivas.",
+  "logo": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=200&h=200&fit=crop&q=80",
+  "banner": "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=1200&h=400&fit=crop&q=80",
+  "phoneWhatsApp": "11999999999",
+  "address": "Rua das Hamburguerias, 123 - Centro",
+  "currency": "R$",
+  "deliveryFee": 5.0,
+  "minOrderValue": 20.0,
+  "theme": "food",
+  "businessCategory": "menu",
+  "category": "Hamburgueria Artesanal",
+  "distance": "0,8 km",
+  "priceRange": "$$",
+  "paymentMethods": [
+    "Pix",
+    "Cartão de Crédito",
+    "Cartão de Débito",
+    "Dinheiro"
+  ],
+  "openingHours": {
+    "open": "18:00",
+    "close": "23:30"
+  },
+  "pixConfig": {
+    "key": "7e3ed5e6-6097-4b15-88a3-221caba64141",
+    "keyType": "random",
+    "beneficiary": "Hamburgueria X Artesanal",
+    "city": "SAO PAULO",
+    "allowTestCent": true,
+    "depositPercentage": 30
+  },
+  "categories": [
+    {
+      "id": "cat-burgers",
+      "name": "Hambúrgueres Artesanais",
+      "icon": "burger",
+      "products": [
+        {
+          "id": "prod-x-burger",
+          "name": "X-Burger Clássico Monster",
+          "description": "Pão brioche selado na manteiga, burger Angus 180g, queijo cheddar duplo derretido e molho especial da casa.",
+          "price": 28.9,
+          "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "opt-ponto-xburger",
+              "title": "Ponto da Carne",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "p-ao-ponto",
+                  "name": "Ao Ponto (Rosado e Suculento)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "p-bem-passado",
+                  "name": "Bem Passado",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "p-mal-passado",
+                  "name": "Mal Passado",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            },
+            {
+              "id": "opt-adicionais-xburger",
+              "title": "Turbine seu Burger (Opcional)",
+              "required": false,
+              "min": 0,
+              "max": 4,
+              "options": [
+                {
+                  "id": "add-bacon",
+                  "name": "Bacon Crocante Extra (4 fatias)",
+                  "price": 5.0,
+                  "maxQuantity": 2
+                },
+                {
+                  "id": "add-cheddar",
+                  "name": "Cheddar Cremoso Extra",
+                  "price": 4.5,
+                  "maxQuantity": 2
+                },
+                {
+                  "id": "add-ovo",
+                  "name": "Ovo Frito na Manteiga",
+                  "price": 3.0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "add-maionese",
+                  "name": "Maionese Verde da Casa (50ml)",
+                  "price": 3.5,
+                  "maxQuantity": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "prod-x-bacon",
+          "name": "X-Bacon Supremo",
+          "description": "Pão brioche, burger artesanal 180g, muito bacon fatiado crocante, queijo prato, cebola caramelizada e barbecue.",
+          "price": 34.9,
+          "image": "https://images.unsplash.com/photo-1553979459-d2229ba7433b?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "opt-ponto-xbacon",
+              "title": "Ponto da Carne",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "p-ao-ponto-bacon",
+                  "name": "Ao Ponto (Rosado e Suculento)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "p-bem-passado-bacon",
+                  "name": "Bem Passado",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cat-porcoes",
+      "name": "Porções & Acompanhamentos",
+      "icon": "fries",
+      "products": [
+        {
+          "id": "prod-batata-cheddar-bacon",
+          "name": "Batata Frita com Cheddar & Bacon",
+          "description": "Batata frita rústica crocante, coberta com cheddar cremoso e generosas lascas de bacon crocante. Serve até 2 pessoas.",
+          "price": 24.0,
+          "image": "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cat-bebidas",
+      "name": "Bebidas Geladas",
+      "icon": "drink",
+      "products": [
+        {
+          "id": "prod-coca-cola",
+          "name": "Coca-Cola Original Lata 350ml",
+          "description": "Refrigerante lata gelado.",
+          "price": 6.5,
+          "image": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    }
+  ],
+  "reviews": {
+    "score": 4.9,
+    "totalReviews": 486,
+    "serviceQuality": {
+      "level": 3,
+      "experienceLabel": "Experiência excelente",
+      "description": "Com base nos pedidos dos últimos 3 meses, a loja oferece um serviço de alta qualidade e rapidez.",
+      "badges": [
+        {
+          "icon": "star",
+          "label": "Avaliações excelentes",
+          "status": "success"
+        },
+        {
+          "icon": "chat-alert",
+          "label": "Poucas reclamações",
+          "status": "warning"
+        },
+        {
+          "icon": "check-doc",
+          "label": "Zero ou poucos cancelamentos",
+          "status": "success"
+        }
+      ]
+    },
+    "distribution": {
+      "5": 88,
+      "4": 8,
+      "3": 2,
+      "2": 1,
+      "1": 1
+    },
+    "comments": [
+      {
+        "id": "rev-1",
+        "author": "Aline M.",
+        "rating": 5,
+        "date": "Há 2 dias",
+        "comment": "Lanche sensacional! Chegou super rápido e bem quentinho.",
+        "itemsOrdered": [
+          "1x Smash Burger Duplo",
+          "1x Batata Rústica Individual"
+        ]
+      }
+    ]
+  }
+}

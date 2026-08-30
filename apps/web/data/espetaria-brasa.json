@@ -1,0 +1,413 @@
+{
+  "slug": "espetaria-brasa",
+  "name": "Espetaria & Jantinha Brasa Nobre",
+  "description": "Espetinhos artesanais na brasa, jantinhas completas, acompanhamentos caseiros e cervejas estupidamente geladas.",
+  "logo": "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&h=200&fit=crop&q=80",
+  "banner": "https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=1200&h=400&fit=crop&q=80",
+  "phoneWhatsApp": "11999999999",
+  "address": "Av. dos Churrasqueiros, 450 - Centro",
+  "currency": "R$",
+  "deliveryFee": 6.0,
+  "minOrderValue": 25.0,
+  "theme": "food",
+  "category": "Espetos & Jantinhas",
+  "distance": "0,8 km",
+  "priceRange": "$$",
+  "paymentMethods": [
+    "Pix",
+    "Cartão de Crédito",
+    "Cartão de Débito",
+    "Dinheiro"
+  ],
+  "openingHours": {
+    "open": "18:00",
+    "close": "23:45"
+  },
+  "pixConfig": {
+    "key": "7e3ed5e6-6097-4b15-88a3-221caba64141",
+    "keyType": "random",
+    "beneficiary": "Espetaria & Jantinha Brasa Nobre",
+    "city": "SAO PAULO",
+    "allowTestCent": true,
+    "depositPercentage": 30
+  },
+  "categories": [
+    {
+      "id": "cat-jantinhas",
+      "name": "Jantinhas Completas",
+      "icon": "flame",
+      "products": [
+        {
+          "id": "prod-jantinha-individual",
+          "name": "Jantinha Tradicional Completa (1 Espeto)",
+          "description": "Arroz branco soltinho, feijão tropeiro especial com bacon, vinagrete artesanal, farofa temperada da casa e 1 espetinho à sua escolha.",
+          "price": 27.9,
+          "image": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "opt-espeto-jantinha",
+              "title": "Escolha o Espetinho da sua Jantinha",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "esp-alcatra",
+                  "name": "Alcatra Bovina na Brasa",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "esp-frango-bacon",
+                  "name": "Medalhão de Frango com Bacon",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "esp-linguiça",
+                  "name": "Linguiça Toscana Artesanal",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "esp-kafta",
+                  "name": "Kafta Recheada com Queijo",
+                  "price": 2.0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "esp-queijo",
+                  "name": "Queijo Coalho Dourado",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "esp-pao-alho",
+                  "name": "Pão de Alho Cremoso",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            },
+            {
+              "id": "opt-ponto-jantinha",
+              "title": "Ponto da Carne (se aplicável)",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "p-ao-ponto",
+                  "name": "Ao Ponto (Rosada e Suculenta)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "p-bem-passado",
+                  "name": "Bem Passada",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            },
+            {
+              "id": "opt-turbinar-jantinha",
+              "title": "Turbine sua Jantinha (Opcional)",
+              "required": false,
+              "min": 0,
+              "max": 3,
+              "options": [
+                {
+                  "id": "add-mandioca",
+                  "name": "Porção de Mandioca Cozida na Manteiga",
+                  "price": 7.0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "add-vinagrete-extra",
+                  "name": "Pote de Vinagrete Extra (100ml)",
+                  "price": 4.0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "add-molho-alho",
+                  "name": "Molho de Alho Especial da Casa",
+                  "price": 3.5,
+                  "maxQuantity": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "prod-jantinha-dupla",
+          "name": "Jantinha Dupla Master (2 Espetos)",
+          "description": "Porção farta para 2 pessoas: Arroz branco, dobro de feijão tropeiro, vinagrete, farofa da casa, mandioca na manteiga e 2 espetinhos à sua escolha.",
+          "price": 49.9,
+          "image": "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "opt-espetos-dupla",
+              "title": "Escolha os 2 Espetinhos",
+              "required": true,
+              "min": 2,
+              "max": 2,
+              "options": [
+                {
+                  "id": "d-alcatra",
+                  "name": "1x Alcatra Bovina",
+                  "price": 0,
+                  "maxQuantity": 2
+                },
+                {
+                  "id": "d-medalhao",
+                  "name": "1x Medalhão de Frango com Bacon",
+                  "price": 0,
+                  "maxQuantity": 2
+                },
+                {
+                  "id": "d-kafta",
+                  "name": "1x Kafta com Queijo",
+                  "price": 2.0,
+                  "maxQuantity": 2
+                },
+                {
+                  "id": "d-pao-alho",
+                  "name": "1x Pão de Alho Especial",
+                  "price": 0,
+                  "maxQuantity": 2
+                },
+                {
+                  "id": "d-queijo-coalho",
+                  "name": "1x Queijo Coalho com Melaço",
+                  "price": 1.5,
+                  "maxQuantity": 2
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cat-espetos-avulsos",
+      "name": "Espetinhos na Brasa (Avulsos)",
+      "icon": "meat",
+      "products": [
+        {
+          "id": "prod-esp-alcatra-avulso",
+          "name": "Espeto de Alcatra Nobre (120g)",
+          "description": "Cubos macios de alcatra selecionada, temperados com sal de parrilla e assados na brasa viva. Acompanha farofinha.",
+          "price": 12.9,
+          "image": "https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "opt-ponto-alcatra-avulso",
+              "title": "Ponto da Carne",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "ponto-ao-ponto",
+                  "name": "Ao Ponto (Suculento)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "ponto-bem-passado",
+                  "name": "Bem Passado",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "prod-esp-medalhao-bacon",
+          "name": "Espeto de Medalhão de Frango com Bacon",
+          "description": "Cubos suculentos de peito de frango enrolados em generosa fatia de bacon defumado e dourado na brasa.",
+          "price": 11.9,
+          "image": "https://images.unsplash.com/photo-1603360946369-dc9bb6258143?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-esp-kafta-queijo",
+          "name": "Espeto de Kafta Recheada com Queijo",
+          "description": "Carne moída nobre temperada com hortelã fresca e especiarias árabes, recheada com queijo muçarela derretido.",
+          "price": 13.9,
+          "image": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-esp-queijo-coalho",
+          "name": "Espeto de Queijo Coalho com Melaço",
+          "description": "Queijo coalho tostado com casquinha crocante na brasa e fio de melaço de cana artesanal.",
+          "price": 10.9,
+          "image": "https://images.unsplash.com/photo-1534422298391-e4f8c172dddb?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-esp-pao-alho",
+          "name": "Pão de Alho Tradicional Cremoso",
+          "description": "Pãozinho crocante recheado com pasta de alho suave, queijo e ervas finas.",
+          "price": 8.9,
+          "image": "https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-esp-coracao",
+          "name": "Espeto de Coração de Frango Temperado",
+          "description": "Corações de frango marinados no vinho branco e ervas, grelhados no ponto ideal.",
+          "price": 11.5,
+          "image": "https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cat-porcoes-guarnicoes",
+      "name": "Porções & Guarnições",
+      "icon": "pot",
+      "products": [
+        {
+          "id": "prod-porcao-mandioca",
+          "name": "Mandioca Frita na Manteiga de Garrafa (400g)",
+          "description": "Mandioca amarela macia por dentro e super crocante por fora, salpicada com cheiro verde.",
+          "price": 22.0,
+          "image": "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-porcao-tropeiro",
+          "name": "Feijão Tropeiro da Casa (500g)",
+          "description": "Feijão carioquinha com bacon em cubos, linguiça calabresa, ovos mexidos, couve fininha e farinha de milho crocante.",
+          "price": 24.9,
+          "image": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cat-bebidas",
+      "name": "Cervejas & Bebidas",
+      "icon": "beer",
+      "products": [
+        {
+          "id": "prod-heineken-ln",
+          "name": "Cerveja Heineken Long Neck 330ml (Gelada)",
+          "description": "Cerveja puro malte gelada no ponto certo.",
+          "price": 9.9,
+          "image": "https://images.unsplash.com/photo-1608270191778-5775c9772a39?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-original-600",
+          "name": "Cerveja Antarctica Original 600ml (Retornável/Gelada)",
+          "description": "Garrafa 600ml estupidamente gelada para entrega.",
+          "price": 14.5,
+          "image": "https://images.unsplash.com/photo-1581098365948-6a5a912b7a49?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-coca-lata",
+          "name": "Coca-Cola Original 350ml",
+          "description": "Refrigerante lata gelado.",
+          "price": 6.5,
+          "image": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-guarana-lata",
+          "name": "Guaraná Antarctica Lata 350ml",
+          "description": "Refrigerante lata gelado.",
+          "price": 6.0,
+          "image": "https://images.unsplash.com/photo-1581098365948-6a5a912b7a49?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    }
+  ],
+  "reviews": {
+    "score": 4.9,
+    "totalReviews": 342,
+    "serviceQuality": {
+      "level": 3,
+      "experienceLabel": "Experiência excelente",
+      "description": "Com base nos pedidos dos últimos 3 meses, a casa se destaca pelo ponto perfeito da brasa e entrega rápida.",
+      "badges": [
+        {
+          "icon": "star",
+          "label": "Espetos suculentos e quentes",
+          "status": "success"
+        },
+        {
+          "icon": "chat-alert",
+          "label": "Poucas reclamações",
+          "status": "warning"
+        },
+        {
+          "icon": "check-doc",
+          "label": "Zero ou poucos cancelamentos",
+          "status": "success"
+        }
+      ]
+    },
+    "distribution": {
+      "5": 89,
+      "4": 8,
+      "3": 2,
+      "2": 1,
+      "1": 0
+    },
+    "comments": [
+      {
+        "id": "rev-esp-1",
+        "author": "Rodrigo Silva",
+        "rating": 5,
+        "date": "Há 1 dia",
+        "comment": "A jantinha é sensacional! O feijão tropeiro e a mandioca com manteiga de garrafa vieram quentinhos. A alcatra no ponto exato.",
+        "itemsOrdered": [
+          "1x Jantinha Tradicional Completa (1 Espeto)",
+          "1x Cerveja Heineken Long Neck 330ml"
+        ]
+      },
+      {
+        "id": "rev-esp-2",
+        "author": "Patricia Nogueira",
+        "rating": 5,
+        "date": "Há 3 dias",
+        "comment": "Melhor espetaria da região! O queijo coalho com melaço e o medalhão com bacon são imperdíveis. Chegou antes do tempo previsto.",
+        "itemsOrdered": [
+          "1x Espeto de Queijo Coalho com Melaço",
+          "2x Espeto de Medalhão de Frango com Bacon"
+        ]
+      },
+      {
+        "id": "rev-esp-3",
+        "author": "Fernando Costa",
+        "rating": 4,
+        "date": "Há 6 dias",
+        "comment": "Muito bom e bem servido. Só sugiro mandar um pouco mais de vinagrete, porque o tempero é muito bom!",
+        "itemsOrdered": [
+          "1x Jantinha Dupla Master (2 Espetos)"
+        ]
+      }
+    ]
+  }
+}

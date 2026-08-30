@@ -1,0 +1,154 @@
+{
+  "slug": "restaurante-bella-italia",
+  "name": "Bella Italia",
+  "description": "Autêntica culinária italiana no coração da cidade.",
+  "logo": "https://images.unsplash.com/photo-1565299624946-b28f40a0ae38?w=200&h=200&fit=crop",
+  "banner": "https://images.unsplash.com/photo-1595295333158-4742f28fbd85?w=1200&h=400&fit=crop",
+  "phoneWhatsApp": "5511999999999",
+  "address": "Rua da Pizza, 789 - Centro",
+  "currency": "R$",
+  "deliveryFee": 8.0,
+  "minOrderValue": 30.0,
+  "theme": "food",
+  "businessCategory": "menu",
+  "category": "Pizzaria & Italiana",
+  "distance": "1,2 km",
+  "priceRange": "$$$",
+  "paymentMethods": [
+    "Pix",
+    "Cartão de Crédito",
+    "Cartão de Débito",
+    "Dinheiro"
+  ],
+  "openingHours": {
+    "open": "18:00",
+    "close": "23:00"
+  },
+  "pixConfig": {
+    "key": "7e3ed5e6-6097-4b15-88a3-221caba64141",
+    "keyType": "random",
+    "beneficiary": "Restaurante Bella Italia",
+    "city": "SAO PAULO",
+    "allowTestCent": true,
+    "depositPercentage": 30
+  },
+  "categories": [
+    {
+      "id": "cat-pizzas-tradicionais",
+      "name": "Pizzas Tradicionais Italianas",
+      "icon": "pizza",
+      "products": [
+        {
+          "id": "prod-margherita",
+          "name": "Pizza Margherita",
+          "description": "Molho de tomate, mussarela de búfala e manjericão fresco.",
+          "price": 45.0,
+          "image": "https://images.unsplash.com/photo-1574071318508-1cdbab80d002?w=400&h=300&fit=crop",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "opt-tamanho-pizza",
+              "title": "Tamanho da Pizza",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "opt-media",
+                  "name": "Média (35cm)",
+                  "price": 10.0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "opt-grande",
+                  "name": "Grande (40cm)",
+                  "price": 15.0,
+                  "maxQuantity": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "prod-calabresa",
+          "name": "Pizza Calabresa",
+          "description": "Molho de tomate, mussarela e calabresa defumada.",
+          "price": 42.0,
+          "image": "https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&h=300&fit=crop",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cat-massas-frescas",
+      "name": "Massas Frescas & Artesanais",
+      "icon": "sparkles",
+      "products": [
+        {
+          "id": "prod-spaghetti",
+          "name": "Spaghetti Carbonara",
+          "description": "Spaghetti com bacon, ovo e parmesão.",
+          "price": 38.0,
+          "image": "https://images.unsplash.com/photo-1612874742237-6526221588e3?w=400&h=300&fit=crop",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-lasanha",
+          "name": "Lasanha à Bolonhesa",
+          "description": "Camadas de massa, molho bolonhesa e bechamel.",
+          "price": 42.0,
+          "image": "https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=400&h=300&fit=crop",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    }
+  ],
+  "reviews": {
+    "score": 4.8,
+    "totalReviews": 324,
+    "serviceQuality": {
+      "level": 4,
+      "experienceLabel": "Experiência autêntica",
+      "description": "Com base nos pedidos dos últimos 3 meses, a loja oferece culinária italiana tradicional com atendimento atencioso.",
+      "badges": [
+        {
+          "icon": "star",
+          "label": "Sabor autêntico",
+          "status": "success"
+        },
+        {
+          "icon": "chat-alert",
+          "label": "Entrega no ponto",
+          "status": "success"
+        },
+        {
+          "icon": "check-doc",
+          "label": "Ingredientes frescos",
+          "status": "success"
+        }
+      ]
+    },
+    "distribution": {
+      "5": 85,
+      "4": 10,
+      "3": 3,
+      "2": 1,
+      "1": 1
+    },
+    "comments": [
+      {
+        "id": "rev-1",
+        "author": "Roberto M.",
+        "rating": 5,
+        "date": "Há 3 dias",
+        "comment": "Pizza Margherita simplesmente perfeita! Massa fina e crocante, molho de tomate caseiro e mussarela de búfala de qualidade.",
+        "itemsOrdered": [
+          "1x Pizza Margherita Média"
+        ]
+      }
+    ]
+  }
+}

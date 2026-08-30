@@ -1,0 +1,201 @@
+{
+  "slug": "cafe-central",
+  "name": "Café Central",
+  "description": "O melhor café da cidade, ambiente acolhedor e doces artesanais.",
+  "logo": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=200&h=200&fit=crop&q=80",
+  "banner": "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1200&h=400&fit=crop&q=80",
+  "phoneWhatsApp": "11988887777",
+  "address": "Rua do Café, 123 - Centro",
+  "currency": "R$",
+  "deliveryFee": 4.0,
+  "minOrderValue": 15.0,
+  "theme": "food",
+  "businessCategory": "menu",
+  "category": "Cafeteria & Doces",
+  "distance": "0,6 km",
+  "priceRange": "$$",
+  "paymentMethods": [
+    "Pix",
+    "Cartão de Crédito",
+    "Cartão de Débito",
+    "Dinheiro"
+  ],
+  "openingHours": {
+    "open": "07:00",
+    "close": "20:00"
+  },
+  "pixConfig": {
+    "key": "7e3ed5e6-6097-4b15-88a3-221caba64141",
+    "keyType": "random",
+    "beneficiary": "Café Central",
+    "city": "SAO PAULO",
+    "allowTestCent": true,
+    "depositPercentage": 30
+  },
+  "categories": [
+    {
+      "id": "cat-cafes",
+      "name": "Cafés Especiais & Bebidas",
+      "icon": "coffee",
+      "products": [
+        {
+          "id": "prod-cappuccino",
+          "name": "Cappuccino Italiano Cremoso (300ml)",
+          "description": "Espresso duplo especial, leite vaporizado aveludado e toque sutil de cacau 70%.",
+          "price": 14.5,
+          "image": "https://images.unsplash.com/photo-1534778101976-62847782c213?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "opt-leite-cappuccino",
+              "title": "Tipo de Leite",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "leite-integral",
+                  "name": "Leite Integral",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "leite-aveia",
+                  "name": "Leite de Aveia (Vegano)",
+                  "price": 3.5,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "leite-desnatado",
+                  "name": "Leite Desnatado",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "prod-iced-latte",
+          "name": "Iced Caramel Latte (400ml)",
+          "description": "Café gelado com calda de caramelo salgado artesanal, leite gelado e pedras de gelo de café.",
+          "price": 16.9,
+          "image": "https://images.unsplash.com/photo-1517701550927-30cf4ba1dba5?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-espresso-duplo",
+          "name": "Espresso Duplo Especial (60ml)",
+          "description": "Grãos 100% arábica da Mogiana Paulista com notas florais e corpo aveludado.",
+          "price": 8.5,
+          "image": "https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cat-doces",
+      "name": "Doces & Sobremesas Artesanais",
+      "icon": "sparkles",
+      "products": [
+        {
+          "id": "prod-croissant-nutella",
+          "name": "Croissant Folhado com Nutella Pura",
+          "description": "Massa folhada francesa amanteigada com recheio generoso de Nutella e lascas de amêndoas tostadas.",
+          "price": 18.9,
+          "image": "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "opt-recheio-croissant",
+              "title": "Adicionar Cobertura Extra?",
+              "required": false,
+              "min": 0,
+              "max": 1,
+              "options": [
+                {
+                  "id": "queijo-presunto",
+                  "name": "Queijo & Presunto Gratinado",
+                  "price": 5.0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "nutella",
+                  "name": "Nutella Pura",
+                  "price": 6.0,
+                  "maxQuantity": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "prod-cheesecake-frutas",
+          "name": "Cheesecake de Frutas Vermelhas",
+          "description": "Fatia generosa de cheesecake clássico nova-iorquino com calda rústica de morangos, amoras e mirtilos.",
+          "price": 19.9,
+          "image": "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-pao-queijo",
+          "name": "Pão de Queijo da Canastra (Porção 4un)",
+          "description": "Pães de queijo crocantes por fora e puxa-puxa por dentro, feitos com autêntico queijo da Canastra.",
+          "price": 12.0,
+          "image": "https://images.unsplash.com/photo-1598142981358-1510d54020a1?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    }
+  ],
+  "reviews": {
+    "score": 4.7,
+    "totalReviews": 289,
+    "serviceQuality": {
+      "level": 3,
+      "experienceLabel": "Atendimento acolhedor",
+      "description": "Com base nos pedidos dos últimos 3 meses, a cafeteria oferece produtos artesanais com atendimento personalizado.",
+      "badges": [
+        {
+          "icon": "star",
+          "label": "Café especial",
+          "status": "success"
+        },
+        {
+          "icon": "chat-alert",
+          "label": "Doces frescos",
+          "status": "success"
+        },
+        {
+          "icon": "check-doc",
+          "label": "Embalagem elegante",
+          "status": "warning"
+        }
+      ]
+    },
+    "distribution": {
+      "5": 82,
+      "4": 12,
+      "3": 4,
+      "2": 1,
+      "1": 1
+    },
+    "comments": [
+      {
+        "id": "rev-1",
+        "author": "Juliana S.",
+        "rating": 5,
+        "date": "Há 1 dia",
+        "comment": "Cappuccino italiano simplesmente perfeito! Crema aveludada, polvilhado de cacau 70% e leite no ponto exato.",
+        "itemsOrdered": [
+          "1x Cappuccino Italiano Cremoso",
+          "1x Croissant com Nutella"
+        ]
+      }
+    ]
+  }
+}

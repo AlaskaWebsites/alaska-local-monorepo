@@ -1,0 +1,140 @@
+{
+  "slug": "clinica-sorriso",
+  "name": "Clínica Sorriso",
+  "description": "Odontologia moderna com foco em estética, implantes e saúde bucal.",
+  "logo": "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=200&h=200&fit=crop&q=80",
+  "banner": "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=1200&h=400&fit=crop&q=80",
+  "phoneWhatsApp": "11966665555",
+  "address": "Rua da Saúde, 321 - Centro",
+  "currency": "R$",
+  "deliveryFee": 0.0,
+  "minOrderValue": 0.0,
+  "theme": "health",
+  "businessCategory": "pro",
+  "category": "Odontologia & Saúde Integrada",
+  "distance": "1,1 km",
+  "priceRange": "$$$",
+  "paymentMethods": [
+    "Pix",
+    "Cartão de Crédito",
+    "Cartão de Débito",
+    "Dinheiro"
+  ],
+  "openingHours": {
+    "open": "08:00",
+    "close": "19:00"
+  },
+  "pixConfig": {
+    "key": "7e3ed5e6-6097-4b15-88a3-221caba64141",
+    "keyType": "random",
+    "beneficiary": "Clínica Sorriso Odontologia",
+    "city": "SAO PAULO",
+    "allowTestCent": true,
+    "depositPercentage": 30
+  },
+  "professionals": [
+    {
+      "id": "prof-dra-camila",
+      "name": "Dra. Camila Nogueira (CRO 123456)",
+      "role": "Especialista em Estética Dental e Clareamento",
+      "avatar": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&q=80"
+    },
+    {
+      "id": "prof-dr-rodrigo",
+      "name": "Dr. Rodrigo Santos (CRO 654321)",
+      "role": "Implantodontia e Reabilitação Oral",
+      "avatar": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&h=150&fit=crop&q=80"
+    }
+  ],
+  "categories": [
+    {
+      "id": "cat-estetica-dental",
+      "name": "Estética & Clareamento",
+      "icon": "sparkles",
+      "products": [
+        {
+          "id": "prod-clareamento-laser",
+          "name": "Clareamento Dental em Consultório (Sessão)",
+          "description": "Clareamento a laser de alta potência com gel protetor gengival e resultado visível na primeira sessão.",
+          "price": 450.0,
+          "durationMinutes": 60,
+          "image": "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-limpeza-completa",
+          "name": "Profilaxia Completa & Remoção de Tártaro",
+          "description": "Limpeza profunda com ultrassom, jato de bicarbonato e aplicação tópica de flúor.",
+          "price": 180.0,
+          "durationMinutes": 45,
+          "image": "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cat-avaliacoes-clinicas",
+      "name": "Avaliações & Procedimentos",
+      "icon": "check-circle",
+      "products": [
+        {
+          "id": "prod-avaliacao-estetica",
+          "name": "Avaliação Inicial & Planejamento 3D",
+          "description": "Consulta completa com diagnóstico digital, fotos intraorais e plano de tratamento personalizado.",
+          "price": 120.0,
+          "durationMinutes": 45,
+          "image": "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    }
+  ],
+  "reviews": {
+    "score": 4.8,
+    "totalReviews": 267,
+    "serviceQuality": {
+      "level": 4,
+      "experienceLabel": "Atendimento humanizado",
+      "description": "Com base nos atendimentos dos últimos 3 meses, a clínica oferece odontologia moderna com profissionais qualificados.",
+      "badges": [
+        {
+          "icon": "star",
+          "label": "Profissionais atenciosos",
+          "status": "success"
+        },
+        {
+          "icon": "chat-alert",
+          "label": "Ambiente esterilizado",
+          "status": "success"
+        },
+        {
+          "icon": "check-doc",
+          "label": "Tratamentos indolores",
+          "status": "success"
+        }
+      ]
+    },
+    "distribution": {
+      "5": 86,
+      "4": 10,
+      "3": 3,
+      "2": 1,
+      "1": 0
+    },
+    "comments": [
+      {
+        "id": "rev-1",
+        "author": "Patrícia Mendes",
+        "rating": 5,
+        "date": "Há 2 dias",
+        "comment": "Limpeza completa super profissional! Raspagem ultrassônica delicada, sem dor nenhuma.",
+        "itemsOrdered": [
+          "1x Limpeza Completa"
+        ]
+      }
+    ]
+  }
+}

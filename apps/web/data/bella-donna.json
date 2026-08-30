@@ -1,0 +1,639 @@
+{
+  "slug": "bella-donna",
+  "name": "Bella Donna Boutique | Moda Feminina",
+  "description": "Moda feminina casual chic, conjuntos de alfaiataria em crepe duna, vestidos fluidos, croppeds elegantes e peças versáteis do P ao GG com entrega rápida.",
+  "logo": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=200&h=200&fit=crop&q=80",
+  "banner": "https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=1200&h=400&fit=crop&q=80",
+  "phoneWhatsApp": "11977778888",
+  "address": "Rua Gerônimo Caetano Garcia, 280 – Centro, Francisco Morato - SP",
+  "currency": "R$",
+  "deliveryFee": 5.0,
+  "minOrderValue": 30.0,
+  "template": "shop",
+  "businessCategory": "shop",
+  "theme": "drinks",
+  "category": "Moda Feminina & Boutique",
+  "distance": "0,3 km",
+  "priceRange": "$$",
+  "paymentMethods": [
+    "Pix",
+    "Cartão de Crédito",
+    "Cartão de Débito",
+    "Dinheiro"
+  ],
+  "openingHours": {
+    "open": "09:00",
+    "close": "19:00"
+  },
+  "pixConfig": {
+    "key": "7e3ed5e6-6097-4b15-88a3-221caba64141",
+    "keyType": "random",
+    "beneficiary": "Bella Donna Boutique",
+    "city": "FRANCISCO MORATO",
+    "allowTestCent": true,
+    "depositPercentage": 30
+  },
+  "categories": [
+    {
+      "id": "conjuntos-alfaiataria",
+      "name": "✨ Conjuntos & Alfaiataria Chic",
+      "icon": "sparkles",
+      "products": [
+        {
+          "id": "conjunto-pantalona-colete",
+          "name": "Conjunto Pantalona + Colete Alfaiataria Duna",
+          "description": "O conjunto mais elegante da estação! Colete estruturado com botões encapados e calça pantalona com elástico traseiro no cós. Tecido crepe duna que não amassa.",
+          "price": 139.9,
+          "image": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "tam-conjunto-pantalona",
+              "title": "Selecione o Tamanho",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "tam-p",
+                  "name": "Tamanho P (Veste 36/38)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "tam-m",
+                  "name": "Tamanho M (Veste 40)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "tam-g",
+                  "name": "Tamanho G (Veste 42/44)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "tam-gg",
+                  "name": "Tamanho GG (Veste 46)",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            },
+            {
+              "id": "cor-conjunto-pantalona",
+              "title": "Escolha a Cor",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "cor-terracota",
+                  "name": "Terracota Queimado",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "cor-nude",
+                  "name": "Nude Areia Elegance",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "cor-preto",
+                  "name": "Preto Clássico",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "cor-verde-oliva",
+                  "name": "Verde Oliva",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "conjunto-short-saia-blazer",
+          "name": "Conjunto Short Saia + Blazer Manga Curta",
+          "description": "Visual moderno e fresquinho para trabalho e passeios. Short saia confortável com zíper invisível e blazer de corte reto.",
+          "price": 119.9,
+          "image": "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "tam-short-blazer",
+              "title": "Tamanho",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "sb-p",
+                  "name": "P (36/38)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "sb-m",
+                  "name": "M (40)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "sb-g",
+                  "name": "G (42/44)",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            },
+            {
+              "id": "cor-short-blazer",
+              "title": "Cor",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "c-fucsia",
+                  "name": "Rosa Fúcsia Vibrante",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "c-offwhite",
+                  "name": "Off-White Puro",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "c-azul",
+                  "name": "Azul Serenity",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "calca-pantalona-cinto",
+          "name": "Calça Pantalona Alfaiataria com Cinto Forrado",
+          "description": "Cintura alta com caimento impecável que alonga a silhueta. Acompanha cinto forrado no mesmo tecido com fivela encapada.",
+          "price": 89.9,
+          "image": "https://images.unsplash.com/photo-1506630448388-4e683c67ddb0?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "tam-pantalona",
+              "title": "Tamanho da Calça",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "cp-p",
+                  "name": "P (36/38)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "cp-m",
+                  "name": "M (40)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "cp-g",
+                  "name": "G (42)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "cp-gg",
+                  "name": "GG (44/46)",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "vestidos-macacoes",
+      "name": "👗 Vestidos & Macacões Fluidos",
+      "icon": "sparkles",
+      "products": [
+        {
+          "id": "vestido-midi-fluido",
+          "name": "Vestido Midi Fluido com Amarração & Mangas Bufantes",
+          "description": "Modelagem romântica e elegante com elastex no busto para ajuste perfeito e fenda sutil na barra. Forro duplo que não marca.",
+          "price": 109.9,
+          "image": "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "tam-vestido-midi",
+              "title": "Tamanho",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "vm-p",
+                  "name": "P (36/38)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "vm-m",
+                  "name": "M (40/42)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "vm-g",
+                  "name": "G (44/46)",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            },
+            {
+              "id": "estampa-vestido-midi",
+              "title": "Estampa / Cor",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "est-floral",
+                  "name": "Floral Botânico Fundo Preto",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "est-terracota",
+                  "name": "Terracota Liso",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "est-poa",
+                  "name": "Poá Clássico P&B",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "vestido-longo-tres-marias",
+          "name": "Vestido Longo Três Marias em Crepe Seda",
+          "description": "Caimento fluido em camadas com decote V valorizado. Perfeito para aniversários, almoços de domingo e cultos/eventos especiais.",
+          "price": 129.9,
+          "image": "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "tam-longo",
+              "title": "Tamanho",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "vl-p",
+                  "name": "P (36/38)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "vl-m",
+                  "name": "M (40/42)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "vl-g",
+                  "name": "G (44/46)",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "macacao-pantalona-transpassado",
+          "name": "Macacão Pantalona com Decote Transpassado",
+          "description": "Peça única imponente e prática! Acompanha faixa para amarração na cintura e bolsos laterais funcionais.",
+          "price": 124.9,
+          "image": "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "blusas-croppeds",
+      "name": "👚 Blusas, Camisas & Croppeds",
+      "icon": "sparkles",
+      "products": [
+        {
+          "id": "camisa-social-acetinada",
+          "name": "Camisa Social Acetinada com Botões Dourados",
+          "description": "Toque macio com brilho sofisticado de seda. Gola clássica, punhos estruturados e caimento soltinho.",
+          "price": 79.9,
+          "image": "https://images.unsplash.com/photo-1602810318383-e386cc2a3ccf?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "tam-camisa",
+              "title": "Tamanho da Camisa",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "cs-p",
+                  "name": "P (36/38)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "cs-m",
+                  "name": "M (40)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "cs-g",
+                  "name": "G (42/44)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "cs-gg",
+                  "name": "GG (46)",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            },
+            {
+              "id": "cor-camisa",
+              "title": "Cor",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "cor-champagne",
+                  "name": "Champanhe Acetinado",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "cor-branco",
+                  "name": "Branco Perolado",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "cor-azul-noite",
+                  "name": "Azul Marinho Noite",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cropped-alfaiataria-estruturado",
+          "name": "Cropped Alfaiataria Estruturado com Alças Largas",
+          "description": "Decote reto com recortes princesa que desenham a silhueta. Fechamento por zíper traseiro de metal.",
+          "price": 49.9,
+          "image": "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "tshirt-algodao-egipcio",
+          "name": "T-shirt 100% Algodão com Bordado 'C’est la vie'",
+          "description": "Malha premium de toque aveludado, gola redonda canelada e bordado de linha em alta definição.",
+          "price": 45.0,
+          "image": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "saias-shorts",
+      "name": "🩳 Saias & Shorts Alfaiataria",
+      "icon": "sparkles",
+      "products": [
+        {
+          "id": "saia-midi-plissada",
+          "name": "Saia Midi Plissada com Cós Elástico Lurex",
+          "description": "Plissado permanente com caimento leve e movimento gracioso. Veste super bem com t-shirt, camisa ou cropped.",
+          "price": 79.9,
+          "image": "https://images.unsplash.com/photo-1583496661160-fb5886a0aaaa?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "cor-saia",
+              "title": "Cor da Saia",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "sp-nude",
+                  "name": "Nude Dourado",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "sp-preto",
+                  "name": "Preto Noite",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "sp-verde",
+                  "name": "Verde Esmeralda",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "short-alfaiataria-cintura-alta",
+          "name": "Short Alfaiataria Cintura Alta com Bolsos Faca",
+          "description": "Comprimento ideal e elegante (não fica curto). Passantes para cinto, pences traseiras modeladoras e zíper com fecho social.",
+          "price": 59.9,
+          "image": "https://images.unsplash.com/photo-1509631179647-0177331693ae?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "looks-noite-festa",
+      "name": "✨ Linha Noite & Ocasiões Especiais",
+      "icon": "sparkles",
+      "products": [
+        {
+          "id": "vestido-tubinho-fenda",
+          "name": "Vestido Tubinho com Fenda Lateral em Crepe Encorpado",
+          "description": "Look poderoso e elegante para jantares, formaturas e eventos. Decote coração suave e fenda lateral na medida certa.",
+          "price": 119.9,
+          "image": "https://images.unsplash.com/photo-1566174053879-31528523f8ae?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "tam-tubinho",
+              "title": "Tamanho",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "tt-p",
+                  "name": "P (36/38)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "tt-m",
+                  "name": "M (40/42)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "tt-g",
+                  "name": "G (44)",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            },
+            {
+              "id": "cor-tubinho",
+              "title": "Cor",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "cor-preto-gala",
+                  "name": "Preto Gala",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "cor-marsala",
+                  "name": "Vinho Marsala",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "cor-royal",
+                  "name": "Azul Royal",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "body-canelado-decote-quadrado",
+          "name": "Body Canelado com Decote Quadrado & Forro Duplo",
+          "description": "Básico sofisticado com tecido canelado power de alta sustentação. Não fica transparente no busto e possui fecho reforçado.",
+          "price": 39.9,
+          "image": "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    }
+  ],
+  "reviews": {
+    "score": 4.9,
+    "totalReviews": 274,
+    "serviceQuality": {
+      "level": 4,
+      "experienceLabel": "Modelagem e tecidos nobres",
+      "description": "Boutique em Francisco Morato – SP com envio rápido, peças que vestem do P ao GG sem transparência e troca descomplicada.",
+      "badges": [
+        {
+          "icon": "star",
+          "label": "Modelagem que valoriza o corpo",
+          "status": "success"
+        },
+        {
+          "icon": "chat-alert",
+          "label": "Tecido premium não amassa",
+          "status": "success"
+        },
+        {
+          "icon": "check-doc",
+          "label": "Entrega motoboy no mesmo dia",
+          "status": "success"
+        }
+      ]
+    },
+    "distribution": {
+      "5": 90,
+      "4": 8,
+      "3": 2,
+      "2": 0,
+      "1": 0
+    },
+    "comments": [
+      {
+        "id": "rev-bd-1",
+        "author": "Fernanda Lima",
+        "rating": 5,
+        "date": "Há 1 dia",
+        "comment": "O conjunto de alfaiataria terracota veste como uma luva! Tecido duna de altíssima qualidade, não amassa no trem nem no trabalho. Com certeza comprarei mais cores.",
+        "itemsOrdered": [
+          "1x Conjunto Pantalona + Colete Alfaiataria Duna"
+        ]
+      },
+      {
+        "id": "rev-bd-2",
+        "author": "Beatriz Mendes",
+        "rating": 5,
+        "date": "Há 3 dias",
+        "comment": "Atendimento no WhatsApp foi super atencioso, me ajudaram a escolher o tamanho certinho (uso G). Chegou no mesmo dia aqui em Morato!",
+        "itemsOrdered": [
+          "1x Vestido Midi Fluido com Amarração & Mangas Bufantes"
+        ]
+      },
+      {
+        "id": "rev-bd-3",
+        "author": "Juliana Ribeiro",
+        "rating": 5,
+        "date": "Há 1 semana",
+        "comment": "O vestido floral é maravilhoso, caimento perfeito e não fica transparente. Embalagem cheirosa com mimo especial. Amei demais!",
+        "itemsOrdered": [
+          "1x Vestido Longo Três Marias em Crepe Seda",
+          "1x Camisa Social Acetinada"
+        ]
+      }
+    ]
+  }
+}
