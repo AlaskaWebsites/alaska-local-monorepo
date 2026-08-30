@@ -8,11 +8,11 @@
         :src="tenant.banner"
         :alt="`Banner de ${tenant.name}`"
         class="w-full h-full object-cover opacity-80"
-        @error="handleImageError($event, tenant.theme)"
+        @error="handleImageError($event, tenant?.theme)"
       />
       <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
 
-      <!-- Botão Voltar ao Topo / Início -->
+      <!-- Botão Voltar para o Início / Showcase -->
       <NuxtLink
         to="/"
         class="absolute top-4 left-4 z-20 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/40 backdrop-blur-md text-white text-xs font-semibold hover:bg-black/60 transition-colors border border-white/10"
@@ -35,15 +35,22 @@
     <!-- 2. Header & Card de Identidade da Loja -->
     <header class="max-w-4xl mx-auto px-4 -mt-16 sm:-mt-20 relative z-10">
       <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl border border-slate-100 flex flex-col items-center text-center">
-        <!-- Logo Flutuante -->
-        <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-2xl overflow-hidden bg-white shadow-lg border-4 border-white -mt-16 sm:-mt-20 mb-4 shrink-0">
+        <!-- Logo Flutuante com Fallback -->
+        <div class="relative h-20 w-20 sm:h-24 sm:w-24 rounded-2xl bg-white p-1 shadow-md border border-slate-100 shrink-0 overflow-hidden -mt-16 sm:-mt-20 mb-4">
           <img
             v-if="tenant.logo"
             :src="tenant.logo"
             :alt="`Logo de ${tenant.name}`"
-            class="w-full h-full object-cover"
-            @error="handleImageError($event, tenant.theme)"
+            class="w-full h-full object-cover rounded-xl"
+            @error="handleImageError($event, tenant?.theme)"
           />
+          <div
+            v-else
+            class="w-full h-full flex items-center justify-center font-bold text-2xl"
+            :class="themeClasses.primaryText"
+          >
+            {{ tenant.name ? tenant.name.charAt(0) : 'A' }}
+          </div>
         </div>
 
         <div class="flex items-center gap-2 flex-wrap justify-center mb-1">
@@ -76,15 +83,16 @@
             <span class="text-slate-500">({{ tenant.reviews?.totalReviews || 0 }})</span>
           </button>
 
-          <!-- Badge Dinâmico de Aberto / Fechado com Horários -->
-          <div
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-full border"
-            :class="isOpen ? 'bg-emerald-50 text-emerald-700 border-emerald-200/80' : 'bg-rose-50 text-rose-700 border-rose-200/80'"
-            :aria-label="openingAriaLabel"
+          <!-- Status Aberto/Fechado (Abre Modal de Informações) com Badge Dinâmico -->
+          <button
+            @click="isInfoOpen = true"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border shadow-2xs transition-all cursor-pointer"
+            :class="isOpen ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/80' : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100/80'"
+            :aria-label="`${openingAriaLabel || (isOpen ? 'Loja aberta' : 'Loja fechada')}. Clique para ver horários e endereço`"
           >
-            <span class="w-2 h-2 rounded-full" :class="isOpen ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'"></span>
+            <Clock class="w-3.5 h-3.5" aria-hidden="true" />
             <span>{{ statusText }}</span>
-          </div>
+          </button>
 
           <!-- Botão Agendar Horário em Destaque (Alaska Hub & Pro) -->
           <button
@@ -101,21 +109,21 @@
 
         <!-- Meta Informações Rápidas -->
         <div class="w-full pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs text-slate-600">
-          <div v-if="tenant.address" class="flex items-center justify-center gap-1.5">
+          <div v-if="tenant.address" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="isInfoOpen = true">
             <MapPin class="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span class="truncate">{{ tenant.address }}</span>
           </div>
-          <div v-if="tenant.deliveryType" class="flex items-center justify-center gap-1.5">
+          <div v-if="tenant.deliveryType" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="isInfoOpen = true">
             <Truck class="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span>{{ tenant.deliveryType }}</span>
           </div>
-          <div v-if="tenant.openingHours" class="flex items-center justify-center gap-1.5">
+          <div v-if="tenant.openingHours" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="isInfoOpen = true">
             <Clock class="w-3.5 h-3.5 text-slate-400 shrink-0" />
             <span>{{ tenant.openingHours.open }} às {{ tenant.openingHours.close }}</span>
           </div>
           <div class="flex items-center justify-center gap-1.5">
             <a
-              :href="`https://wa.me/${tenant.phoneWhatsApp}`"
+              :href="`https://wa.me/${(tenant.phoneWhatsApp || '').replace(/\D/g, '')}`"
               target="_blank"
               rel="noopener noreferrer"
               class="text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1"
@@ -316,33 +324,35 @@
       </div>
     </main>
 
-    <!-- 7. Barra Fixa Flutuante Inferior (Bottom Bar / Cart CTA) -->
-    <footer
-      v-if="totalItemsCount > 0 && !isBookingOpen"
-      class="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-40 animate-fade-in-up"
-    >
-      <button
-        @click="isCartDrawerOpen = true"
-        class="w-full bg-slate-900 hover:bg-slate-800 text-white p-4 rounded-2xl shadow-2xl flex items-center justify-between border border-slate-700/50 cursor-pointer active:scale-[0.98] transition-all"
+    <!-- 7. Barra Fixa Flutuante Inferior (Bottom Bar / Cart CTA) com ClientOnly -->
+    <ClientOnly>
+      <footer
+        v-if="totalItemsCount > 0 && !isBookingOpen"
+        class="fixed bottom-4 left-4 right-4 max-w-md mx-auto z-40 animate-fade-in-up"
       >
-        <div class="flex items-center gap-3">
-          <span class="w-7 h-7 rounded-full bg-amber-500 text-slate-900 text-xs font-black flex items-center justify-center">
-            {{ totalItemsCount }}
+        <button
+          @click="isCartDrawerOpen = true"
+          class="w-full bg-slate-900 hover:bg-slate-800 text-white p-4 rounded-2xl shadow-2xl flex items-center justify-between border border-slate-700/50 cursor-pointer active:scale-[0.98] transition-all"
+        >
+          <div class="flex items-center gap-3">
+            <span class="w-7 h-7 rounded-full bg-amber-500 text-slate-900 text-xs font-black flex items-center justify-center">
+              {{ totalItemsCount }}
+            </span>
+            <span class="text-sm font-bold">Ver Sacola</span>
+          </div>
+          <span class="text-sm font-extrabold font-mono text-amber-400">
+            {{ formatCurrency(cartSubtotal) }}
           </span>
-          <span class="text-sm font-bold">Ver Sacola</span>
-        </div>
-        <span class="text-sm font-extrabold font-mono text-amber-400">
-          {{ formatCurrency(cartSubtotal) }}
-        </span>
-      </button>
-    </footer>
+        </button>
+      </footer>
+    </ClientOnly>
 
     <!-- 8. Modais do Sistema -->
     <ProductCustomizerModal
-      v-if="selectedProduct"
+      v-if="selectedProduct && tenant"
       :is-open="!!selectedProduct"
       :product="selectedProduct"
-      :theme="tenant?.theme"
+      :tenant="tenant"
       @close="closeProductModal"
       @add-to-cart="handleAddProductToCart"
     />
@@ -371,6 +381,13 @@
       :reviews="tenant.reviews"
       @close="isReviewsOpen = false"
     />
+
+    <StoreInfoModal
+      v-if="tenant"
+      :is-open="isInfoOpen"
+      :tenant="tenant"
+      @close="isInfoOpen = false"
+    />
   </div>
 </template>
 
@@ -385,21 +402,20 @@ import { formatCurrency } from '~/utils/formatters'
 import { handleImageError } from '~/utils/images'
 import ProductSearchInput from '~/components/ProductSearchInput.vue'
 import BookingModal from '~/components/BookingModal.vue'
+import StoreInfoModal from '~/components/StoreInfoModal.vue'
 import {
   Phone,
   MapPin,
   Truck,
   Clock,
   Star,
-  ShoppingCart,
   Sparkles,
   ChevronLeft,
   ChevronRight,
   Share2,
-  Calendar,
-  Search
+  Calendar
 } from 'lucide-vue-next'
-import type { Product, CartItem, BookingService, Tenant } from '~/types'
+import type { Product, CartItem, BookingService } from '~/types'
 
 // 1. Resolução do Tenant Atual (Retorna referências reativas síncronas)
 const { tenant, slug } = useTenant()
