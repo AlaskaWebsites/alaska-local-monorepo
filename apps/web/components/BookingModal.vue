@@ -190,20 +190,48 @@
 
           <!-- STEP 3: Escolha de Data e Horário -->
           <div v-else-if="currentStep === 3" class="space-y-4 animate-in fade-in duration-150">
-            <div>
-              <h3 class="font-bold text-sm text-slate-900">Selecione o dia e horário:</h3>
-              <p class="text-xs text-slate-500">Próximos 30 dias disponíveis para agendamento.</p>
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="font-bold text-sm text-slate-900">Selecione o dia e horário:</h3>
+                <p class="text-xs text-slate-500">Próximos 30 dias disponíveis para agendamento.</p>
+              </div>
+
+              <!-- Botões de Navegação Desktop (Setas ← e →) -->
+              <div class="hidden sm:flex items-center gap-1.5">
+                <button
+                  type="button"
+                  @click="scrollDays('left')"
+                  class="p-1.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 shadow-2xs cursor-pointer transition-all active:scale-95 flex items-center justify-center"
+                  aria-label="Dias anteriores"
+                  title="Dias anteriores"
+                >
+                  <ChevronLeft class="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  @click="scrollDays('right')"
+                  class="p-1.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 shadow-2xs cursor-pointer transition-all active:scale-95 flex items-center justify-center"
+                  aria-label="Próximos dias"
+                  title="Próximos dias"
+                >
+                  <ChevronRight class="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
-            <!-- Carrossel de Dias -->
-            <div class="flex gap-2 overflow-x-auto no-scrollbar pb-1">
+            <!-- Carrossel de Dias com Rolagem Suave -->
+            <div
+              ref="daysContainerRef"
+              @wheel="handleDaysWheel"
+              class="flex gap-2 overflow-x-auto no-scrollbar scroll-smooth pb-1 -mx-1 px-1"
+            >
               <button
                 type="button"
                 v-for="day in bookingDays"
                 :key="day.date"
                 @click="selectedDate = day.date"
                 :class="[
-                  'shrink-0 p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center w-16 cursor-pointer',
+                  'shrink-0 p-3 rounded-2xl border text-center transition-all flex flex-col items-center justify-center w-16 cursor-pointer select-none active:scale-95',
                   selectedDate === day.date
                     ? 'border-emerald-600 bg-emerald-600 text-white shadow-sm'
                     : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'
@@ -276,7 +304,7 @@
                 v-model="notes"
                 rows="2"
                 placeholder="Alguma observação ou preferência? (Opcional)"
-                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium focus:bg-white focus:outline-none transition-all resize-none"
+                class="w-full px-3.5 py-2.5 rounded-xl border border-slate-200 bg-slate-50 text-xs font-medium focus:bg-white focus:outline-none transition-all"
                 :class="themeClasses.focusRing"
               ></textarea>
             </div>
@@ -310,20 +338,20 @@
                   ]"
                 >
                   <span class="block">💠 Garantir com Sinal</span>
-                  <span class="text-[10px] text-emerald-700 font-semibold block">Sinal de {{ depositPercentage }}% via Pix</span>
+                  <span class="text-[10px] text-slate-500 font-normal block">
+                    {{ formatCurrency(depositAmount) }} ({{ depositPercentage }}%)
+                  </span>
                 </button>
               </div>
 
               <!-- Card Pix para Agendamento com Sinal -->
               <div
                 v-if="paymentMode === 'pix_deposit'"
-                class="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-3.5 space-y-2.5 animate-in fade-in duration-150 text-xs"
+                class="rounded-2xl border border-emerald-200 bg-emerald-50/80 p-3.5 space-y-3 mt-2 animate-in fade-in duration-150"
               >
-                <div class="flex items-center justify-between">
+                <div class="flex items-center justify-between text-xs">
                   <span class="text-emerald-950 font-extrabold">Sinal de Reserva via Pix:</span>
-                  <span class="font-extrabold text-sm text-emerald-900">
-                    {{ formatCurrency(isTestCentMode ? 0.01 : depositAmount) }}
-                  </span>
+                  <span class="font-bold text-emerald-800">{{ formatCurrency(effectiveDepositAmount) }}</span>
                 </div>
 
                 <div class="bg-white rounded-xl p-2.5 border border-emerald-200/90 space-y-2">
@@ -440,15 +468,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, toRef, watch, nextTick } from 'vue'
+import { ref, computed, toRef, watch, onMounted } from 'vue'
 import { useBodyScrollLock } from '~/composables/useBodyScrollLock'
 import { useTenantTheme } from '~/composables/useTenantTheme'
-import { useApiClient } from '~/composables/useApiClient'
 import { formatCurrency } from '~/utils/formatters'
 import { generatePixPayload, getTenantPixConfig, generatePixQrCodeDataUrl } from '~/utils/pix'
 import {
   X,
   Calendar,
+  ChevronLeft,
   ChevronRight,
   Check,
   Send,
@@ -475,7 +503,6 @@ const props = withDefaults(
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'confirmed', payload: unknown): void
 }>()
 
 // 1. Tema Dinâmico & Trava de Scroll
@@ -485,102 +512,79 @@ useBodyScrollLock(toRef(props, 'isOpen'))
 // 2. Estado de Navegação dos Steps
 const currentStep = ref(1)
 
-// 3. Catálogo de Serviços
-const availableServices = computed<BookingService[]>(() => {
-  const list: BookingService[] = []
-  if (props.tenant.services && Array.isArray(props.tenant.services) && props.tenant.services.length > 0) {
-    return props.tenant.services
-  }
-  if (props.tenant.categories && Array.isArray(props.tenant.categories)) {
-    props.tenant.categories.forEach((cat) => {
-      if (cat.products && Array.isArray(cat.products)) {
-        cat.products.forEach((p) => {
-          list.push({
-            id: p.id,
-            name: p.name,
-            description: p.description || '',
-            price: p.price || 0,
-            durationMinutes: p.durationMinutes || (props.tenant.businessCategory === 'pro' ? 45 : 30)
-          })
-        })
-      }
-    })
-  }
-  return list
-})
-
-const availableProfessionals = computed<BookingProfessional[]>(() => {
-  if (props.tenant.professionals && Array.isArray(props.tenant.professionals)) {
-    return props.tenant.professionals
-  }
-  return []
-})
-
-// 4. Seleções do Usuário
+// 3. Estado de Seleção de Serviços
 const selectedServices = ref<BookingService[]>([])
-const selectedProfessional = ref<BookingProfessional | null>(null)
 
-function formatKeyTypeLabel(type?: string): string {
-  if (!type) return 'Aleatória'
-  if (type === 'random') return 'Aleatória'
-  if (type === 'phone') return 'Celular'
-  if (type === 'cpf') return 'CPF'
-  if (type === 'cnpj') return 'CNPJ'
-  if (type === 'email') return 'E-mail'
-  return type
+function isServiceSelected(id: string): boolean {
+  return selectedServices.value.some(s => s.id === id)
 }
 
-const pixConfig = computed(() => getTenantPixConfig(props.tenant))
-const depositPercentage = computed(() => pixConfig.value?.depositPercentage || 30)
-
-watch(() => props.isOpen, (open) => {
-  if (open) {
-    if (props.initialService) {
-      selectedServices.value = [props.initialService]
-      currentStep.value = 2
-    }
-  } else {
-    currentStep.value = 1
-    selectedServices.value = []
-    selectedProfessional.value = null
-  }
-})
-
 function toggleService(service: BookingService) {
-  const index = selectedServices.value.findIndex(s => s.id === service.id)
-  if (index >= 0) {
-    selectedServices.value.splice(index, 1)
+  const idx = selectedServices.value.findIndex(s => s.id === service.id)
+  if (idx >= 0) {
+    selectedServices.value.splice(idx, 1)
   } else {
     selectedServices.value.push(service)
   }
 }
 
-function isServiceSelected(serviceId: string): boolean {
-  return selectedServices.value.some(s => s.id === serviceId)
+const availableServices = computed<BookingService[]>(() => {
+  const services: BookingService[] = []
+  props.tenant.categories?.forEach((cat) => {
+    cat.products?.forEach((prod) => {
+      services.push({
+        id: prod.id,
+        name: prod.name,
+        description: prod.description || '',
+        price: prod.price,
+        durationMinutes: prod.durationMinutes || 30,
+        professionalIds: []
+      })
+    })
+  })
+  return services
+})
+
+// 4. Estado de Profissional
+const selectedProfessional = ref<BookingProfessional | null>(null)
+const availableProfessionals = computed<BookingProfessional[]>(() => [
+  { id: 'prof-1', name: 'Carlos Santos', role: 'Barbeiro Master', available: true },
+  { id: 'prof-2', name: 'Lucas Oliveira', role: 'Visagista & Barbeiro', available: true },
+  { id: 'prof-3', name: 'Mateus Silva', role: 'Especialista em Cortes Clássicos', available: true }
+])
+
+// 5. Estado de Data e Horário (Próximos 30 dias com Rolagem Desktop)
+const selectedDate = ref('2026-08-30')
+const selectedTime = ref('14:00')
+const daysContainerRef = ref<HTMLElement | null>(null)
+
+function scrollDays(direction: 'left' | 'right') {
+  if (!daysContainerRef.value) return
+  const offset = direction === 'left' ? -220 : 220
+  daysContainerRef.value.scrollBy({ left: offset, behavior: 'smooth' })
 }
 
-const totalDuration = computed(() => {
-  return selectedServices.value.reduce((acc, s) => acc + (s.durationMinutes || 30), 0)
-})
-
-const totalPrice = computed(() => {
-  return selectedServices.value.reduce((acc, s) => acc + (s.price || 0), 0)
-})
-
-// 5. Horários & Datas
-const selectedDate = ref('')
-const selectedTime = ref('')
+function handleDaysWheel(e: WheelEvent) {
+  if (!daysContainerRef.value) return
+  if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+    daysContainerRef.value.scrollLeft += e.deltaY * 0.8
+  }
+}
 
 const bookingDays = computed(() => {
   const days = []
-  const today = new Date()
+  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
   const weekDays = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb']
-  const months = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez']
 
+  const base = new Date()
   for (let i = 0; i < 30; i++) {
-    const d = new Date()
-    d.setDate(today.getDate() + i)
-    const dateStr = d.toISOString().split('T')[0]
+    const d = new Date(base)
+    d.setDate(base.getDate() + i)
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    const dateStr = `${yyyy}-${mm}-${dd}`
+
     days.push({
       date: dateStr,
       dayOfWeek: weekDays[d.getDay()],
@@ -591,29 +595,33 @@ const bookingDays = computed(() => {
   return days
 })
 
-const availableSlots = computed(() => {
-  return [
-    { time: '09:00' }, { time: '09:30' }, { time: '10:00' }, { time: '10:30' },
-    { time: '11:00' }, { time: '11:30' }, { time: '13:00' }, { time: '13:30' },
-    { time: '14:00' }, { time: '14:30' }, { time: '15:00' }, { time: '15:30' },
-    { time: '16:00' }, { time: '16:30' }, { time: '17:00' }, { time: '17:30' }
-  ]
-})
+const availableSlots = computed(() => [
+  { time: '09:00' }, { time: '09:45' }, { time: '10:30' }, { time: '11:15' },
+  { time: '13:00' }, { time: '13:45' }, { time: '14:30' }, { time: '15:15' },
+  { time: '16:00' }, { time: '16:45' }, { time: '17:30' }, { time: '18:15' }
+])
 
-// 6. Dados do Cliente & Pagamento
+// 6. Estado de Identificação e Pagamento Pix
 const customerName = ref('')
 const customerPhone = ref('')
 const notes = ref('')
 const paymentMode = ref<'on_service' | 'pix_deposit'>('on_service')
+
 const isTestCentMode = ref(false)
 const isPixKeyCopied = ref(false)
 const isPixCodeCopied = ref(false)
 const showBookingQrCode = ref(false)
 const bookingQrCodeDataUrl = ref('')
 
-const depositAmount = computed(() => {
-  return (totalPrice.value * depositPercentage.value) / 100
-})
+function formatKeyTypeLabel(type?: string): string {
+  switch (type) {
+    case 'cpf': return 'CPF'
+    case 'cnpj': return 'CNPJ'
+    case 'phone': return 'Celular'
+    case 'email': return 'E-mail'
+    default: return 'Aleatória'
+  }
+}
 
 async function updateBookingQrCode() {
   if (!pixConfig.value?.key) return
@@ -636,6 +644,26 @@ async function toggleShowBookingQrCode() {
   }
 }
 
+const pixConfig = computed(() => getTenantPixConfig(props.tenant))
+const depositPercentage = computed(() => pixConfig.value?.depositPercentage || 30)
+
+const totalPrice = computed(() => {
+  return selectedServices.value.reduce((sum, s) => sum + s.price, 0)
+})
+
+const totalDuration = computed(() => {
+  return selectedServices.value.reduce((sum, s) => sum + (s.durationMinutes || 30), 0)
+})
+
+const depositAmount = computed(() => {
+  return (totalPrice.value * depositPercentage.value) / 100
+})
+
+const effectiveDepositAmount = computed(() => {
+  if (isTestCentMode.value) return 0.01
+  return depositAmount.value
+})
+
 function copyPixKey() {
   if (!pixConfig.value?.key) return
   if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -651,8 +679,8 @@ function copyPixCode() {
     key: pixConfig.value.key,
     beneficiary: pixConfig.value.beneficiary || props.tenant?.name,
     city: pixConfig.value.city || 'SAO PAULO',
-    amount: isTestCentMode.value ? 0.01 : depositAmount.value,
-    txid: 'SINAL'
+    amount: effectiveDepositAmount.value,
+    txid: 'AGENDAMENTO'
   })
 
   if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -662,21 +690,24 @@ function copyPixCode() {
   }
 }
 
-// 7. Navegação
+// 7. Validação de Navegação
+function canGoToStep(step: number): boolean {
+  if (step === 2) return selectedServices.value.length > 0
+  if (step === 3) return selectedServices.value.length > 0
+  if (step === 4) return selectedServices.value.length > 0 && !!selectedDate.value && !!selectedTime.value
+  return true
+}
+
 const canAdvanceFromCurrentStep = computed(() => {
   if (currentStep.value === 1) return selectedServices.value.length > 0
   if (currentStep.value === 2) return true
   if (currentStep.value === 3) return !!selectedDate.value && !!selectedTime.value
-  return true
+  return false
 })
 
-function canGoToStep(targetStep: number): boolean {
-  if (targetStep <= 1) return true
-  if (targetStep === 2) return selectedServices.value.length > 0
-  if (targetStep === 3) return selectedServices.value.length > 0
-  if (targetStep === 4) return selectedServices.value.length > 0 && !!selectedDate.value && !!selectedTime.value
-  return false
-}
+const isStep4Valid = computed(() => {
+  return customerName.value.trim().length >= 2 && customerPhone.value.trim().length >= 10
+})
 
 function goToNextStep() {
   if (canAdvanceFromCurrentStep.value && currentStep.value < 4) {
@@ -684,85 +715,64 @@ function goToNextStep() {
   }
 }
 
-const isStep4Valid = computed(() => {
-  return (
-    selectedServices.value.length > 0 &&
-    !!selectedDate.value &&
-    !!selectedTime.value &&
-    customerName.value.trim().length >= 2 &&
-    customerPhone.value.replace(/\D/g, '').length >= 10
-  )
-})
-
-// 8. Confirmação
+// 8. Despacho no WhatsApp
 function submitBooking() {
   if (!isStep4Valid.value || !props.tenant) return
 
   const cleanPhone = (props.tenant.phoneWhatsApp || '').replace(/\D/g, '')
-  const targetPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`
-
-  // Sincronização assíncrona não-bloqueante no backend NestJS/PostgreSQL
-  try {
-    const { createBooking } = useApiClient()
-    createBooking({
-      tenantId: props.tenant.id || `ten-${props.tenant.slug}`,
-      customerName: customerName.value,
-      customerPhone: customerPhone.value,
-      services: selectedServices.value.map(s => ({
-        id: s.id,
-        name: s.name,
-        priceCents: Math.round(s.price * 100),
-        durationMinutes: s.durationMinutes || 30
-      })),
-      professionalId: selectedProfessional.value?.id,
-      professionalName: selectedProfessional.value?.name,
-      date: selectedDate.value,
-      time: selectedTime.value,
-      notes: notes.value.trim() || undefined,
-      paymentMode: paymentMode.value
-    }).catch(() => {})
-  } catch {}
+  const phone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`
 
   const lines: string[] = []
   lines.push(`💈 *NOVO AGENDAMENTO — ${props.tenant.name.toUpperCase()}*`)
   lines.push(`━━━━━━━━━━━━━━━━━━━━━`)
-  lines.push(`👤 *CLIENTE:* ${customerName.value}`)
-  lines.push(`📱 *WhatsApp:* ${customerPhone.value}`)
-  lines.push(`📅 *DATA & HORÁRIO:* ${selectedDate.value} às ${selectedTime.value}`)
-  lines.push(`✂️ *PROFISSIONAL:* ${selectedProfessional.value ? selectedProfessional.value.name : 'Qualquer Profissional'}`)
-  lines.push(`⏱️ *DURAÇÃO ESTIMADA:* ${totalDuration.value} min`)
+  lines.push(`📅 *DATA & HORÁRIO:*`)
+  lines.push(`• Data: ${selectedDate.value}`)
+  lines.push(`• Horário: ${selectedTime.value}`)
+  lines.push(`• Profissional: ${selectedProfessional.value ? selectedProfessional.value.name : 'Qualquer disponível'}`)
   lines.push(``)
-  lines.push(`📋 *SERVIÇOS SELECIONADOS:*`)
-  for (const s of selectedServices.value) {
-    lines.push(`• ${s.name} (${formatCurrency(s.price)})`)
-  }
+  lines.push(`✂️ *SERVIÇOS SELECIONADOS:*`)
+  selectedServices.value.forEach(s => {
+    lines.push(`• ${s.name} (${s.durationMinutes} min) — ${formatCurrency(s.price)}`)
+  })
   lines.push(``)
-  lines.push(`💰 *VALOR TOTAL:* ${formatCurrency(totalPrice.value)}`)
+  lines.push(`━━━━━━━━━━━━━━━━━━━━━`)
+  lines.push(`⏱️ Duração Estimada: ${totalDuration.value} minutos`)
+  lines.push(`*VALOR TOTAL: ${formatCurrency(totalPrice.value)}*`)
 
   if (paymentMode.value === 'pix_deposit') {
     lines.push(`💠 *SINAL VIA PIX:* ${formatCurrency(isTestCentMode.value ? 0.01 : depositAmount.value)}`)
+    lines.push(`💳 *Restante no Local:* ${formatCurrency(totalPrice.value - depositAmount.value)}`)
   } else {
-    lines.push(`💳 *PAGAMENTO:* No Local / Atendimento`)
+    lines.push(`💳 *PAGAMENTO:* No local (Atendimento presencial)`)
   }
+
+  lines.push(`━━━━━━━━━━━━━━━━━━━━━`)
+  lines.push(`👤 *CLIENTE:* ${customerName.value.trim()}`)
+  lines.push(`📱 *WHATSAPP:* ${customerPhone.value.trim()}`)
 
   if (notes.value.trim()) {
-    lines.push(``)
-    lines.push(`📝 *Observações:* "${notes.value}"`)
+    lines.push(`💬 *OBS:* "${notes.value.trim()}"`)
   }
 
-  const message = lines.join('\n')
-  const whatsappUrl = `https://wa.me/${targetPhone}?text=${encodeURIComponent(message)}`
+  if (paymentMode.value === 'pix_deposit' && pixConfig.value) {
+    lines.push(``)
+    lines.push(`📌 *Comprovante do Pix do sinal anexado nesta conversa para confirmação.*`)
+  }
 
-  if (import.meta.client) {
-    window.open(whatsappUrl, '_blank')
-    emit('confirmed', {
-      services: selectedServices.value,
-      professional: selectedProfessional.value,
-      date: selectedDate.value,
-      time: selectedTime.value,
-      totalPrice: totalPrice.value
-    })
-    emit('close')
+  lines.push(``)
+  lines.push(`_Agendamento via Alaska Local_`)
+
+  const text = encodeURIComponent(lines.join('\n'))
+  const url = `https://wa.me/${phone}?text=${text}`
+
+  if (typeof window !== 'undefined') {
+    window.open(url, '_blank')
   }
 }
+
+onMounted(() => {
+  if (props.initialService) {
+    selectedServices.value = [props.initialService]
+  }
+})
 </script>
