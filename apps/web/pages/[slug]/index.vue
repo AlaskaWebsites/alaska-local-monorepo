@@ -1,8 +1,8 @@
 <!-- pages/[slug]/index.vue -->
 <template>
-  <div v-if="tenant" class="min-h-screen bg-slate-50 text-slate-900 pb-32">
+  <div v-if="effectiveTenant" class="min-h-screen bg-slate-50 text-slate-900 pb-32">
     <!-- Banner de Alerta / Pausa Emergencial da Loja -->
-    <div v-if="emergencyOverride?.isClosed" class="bg-rose-600 text-white text-xs font-bold p-3 text-center sticky top-0 z-40 shadow-md">
+    <div v-if="effectiveTenant.isEmergencyClosed" class="bg-rose-600 text-white text-xs font-bold p-3 text-center sticky top-0 z-40 shadow-md">
       <span>⚠️ Atendimento temporariamente pausado pela loja no momento. Retornaremos em breve!</span>
     </div>
 
@@ -15,11 +15,11 @@
     <!-- 1. Banner de Capa Hero -->
     <div class="relative h-48 sm:h-64 w-full bg-slate-900 overflow-hidden">
       <img
-        v-if="tenant.banner"
-        :src="tenant.banner"
-        :alt="`Banner de ${tenant.name}`"
+        v-if="effectiveTenant.banner"
+        :src="effectiveTenant.banner"
+        :alt="`Banner de ${effectiveTenant.name}`"
         class="w-full h-full object-cover opacity-80"
-        @error="handleImageError($event, tenant?.theme)"
+        @error="handleImageError($event, effectiveTenant?.theme)"
       />
       <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
 
@@ -49,49 +49,49 @@
         <!-- Logo Flutuante com Fallback -->
         <div class="relative h-20 w-20 sm:h-24 sm:w-24 rounded-2xl bg-white p-1 shadow-md border border-slate-100 shrink-0 overflow-hidden -mt-16 sm:-mt-20 mb-4">
           <img
-            v-if="tenant.logo"
-            :src="tenant.logo"
-            :alt="`Logo de ${tenant.name}`"
+            v-if="effectiveTenant.logo"
+            :src="effectiveTenant.logo"
+            :alt="`Logo de ${effectiveTenant.name}`"
             class="w-full h-full object-cover rounded-xl"
-            @error="handleImageError($event, tenant?.theme)"
+            @error="handleImageError($event, effectiveTenant?.theme)"
           />
           <div
             v-else
             class="w-full h-full flex items-center justify-center font-bold text-2xl"
             :class="themeClasses.primaryText"
           >
-            {{ tenant.name ? tenant.name.charAt(0) : 'A' }}
+            {{ effectiveTenant.name ? effectiveTenant.name.charAt(0) : 'A' }}
           </div>
         </div>
 
         <div class="flex items-center gap-2 flex-wrap justify-center mb-1">
           <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-            {{ tenant.name }}
+            {{ effectiveTenant.name }}
           </h1>
           <span
-            v-if="tenant.badge"
+            v-if="effectiveTenant.badge"
             class="text-[11px] font-extrabold uppercase px-2.5 py-0.5 rounded-full border shadow-2xs"
             :class="[themeClasses.badgeBg, themeClasses.badgeText, themeClasses.badgeBorder]"
           >
-            {{ tenant.badge }}
+            {{ effectiveTenant.badge }}
           </span>
         </div>
 
-        <p v-if="tenant.description" class="text-sm text-slate-600 max-w-lg mb-4 leading-relaxed">
-          {{ tenant.description }}
+        <p v-if="effectiveTenant.description" class="text-sm text-slate-600 max-w-lg mb-4 leading-relaxed">
+          {{ effectiveTenant.description }}
         </p>
 
         <!-- Avaliações, Status de Abertura & Ações Rápidas -->
         <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs font-semibold mb-6">
           <button
-            v-if="tenant.reviews"
+            v-if="effectiveTenant.reviews"
             @click="isReviewsOpen = true"
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/80 hover:bg-amber-100 transition-colors cursor-pointer"
             aria-label="Ver avaliações do estabelecimento"
           >
             <Star class="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-            <span>{{ Number(tenant.reviews?.rating || 5).toFixed(1) }}</span>
-            <span class="text-slate-500">({{ tenant.reviews?.totalReviews || 0 }})</span>
+            <span>{{ Number(effectiveTenant.reviews?.rating || 5).toFixed(1) }}</span>
+            <span class="text-slate-500">({{ effectiveTenant.reviews?.totalReviews || 0 }})</span>
           </button>
 
           <!-- Status Aberto/Fechado (Abre Modal de Informações) com Badge Dinâmico -->
@@ -120,21 +120,21 @@
 
         <!-- Meta Informações Rápidas -->
         <div class="w-full pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs text-slate-600">
-          <div v-if="tenant.address" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="isInfoOpen = true">
+          <div v-if="effectiveTenant.address" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="isInfoOpen = true">
             <MapPin class="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span class="truncate">{{ tenant.address }}</span>
+            <span class="truncate">{{ effectiveTenant.address }}</span>
           </div>
-          <div v-if="tenant.deliveryType" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="isInfoOpen = true">
+          <div v-if="effectiveTenant.deliveryType" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="isInfoOpen = true">
             <Truck class="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span>{{ dynamicDeliveryTime || tenant.deliveryType }}</span>
+            <span>{{ effectiveTenant.deliveryType }}</span>
           </div>
-          <div v-if="tenant.openingHours" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="isInfoOpen = true">
+          <div v-if="effectiveTenant.openingHours" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="isInfoOpen = true">
             <Clock class="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span>{{ dynamicHours.open }} às {{ dynamicHours.close }}</span>
+            <span>{{ effectiveTenant.openingHours.open }} às {{ effectiveTenant.openingHours.close }}</span>
           </div>
           <div class="flex items-center justify-center gap-1.5">
             <a
-              :href="`https://wa.me/${(tenant.phoneWhatsApp || '').replace(/\D/g, '')}`"
+              :href="`https://wa.me/${(effectiveTenant.phoneWhatsApp || '').replace(/\D/g, '')}`"
               target="_blank"
               rel="noopener noreferrer"
               class="text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1"
@@ -202,7 +202,7 @@
               class="w-full h-full object-cover"
               :class="{ 'group-hover:scale-105 transition-transform duration-300': isProductAvailable(product) }"
               loading="lazy"
-              @error="handleImageError($event, tenant?.theme)"
+              @error="handleImageError($event, effectiveTenant?.theme)"
             />
             <div v-else class="w-full h-full flex items-center justify-center text-slate-400 text-2xl font-bold bg-slate-100">
               {{ product.name.charAt(0) }}
@@ -263,8 +263,8 @@
     </section>
 
     <!-- 5. Abas Fixas de Navegação por Categoria -->
-    <div v-if="!isSearching && (tenant.categories || []).length > 0" class="mt-8">
-      <CategoryTabs :categories="tenant.categories" :theme="tenant.theme" />
+    <div v-if="!isSearching && (effectiveTenant.categories || []).length > 0" class="mt-8">
+      <CategoryTabs :categories="effectiveTenant.categories" :theme="effectiveTenant.theme" />
     </div>
 
     <!-- 6. Catálogo Principal / Grid de Produtos -->
@@ -367,7 +367,7 @@
                   class="w-full h-full object-cover"
                   :class="{ 'group-hover:scale-105 transition-transform duration-300': isProductAvailable(product) }"
                   loading="lazy"
-                  @error="handleImageError($event, tenant?.theme)"
+                  @error="handleImageError($event, effectiveTenant?.theme)"
                 />
                 <div v-else class="w-full h-full flex items-center justify-center text-slate-400 text-2xl font-bold bg-slate-100">
                   {{ product.name.charAt(0) }}
@@ -409,18 +409,18 @@
 
     <!-- 8. Modais do Sistema -->
     <ProductCustomizerModal
-      v-if="selectedProduct && tenant"
+      v-if="selectedProduct && effectiveTenant"
       :is-open="!!selectedProduct"
       :product="selectedProduct"
-      :tenant="tenant"
+      :tenant="effectiveTenant"
       @close="closeProductModal"
       @add-to-cart="handleAddProductToCart"
     />
 
     <CartDrawerModal
-      v-if="tenant"
+      v-if="effectiveTenant"
       :is-open="isCartDrawerOpen"
-      :tenant="tenant"
+      :tenant="effectiveTenant"
       :items="cartItems"
       @close="isCartDrawerOpen = false"
       @remove-item="removeCartItem"
@@ -428,24 +428,24 @@
     />
 
     <BookingModal
-      v-if="isServiceStore && tenant"
+      v-if="isServiceStore && effectiveTenant"
       :is-open="isBookingOpen"
-      :tenant="tenant"
+      :tenant="effectiveTenant"
       :initial-service="selectedBookingService"
       @close="isBookingOpen = false"
     />
 
     <StoreReviewsModal
-      v-if="tenant.reviews"
+      v-if="effectiveTenant.reviews"
       :is-open="isReviewsOpen"
-      :reviews="tenant.reviews"
+      :reviews="effectiveTenant.reviews"
       @close="isReviewsOpen = false"
     />
 
     <StoreInfoModal
-      v-if="tenant"
+      v-if="effectiveTenant"
       :is-open="isInfoOpen"
-      :tenant="tenant"
+      :tenant="effectiveTenant"
       @close="isInfoOpen = false"
     />
   </div>
@@ -476,12 +476,12 @@ import {
   Share2,
   Calendar
 } from 'lucide-vue-next'
-import type { Product, CartItem, BookingService } from '~/types'
+import type { Product, CartItem, BookingService, Tenant } from '~/types'
 
 const route = useRoute()
 const slug = computed(() => String(route.params.slug || ''))
 
-// 1. Resolução do Tenant Atual (Retorna referências reativas síncronas)
+// 1. Resolução do Tenant Base
 const { tenant } = useTenant(slug)
 
 // 2. Overrides Operacionais Reativos em Tempo Real (ADR 013)
@@ -503,29 +503,25 @@ onMounted(() => {
   }
 })
 
-const announcementOverride = computed(() => localOverrides.value?.announcement)
-const emergencyOverride = computed(() => localOverrides.value?.emergency)
-
-const dynamicDeliveryFee = computed(() => {
-  if (localOverrides.value?.delivery?.deliveryFee !== undefined) {
-    return localOverrides.value.delivery.deliveryFee
-  }
-  return (tenant.value as any)?.deliveryFee || 0
-})
-
-const dynamicDeliveryTime = computed(() => {
-  if (localOverrides.value?.delivery?.estimatedTime) {
-    return localOverrides.value.delivery.estimatedTime
-  }
-  return tenant.value?.deliveryType || null
-})
-
-const dynamicHours = computed(() => {
+// 3. Objeto Tenant Efetivo e Reativo (Sincroniza vitrine e modais com overrides do admin)
+const effectiveTenant = computed<Tenant | null>(() => {
+  if (!tenant.value) return null
+  const ov = localOverrides.value || {}
   return {
-    open: localOverrides.value?.openingHours?.open || tenant.value?.openingHours?.open || '09:00',
-    close: localOverrides.value?.openingHours?.close || tenant.value?.openingHours?.close || '20:00'
-  }
+    ...tenant.value,
+    openingHours: {
+      ...tenant.value.openingHours,
+      open: ov.openingHours?.open || tenant.value.openingHours?.open || '09:00',
+      close: ov.openingHours?.close || tenant.value.openingHours?.close || '20:00',
+    },
+    deliveryFee: ov.delivery?.deliveryFee !== undefined ? ov.delivery.deliveryFee : (tenant.value as any)?.deliveryFee,
+    minOrderValue: ov.delivery?.minOrderValue !== undefined ? ov.delivery.minOrderValue : (tenant.value as any)?.minOrderValue,
+    deliveryType: ov.delivery?.estimatedTime || tenant.value.deliveryType,
+    isEmergencyClosed: ov.emergency?.isClosed ?? false
+  } as Tenant
 })
+
+const announcementOverride = computed(() => localOverrides.value?.announcement)
 
 function isProductAvailable(product: Product): boolean {
   const prodOverrides = localOverrides.value?.products || localOverrides.value
@@ -545,19 +541,19 @@ function getProductPrice(product: Product): number {
   return product.price
 }
 
-// 3. Tema Dinâmico
-const { themeClasses } = useTenantTheme(tenant)
+// 4. Tema Dinâmico
+const { themeClasses } = useTenantTheme(effectiveTenant)
 
-// 4. Horário de Funcionamento (Aberto / Fechado com Badge Dinâmico)
-const { isOpen, statusText, ariaLabel: openingAriaLabel } = useOpeningHours(tenant)
+// 5. Horário de Funcionamento Reativo (Aberto / Fechado / Pausado)
+const { isOpen, statusText, ariaLabel: openingAriaLabel } = useOpeningHours(effectiveTenant)
 
-// 5. Compartilhamento e Toast
+// 6. Compartilhamento e Toast
 const isCopied = ref(false)
 function shareStore() {
   if (typeof navigator !== 'undefined' && navigator.share) {
     navigator.share({
-      title: tenant.value?.name,
-      text: tenant.value?.description,
+      title: effectiveTenant.value?.name,
+      text: effectiveTenant.value?.description,
       url: window.location.href
     }).catch(() => {})
   } else if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -569,7 +565,7 @@ function shareStore() {
   }
 }
 
-// 6. Busca de Produtos em Tempo Real (useProductSearch)
+// 7. Busca de Produtos em Tempo Real
 const {
   searchQuery,
   isSearching,
@@ -577,9 +573,9 @@ const {
   totalResultsCount,
   hasResults,
   clearSearch
-} = useProductSearch(computed(() => tenant?.value?.categories || []))
+} = useProductSearch(computed(() => effectiveTenant?.value?.categories || []))
 
-// 7. Carrinho Persistente Multi-Tenant com Isolamento por Loja no LocalStorage (useCart)
+// 8. Carrinho Persistente Multi-Tenant
 const {
   items: cartItems,
   addItem: addToCart,
@@ -589,30 +585,30 @@ const {
   cartSubtotal
 } = useCart(slug)
 
-// 8. SEO & OpenGraph Dinâmico com Guardas Defensivas de SSR
+// 9. SEO & OpenGraph Dinâmico
 useSeoMeta({
-  title: () => tenant?.value ? `${tenant.value.name} — Vitrine & Pedidos Online` : 'Alaska Local',
-  description: () => tenant?.value?.description || 'Faça seu pedido ou agende seu horário online de forma rápida pelo WhatsApp.',
-  ogTitle: () => tenant?.value?.name || 'Alaska Local',
-  ogDescription: () => tenant?.value?.description || 'Atendimento digital via WhatsApp.',
-  ogImage: () => tenant?.value?.banner || tenant?.value?.logo || '/og-image.png',
+  title: () => effectiveTenant?.value ? `${effectiveTenant.value.name} — Vitrine & Pedidos Online` : 'Alaska Local',
+  description: () => effectiveTenant?.value?.description || 'Faça seu pedido ou agende seu horário online de forma rápida pelo WhatsApp.',
+  ogTitle: () => effectiveTenant?.value?.name || 'Alaska Local',
+  ogDescription: () => effectiveTenant?.value?.description || 'Atendimento digital via WhatsApp.',
+  ogImage: () => effectiveTenant?.value?.banner || effectiveTenant?.value?.logo || '/og-image.png',
   twitterCard: 'summary_large_image'
 })
 
-// 9. Estados de Modais
+// 10. Estados de Modais
 const isReviewsOpen = ref(false)
 const isInfoOpen = ref(false)
 const isCartDrawerOpen = ref(false)
 const selectedProduct = ref<Product | null>(null)
 
-// Estados do Módulo de Agendamento (Alaska Hub & Pro)
+// Estados do Módulo de Agendamento
 const isBookingOpen = ref(false)
 const selectedBookingService = ref<BookingService | null>(null)
 
 const isServiceStore = computed(() => {
-  if (!tenant?.value) return false
-  const cat = (tenant.value as any).businessCategory || (tenant.value as any).category || (tenant.value as any).template
-  return cat === 'hub' || cat === 'pro' || tenant.value.slug === 'barbearia-style' || tenant.value.slug === 'clinica-sorriso'
+  if (!effectiveTenant?.value) return false
+  const cat = (effectiveTenant.value as any).businessCategory || (effectiveTenant.value as any).category || (effectiveTenant.value as any).template
+  return cat === 'hub' || cat === 'pro' || effectiveTenant.value.slug === 'barbearia-style' || effectiveTenant.value.slug === 'clinica-sorriso'
 })
 
 function handleProductClick(product: Product) {
@@ -649,11 +645,11 @@ function handleAddProductToCart(item: CartItem) {
   closeProductModal()
 }
 
-// 10. Destaques Dinâmicos com iterador seguro
+// 11. Destaques Dinâmicos
 const featuredProducts = computed(() => {
-  if (!tenant?.value?.categories || !Array.isArray(tenant.value.categories)) return []
+  if (!effectiveTenant?.value?.categories || !Array.isArray(effectiveTenant.value.categories)) return []
   const all: Product[] = []
-  for (const cat of tenant.value.categories) {
+  for (const cat of effectiveTenant.value.categories) {
     if (cat && Array.isArray(cat.products)) {
       all.push(...cat.products)
     }
@@ -661,7 +657,7 @@ const featuredProducts = computed(() => {
   return all.slice(0, 6)
 })
 
-// 11. Controle de Rolagem Horizontal do Carrossel
+// 12. Controle de Rolagem Horizontal do Carrossel
 const carouselRef = ref<HTMLElement | null>(null)
 
 function scrollCarousel(direction: 'left' | 'right') {
