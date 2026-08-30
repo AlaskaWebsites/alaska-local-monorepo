@@ -1,6 +1,6 @@
-# 🏔️ Alaska Local — Backend API & AI Agent Engine
+# ⚙️ @alaska/api — Backend NestJS 11 & Clean Architecture
 
-> Backend robusto em **NestJS 11** desenvolvido com **Clean Architecture (Ports & Adapters)**, validação rigorosa com **Zod**, banco de dados **PostgreSQL 16** com **Row Level Security (RLS)**, suporte completo a pagamentos **Pix D+0 (BR Code EMV & QR Code)** e documentação interativa **OpenAPI/Swagger**.
+> API REST escalável do ecossistema **Alaska Local Monorepo**, desenvolvida em **NestJS 11** com **Clean Architecture (Ports & Adapters)**, validação **Zod 3.24**, banco de dados **PostgreSQL 16** com **Row Level Security (RLS)**, suporte a pagamentos **Pix D+0** e documentação interativa **OpenAPI/Swagger**.
 
 [![NestJS](https://img.shields.io/badge/NestJS-11.0.0-E0234E?logo=nestjs)](https://nestjs.com/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7.3-3178C6?logo=typescript)](https://www.typescriptlang.org/)
@@ -12,118 +12,68 @@
 
 ---
 
-## 🏛️ Arquitetura Limpa (Ports & Adapters)
+## 🏛️ Camadas de Clean Architecture
 
-O backend segue estritamente os princípios de Clean Architecture e separação em camadas independentes de framework:
+O backend mantém o isolamento estrito de regras de negócio em relação a frameworks:
 
 ```
-alaska-local-backend/
-├── docker/                         # Configurações de containerização
-│   └── init.sql                    # Script de inicialização PostgreSQL, tabelas, RLS e seeds
-├── scripts/                        # Scripts de automação e banco
-│   └── seed.ts                     # Script de sincronização e seed no PostgreSQL (npm run db:seed)
-├── src/
-│   ├── config/                     # Configurações de ambiente validadas com Zod
-│   │   └── env.schema.ts           # EnvSchema estrito (PORT, DATABASE_URL, CORS, etc.)
-│   ├── core/                       # Núcleo da Aplicação (Zero dependência de frameworks)
-│   │   ├── application/            # Casos de Uso, Portas e Tokens de Injeção
-│   │   │   ├── ports/              # Interfaces: ITenantRepository, IOrderRepository, IBookingRepository, IPixGateway
-│   │   │   ├── tokens.ts           # Símbolos de injeção de dependência para Ports
-│   │   │   └── use-cases/          # CalculatePixPayload, CreateOrder, GetTenantBySlug, ResolveTenantByDomain
-│   │   └── domain/                 # Entidades Puras e Value Objects
-│   │       ├── entities/           # Tenant, Product, Order, Booking
-│   │       ├── errors/             # DomainError, EntityNotFoundError, ValidationError
-│   │       └── value-objects/      # Money (centavos imutáveis), Address
-│   └── infrastructure/             # Adaptadores de Entrada/Saída e Frameworks
-│       ├── gateways/               # LocalPixGateway (BR Code EMV, CRC-16, QR Code Data URL)
-│       ├── http/                   # Controladores REST, Pipes de validação Zod e Filtros de Exceção
-│       │   ├── controllers/        # HealthController, TenantController, PixController, OrderController, BookingController
-│       │   ├── filters/            # DomainExceptionFilter (converte DomainError para HTTP 400/404/500)
-│       │   └── pipes/              # ZodValidationPipe
-│       ├── modules/                # Módulos NestJS: DatabaseModule, TenantModule, PixModule, OrderModule, BookingModule
-│       └── persistence/            # Camada de Dados (PostgreSQL Pool + Mappers + In-Memory Fallback)
-│           ├── in-memory/          # Repositórios em memória para testes unitários ultrarrápidos
-│           └── postgres/           # Repositórios PostgreSQL (PostgresService, Mappers e RLS)
-├── tests/                          # Suíte de Testes Automatizados no Vitest
-│   ├── unit/                       # Testes de Domínio, Use Cases e Value Objects
-│   └── e2e/                        # Testes de integração de Controladores e Rotas
-├── docker-compose.yml              # Orquestração do PostgreSQL 16
-└── vitest.config.ts                # Configuração do Vitest com aliases nativos
+apps/api/src/
+├── core/                             # NÚCLEO PURO (ZERO DEPENDÊNCIA DE FRAMEWORKS)
+│   ├── domain/                       # Entidades (Tenant, Product, Order, Booking) e Money VO
+│   └── application/                  # Use Cases, Ports (Interfaces) e Tokens de Injeção
+└── infrastructure/                   # ADAPTADORES & FRAMEWORKS
+    ├── http/                         # Controllers (/api/v1), ZodValidationPipe e Filters
+    ├── gateways/                     # LocalPixGateway (EMV BACEN e QR Code Base64)
+    ├── modules/                      # Módulos NestJS (Database, Tenant, Order, Booking, Pix)
+    └── persistence/                  # PostgresService (pg.Pool), PostgresRepositories e Mappers
 ```
 
 ---
 
-## ⚡ Endpoints da API
+## 🚀 Como Executar
 
-A documentação interativa completa está disponível em `http://localhost:3333/docs` via **Swagger / OpenAPI**.
-
-### 🏢 Tenants & Domínios
-* `GET /api/v1/tenants/:slug` — Busca dados operacionais, tema e catálogo do estabelecimento.
-* `GET /api/v1/tenants/resolve?host=...` — Resolve o tenant via domínio próprio ou subdomínio.
-
-### 💠 Pagamentos Pix
-* `POST /api/v1/pix/brcode` — Gera o payload BR Code EMV (Copia e Cola) com CRC-16 e imagem QR Code em Base64 Data URL.
-* `GET /api/v1/pix/qrcode?tenantSlug=...&amount=...` — Consulta dados e imagem do QR Code Pix via parâmetros de URL.
-
-### 🛍️ Pedidos (Orders)
-* `POST /api/v1/orders` — Cria um novo pedido com validação Zod, cálculo de total e suporte a Pix EMV.
-* `GET /api/v1/orders/:id` — Busca os detalhes do pedido.
-
-### 📅 Agendamentos (Bookings)
-* `POST /api/v1/bookings` — Registra agendamento de serviços (Alaska Hub & Alaska Pro).
-* `GET /api/v1/bookings/tenant/:tenantId?date=...` — Lista agendamentos por estabelecimento e data.
-
-### 🩺 Health Check
-* `GET /api/v1/health` — Status de integridade e uptime do serviço.
-
----
-
-## 🚀 Como Executar Localmente
-
-### 1. Pré-requisitos
-* Node.js 20+ ou 22+
-* Docker e Docker Compose (para o banco PostgreSQL)
-
-### 2. Clonar e Instalar Dependências
+### 1. Subir o PostgreSQL via Docker (na raiz do monorepo)
 ```bash
-git clone https://github.com/AlaskaWebsites/alaska-local-backend.git
-cd alaska-local-backend
-npm install
+pnpm db:up
 ```
 
-### 3. Subir o Banco de Dados PostgreSQL (Docker)
+### 2. Sincronizar os 9 Estabelecimentos no Banco (Seed)
 ```bash
-docker compose up -d
-```
-O PostgreSQL será inicializado na porta `5432` com as tabelas e extensões UUID criadas.
-
-### 4. Configurar as Variáveis de Ambiente
-Crie um arquivo `.env` baseado no `.env.example`:
-```env
-NODE_ENV=development
-PORT=3333
-CORS_ORIGINS=*
-DATABASE_URL=postgres://alaska:alaskapassword@localhost:5432/alaska_local
+pnpm db:seed
 ```
 
-### 5. Executar o Seed Inicial do Banco
+### 3. Iniciar a API em Modo Desenvolvimento
 ```bash
-npm run db:seed
-```
-O comando atualizará todos os estabelecimentos com as configurações canônicas de Pix e catálogo.
+# A partir da raiz do monorepo (porta 3333):
+pnpm dev:api
 
-### 6. Iniciar o Servidor NestJS
-```bash
-npm run start:dev
+# Ou de dentro da pasta apps/api:
+pnpm start:dev
 ```
-Acesse a documentação interativa em: `http://localhost:3333/docs`
 
-### 7. Executar os Testes Automatizados (Vitest)
+### 4. Rodar os Testes Unitários no Vitest
 ```bash
-npm run test
+# A partir da raiz:
+pnpm test:api
+
+# Em modo watch:
+pnpm --filter @alaska/api test:watch
 ```
 
 ---
 
-## 📜 Licença
-Distribuído sob licença MIT. Desenvolvido pela equipe **Alaska Websites**.
+## 📡 Endpoints Principais (Prefixo Global `/api/v1`)
+
+* **Swagger UI Interativo**: `http://localhost:3333/docs`
+* **Health Check**: `http://localhost:3333/api/v1/health`
+* **Consultar Estabelecimento**: `http://localhost:3333/api/v1/tenants/:slug`
+* **Resolução por Domínio**: `http://localhost:3333/api/v1/tenants/resolve?host=cliente.com.br`
+* **Criar Pedido**: `POST http://localhost:3333/api/v1/orders`
+* **Criar Agendamento**: `POST http://localhost:3333/api/v1/bookings`
+* **Gerar Pix BR Code**: `POST http://localhost:3333/api/v1/pix/brcode`
+
+---
+
+## 📚 Documentação Completa
+
+Para guias aprofundados de Clean Architecture, RLS no PostgreSQL e ADRs, consulte a pasta centralizada **[`docs/`](../../docs/)** na raiz do monorepo.
