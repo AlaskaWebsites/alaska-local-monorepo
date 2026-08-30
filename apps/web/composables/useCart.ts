@@ -1,8 +1,9 @@
 // composables/useCart.ts
 import { computed, isRef, type Ref } from 'vue'
+import { defineStore } from 'pinia'
 import { useLocalStorage } from '@vueuse/core'
 import { useHaptic } from './useHaptic'
-import type { CartItem, Tenant } from '~/types'
+import type { CartItem, Tenant, DeliveryType, PaymentMethod, Address } from '~/types'
 
 /**
  * Composable multi-tenant para gerenciamento e persistência reativa da sacola de compras.
@@ -104,3 +105,65 @@ export function useCart(tenantSource?: Ref<Tenant | string | null | undefined> |
     storageKey,
   }
 }
+
+/**
+ * Store Pinia (Legado / Compatibilidade com testes unitários globais)
+ */
+export const useCartStore = defineStore('cart', {
+  state: () => ({
+    items: [] as CartItem[],
+    deliveryType: 'delivery' as DeliveryType,
+    deliveryFee: 0,
+    customerName: '',
+    customerPhone: '',
+    address: {
+      street: '',
+      number: '',
+      neighborhood: '',
+      complement: '',
+    } as Address,
+    paymentMethod: 'Pix' as PaymentMethod,
+    changeFor: null as number | null,
+  }),
+
+  getters: {
+    totalItems: (state): number =>
+      (state.items || []).reduce((acc: number, item: CartItem) => acc + (item.quantity || 0), 0),
+
+    subtotal: (state): number =>
+      (state.items || []).reduce((acc: number, item: CartItem) => acc + (item.unitPrice || 0) * (item.quantity || 0), 0),
+
+    total: (state): number => {
+      const list = state.items || []
+      if (list.length === 0) return 0
+      const fee = state.deliveryType === 'delivery' ? (state.deliveryFee || 0) : 0
+      const sub = list.reduce((acc: number, item: CartItem) => acc + (item.unitPrice || 0) * (item.quantity || 0), 0)
+      return sub + fee
+    },
+  },
+
+  actions: {
+    addItem(item: CartItem) {
+      this.items.push(item)
+    },
+    removeItem(index: number) {
+      if (this.items && index >= 0 && index < this.items.length) {
+        this.items.splice(index, 1)
+      }
+    },
+    updateQuantity(index: number, quantity: number) {
+      if (!this.items || index < 0 || index >= this.items.length) return
+      if (quantity <= 0) {
+        this.removeItem(index)
+      } else {
+        this.items[index].quantity = quantity
+      }
+    },
+    clearCart() {
+      this.items = []
+      this.customerName = ''
+      this.customerPhone = ''
+      this.changeFor = null
+    },
+  },
+})
