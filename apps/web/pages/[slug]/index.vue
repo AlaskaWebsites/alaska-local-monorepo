@@ -543,16 +543,3 @@ function scrollCarousel(direction: 'left' | 'right') {
   carouselRef.value.scrollBy({ left: offset, behavior: 'smooth' })
 }
 </script>
-
-<style scoped>
-.no-scrollbar::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
-.no-scrollbar {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
-}
-</style>

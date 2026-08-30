@@ -60,7 +60,7 @@ function scroll(direction: 'left' | 'right') {
   if (!tabsContainerRef.value) return
   const scrollAmount = 280
   const delta = direction === 'left' ? -scrollAmount : scrollAmount
-  tabsContainerRef.value.scrollBy({ left: delta, behavior: 'smooth' })
+  tabsContainerRef.value.scrollBy({ left: delta, behavior: 'smooth' })\
 }
 
 function handleWheel(e: WheelEvent) {
@@ -94,16 +94,3 @@ watch(
   { deep: true }
 )
 </script>
-
-<style scoped>
-.no-scrollbar::-webkit-scrollbar {
-  display: none !important;
-  width: 0 !important;
-  height: 0 !important;
-}
-
-.no-scrollbar {
-  -ms-overflow-style: none !important;
-  scrollbar-width: none !important;
-}
-</style>
