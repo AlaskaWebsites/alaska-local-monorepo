@@ -14,6 +14,7 @@ export interface PixConfig {
   beneficiary?: string
   city?: string
   depositPercentage?: number
+  allowTestCent?: boolean
 }
 
 export interface TenantProps {
@@ -21,6 +22,8 @@ export interface TenantProps {
   slug: string
   name: string
   description?: string
+  logo?: string
+  banner?: string
   phoneWhatsApp: string
   address?: string
   businessCategory: BusinessCategory
@@ -70,6 +73,8 @@ export class Tenant {
   get slug(): string { return this.props.slug }
   get name(): string { return this.props.name }
   get description(): string | undefined { return this.props.description }
+  get logo(): string | undefined { return this.props.logo }
+  get banner(): string | undefined { return this.props.banner }
   get phoneWhatsApp(): string { return this.props.phoneWhatsApp }
   get address(): string | undefined { return this.props.address }
   get businessCategory(): BusinessCategory { return this.props.businessCategory }
@@ -86,8 +91,8 @@ export class Tenant {
   isOpen(referenceDate: Date = new Date()): boolean {
     if (!this.props.openingHours) return true
 
-    const [openH, openM] = this.props.openingHours.open.split(':').map(Number)
-    const [closeH, closeM] = this.props.openingHours.close.split(':').map(Number)
+    const [openH = 0, openM = 0] = this.props.openingHours.open.split(':').map(Number)
+    const [closeH = 0, closeM = 0] = this.props.openingHours.close.split(':').map(Number)
 
     const openMin = openH * 60 + openM
     const closeMin = closeH * 60 + closeM
@@ -102,7 +107,7 @@ export class Tenant {
     return currentMin >= openMin && currentMin < closeMin
   }
 
-  updateDetails(details: { name?: string; description?: string; address?: string; openingHours?: OpeningHours } | string, description?: string, address?: string): void {
+  updateDetails(details: { name?: string; description?: string; address?: string; openingHours?: OpeningHours; logo?: string; banner?: string } | string, description?: string, address?: string): void {
     if (typeof details === 'string') {
       if (!details || details.trim().length < 2) {
         throw new ValidationError('Nome inválido.')
@@ -118,6 +123,8 @@ export class Tenant {
       if (details.description !== undefined) this.props.description = details.description
       if (details.address !== undefined) this.props.address = details.address
       if (details.openingHours !== undefined) this.props.openingHours = details.openingHours
+      if (details.logo !== undefined) this.props.logo = details.logo
+      if (details.banner !== undefined) this.props.banner = details.banner
     }
     this.props.updatedAt = new Date()
   }
