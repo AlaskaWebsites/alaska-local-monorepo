@@ -69,15 +69,25 @@
                   <span class="text-xs font-extrabold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
                     {{ item.quantity }}x
                   </span>
-                  <h4 class="font-bold text-sm text-slate-900 truncate">{{ item.name }}</h4>
+                  <h4 class="font-bold text-sm text-slate-900 truncate">
+                    {{ item.product?.name || item.name }}
+                  </h4>
                 </div>
 
-                <p v-if="item.observations" class="text-xs text-slate-500 italic mt-1 bg-white p-2 rounded-lg border border-slate-100">
-                  Obs: "{{ item.observations }}"
+                <!-- Opcionais Selecionados (se houver) -->
+                <ul v-if="Array.isArray(item.options) && item.options.length > 0" class="text-[11px] text-slate-500 space-y-0.5 mt-1.5">
+                  <li v-for="(opt, optIdx) in item.options" :key="optIdx" class="flex justify-between">
+                    <span>+ {{ opt.name || opt.label }}</span>
+                    <span v-if="opt.price" class="font-mono font-semibold text-slate-700">+ {{ formatCurrency(opt.price) }}</span>
+                  </li>
+                </ul>
+
+                <p v-if="item.observations || item.notes || item.observation" class="text-xs text-slate-500 italic mt-2 bg-white p-2 rounded-lg border border-slate-100">
+                  Obs: "{{ item.observations || item.notes || item.observation }}"
                 </p>
 
                 <p class="text-xs font-extrabold text-slate-900 font-mono mt-2">
-                  {{ formatCurrency((item.unitPrice || 0) * (item.quantity || 1)) }}
+                  {{ formatCurrency((item.unitPrice || item.product?.price || 0) * (item.quantity || 1)) }}
                 </p>
               </div>
 
@@ -242,7 +252,10 @@ const effectiveDeliveryFee = computed(() => {
 })
 
 const subtotal = computed(() => {
-  return props.items.reduce((acc, item) => acc + (item.unitPrice || 0) * (item.quantity || 1), 0)
+  return props.items.reduce((acc, item) => {
+    const price = item.unitPrice || item.product?.price || 0
+    return acc + price * (item.quantity || 1)
+  }, 0)
 })
 
 const total = computed(() => {
@@ -276,8 +289,18 @@ function handleSendWhatsApp() {
 
   msg += `\n*ITENS DO PEDIDO:*\n`
   props.items.forEach((item, idx) => {
-    msg += `${idx + 1}. ${item.quantity}x *${item.name}* - ${formatCurrency((item.unitPrice || 0) * (item.quantity || 1))}\n`
-    if (item.observations) msg += `   _Obs: ${item.observations}_\n`
+    const itemName = item.product?.name || item.name || 'Produto'
+    const unitPrice = item.unitPrice || item.product?.price || 0
+    msg += `${idx + 1}. ${item.quantity}x *${itemName}* - ${formatCurrency(unitPrice * (item.quantity || 1))}\n`
+    if (Array.isArray(item.options)) {
+      item.options.forEach((opt: any) => {
+        msg += `   + ${opt.name || opt.label}`
+        if (opt.price) msg += ` (${formatCurrency(opt.price)})`
+        msg += `\n`
+      })
+    }
+    const obs = item.observations || item.notes || item.observation
+    if (obs) msg += `   _Obs: ${obs}_\n`
   })
 
   msg += `\n*Subtotal:* ${formatCurrency(subtotal.value)}\n`
