@@ -1,60 +1,97 @@
 import { Pool } from 'pg'
+import { randomUUID } from 'crypto'
 import dotenv from 'dotenv'
 
 dotenv.config()
 
 const databaseUrl = process.env.DATABASE_URL || 'postgres://alaska_admin:alaska_secret_2026@localhost:5432/alaska_local_db'
 
-const stores = [
+interface StoreSeed {
+  slug: string
+  name: string
+  category: 'menu' | 'shop' | 'hub' | 'pro'
+  theme: string
+  city: string
+  phone: string
+}
+
+const stores: StoreSeed[] = [
   {
-    "slug": "adega-prime",
-    "name": "Adega & Distribuidora Prime",
-    "city": "SAO PAULO"
+    slug: 'adega-prime',
+    name: 'Adega & Distribuidora Prime',
+    category: 'menu',
+    theme: 'amber',
+    city: 'SAO PAULO',
+    phone: '11988889999'
   },
   {
-    "slug": "karine-finardi",
-    "name": "Karine Finardi Semijoias",
-    "city": "FRANCISCO MORATO"
+    slug: 'karine-finardi',
+    name: 'Karine Finardi Semijoias',
+    category: 'shop',
+    theme: 'rose',
+    city: 'FRANCISCO MORATO',
+    phone: '11999998888'
   },
   {
-    "slug": "barbearia-style",
-    "name": "Barbearia Style",
-    "city": "SAO PAULO"
+    slug: 'barbearia-style',
+    name: 'Barbearia Style',
+    category: 'hub',
+    theme: 'barber',
+    city: 'SAO PAULO',
+    phone: '11977776666'
   },
   {
-    "slug": "hamburgueria-x",
-    "name": "Hamburgueria X Artesanal",
-    "city": "SAO PAULO"
+    slug: 'hamburgueria-x',
+    name: 'Hamburgueria X Artesanal',
+    category: 'menu',
+    theme: 'food',
+    city: 'SAO PAULO',
+    phone: '11999999999'
   },
   {
-    "slug": "clinica-sorriso",
-    "name": "Clínica Sorriso Odontologia",
-    "city": "SAO PAULO"
+    slug: 'clinica-sorriso',
+    name: 'Clínica Sorriso Odontologia',
+    category: 'pro',
+    theme: 'health',
+    city: 'SAO PAULO',
+    phone: '11966665555'
   },
   {
-    "slug": "bella-donna",
-    "name": "Bella Donna Boutique",
-    "city": "FRANCISCO MORATO"
+    slug: 'bella-donna',
+    name: 'Bella Donna Boutique',
+    category: 'shop',
+    theme: 'drinks',
+    city: 'FRANCISCO MORATO',
+    phone: '11977778888'
   },
   {
-    "slug": "cafe-central",
-    "name": "Café Central",
-    "city": "SAO PAULO"
+    slug: 'cafe-central',
+    name: 'Café Central',
+    category: 'menu',
+    theme: 'food',
+    city: 'SAO PAULO',
+    phone: '11988887777'
   },
   {
-    "slug": "espetaria-brasa",
-    "name": "Espetaria & Jantinha Brasa Nobre",
-    "city": "SAO PAULO"
+    slug: 'espetaria-brasa',
+    name: 'Espetaria & Jantinha Brasa Nobre',
+    category: 'menu',
+    theme: 'food',
+    city: 'SAO PAULO',
+    phone: '11999999999'
   },
   {
-    "slug": "restaurante-bella-italia",
-    "name": "Restaurante Bella Italia",
-    "city": "SAO PAULO"
+    slug: 'restaurante-bella-italia',
+    name: 'Restaurante Bella Italia',
+    category: 'menu',
+    theme: 'food',
+    city: 'SAO PAULO',
+    phone: '5511999999999'
   }
 ]
 
 async function runSeed() {
-  console.log('🌱 Conectando ao PostgreSQL para atualizar chave Pix...')
+  console.log('🌱 Conectando ao PostgreSQL para sincronizar estabelecimentos...')
   const pool = new Pool({ connectionString: databaseUrl })
 
   try {
@@ -63,7 +100,7 @@ async function runSeed() {
     const targetPixKey = '7e3ed5e6-6097-4b15-88a3-221caba64141'
     const targetKeyType = 'random'
 
-    console.log(`🔄 Atualizando chave Pix para: ${targetPixKey} (${targetKeyType}) em todas as lojas...\n`)
+    console.log(`🔄 Atualizando estabelecimentos e chaves Pix (${targetPixKey})...\n`)
 
     for (const store of stores) {
       const pixConfig = JSON.stringify({
@@ -75,34 +112,39 @@ async function runSeed() {
         depositPercentage: 30
       })
 
-      // Atualiza o pix_config pelo slug (compatível com id UUID nativo ou VARCHAR)
+      // 1. Tenta atualizar se o tenant já existe pelo slug
       const res = await client.query(
         `UPDATE tenants 
-         SET pix_config = $1::jsonb 
-         WHERE LOWER(slug) = LOWER($2) 
+         SET pix_config = $1::jsonb,
+             name = $2,
+             business_category = $3,
+             theme = $4,
+             updated_at = NOW()
+         WHERE LOWER(slug) = LOWER($5) 
          RETURNING slug, name, pix_config`,
-        [pixConfig, store.slug]
+        [pixConfig, store.name, store.category, store.theme, store.slug]
       )
 
       if (res.rowCount && res.rowCount > 0) {
         const row = res.rows[0]
-        console.log(`   ✓ [${row.slug}] ${row.name}: Pix Key = ${row.pix_config?.key} (${row.pix_config?.keyType})`)
+        console.log(`   ✓ [${row.slug}] ${row.name}: Sincronizado`)
       } else {
-        // Se o tenant ainda não existe no banco, insere deixando o ID com default uuid
+        // 2. Se o tenant não existe no banco, insere gerando UUID explícito
+        const generatedId = randomUUID()
         const insertRes = await client.query(
-          `INSERT INTO tenants (slug, name, phone_whatsapp, business_category, theme, pix_config)
-           VALUES ($1, $2, '11999999999', 'menu', 'food', $3::jsonb)
+          `INSERT INTO tenants (id, slug, name, phone_whatsapp, business_category, theme, pix_config)
+           VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
            RETURNING slug, name, pix_config`,
-          [store.slug, store.name, pixConfig]
+          [generatedId, store.slug, store.name, store.phone, store.category, store.theme, pixConfig]
         )
         const row = insertRes.rows[0]
-        console.log(`   + [${row.slug}] ${row.name} (Criado): Pix Key = ${row.pix_config?.key}`)
+        console.log(`   + [${row.slug}] ${row.name} (Criado com ID ${generatedId.slice(0, 8)}...)`)
       }
     }
 
     client.release()
     await pool.end()
-    console.log('\n🚀 Todas as lojas foram atualizadas com sucesso no PostgreSQL!')
+    console.log('\n🚀 Todos os 9 estabelecimentos foram sincronizados com sucesso no PostgreSQL!')
   } catch (err) {
     console.error('❌ Erro ao executar seed:', err)
     process.exit(1)
