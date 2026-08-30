@@ -1,11 +1,19 @@
 import { ref, computed } from 'vue'
-import { useRuntimeConfig } from '#app'
 import type { Product } from '@alaska/contracts'
 import { useHaptic } from './useHaptic'
 
+function getApiBaseUrl(): string {
+  try {
+    if (typeof useRuntimeConfig === 'function') {
+      const config = useRuntimeConfig()
+      if (config?.public?.apiBaseUrl) return config.public.apiBaseUrl
+    }
+  } catch {}
+  return 'http://localhost:3333/api/v1'
+}
+
 export function useMerchantAdmin(slug: string) {
-  const config = useRuntimeConfig()
-  const apiBaseUrl = config.public?.apiBaseUrl || 'http://localhost:3333/api/v1'
+  const apiBaseUrl = getApiBaseUrl()
   const { triggerHaptic } = useHaptic()
   const pinSessionKey = `alaska_admin_auth_${slug}`
 
@@ -58,12 +66,14 @@ export function useMerchantAdmin(slug: string) {
 
     try {
       // 2. Sincronização com o backend NestJS na porta 3333 via apiBaseUrl
-      const res = await $fetch(`${apiBaseUrl}/tenants/${slug}/products/${productId}/availability`, {
-        method: 'PATCH',
-        body: { isAvailable: !currentStatus },
-        timeout: 3000
-      })
-      return !!res
+      if (typeof $fetch === 'function') {
+        await $fetch(`${apiBaseUrl}/tenants/${slug}/products/${productId}/availability`, {
+          method: 'PATCH',
+          body: { isAvailable: !currentStatus },
+          timeout: 3000
+        })
+      }
+      return true
     } catch {
       // Fallback gracioso caso a API esteja offline (mantém o estado otimista)
       return true
@@ -83,12 +93,14 @@ export function useMerchantAdmin(slug: string) {
     }
 
     try {
-      const res = await $fetch(`${apiBaseUrl}/tenants/${slug}/products/${productId}`, {
-        method: 'PUT',
-        body: { price: newPrice, priceCents: Math.round(newPrice * 100) },
-        timeout: 3000
-      })
-      return !!res
+      if (typeof $fetch === 'function') {
+        await $fetch(`${apiBaseUrl}/tenants/${slug}/products/${productId}`, {
+          method: 'PUT',
+          body: { price: newPrice, priceCents: Math.round(newPrice * 100) },
+          timeout: 3000
+        })
+      }
+      return true
     } catch {
       return true
     }
