@@ -4,7 +4,7 @@ export const EnvSchema = z.object({
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   PORT: z.coerce.number().default(3333),
   CORS_ORIGINS: z.string().default('*'),
-  DATABASE_URL: z.string().optional().default('postgres://alaska:alaskapassword@localhost:5432/alaska_local'),
+  DATABASE_URL: z.string().optional().default('postgres://alaska_admin:alaska_secret_2026@localhost:5432/alaska_local_db'),
   SUPABASE_URL: z.string().optional(),
   SUPABASE_KEY: z.string().optional(),
   ASAAS_API_KEY: z.string().optional(),
@@ -13,11 +13,13 @@ export const EnvSchema = z.object({
 
 export type Env = z.infer<typeof EnvSchema>
 
-export function validateEnv(env: Record<string, unknown> = process.env): Env {
-  const parsed = EnvSchema.safeParse(env)
-  if (!parsed.success) {
-    console.error('❌ Configuração inválida de variáveis de ambiente:', parsed.error.format())
-    throw new Error('Falha na validação de variáveis de ambiente.')
+export function validateEnv(): Env {
+  const result = EnvSchema.safeParse(process.env)
+
+  if (!result.success) {
+    console.error('❌ Configuração inválida de variáveis de ambiente:', result.error.format())
+    throw new Error('Falha na validação das variáveis de ambiente.')
   }
-  return parsed.data
+
+  return result.data
 }
