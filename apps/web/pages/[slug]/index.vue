@@ -179,34 +179,47 @@
         <div
           v-for="product in (featuredProducts || [])"
           :key="product.id"
-          @click="handleProductClick(product)"
-          class="shrink-0 w-64 sm:w-68 md:w-72 bg-white rounded-2xl border border-slate-200/90 shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden flex flex-col justify-between cursor-pointer group active:scale-[0.99]"
+          @click="isProductAvailable(product) && handleProductClick(product)"
+          class="shrink-0 w-64 sm:w-68 md:w-72 bg-white rounded-2xl border border-slate-200/90 shadow-sm transition-all duration-200 overflow-hidden flex flex-col justify-between"
+          :class="isProductAvailable(product) ? 'cursor-pointer hover:shadow-md active:scale-[0.99] group' : 'opacity-60 grayscale-[30%] bg-slate-50 border-dashed cursor-not-allowed'"
         >
           <div class="relative h-32 w-full bg-slate-100 overflow-hidden">
             <img
               v-if="product.image"
               :src="product.image"
               :alt="product.name"
-              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              class="w-full h-full object-cover"
+              :class="{ 'group-hover:scale-105 transition-transform duration-300': isProductAvailable(product) }"
               loading="lazy"
               @error="handleImageError($event, tenant?.theme)"
             />
             <div v-else class="w-full h-full flex items-center justify-center text-slate-400 text-2xl font-bold bg-slate-100">
               {{ product.name.charAt(0) }}
             </div>
+            
+            <!-- Badge de Oferta -->
             <span
-              v-if="product.originalPrice"
+              v-if="product.originalPrice && isProductAvailable(product)"
               class="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-rose-500 text-white text-[10px] font-extrabold shadow-sm"
             >
               OFERTA
             </span>
+
+            <!-- Overlay de Esgotado -->
+            <div v-if="!isProductAvailable(product)" class="absolute inset-0 bg-slate-950/60 backdrop-blur-[1px] flex items-center justify-center">
+              <span class="text-[11px] font-black text-white bg-rose-600 px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">
+                Esgotado
+              </span>
+            </div>
           </div>
 
           <div class="p-3.5 flex-1 flex flex-col justify-between">
             <div>
-              <h3 class="font-bold text-slate-900 text-sm group-hover:text-amber-600 transition-colors line-clamp-1">
-                {{ product.name }}
-              </h3>
+              <div class="flex items-center justify-between gap-1">
+                <h3 class="font-bold text-slate-900 text-sm line-clamp-1" :class="{ 'group-hover:text-amber-600 transition-colors': isProductAvailable(product) }">
+                  {{ product.name }}
+                </h3>
+              </div>
               <p v-if="product.description" class="text-xs text-slate-500 line-clamp-2 mt-1">
                 {{ product.description }}
               </p>
@@ -218,15 +231,22 @@
                   {{ formatCurrency(product.originalPrice) }}
                 </span>
                 <span class="text-sm font-extrabold text-slate-900 font-mono" :class="themeClasses.primaryText">
-                  {{ formatCurrency(product.price) }}
+                  {{ formatCurrency(getProductPrice(product)) }}
                 </span>
               </div>
               <button
+                v-if="isProductAvailable(product)"
                 class="px-2.5 py-1 rounded-lg text-xs font-bold shadow-2xs hover:opacity-90 active:scale-95 transition-all cursor-pointer"
                 :class="themeClasses.buttonPrimary"
               >
                 {{ isServiceStore ? 'Agendar' : 'Adicionar' }}
               </button>
+              <span
+                v-else
+                class="text-[11px] font-bold text-slate-400 bg-slate-200 px-2.5 py-1 rounded-lg cursor-not-allowed select-none"
+              >
+                Esgotado
+              </span>
             </div>
           </div>
         </div>
@@ -278,44 +298,75 @@
             <div
               v-for="product in (category.products || [])"
               :key="product.id"
-              @click="handleProductClick(product)"
-              class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs hover:shadow-md transition-all duration-200 flex gap-4 cursor-pointer group active:scale-[0.99] justify-between"
+              @click="isProductAvailable(product) && handleProductClick(product)"
+              class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-xs transition-all duration-200 flex gap-4 justify-between"
+              :class="isProductAvailable(product) ? 'cursor-pointer hover:shadow-md active:scale-[0.99] group' : 'opacity-60 grayscale-[30%] bg-slate-50/80 border-dashed cursor-not-allowed'"
             >
               <div class="flex-1 flex flex-col justify-between">
                 <div>
-                  <h3 class="font-bold text-slate-900 text-sm group-hover:text-amber-600 transition-colors">
-                    {{ product.name }}
-                  </h3>
+                  <div class="flex items-center gap-2">
+                    <h3 class="font-bold text-slate-900 text-sm" :class="{ 'group-hover:text-amber-600 transition-colors': isProductAvailable(product) }">
+                      {{ product.name }}
+                    </h3>
+                    <span
+                      v-if="!isProductAvailable(product)"
+                      class="text-[10px] px-2 py-0.5 rounded-md font-extrabold uppercase tracking-wider bg-rose-500/10 text-rose-600 border border-rose-500/20 shrink-0"
+                    >
+                      Esgotado
+                    </span>
+                  </div>
                   <p v-if="product.description" class="text-xs text-slate-500 line-clamp-2 mt-1 leading-relaxed">
                     {{ product.description }}
                   </p>
                 </div>
 
-                <div class="mt-3 flex items-center gap-2">
-                  <span v-if="product.originalPrice" class="text-xs text-slate-400 line-through font-mono">
-                    {{ formatCurrency(product.originalPrice) }}
-                  </span>
-                  <span class="text-sm font-extrabold text-slate-900 font-mono" :class="themeClasses.primaryText">
-                    {{ formatCurrency(product.price) }}
-                  </span>
-                  <span v-if="product.durationMinutes" class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                    ⏱️ {{ product.durationMinutes }}min
+                <div class="mt-3 flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span v-if="product.originalPrice" class="text-xs text-slate-400 line-through font-mono">
+                      {{ formatCurrency(product.originalPrice) }}
+                    </span>
+                    <span class="text-sm font-extrabold text-slate-900 font-mono" :class="themeClasses.primaryText">
+                      {{ formatCurrency(getProductPrice(product)) }}
+                    </span>
+                    <span v-if="product.durationMinutes" class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
+                      ⏱️ {{ product.durationMinutes }}min
+                    </span>
+                  </div>
+
+                  <button
+                    v-if="isProductAvailable(product)"
+                    class="px-2.5 py-1 rounded-lg text-xs font-bold shadow-2xs hover:opacity-90 active:scale-95 transition-all cursor-pointer"
+                    :class="themeClasses.buttonPrimary"
+                  >
+                    {{ isServiceStore ? 'Agendar' : 'Adicionar' }}
+                  </button>
+                  <span
+                    v-else
+                    class="text-[11px] font-bold text-slate-400 bg-slate-200/80 px-2.5 py-1 rounded-lg cursor-not-allowed select-none"
+                  >
+                    Indisponível
                   </span>
                 </div>
               </div>
 
-              <!-- Thumbnail com Fallback Resiliente -->
+              <!-- Thumbnail com Fallback Resiliente e Overlay de Esgotado -->
               <div class="w-24 h-24 sm:w-28 sm:h-28 rounded-xl bg-slate-100 overflow-hidden shrink-0 relative">
                 <img
                   v-if="product.image"
                   :src="product.image"
                   :alt="product.name"
-                  class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                  class="w-full h-full object-cover"
+                  :class="{ 'group-hover:scale-105 transition-transform duration-300': isProductAvailable(product) }"
                   loading="lazy"
                   @error="handleImageError($event, tenant?.theme)"
                 />
                 <div v-else class="w-full h-full flex items-center justify-center text-slate-400 text-2xl font-bold bg-slate-100">
                   {{ product.name.charAt(0) }}
+                </div>
+                <div v-if="!isProductAvailable(product)" class="absolute inset-0 bg-slate-950/60 backdrop-blur-[1px] flex items-center justify-center">
+                  <span class="text-[10px] font-black text-white bg-rose-600 px-2 py-0.5 rounded shadow-sm uppercase tracking-wider">
+                    Esgotado
+                  </span>
                 </div>
               </div>
             </div>
@@ -392,7 +443,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTenant } from '~/composables/useTenant'
 import { useTenantTheme } from '~/composables/useTenantTheme'
@@ -424,13 +475,48 @@ const slug = computed(() => String(route.params.slug || ''))
 // 1. Resolução do Tenant Atual (Retorna referências reativas síncronas)
 const { tenant } = useTenant(slug)
 
-// 2. Tema Dinâmico
+// 2. Overrides Operacionais Reativos em Tempo Real (ADR 013)
+const localOverrides = ref<Record<string, { isAvailable?: boolean; price?: number }>>({})
+
+function syncLocalOverrides() {
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem(`alaska_overrides_${slug.value}`)
+      if (raw) localOverrides.value = JSON.parse(raw)
+    } catch {}
+  }
+}
+
+onMounted(() => {
+  syncLocalOverrides()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', syncLocalOverrides)
+  }
+})
+
+function isProductAvailable(product: Product): boolean {
+  if (localOverrides.value[product.id]?.isAvailable !== undefined) {
+    return localOverrides.value[product.id].isAvailable!
+  }
+  if (product.isAvailable !== undefined) return product.isAvailable
+  if ((product as any).available !== undefined) return (product as any).available
+  return true
+}
+
+function getProductPrice(product: Product): number {
+  if (localOverrides.value[product.id]?.price !== undefined) {
+    return localOverrides.value[product.id].price!
+  }
+  return product.price
+}
+
+// 3. Tema Dinâmico
 const { themeClasses } = useTenantTheme(tenant)
 
-// 3. Horário de Funcionamento (Aberto / Fechado com Badge Dinâmico)
+// 4. Horário de Funcionamento (Aberto / Fechado com Badge Dinâmico)
 const { isOpen, statusText, ariaLabel: openingAriaLabel } = useOpeningHours(tenant)
 
-// 4. Compartilhamento e Toast
+// 5. Compartilhamento e Toast
 const isCopied = ref(false)
 function shareStore() {
   if (typeof navigator !== 'undefined' && navigator.share) {
@@ -448,7 +534,7 @@ function shareStore() {
   }
 }
 
-// 5. Busca de Produtos em Tempo Real (useProductSearch)
+// 6. Busca de Produtos em Tempo Real (useProductSearch)
 const {
   searchQuery,
   isSearching,
@@ -458,7 +544,7 @@ const {
   clearSearch
 } = useProductSearch(computed(() => tenant?.value?.categories || []))
 
-// 6. Carrinho Persistente Multi-Tenant com Isolamento por Loja no LocalStorage (useCart)
+// 7. Carrinho Persistente Multi-Tenant com Isolamento por Loja no LocalStorage (useCart)
 const {
   items: cartItems,
   addItem: addToCart,
@@ -468,7 +554,7 @@ const {
   cartSubtotal
 } = useCart(slug)
 
-// 7. SEO & OpenGraph Dinâmico com Guardas Defensivas de SSR
+// 8. SEO & OpenGraph Dinâmico com Guardas Defensivas de SSR
 useSeoMeta({
   title: () => tenant?.value ? `${tenant.value.name} — Vitrine & Pedidos Online` : 'Alaska Local',
   description: () => tenant?.value?.description || 'Faça seu pedido ou agende seu horário online de forma rápida pelo WhatsApp.',
@@ -478,7 +564,7 @@ useSeoMeta({
   twitterCard: 'summary_large_image'
 })
 
-// 8. Estados de Modais
+// 9. Estados de Modais
 const isReviewsOpen = ref(false)
 const isInfoOpen = ref(false)
 const isCartDrawerOpen = ref(false)
@@ -495,6 +581,8 @@ const isServiceStore = computed(() => {
 })
 
 function handleProductClick(product: Product) {
+  if (!isProductAvailable(product)) return
+
   if (isServiceStore.value) {
     selectedBookingService.value = {
       id: product.id,
@@ -526,7 +614,7 @@ function handleAddProductToCart(item: CartItem) {
   closeProductModal()
 }
 
-// 9. Destaques Dinâmicos com iterador seguro
+// 10. Destaques Dinâmicos com iterador seguro
 const featuredProducts = computed(() => {
   if (!tenant?.value?.categories || !Array.isArray(tenant.value.categories)) return []
   const all: Product[] = []
@@ -538,7 +626,7 @@ const featuredProducts = computed(() => {
   return all.slice(0, 6)
 })
 
-// 10. Controle de Rolagem Horizontal do Carrossel
+// 11. Controle de Rolagem Horizontal do Carrossel
 const carouselRef = ref<HTMLElement | null>(null)
 
 function scrollCarousel(direction: 'left' | 'right') {
