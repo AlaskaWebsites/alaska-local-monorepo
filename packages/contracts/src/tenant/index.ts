@@ -66,6 +66,15 @@ export const TenantSchema = z.object({
   banner: z.string().optional(),
 })
 
+// Schemas de Gestão Operacional e Painel do Lojista (ADR 013)
+export const UpdateTenantHoursSchema = z.object({
+  openingHours: OpeningHoursSchema,
+})
+
+export const VerifyAdminPinSchema = z.object({
+  pin: z.string().min(4, 'PIN deve ter no mínimo 4 dígitos').max(8, 'PIN deve ter no máximo 8 dígitos'),
+})
+
 export type TenantCategory = z.infer<typeof TenantCategorySchema>
 export type TenantTheme = z.infer<typeof TenantThemeSchema>
 export type OpeningHoursDay = z.infer<typeof OpeningHoursDaySchema>
@@ -73,3 +82,5 @@ export type OpeningHours = z.infer<typeof OpeningHoursSchema>
 export type PixConfig = z.infer<typeof PixConfigSchema>
 export type StoreReviews = z.infer<typeof StoreReviewsSchema>
 export type Tenant = z.infer<typeof TenantSchema>
+export type UpdateTenantHoursDto = z.infer<typeof UpdateTenantHoursSchema>
+export type VerifyAdminPinDto = z.infer<typeof VerifyAdminPinSchema>

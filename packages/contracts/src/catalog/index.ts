@@ -43,7 +43,25 @@ export const CategorySchema = z.object({
   products: z.array(ProductSchema).optional().default([]),
 })
 
+// Schemas de Mutação para o Painel do Lojista (ADR 013)
+export const ToggleProductAvailabilitySchema = z.object({
+  isAvailable: z.boolean(),
+})
+
+export const UpdateProductSchema = z.object({
+  name: z.string().min(1).optional(),
+  description: z.string().optional(),
+  price: z.number().positive().optional(),
+  priceCents: z.number().int().nonnegative().optional(),
+  originalPrice: z.number().positive().optional(),
+  isAvailable: z.boolean().optional(),
+  options: z.array(OptionGroupSchema).optional(),
+  durationMinutes: z.number().int().positive().optional(),
+})
+
 export type OptionItem = z.infer<typeof OptionItemSchema>
 export type OptionGroup = z.infer<typeof OptionGroupSchema>
 export type Product = z.infer<typeof ProductSchema>
 export type Category = z.infer<typeof CategorySchema>
+export type ToggleProductAvailabilityDto = z.infer<typeof ToggleProductAvailabilitySchema>
+export type UpdateProductDto = z.infer<typeof UpdateProductSchema>
