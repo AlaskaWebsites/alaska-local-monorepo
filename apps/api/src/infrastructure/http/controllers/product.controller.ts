@@ -1,4 +1,4 @@
-import { Controller, Patch, Put, Body, Param, UsePipes, HttpCode, HttpStatus } from '@nestjs/common'
+import { Controller, Patch, Put, Body, Param, HttpCode, HttpStatus } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger'
 import {
   ToggleProductAvailabilitySchema,
@@ -23,10 +23,10 @@ export class ProductController {
   @ApiOperation({ summary: 'Ligar/desligar disponibilidade de produto em tempo real (< 3s)' })
   @ApiParam({ name: 'slug', description: 'Slug do estabelecimento' })
   @ApiParam({ name: 'productId', description: 'ID do produto' })
-  @UsePipes(new ZodValidationPipe(ToggleProductAvailabilitySchema))
   async toggleAvailability(
+    @Param('slug') slug: string,
     @Param('productId') productId: string,
-    @Body() dto: ToggleProductAvailabilityDto
+    @Body(new ZodValidationPipe(ToggleProductAvailabilitySchema)) dto: ToggleProductAvailabilityDto
   ) {
     const product = await this.toggleAvailabilityUseCase.execute({
       productId,
@@ -47,10 +47,10 @@ export class ProductController {
   @ApiOperation({ summary: 'Atualizar informações de produto (preço, opcionais, descrição)' })
   @ApiParam({ name: 'slug', description: 'Slug do estabelecimento' })
   @ApiParam({ name: 'productId', description: 'ID do produto' })
-  @UsePipes(new ZodValidationPipe(UpdateProductSchema))
   async updateProduct(
+    @Param('slug') slug: string,
     @Param('productId') productId: string,
-    @Body() dto: UpdateProductDto
+    @Body(new ZodValidationPipe(UpdateProductSchema)) dto: UpdateProductDto
   ) {
     const product = await this.updateProductUseCase.execute({
       productId,

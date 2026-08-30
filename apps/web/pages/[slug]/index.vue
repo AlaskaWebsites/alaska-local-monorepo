@@ -393,6 +393,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useRoute } from 'vue-router'
 import { useTenant } from '~/composables/useTenant'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 import { useOpeningHours } from '~/composables/useOpeningHours'
@@ -417,8 +418,11 @@ import {
 } from 'lucide-vue-next'
 import type { Product, CartItem, BookingService } from '~/types'
 
+const route = useRoute()
+const slug = computed(() => String(route.params.slug || ''))
+
 // 1. Resolução do Tenant Atual (Retorna referências reativas síncronas)
-const { tenant, slug } = useTenant()
+const { tenant } = useTenant(slug)
 
 // 2. Tema Dinâmico
 const { themeClasses } = useTenantTheme(tenant)
@@ -454,7 +458,7 @@ const {
   clearSearch
 } = useProductSearch(computed(() => tenant?.value?.categories || []))
 
-// 6. Carrinho Persistente Multi-Tenant via LocalStorage (useCart)
+// 6. Carrinho Persistente Multi-Tenant com Isolamento por Loja no LocalStorage (useCart)
 const {
   items: cartItems,
   addItem: addToCart,
@@ -462,7 +466,7 @@ const {
   clearCart,
   totalItemsCount,
   cartSubtotal
-} = useCart(tenant)
+} = useCart(slug)
 
 // 7. SEO & OpenGraph Dinâmico com Guardas Defensivas de SSR
 useSeoMeta({
