@@ -62,16 +62,41 @@
             <div
               v-for="(item, idx) in items"
               :key="idx"
-              class="p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-start justify-between gap-3 shadow-2xs"
+              class="p-3.5 sm:p-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-start gap-3 shadow-2xs"
             >
+              <!-- Thumbnail do Produto com Fallback -->
+              <div class="w-16 h-16 sm:w-18 sm:h-18 rounded-xl bg-slate-100 overflow-hidden shrink-0 relative border border-slate-200/80">
+                <img
+                  v-if="item.product?.image || item.image"
+                  :src="item.product?.image || item.image"
+                  :alt="item.product?.name || item.name"
+                  class="w-full h-full object-cover"
+                  @error="handleImageError($event, tenant?.theme)"
+                />
+                <div v-else class="w-full h-full flex items-center justify-center text-slate-400 font-bold text-lg bg-slate-100">
+                  {{ (item.product?.name || item.name || 'P').charAt(0) }}
+                </div>
+              </div>
+
+              <!-- Informações do Item -->
               <div class="flex-1 min-w-0">
-                <div class="flex items-center gap-2">
-                  <span class="text-xs font-extrabold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
-                    {{ item.quantity }}x
-                  </span>
-                  <h4 class="font-bold text-sm text-slate-900 truncate">
-                    {{ item.product?.name || item.name }}
-                  </h4>
+                <div class="flex items-start justify-between gap-1">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-xs font-extrabold text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded">
+                      {{ item.quantity }}x
+                    </span>
+                    <h4 class="font-bold text-sm text-slate-900 line-clamp-1">
+                      {{ item.product?.name || item.name }}
+                    </h4>
+                  </div>
+
+                  <button
+                    @click="$emit('remove-item', idx)"
+                    class="text-slate-300 hover:text-rose-500 p-1 rounded-lg transition-colors cursor-pointer shrink-0"
+                    title="Remover item"
+                  >
+                    <Trash2 class="w-4 h-4" />
+                  </button>
                 </div>
 
                 <!-- Opcionais Selecionados (se houver) -->
@@ -90,14 +115,6 @@
                   {{ formatCurrency((item.unitPrice || item.product?.price || 0) * (item.quantity || 1)) }}
                 </p>
               </div>
-
-              <button
-                @click="$emit('remove-item', idx)"
-                class="text-slate-300 hover:text-rose-500 p-1 rounded-lg transition-colors cursor-pointer"
-                title="Remover item"
-              >
-                <Trash2 class="w-4 h-4" />
-              </button>
             </div>
 
             <!-- Dados de Entrega e Checkout -->
@@ -222,6 +239,7 @@
 import { ref, computed } from 'vue'
 import { useOpeningHours } from '~/composables/useOpeningHours'
 import { formatCurrency } from '~/utils/formatters'
+import { handleImageError } from '~/utils/images'
 import { ShoppingCart, Trash2, X, Truck, ShoppingBag, Send, AlertCircle } from 'lucide-vue-next'
 import type { CartItem, Tenant } from '~/types'
 
