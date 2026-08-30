@@ -261,12 +261,8 @@
       :is-open="isCartOpen"
       :items="cartItems"
       :tenant="tenant"
-      :delivery-fee="deliveryFee"
-      :subtotal="cartTotal"
       @close="isCartOpen = false"
-      @update-quantity="updateQuantity"
       @clear-cart="clearCart"
-      @checkout="handleCheckout"
     />
 
     <BookingModal
@@ -281,7 +277,6 @@
       v-if="tenant.reviews"
       :is-open="isReviewsOpen"
       :reviews="tenant.reviews"
-      :store-name="tenant.name"
       @close="isReviewsOpen = false"
     />
   </div>
@@ -372,10 +367,6 @@ function handleAddToCart(item: any) {
   addToCart(item)
   isCustomizerOpen.value = false
   selectedProduct.value = null
-}
-
-function handleCheckout() {
-  isCartOpen.value = false
 }
 
 function scrollCarousel(direction: 'left' | 'right') {
