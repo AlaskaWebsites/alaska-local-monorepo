@@ -386,7 +386,7 @@ function handleCheckout() {
 function scrollCarousel(direction: 'left' | 'right') {
   if (!carouselRef.value) return
   const offset = direction === 'left' ? -260 : 260
-  carouselRef.value.scrollBy({ left: offset, behavior: 'smooth' })\\
+  carouselRef.value.scrollBy({ left: offset, behavior: 'smooth' })
 }
 </script>
 
