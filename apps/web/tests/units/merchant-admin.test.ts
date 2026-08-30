@@ -66,4 +66,14 @@ describe('Unit: useMerchantAdmin Composable (ADR 013)', () => {
     const product = mockProducts.find(p => p.id === 'prod-1')
     expect(product?.price).toBe(35.5)
   })
+
+  it('deve salvar configurações de delivery e comunicado', () => {
+    const admin = useMerchantAdmin(slug)
+    admin.updateDelivery(7.5, 30.0, '40-55 min')
+    admin.updateAnnouncement(true, 'Promoção Especial')
+    
+    const overrides = admin.getOverrides()
+    expect(overrides.delivery?.deliveryFee).toBe(7.5)
+    expect(overrides.announcement?.isEnabled).toBe(true)
+  })
 })

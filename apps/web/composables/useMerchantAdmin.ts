@@ -1,6 +1,15 @@
-import { ref, computed, watch } from 'vue'
-import type { Product, Category } from '@alaska/contracts'
+import { ref, computed } from 'vue'
+import type { Product, Category, OpeningHours } from '@alaska/contracts'
 import { useHaptic } from './useHaptic'
+
+export interface TenantOverrides {
+  products?: Record<string, { isAvailable?: boolean; price?: number; durationMinutes?: number }>
+  openingHours?: { open?: string; close?: string }
+  delivery?: { deliveryFee?: number; minOrderValue?: number; estimatedTime?: string }
+  announcement?: { isEnabled: boolean; message: string }
+  emergency?: { isClosed: boolean; reason: string }
+  blockedSlots?: Array<{ date: string; time: string; reason: string }>
+}
 
 function getApiBaseUrl(): string {
   try {
@@ -26,7 +35,7 @@ export function useMerchantAdmin(slug: string) {
     isAuthenticated.value = sessionStorage.getItem(pinSessionKey) === 'true'
   }
 
-  function getLocalOverrides(): Record<string, { isAvailable?: boolean; price?: number }> {
+  function getOverrides(): TenantOverrides {
     if (typeof window === 'undefined') return {}
     try {
       const raw = localStorage.getItem(overridesKey)
@@ -36,29 +45,42 @@ export function useMerchantAdmin(slug: string) {
     }
   }
 
-  function saveLocalOverride(productId: string, override: { isAvailable?: boolean; price?: number }) {
+  function saveOverrides(newOverrides: Partial<TenantOverrides>) {
     if (typeof window === 'undefined') return
     try {
-      const current = getLocalOverrides()
-      current[productId] = { ...current[productId], ...override }
-      localStorage.setItem(overridesKey, JSON.stringify(current))
+      const current = getOverrides()
+      const merged: TenantOverrides = {
+        ...current,
+        ...newOverrides,
+        products: { ...current.products, ...(newOverrides.products || {}) },
+        delivery: { ...current.delivery, ...(newOverrides.delivery || {}) },
+        announcement: newOverrides.announcement ?? current.announcement,
+        emergency: newOverrides.emergency ?? current.emergency,
+        blockedSlots: newOverrides.blockedSlots ?? current.blockedSlots ?? []
+      }
+      localStorage.setItem(overridesKey, JSON.stringify(merged))
+      window.dispatchEvent(new Event('storage'))
     } catch (e) {
-      console.warn('Erro ao salvar override no localStorage:', e)
+      console.warn('Erro ao salvar overrides:', e)
     }
   }
 
   function applyOverridesToCategories(categories: Category[]) {
-    const overrides = getLocalOverrides()
+    const overrides = getOverrides()
+    const productOverrides = overrides.products || {}
     for (const cat of categories) {
       if (cat.products && Array.isArray(cat.products)) {
         for (const p of cat.products) {
-          if (overrides[p.id]) {
-            if (overrides[p.id].isAvailable !== undefined) {
-              p.isAvailable = overrides[p.id].isAvailable!
-              ;(p as any).available = overrides[p.id].isAvailable!
+          if (productOverrides[p.id]) {
+            if (productOverrides[p.id].isAvailable !== undefined) {
+              p.isAvailable = productOverrides[p.id].isAvailable!
+              ;(p as any).available = productOverrides[p.id].isAvailable!
             }
-            if (overrides[p.id].price !== undefined) {
-              p.price = overrides[p.id].price!
+            if (productOverrides[p.id].price !== undefined) {
+              p.price = productOverrides[p.id].price!
+            }
+            if (productOverrides[p.id].durationMinutes !== undefined) {
+              p.durationMinutes = productOverrides[p.id].durationMinutes!
             }
           }
         }
@@ -97,7 +119,6 @@ export function useMerchantAdmin(slug: string) {
     triggerHaptic(30)
     const newStatus = !currentStatus
 
-    // 1. Atualização reativa imediata na UI (< 50ms)
     const product = products.find(p => p.id === productId)
     if (product) {
       product.isAvailable = newStatus
@@ -106,11 +127,11 @@ export function useMerchantAdmin(slug: string) {
       }
     }
 
-    // 2. Persistência de override local instantânea para que a vitrine reflita na hora
-    saveLocalOverride(productId, { isAvailable: newStatus })
+    saveOverrides({
+      products: { [productId]: { isAvailable: newStatus } }
+    })
 
     try {
-      // 3. Sincronização assíncrona com o backend NestJS
       if (typeof $fetch === 'function') {
         await $fetch(`${apiBaseUrl}/tenants/${slug}/products/${productId}/availability`, {
           method: 'PATCH',
@@ -136,7 +157,9 @@ export function useMerchantAdmin(slug: string) {
       product.price = newPrice
     }
 
-    saveLocalOverride(productId, { price: newPrice })
+    saveOverrides({
+      products: { [productId]: { price: newPrice } }
+    })
 
     try {
       if (typeof $fetch === 'function') {
@@ -152,14 +175,97 @@ export function useMerchantAdmin(slug: string) {
     }
   }
 
+  async function updateProductDuration(
+    products: Product[],
+    productId: string,
+    durationMinutes: number
+  ): Promise<boolean> {
+    triggerHaptic(30)
+
+    const product = products.find(p => p.id === productId)
+    if (product) {
+      product.durationMinutes = durationMinutes
+    }
+
+    saveOverrides({
+      products: { [productId]: { durationMinutes } }
+    })
+
+    return true
+  }
+
+  async function updateHours(openTime: string, closeTime: string): Promise<boolean> {
+    triggerHaptic(30)
+    saveOverrides({
+      openingHours: { open: openTime, close: closeTime }
+    })
+
+    try {
+      if (typeof $fetch === 'function') {
+        await $fetch(`${apiBaseUrl}/tenants/${slug}/hours`, {
+          method: 'PATCH',
+          body: { openingHours: { open: openTime, close: closeTime } },
+          timeout: 3000
+        })
+      }
+      return true
+    } catch {
+      return true
+    }
+  }
+
+  function updateDelivery(fee: number, minOrder: number, estimatedTime: string) {
+    triggerHaptic(30)
+    saveOverrides({
+      delivery: { deliveryFee: fee, minOrderValue: minOrder, estimatedTime }
+    })
+  }
+
+  function updateAnnouncement(isEnabled: boolean, message: string) {
+    triggerHaptic(30)
+    saveOverrides({
+      announcement: { isEnabled, message }
+    })
+  }
+
+  function updateEmergency(isClosed: boolean, reason: string = '') {
+    triggerHaptic(40)
+    saveOverrides({
+      emergency: { isClosed, reason }
+    })
+  }
+
+  function toggleBlockSlot(date: string, time: string, reason: string = 'Bloqueado') {
+    triggerHaptic(30)
+    const current = getOverrides()
+    const slots = current.blockedSlots || []
+    const existingIndex = slots.findIndex(s => s.date === date && s.time === time)
+
+    let updatedSlots = [...slots]
+    if (existingIndex >= 0) {
+      updatedSlots.splice(existingIndex, 1)
+    } else {
+      updatedSlots.push({ date, time, reason })
+    }
+
+    saveOverrides({ blockedSlots: updatedSlots })
+  }
+
   return {
     isAuthenticated: computed(() => isAuthenticated.value),
     isSubmitting: computed(() => isSubmitting.value),
     errorMessage: computed(() => errorMessage.value),
     login,
     logout,
+    getOverrides,
+    applyOverridesToCategories,
     toggleProductAvailability,
     updateProductPrice,
-    applyOverridesToCategories
+    updateProductDuration,
+    updateHours,
+    updateDelivery,
+    updateAnnouncement,
+    updateEmergency,
+    toggleBlockSlot,
   }
 }

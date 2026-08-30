@@ -1,6 +1,17 @@
 <!-- pages/[slug]/index.vue -->
 <template>
   <div v-if="tenant" class="min-h-screen bg-slate-50 text-slate-900 pb-32">
+    <!-- Banner de Alerta / Pausa Emergencial da Loja -->
+    <div v-if="emergencyOverride?.isClosed" class="bg-rose-600 text-white text-xs font-bold p-3 text-center sticky top-0 z-40 shadow-md">
+      <span>⚠️ Atendimento temporariamente pausado pela loja no momento. Retornaremos em breve!</span>
+    </div>
+
+    <!-- Banner de Comunicado Oficial da Loja -->
+    <div v-else-if="announcementOverride?.isEnabled && announcementOverride?.message" class="bg-amber-500 text-slate-950 text-xs font-bold p-2.5 px-4 text-center sticky top-0 z-40 shadow-sm flex items-center justify-center gap-2">
+      <span>📢</span>
+      <span>{{ announcementOverride.message }}</span>
+    </div>
+
     <!-- 1. Banner de Capa Hero -->
     <div class="relative h-48 sm:h-64 w-full bg-slate-900 overflow-hidden">
       <img
@@ -115,11 +126,11 @@
           </div>
           <div v-if="tenant.deliveryType" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="isInfoOpen = true">
             <Truck class="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span>{{ tenant.deliveryType }}</span>
+            <span>{{ dynamicDeliveryTime || tenant.deliveryType }}</span>
           </div>
           <div v-if="tenant.openingHours" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="isInfoOpen = true">
             <Clock class="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span>{{ tenant.openingHours.open }} às {{ tenant.openingHours.close }}</span>
+            <span>{{ dynamicHours.open }} às {{ dynamicHours.close }}</span>
           </div>
           <div class="flex items-center justify-center gap-1.5">
             <a
@@ -197,7 +208,6 @@
               {{ product.name.charAt(0) }}
             </div>
             
-            <!-- Badge de Oferta -->
             <span
               v-if="product.originalPrice && isProductAvailable(product)"
               class="absolute top-2 right-2 px-2 py-0.5 rounded-md bg-rose-500 text-white text-[10px] font-extrabold shadow-sm"
@@ -205,7 +215,6 @@
               OFERTA
             </span>
 
-            <!-- Overlay de Esgotado -->
             <div v-if="!isProductAvailable(product)" class="absolute inset-0 bg-slate-950/60 backdrop-blur-[1px] flex items-center justify-center">
               <span class="text-[11px] font-black text-white bg-rose-600 px-2.5 py-1 rounded-md shadow-md uppercase tracking-wider">
                 Esgotado
@@ -476,7 +485,7 @@ const slug = computed(() => String(route.params.slug || ''))
 const { tenant } = useTenant(slug)
 
 // 2. Overrides Operacionais Reativos em Tempo Real (ADR 013)
-const localOverrides = ref<Record<string, { isAvailable?: boolean; price?: number }>>({})
+const localOverrides = ref<any>({})
 
 function syncLocalOverrides() {
   if (typeof window !== 'undefined') {
@@ -494,9 +503,34 @@ onMounted(() => {
   }
 })
 
+const announcementOverride = computed(() => localOverrides.value?.announcement)
+const emergencyOverride = computed(() => localOverrides.value?.emergency)
+
+const dynamicDeliveryFee = computed(() => {
+  if (localOverrides.value?.delivery?.deliveryFee !== undefined) {
+    return localOverrides.value.delivery.deliveryFee
+  }
+  return (tenant.value as any)?.deliveryFee || 0
+})
+
+const dynamicDeliveryTime = computed(() => {
+  if (localOverrides.value?.delivery?.estimatedTime) {
+    return localOverrides.value.delivery.estimatedTime
+  }
+  return tenant.value?.deliveryType || null
+})
+
+const dynamicHours = computed(() => {
+  return {
+    open: localOverrides.value?.openingHours?.open || tenant.value?.openingHours?.open || '09:00',
+    close: localOverrides.value?.openingHours?.close || tenant.value?.openingHours?.close || '20:00'
+  }
+})
+
 function isProductAvailable(product: Product): boolean {
-  if (localOverrides.value[product.id]?.isAvailable !== undefined) {
-    return localOverrides.value[product.id].isAvailable!
+  const prodOverrides = localOverrides.value?.products || localOverrides.value
+  if (prodOverrides?.[product.id]?.isAvailable !== undefined) {
+    return prodOverrides[product.id].isAvailable!
   }
   if (product.isAvailable !== undefined) return product.isAvailable
   if ((product as any).available !== undefined) return (product as any).available
@@ -504,8 +538,9 @@ function isProductAvailable(product: Product): boolean {
 }
 
 function getProductPrice(product: Product): number {
-  if (localOverrides.value[product.id]?.price !== undefined) {
-    return localOverrides.value[product.id].price!
+  const prodOverrides = localOverrides.value?.products || localOverrides.value
+  if (prodOverrides?.[product.id]?.price !== undefined) {
+    return prodOverrides[product.id].price!
   }
   return product.price
 }
