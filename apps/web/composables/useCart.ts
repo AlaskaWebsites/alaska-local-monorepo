@@ -5,6 +5,16 @@ import { useLocalStorage } from '@vueuse/core'
 import { useHaptic } from './useHaptic'
 import type { CartItem, Tenant, DeliveryType, PaymentMethod, Address } from '~/types'
 
+function areOptionsEqual(opt1?: any[], opt2?: any[]): boolean {
+  const list1 = Array.isArray(opt1) ? opt1 : []
+  const list2 = Array.isArray(opt2) ? opt2 : []
+  if (list1.length !== list2.length) return false
+
+  const keys1 = list1.map(o => o.id || o.name || o.label).sort().join(',')
+  const keys2 = list2.map(o => o.id || o.name || o.label).sort().join(',')
+  return keys1 === keys2
+}
+
 /**
  * Composable multi-tenant para gerenciamento e persistência reativa da sacola de compras.
  * Os itens são estritamente isolados e persistidos no localStorage com chave prefixada pelo slug da loja.
@@ -52,7 +62,26 @@ export function useCart(tenantSource?: Ref<Tenant | string | null | undefined> |
 
   function addItem(item: CartItem) {
     triggerHaptic(35)
-    items.value.push(item)
+    
+    const productId = item.product?.id || item.id
+    const itemObs = (item.observations || item.notes || item.observation || '').trim()
+
+    // Verifica se já existe exatamente o mesmo item com as mesmas opções e observações para somar a quantidade
+    const existingIndex = items.value.findIndex(existing => {
+      const existingId = existing.product?.id || existing.id
+      if (existingId !== productId) return false
+
+      const existingObs = (existing.observations || existing.notes || existing.observation || '').trim()
+      if (existingObs !== itemObs) return false
+
+      return areOptionsEqual(existing.options, item.options)
+    })
+
+    if (existingIndex >= 0) {
+      items.value[existingIndex].quantity = (items.value[existingIndex].quantity || 1) + (item.quantity || 1)
+    } else {
+      items.value.push({ ...item })
+    }
   }
 
   function removeItem(index: number) {
@@ -82,7 +111,10 @@ export function useCart(tenantSource?: Ref<Tenant | string | null | undefined> |
   })
 
   const cartSubtotal = computed(() => {
-    return items.value.reduce((acc, item) => acc + (item.unitPrice || 0) * (item.quantity || 1), 0)
+    return items.value.reduce((acc, item) => {
+      const price = item.unitPrice || item.product?.price || 0
+      return acc + price * (item.quantity || 1)
+    }, 0)
   })
 
   const isEmpty = computed(() => items.value.length === 0)
@@ -131,20 +163,43 @@ export const useCartStore = defineStore('cart', {
       (state.items || []).reduce((acc: number, item: CartItem) => acc + (item.quantity || 0), 0),
 
     subtotal: (state): number =>
-      (state.items || []).reduce((acc: number, item: CartItem) => acc + (item.unitPrice || 0) * (item.quantity || 0), 0),
+      (state.items || []).reduce((acc: number, item: CartItem) => {
+        const price = item.unitPrice || item.product?.price || 0
+        return acc + price * (item.quantity || 0)
+      }, 0),
 
     total: (state): number => {
       const list = state.items || []
       if (list.length === 0) return 0
       const fee = state.deliveryType === 'delivery' ? (state.deliveryFee || 0) : 0
-      const sub = list.reduce((acc: number, item: CartItem) => acc + (item.unitPrice || 0) * (item.quantity || 0), 0)
+      const sub = list.reduce((acc: number, item: CartItem) => {
+        const price = item.unitPrice || item.product?.price || 0
+        return acc + price * (item.quantity || 0)
+      }, 0)
       return sub + fee
     },
   },
 
   actions: {
     addItem(item: CartItem) {
-      this.items.push(item)
+      const productId = item.product?.id || item.id
+      const itemObs = (item.observations || item.notes || item.observation || '').trim()
+
+      const existingIndex = this.items.findIndex(existing => {
+        const existingId = existing.product?.id || existing.id
+        if (existingId !== productId) return false
+
+        const existingObs = (existing.observations || existing.notes || existing.observation || '').trim()
+        if (existingObs !== itemObs) return false
+
+        return areOptionsEqual(existing.options, item.options)
+      })
+
+      if (existingIndex >= 0) {
+        this.items[existingIndex].quantity = (this.items[existingIndex].quantity || 1) + (item.quantity || 1)
+      } else {
+        this.items.push(item)
+      }
     },
     removeItem(index: number) {
       if (this.items && index >= 0 && index < this.items.length) {

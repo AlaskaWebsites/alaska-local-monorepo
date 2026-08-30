@@ -5,10 +5,10 @@
       <!-- Backdrop Escuro com Blur -->
       <div @click="$emit('close')" class="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"></div>
 
-      <!-- Gaveta Lateral Deslizante -->
-      <aside class="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between z-10 animate-slide-in-right overflow-y-auto">
-        <!-- 1. Header da Sacola -->
-        <div class="p-5 border-b border-slate-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-md z-10">
+      <!-- Gaveta Lateral Deslizante com Layout Estruturado -->
+      <aside class="relative w-full max-w-md bg-white h-full shadow-2xl flex flex-col justify-between z-10 animate-slide-in-right overflow-hidden">
+        <!-- 1. Header da Sacola (Fixo) -->
+        <div class="p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white z-20">
           <div class="flex items-center gap-2.5">
             <ShoppingCart class="w-5 h-5 text-slate-800" />
             <h2 id="cart-title" class="text-lg font-extrabold text-slate-900">Sua Sacola</h2>
@@ -36,8 +36,8 @@
           </div>
         </div>
 
-        <!-- 2. Conteúdo da Sacola (Vazia ou Lista de Itens) -->
-        <div class="flex-1 p-5 space-y-6">
+        <!-- 2. Conteúdo da Sacola (Rolável) -->
+        <div class="flex-1 overflow-y-auto p-5 space-y-6">
           <!-- Alerta de Loja Fechada / Pausada -->
           <div v-if="!isStoreOpen" class="bg-rose-50 border border-rose-200 rounded-2xl p-4 text-center space-y-1">
             <div class="flex items-center justify-center gap-1.5 text-xs font-bold text-rose-700">
@@ -198,8 +198,8 @@
           </div>
         </div>
 
-        <!-- 3. Footer com Totais e Botão de Enviar Pedido -->
-        <div v-if="items.length > 0" class="p-5 border-t border-slate-100 bg-slate-50/80 space-y-3 sticky bottom-0">
+        <!-- 3. Footer Fixo Opaco com Totais e Botão de Enviar Pedido -->
+        <div v-if="items.length > 0" class="p-5 border-t border-slate-200 bg-white space-y-3 shrink-0 z-20 shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
           <div class="space-y-1.5 text-xs text-slate-600">
             <div class="flex justify-between">
               <span>Subtotal</span>
