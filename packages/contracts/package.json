@@ -7,39 +7,39 @@
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
+      "types": "./dist/index.d.ts",
       "import": "./dist/index.js",
-      "require": "./dist/index.cjs",
-      "types": "./dist/index.d.ts"
+      "require": "./dist/index.cjs"
     },
     "./tenant": {
+      "types": "./dist/tenant/index.d.ts",
       "import": "./dist/tenant/index.js",
-      "require": "./dist/tenant/index.cjs",
-      "types": "./dist/tenant/index.d.ts"
+      "require": "./dist/tenant/index.cjs"
     },
     "./catalog": {
+      "types": "./dist/catalog/index.d.ts",
       "import": "./dist/catalog/index.js",
-      "require": "./dist/catalog/index.cjs",
-      "types": "./dist/catalog/index.d.ts"
+      "require": "./dist/catalog/index.cjs"
     },
     "./order": {
+      "types": "./dist/order/index.d.ts",
       "import": "./dist/order/index.js",
-      "require": "./dist/order/index.cjs",
-      "types": "./dist/order/index.d.ts"
+      "require": "./dist/order/index.cjs"
     },
     "./booking": {
+      "types": "./dist/booking/index.d.ts",
       "import": "./dist/booking/index.js",
-      "require": "./dist/booking/index.cjs",
-      "types": "./dist/booking/index.d.ts"
+      "require": "./dist/booking/index.cjs"
     },
     "./pix": {
+      "types": "./dist/pix/index.d.ts",
       "import": "./dist/pix/index.js",
-      "require": "./dist/pix/index.cjs",
-      "types": "./dist/pix/index.d.ts"
+      "require": "./dist/pix/index.cjs"
     },
     "./common": {
+      "types": "./dist/common/index.d.ts",
       "import": "./dist/common/index.js",
-      "require": "./dist/common/index.cjs",
-      "types": "./dist/common/index.d.ts"
+      "require": "./dist/common/index.cjs"
     }
   },
   "scripts": {
