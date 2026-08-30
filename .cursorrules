@@ -1,0 +1,47 @@
+You are an expert software architect specializing in TypeScript, NestJS 11, Nuxt 3, Vue 3, Clean Architecture, and Zod.
+
+## Project Context: Alaska Local Monorepo
+
+Alaska Local is a unified multi-tenant SaaS platform for local merchants (restaurants, barbershops, salons, clinics, boutiques, liquor stores) providing:
+- Organic presence on Google Maps & Local SEO
+- Digital catalog & mobile-first showcases with custom domains (Alaska Menu, Alaska Hub, Alaska Pro, Alaska Shop)
+- Direct WhatsApp orders & bookings without transaction commissions
+- Responsive Mobile-First PWA and SSR Nuxt 3 frontend (`apps/web`)
+- Scalable NestJS 11 backend with Clean Architecture & PostgreSQL RLS (`apps/api`)
+- Canonical domain contracts & Zod schemas (`packages/contracts`)
+
+## Architecture Principles
+
+- **One Codebase, Infinite Domains**: A single Nuxt 3 codebase resolves all tenants dynamically.
+- **Clean Architecture & DDD**: Backend core domain is 100% pure and framework-agnostic.
+- **Strict Money VO**: All financial and monetary calculations MUST use the `Money` Value Object with integer cents (`price_cents INT`). Never use floating-point numbers for money.
+- **Fail-Fast Validation**: Zod is the exclusive validator across contracts, DTOs, and environment variables.
+- **Test Harness Gate**: 100% green tests in Vitest before finishing any task (`pnpm test` or `turbo test`).
+
+## Multi-Tenancy Resolution
+- By slug: `pages/[slug].vue`
+- By subdomain: `[slug].alaska.app`
+- By custom domain: `www.client.com.br` via header `host`
+
+## Strict TypeScript & Code Quality Standards
+
+### 1. Index Signature & Array Destructuring Safety (`noUncheckedIndexedAccess`)
+- Always provide fallback defaults when accessing arrays or destructuring:
+  ```typescript
+  const [hours = 0, minutes = 0] = time.split(':').map(Number)
+  const month = MONTH_SHORTS[monthIndex] || ''
+  ```
+
+### 2. SSR-Safe Null/Undefined Checks in Templates
+- Always protect `.length` and array iterations:
+  ```html
+  <div v-if="(items?.length || 0) > 0">
+  <div v-for="item in (items || [])" :key="item.id">
+  ```
+
+### 3. Image Fallbacks & Anti-404
+- Always attach `@error="handleImageError($event, tenant?.theme)"` on all `<img>` tags.
+- Use `~/utils/images` fallback SVG Data URIs instead of external URLs for placeholders.
+
+### 4. Accessibility (W3C / WCAG)
+- Modals must include `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, auto-focus, `Escape` listener, and `useBodyScrollLock`.
