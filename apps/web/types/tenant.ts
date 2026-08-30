@@ -1,4 +1,3 @@
-// types/tenant.ts
 import { z } from 'zod'
 
 // 1. Schemas de Opcionais e Variações
@@ -117,7 +116,7 @@ export const TenantSchema = z.object({
   currency: z.string().default('R$'),
   deliveryFee: z.number().default(0),
   minOrderValue: z.number().default(0),
-  template: z.string().optional(),
+  template: z.enum(['menu', 'hub', 'booking', 'pro', 'shop']).optional().default('menu'),
   businessCategory: BusinessCategorySchema.optional(),
   theme: TenantThemeSchema.optional().default('food'),
   openingHours: OpeningHoursSchema.optional(),
