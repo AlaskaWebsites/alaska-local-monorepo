@@ -5,8 +5,8 @@ import { TenantSchema, type Tenant } from '~/types/tenant'
 
 /**
  * Composable reativo e SSR-safe para resolução de Tenant pelo slug da rota ou customizado.
- * Adota estratégia híbrida e resiliente: busca dados da API se disponível, mas NUNCA perde
- * as categorias, produtos e reviews presentes nos catálogos locais em ~/data/*.json.
+ * Adota estratégia híbrida e resiliente: busca dados da API se disponível e mescla
+ * com os catálogos locais e com os overrides operacionais do Painel do Lojista (ADR 013).
  */
 export function useTenant(customSlug?: string | Ref<string | null | undefined>) {
     const route = useRoute()
@@ -24,7 +24,7 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
     const { data: tenant, pending, error, refresh } = useAsyncData<Tenant | null>(
         `tenant-${slug.value}`,
         async () => {
-            // Helper para carregar o catálogo completo do JSON local
+            // 1. Helper para carregar o catálogo completo do JSON local
             const loadLocalJson = (): Tenant | null => {
                 try {
                     const files = import.meta.glob('~/data/*.json', { eager: true }) as Record<
@@ -54,9 +54,9 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
                 return null
             }
 
-            const localTenant = loadLocalJson()
+            let loadedTenant = loadLocalJson()
 
-            // 1. Estratégia API-First Resiliente: Tenta buscar do backend NestJS se houver baseURL
+            // 2. Estratégia API-First Resiliente: Tenta buscar do backend NestJS se houver baseURL
             if (apiBaseUrl) {
                 try {
                     const res = await $fetch<{ success: boolean; data: any }>(
@@ -65,32 +65,54 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
                     )
                     if (res && res.success && res.data) {
                         const apiData = res.data
-                        // Se a API retornou categorias preenchidas, usa direto
                         if (Array.isArray(apiData.categories) && apiData.categories.length > 0) {
-                            return TenantSchema.parse(apiData)
-                        }
-
-                        // Se a API retornou o tenant mas sem categorias (ex: seed de metadata),
-                        // faz o merge preservando os produtos, categorias e reviews do catálogo local!
-                        if (localTenant) {
-                            return TenantSchema.parse({
-                                ...localTenant,
+                            loadedTenant = TenantSchema.parse(apiData)
+                        } else if (loadedTenant) {
+                            loadedTenant = TenantSchema.parse({
+                                ...loadedTenant,
                                 ...apiData,
-                                categories: (localTenant.categories && localTenant.categories.length > 0)
-                                    ? localTenant.categories
+                                categories: (loadedTenant.categories && loadedTenant.categories.length > 0)
+                                    ? loadedTenant.categories
                                     : (apiData.categories || []),
-                                reviews: localTenant.reviews || apiData.reviews
+                                reviews: loadedTenant.reviews || apiData.reviews
                             })
                         }
-
-                        return TenantSchema.parse(apiData)
                     }
                 } catch {
-                    // Falha silenciosa na API: prossegue para o catálogo local
+                    // Fallback silencioso para o catálogo local
                 }
             }
 
-            return localTenant
+            // 3. Aplica overrides operacionais do Painel do Lojista (ADR 013) salvos em tempo real
+            if (loadedTenant && typeof window !== 'undefined') {
+                try {
+                    const rawOverrides = localStorage.getItem(`alaska_overrides_${slug.value}`)
+                    if (rawOverrides) {
+                        const overrides = JSON.parse(rawOverrides)
+                        if (loadedTenant.categories && Array.isArray(loadedTenant.categories)) {
+                            for (const cat of loadedTenant.categories) {
+                                if (cat.products && Array.isArray(cat.products)) {
+                                    for (const p of cat.products) {
+                                        if (overrides[p.id]) {
+                                            if (overrides[p.id].isAvailable !== undefined) {
+                                                p.isAvailable = overrides[p.id].isAvailable
+                                                ;(p as any).available = overrides[p.id].isAvailable
+                                            }
+                                            if (overrides[p.id].price !== undefined) {
+                                                p.price = overrides[p.id].price
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.warn('Erro ao mesclar overrides operacionais:', e)
+                }
+            }
+
+            return loadedTenant
         },
         {
             watch: [slug]

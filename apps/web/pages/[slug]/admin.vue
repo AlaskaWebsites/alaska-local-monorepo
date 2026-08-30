@@ -79,8 +79,8 @@
           <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3.5 flex items-start gap-3">
             <span class="text-lg">⚡</span>
             <div class="text-xs">
-              <p class="font-bold text-emerald-400">Pausa Rápida de Produtos</p>
-              <p class="text-slate-300 mt-0.5">Acabou algum ingrediente ou item? Clique no botão para pausar no cardápio em menos de 3 segundos.</p>
+              <p class="font-bold text-emerald-400">Pausa Rápida de Produtos (< 3s)</p>
+              <p class="text-slate-300 mt-0.5">Acabou algum ingrediente ou item? Clique no botão para pausar no cardápio na hora.</p>
             </div>
           </div>
         </div>
@@ -148,7 +148,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, watchEffect } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTenant } from '~/composables/useTenant'
 import { useMerchantAdmin } from '~/composables/useMerchantAdmin'
@@ -158,12 +158,19 @@ const route = useRoute()
 const slug = computed(() => String(route.params.slug || ''))
 
 const { tenant } = useTenant(slug)
-const { isAuthenticated, errorMessage, login, logout, toggleProductAvailability } = useMerchantAdmin(slug.value)
+const { isAuthenticated, errorMessage, login, logout, toggleProductAvailability, applyOverridesToCategories } = useMerchantAdmin(slug.value)
 
 const pinInput = ref('')
 
 const categories = computed<Category[]>(() => {
   return (tenant.value?.categories || []) as Category[]
+})
+
+// Aplica overrides salvos aos produtos na tela do admin
+watchEffect(() => {
+  if (categories.value.length > 0) {
+    applyOverridesToCategories(categories.value)
+  }
 })
 
 function handleLogin() {
