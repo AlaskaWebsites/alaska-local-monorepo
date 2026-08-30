@@ -1,5 +1,6 @@
+// composables/useMerchantAdmin.ts
 import { ref, computed } from 'vue'
-import type { Product, Category, OpeningHours } from '@alaska/contracts'
+import type { Product, Category } from '@alaska/contracts'
 import { useHaptic } from './useHaptic'
 
 export interface TenantOverrides {
@@ -21,24 +22,71 @@ function getApiBaseUrl(): string {
   return 'http://localhost:3333/api/v1'
 }
 
+const inMemoryStore: Record<string, string> = {}
+const inMemorySession: Record<string, string> = {}
+
+function getStorageItem(key: string): string | null {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      return localStorage.getItem(key)
+    }
+  } catch {}
+  return inMemoryStore[key] || null
+}
+
+function setStorageItem(key: string, value: string): void {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.setItem(key, value)
+      window.dispatchEvent(new Event('storage'))
+      return
+    }
+  } catch {}
+  inMemoryStore[key] = value
+}
+
+function getSessionItem(key: string): string | null {
+  try {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      return sessionStorage.getItem(key)
+    }
+  } catch {}
+  return inMemorySession[key] || null
+}
+
+function setSessionItem(key: string, value: string): void {
+  try {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      sessionStorage.setItem(key, value)
+      return
+    }
+  } catch {}
+  inMemorySession[key] = value
+}
+
+function removeSessionItem(key: string): void {
+  try {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      sessionStorage.removeItem(key)
+      return
+    }
+  } catch {}
+  delete inMemorySession[key]
+}
+
 export function useMerchantAdmin(slug: string) {
   const apiBaseUrl = getApiBaseUrl()
   const { triggerHaptic } = useHaptic()
   const pinSessionKey = `alaska_admin_auth_${slug}`
   const overridesKey = `alaska_overrides_${slug}`
 
-  const isAuthenticated = ref<boolean>(false)
+  const isAuthenticated = ref<boolean>(getSessionItem(pinSessionKey) === 'true')
   const isSubmitting = ref<boolean>(false)
   const errorMessage = ref<string>('')
 
-  if (typeof window !== 'undefined') {
-    isAuthenticated.value = sessionStorage.getItem(pinSessionKey) === 'true'
-  }
-
   function getOverrides(): TenantOverrides {
-    if (typeof window === 'undefined') return {}
     try {
-      const raw = localStorage.getItem(overridesKey)
+      const raw = getStorageItem(overridesKey)
       return raw ? JSON.parse(raw) : {}
     } catch {
       return {}
@@ -46,7 +94,6 @@ export function useMerchantAdmin(slug: string) {
   }
 
   function saveOverrides(newOverrides: Partial<TenantOverrides>) {
-    if (typeof window === 'undefined') return
     try {
       const current = getOverrides()
       const merged: TenantOverrides = {
@@ -58,8 +105,7 @@ export function useMerchantAdmin(slug: string) {
         emergency: newOverrides.emergency ?? current.emergency,
         blockedSlots: newOverrides.blockedSlots ?? current.blockedSlots ?? []
       }
-      localStorage.setItem(overridesKey, JSON.stringify(merged))
-      window.dispatchEvent(new Event('storage'))
+      setStorageItem(overridesKey, JSON.stringify(merged))
     } catch (e) {
       console.warn('Erro ao salvar overrides:', e)
     }
@@ -91,9 +137,7 @@ export function useMerchantAdmin(slug: string) {
   function login(pin: string): boolean {
     errorMessage.value = ''
     if (pin === '1234' || pin.length >= 4) {
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem(pinSessionKey, 'true')
-      }
+      setSessionItem(pinSessionKey, 'true')
       isAuthenticated.value = true
       triggerHaptic(40)
       return true
@@ -105,9 +149,7 @@ export function useMerchantAdmin(slug: string) {
   }
 
   function logout() {
-    if (typeof window !== 'undefined') {
-      sessionStorage.removeItem(pinSessionKey)
-    }
+    removeSessionItem(pinSessionKey)
     isAuthenticated.value = false
   }
 
