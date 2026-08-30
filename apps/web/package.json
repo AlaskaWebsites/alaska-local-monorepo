@@ -8,23 +8,32 @@
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@alaska/contracts": "workspace:*",
-    "@vueuse/core": "^12.7.0",
-    "lucide-vue-next": "^0.475.0",
+    "@lucide/vue": "^1.33.0",
+    "@vueuse/core": "^14.4.0",
+    "lucide-vue-next": "^0.542.0",
+    "nuxt": "^3.17.6",
     "qrcode": "^1.5.4",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0",
     "zod": "^3.24.2"
   },
   "devDependencies": {
-    "@nuxtjs/tailwindcss": "^6.13.1",
+    "@nuxtjs/tailwindcss": "^6.14.0",
+    "@testing-library/vue": "^8.1.0",
     "@types/node": "^22.13.4",
     "@types/qrcode": "^1.5.5",
-    "@vue/test-utils": "^2.4.6",
+    "@vitejs/plugin-vue": "^5.2.4",
+    "@vue/test-utils": "^2.4.11",
+    "@vueuse/nuxt": "^14.4.0",
     "jsdom": "^26.0.0",
-    "nuxt": "^3.15.4",
+    "pinia": "^4.0.3",
     "typescript": "^5.8.2",
-    "vitest": "^3.0.5"
+    "vitest": "^4.1.11",
+    "vue-tsc": "^2.2.8"
   }
 }
