@@ -1,9 +1,9 @@
 import { Pool } from 'pg'
-import * as dotenv from 'dotenv'
+import dotenv from 'dotenv'
 
 dotenv.config()
 
-const databaseUrl = process.env.DATABASE_URL || 'postgres://alaska:alaskapassword@localhost:5432/alaska_local'
+const databaseUrl = process.env.DATABASE_URL || 'postgres://alaska_admin:alaska_secret_2026@localhost:5432/alaska_local_db'
 
 const stores = [
   {
@@ -59,7 +59,6 @@ async function runSeed() {
 
   try {
     const client = await pool.connect()
-    console.log('✅ Conectado ao banco de dados!')
 
     const targetPixKey = '7e3ed5e6-6097-4b15-88a3-221caba64141'
     const targetKeyType = 'random'
