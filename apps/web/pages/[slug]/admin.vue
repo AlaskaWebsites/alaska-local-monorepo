@@ -148,7 +148,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTenant } from '~/composables/useTenant'
 import { useMerchantAdmin } from '~/composables/useMerchantAdmin'
@@ -157,16 +157,10 @@ import type { Product, Category } from '@alaska/contracts'
 const route = useRoute()
 const slug = computed(() => String(route.params.slug || ''))
 
-const { tenant, loadTenant } = useTenant()
+const { tenant } = useTenant(slug)
 const { isAuthenticated, errorMessage, login, logout, toggleProductAvailability } = useMerchantAdmin(slug.value)
 
 const pinInput = ref('')
-
-onMounted(async () => {
-  if (slug.value) {
-    await loadTenant(slug.value)
-  }
-})
 
 const categories = computed<Category[]>(() => {
   return (tenant.value?.categories || []) as Category[]

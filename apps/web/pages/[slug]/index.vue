@@ -38,8 +38,8 @@
           <button v-if="tenant.reviews" @click="isReviewsOpen = true"
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/80 hover:bg-amber-100 transition-colors cursor-pointer"
             aria-label="Ver avaliações do estabelecimento">
-            <span>⭐ {{ tenant.reviews.rating.toFixed(1) }}</span>
-            <span class="text-slate-500">({{ tenant.reviews.totalReviews }})</span>
+            <span>⭐ {{ Number(tenant.reviews?.rating || 5).toFixed(1) }}</span>
+            <span class="text-slate-500">({{ tenant.reviews?.totalReviews || 0 }})</span>
           </button>
 
           <!-- Badge Dinâmico de Aberto / Fechado com Horários -->
@@ -138,10 +138,10 @@
             <div class="mt-3 pt-2 border-t border-slate-100 flex items-center justify-between">
               <div>
                 <span v-if="product.originalPrice" class="text-[10px] text-slate-400 line-through mr-1 font-mono">
-                  R$ {{ product.originalPrice.toFixed(2).replace('.', ',') }}
+                  R$ {{ Number(product.originalPrice).toFixed(2).replace('.', ',') }}
                 </span>
                 <span class="text-sm font-extrabold text-slate-900 font-mono" :class="themeClasses.primaryText">
-                  R$ {{ product.price.toFixed(2).replace('.', ',') }}
+                  R$ {{ Number(product.price).toFixed(2).replace('.', ',') }}
                 </span>
               </div>
               <button
@@ -203,10 +203,10 @@
 
                 <div class="mt-3 flex items-center gap-2">
                   <span v-if="product.originalPrice" class="text-xs text-slate-400 line-through font-mono">
-                    R$ {{ product.originalPrice.toFixed(2).replace('.', ',') }}
+                    R$ {{ Number(product.originalPrice).toFixed(2).replace('.', ',') }}
                   </span>
                   <span class="text-sm font-extrabold text-slate-900 font-mono" :class="themeClasses.primaryText">
-                    R$ {{ product.price.toFixed(2).replace('.', ',') }}
+                    R$ {{ Number(product.price).toFixed(2).replace('.', ',') }}
                   </span>
                   <span v-if="product.durationMinutes" class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
                     ⏱️ {{ product.durationMinutes }}min
@@ -288,7 +288,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTenant } from '~/composables/useTenant'
 import { useCart } from '~/composables/useCart'
@@ -301,13 +301,8 @@ import type { Product, Category, BookingService } from '~/types'
 const route = useRoute()
 const slug = computed(() => String(route.params.slug || ''))
 
-// 1. Carregamento do Tenant & Tema
-const { tenant, loadTenant } = useTenant()
-onMounted(async () => {
-  if (slug.value) {
-    await loadTenant(slug.value)
-  }
-})
+// 1. Carregamento Reativo e SSR-safe do Tenant & Tema
+const { tenant } = useTenant(slug)
 
 const { themeClasses, isBookingTenant, badgeInfo } = useTenantTheme(computed(() => tenant.value?.theme), computed(() => tenant.value?.category))
 
