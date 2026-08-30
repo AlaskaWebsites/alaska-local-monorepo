@@ -1,40 +1,45 @@
 import { z } from 'zod'
 
+export const BookingServiceSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  price: z.number().nonnegative(),
+  durationMinutes: z.number().int().positive(),
+  description: z.string().optional(),
+})
+
 export const ProfessionalSchema = z.object({
   id: z.string(),
   name: z.string().min(1),
   role: z.string().optional().default('Especialista'),
   avatar: z.string().optional(),
-  bio: z.string().optional(),
-  isAvailable: z.boolean().default(true),
-})
-
-export const BookingServiceSchema = z.object({
-  id: z.string(),
-  name: z.string().min(1),
-  description: z.string().optional().default(''),
-  price: z.number().nonnegative(),
-  durationMinutes: z.number().int().positive().default(30),
-  image: z.string().optional(),
-  professionalIds: z.array(z.string()).optional().default([]),
+  availableDays: z.array(z.number().min(0).max(6)).optional(),
+  isAvailable: z.boolean().optional().default(true),
 })
 
 export const BookingSlotSchema = z.object({
   time: z.string().regex(/^\d{2}:\d{2}$/),
-  available: z.boolean().default(true),
+  isAvailable: z.boolean().optional().default(true),
+  available: z.boolean().optional().default(true),
   professionalId: z.string().optional(),
 })
 
 export const CreateBookingSchema = z.object({
-  tenantId: z.string().min(1),
-  customerName: z.string().min(2),
-  customerPhone: z.string().min(10),
-  serviceId: z.string().min(1),
+  tenantSlug: z.string().optional(),
+  tenantId: z.string().optional(),
+  serviceIds: z.array(z.string()).min(1, 'Selecione ao menos um serviço').optional(),
+  serviceId: z.string().optional(),
   professionalId: z.string().optional(),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  time: z.string().regex(/^\d{2}:\d{2}$/),
+  professionalName: z.string().optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data deve estar no formato YYYY-MM-DD'),
+  time: z.string().regex(/^\d{2}:\d{2}$/, 'Hora deve estar no formato HH:mm'),
+  customerName: z.string().min(2, 'Nome é obrigatório'),
+  customerPhone: z.string().min(10, 'Telefone é obrigatório'),
+  upsellProductIds: z.array(z.string()).optional(),
   depositAmount: z.number().nonnegative().optional().default(0),
+  depositAmountCents: z.number().int().nonnegative().optional().default(0),
   notes: z.string().optional(),
+  paymentMode: z.enum(['on_service', 'pix_deposit', 'pix_full']).optional().default('on_service'),
 })
 
 export const BlockBookingSlotSchema = z.object({
@@ -43,8 +48,8 @@ export const BlockBookingSlotSchema = z.object({
   reason: z.string().optional().default('Horário Bloqueado pelo Lojista'),
 })
 
-export type Professional = z.infer<typeof ProfessionalSchema>
 export type BookingService = z.infer<typeof BookingServiceSchema>
+export type Professional = z.infer<typeof ProfessionalSchema>
 export type BookingSlot = z.infer<typeof BookingSlotSchema>
 export type CreateBookingDto = z.infer<typeof CreateBookingSchema>
 export type BlockBookingSlotDto = z.infer<typeof BlockBookingSlotSchema>
