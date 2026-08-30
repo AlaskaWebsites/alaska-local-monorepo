@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { UpdateProductUseCase } from '@core/application/use-cases/update-product.use-case'
 import { InMemoryProductRepository } from '@infra/persistence/in-memory/in-memory-product.repository'
 import { Product } from '@core/domain/entities/product.entity'
-import { Money } from '@core/domain/value-objects/money.vo'
 
 describe('Unit: UpdateProductUseCase (ADR 013)', () => {
   let repository: InMemoryProductRepository
@@ -18,7 +17,7 @@ describe('Unit: UpdateProductUseCase (ADR 013)', () => {
         tenantId: 'ten-hamburgueria-x',
         categoryId: 'cat-burgers',
         name: 'Smash Bacon Duplo',
-        price: Money.fromCents(3200),
+        priceCents: 3200,
         isAvailable: true
       })
     )
@@ -30,7 +29,7 @@ describe('Unit: UpdateProductUseCase (ADR 013)', () => {
       priceCents: 3500
     })
 
-    expect(result.price.cents).toBe(3500)
+    expect(result.price.inCents).toBe(3500)
     expect(result.price.amount).toBe(35)
   })
 })

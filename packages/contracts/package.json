@@ -2,51 +2,51 @@
   "name": "@alaska/contracts",
   "version": "1.0.0",
   "private": true,
-  "main": "./dist/index.cjs",
-  "module": "./dist/index.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
     },
     "./tenant": {
       "types": "./dist/tenant/index.d.ts",
-      "import": "./dist/tenant/index.js",
-      "require": "./dist/tenant/index.cjs"
+      "import": "./dist/tenant/index.mjs",
+      "require": "./dist/tenant/index.js"
     },
     "./catalog": {
       "types": "./dist/catalog/index.d.ts",
-      "import": "./dist/catalog/index.js",
-      "require": "./dist/catalog/index.cjs"
+      "import": "./dist/catalog/index.mjs",
+      "require": "./dist/catalog/index.js"
     },
     "./order": {
       "types": "./dist/order/index.d.ts",
-      "import": "./dist/order/index.js",
-      "require": "./dist/order/index.cjs"
+      "import": "./dist/order/index.mjs",
+      "require": "./dist/order/index.js"
     },
     "./booking": {
       "types": "./dist/booking/index.d.ts",
-      "import": "./dist/booking/index.js",
-      "require": "./dist/booking/index.cjs"
+      "import": "./dist/booking/index.mjs",
+      "require": "./dist/booking/index.js"
     },
     "./pix": {
       "types": "./dist/pix/index.d.ts",
-      "import": "./dist/pix/index.js",
-      "require": "./dist/pix/index.cjs"
+      "import": "./dist/pix/index.mjs",
+      "require": "./dist/pix/index.js"
     },
     "./common": {
       "types": "./dist/common/index.d.ts",
-      "import": "./dist/common/index.js",
-      "require": "./dist/common/index.cjs"
+      "import": "./dist/common/index.mjs",
+      "require": "./dist/common/index.js"
     }
   },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "zod": "^3.24.2"

@@ -1,6 +1,11 @@
 import { Controller, Patch, Put, Body, Param, UsePipes, HttpCode, HttpStatus } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger'
-import { ToggleProductAvailabilitySchema, UpdateProductSchema, type ToggleProductAvailabilityDto, type UpdateProductDto } from '@alaska/contracts/catalog'
+import {
+  ToggleProductAvailabilitySchema,
+  UpdateProductSchema,
+  type ToggleProductAvailabilityDto,
+  type UpdateProductDto
+} from '@alaska/contracts'
 import { ZodValidationPipe } from '../pipes/zod-validation.pipe'
 import { ToggleProductAvailabilityUseCase } from '@core/application/use-cases/toggle-product-availability.use-case'
 import { UpdateProductUseCase } from '@core/application/use-cases/update-product.use-case'
@@ -59,7 +64,7 @@ export class ProductController {
       data: {
         id: product.id,
         name: product.name,
-        priceCents: product.price.cents,
+        priceCents: product.price.inCents,
         isAvailable: product.isAvailable
       }
     }

@@ -15,7 +15,7 @@ export class UpdateTenantHoursUseCase {
     if (!tenant) {
       throw new EntityNotFoundError('Tenant', input.slug)
     }
-    tenant.updateDetails({ openingHours: input.openingHours })
+    tenant.updateOpeningHours(input.openingHours)
     await this.tenantRepository.save(tenant)
     return tenant
   }

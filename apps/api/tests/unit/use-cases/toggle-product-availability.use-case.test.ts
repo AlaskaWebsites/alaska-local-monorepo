@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { ToggleProductAvailabilityUseCase } from '@core/application/use-cases/toggle-product-availability.use-case'
 import { InMemoryProductRepository } from '@infra/persistence/in-memory/in-memory-product.repository'
 import { Product } from '@core/domain/entities/product.entity'
-import { Money } from '@core/domain/value-objects/money.vo'
 import { EntityNotFoundError } from '@core/domain/errors/domain.error'
 
 describe('Unit: ToggleProductAvailabilityUseCase (ADR 013)', () => {
@@ -19,7 +18,7 @@ describe('Unit: ToggleProductAvailabilityUseCase (ADR 013)', () => {
         tenantId: 'ten-hamburgueria-x',
         categoryId: 'cat-burgers',
         name: 'Smash Bacon Duplo',
-        price: Money.fromCents(3200),
+        priceCents: 3200,
         isAvailable: true
       })
     )

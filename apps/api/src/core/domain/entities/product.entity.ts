@@ -56,6 +56,7 @@ export class Product {
   get imageUrl(): string | undefined { return this.props.imageUrl }
   get isAvailable(): boolean { return this.props.isAvailable ?? true }
   get optionGroups(): OptionGroup[] { return this.props.optionGroups || [] }
+  get createdAt(): Date | undefined { return this.props.createdAt }
 
   calculateItemTotal(selectedOptionIds: string[], quantity: number = 1): Money {
     if (quantity < 1) throw new ValidationError('A quantidade mínima é 1.')

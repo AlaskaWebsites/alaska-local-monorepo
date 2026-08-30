@@ -1,18 +1,7 @@
 import { ValidationError } from '../errors/domain.error'
 
 export type BusinessCategory = 'menu' | 'shop' | 'hub' | 'pro'
-export type TenantTheme = 
-  | 'food'
-  | 'barber'
-  | 'health'
-  | 'drinks'
-  | 'rose'
-  | 'amber'
-  | 'violet'
-  | 'blue'
-  | 'emerald'
-  | 'slate'
-  | 'default'
+export type TenantTheme = 'food' | 'barber' | 'health' | 'drinks' | 'rose' | 'amber' | 'violet' | 'blue' | 'emerald' | 'slate' | 'default'
 
 export interface OpeningHours {
   open: string  // HH:mm
@@ -24,7 +13,6 @@ export interface PixConfig {
   keyType: 'cpf' | 'cnpj' | 'email' | 'phone' | 'random'
   beneficiary?: string
   city?: string
-  allowTestCent?: boolean
   depositPercentage?: number
 }
 
@@ -33,8 +21,6 @@ export interface TenantProps {
   slug: string
   name: string
   description?: string
-  logo?: string
-  banner?: string
   phoneWhatsApp: string
   address?: string
   businessCategory: BusinessCategory
@@ -44,8 +30,6 @@ export interface TenantProps {
   customDomain?: string
   deliveryFeeCents?: number
   minOrderValueCents?: number
-  categories?: unknown[]
-  reviews?: unknown
   isActive?: boolean
   createdAt?: Date
   updatedAt?: Date
@@ -86,8 +70,6 @@ export class Tenant {
   get slug(): string { return this.props.slug }
   get name(): string { return this.props.name }
   get description(): string | undefined { return this.props.description }
-  get logo(): string | undefined { return this.props.logo }
-  get banner(): string | undefined { return this.props.banner }
   get phoneWhatsApp(): string { return this.props.phoneWhatsApp }
   get address(): string | undefined { return this.props.address }
   get businessCategory(): BusinessCategory { return this.props.businessCategory }
@@ -97,8 +79,6 @@ export class Tenant {
   get customDomain(): string | undefined { return this.props.customDomain }
   get deliveryFeeCents(): number { return this.props.deliveryFeeCents || 0 }
   get minOrderValueCents(): number { return this.props.minOrderValueCents || 0 }
-  get categories(): unknown[] { return this.props.categories || [] }
-  get reviews(): unknown { return this.props.reviews }
   get isActive(): boolean { return this.props.isActive ?? true }
   get createdAt(): Date { return this.props.createdAt || new Date() }
   get updatedAt(): Date { return this.props.updatedAt || new Date() }
@@ -122,13 +102,28 @@ export class Tenant {
     return currentMin >= openMin && currentMin < closeMin
   }
 
-  updateDetails(name: string, description?: string, address?: string): void {
-    if (!name || name.trim().length < 2) {
-      throw new ValidationError('Nome inválido.')
+  updateDetails(details: { name?: string; description?: string; address?: string; openingHours?: OpeningHours } | string, description?: string, address?: string): void {
+    if (typeof details === 'string') {
+      if (!details || details.trim().length < 2) {
+        throw new ValidationError('Nome inválido.')
+      }
+      this.props.name = details
+      this.props.description = description
+      this.props.address = address
+    } else {
+      if (details.name) {
+        if (details.name.trim().length < 2) throw new ValidationError('Nome inválido.')
+        this.props.name = details.name
+      }
+      if (details.description !== undefined) this.props.description = details.description
+      if (details.address !== undefined) this.props.address = details.address
+      if (details.openingHours !== undefined) this.props.openingHours = details.openingHours
     }
-    this.props.name = name
-    this.props.description = description
-    this.props.address = address
+    this.props.updatedAt = new Date()
+  }
+
+  updateOpeningHours(hours: OpeningHours): void {
+    this.props.openingHours = hours
     this.props.updatedAt = new Date()
   }
 
