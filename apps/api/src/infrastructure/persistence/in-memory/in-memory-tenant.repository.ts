@@ -1,21 +1,8 @@
 import { ITenantRepository } from '@core/application/ports/tenant.repository.port'
 import { Tenant } from '@core/domain/entities/tenant.entity'
-import { SEED_TENANTS } from './seed-data'
 
 export class InMemoryTenantRepository implements ITenantRepository {
   private items: Map<string, Tenant> = new Map()
-
-  constructor(autoSeed: boolean = true) {
-    if (autoSeed) {
-      this.seed()
-    }
-  }
-
-  private seed(): void {
-    for (const tenant of SEED_TENANTS) {
-      this.items.set(tenant.id, tenant)
-    }
-  }
 
   async findById(id: string): Promise<Tenant | null> {
     return this.items.get(id) || null
@@ -42,7 +29,7 @@ export class InMemoryTenantRepository implements ITenantRepository {
   }
 
   async save(tenant: Tenant): Promise<void> {
-    // Remove qualquer registro prévio com o mesmo slug para evitar duplicatas
+    // Remove qualquer registro com o mesmo slug para evitar duplicatas nos testes
     for (const [id, existing] of this.items.entries()) {
       if (existing.slug.toLowerCase() === tenant.slug.toLowerCase()) {
         this.items.delete(id)
