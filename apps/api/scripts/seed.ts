@@ -1,153 +1,205 @@
 import { Pool } from 'pg'
-import { randomUUID } from 'crypto'
-import dotenv from 'dotenv'
+import * as dotenv from 'dotenv'
 
 dotenv.config()
 
-const databaseUrl = process.env.DATABASE_URL || 'postgres://alaska_admin:alaska_secret_2026@localhost:5432/alaska_local_db'
+const DATABASE_URL =
+  process.env.DATABASE_URL ||
+  'postgres://alaska_admin:alaska_secret_2026@localhost:5432/alaska_local_db'
 
-interface StoreSeed {
-  slug: string
-  name: string
-  category: 'menu' | 'shop' | 'hub' | 'pro'
-  theme: string
-  city: string
-  phone: string
-}
-
-const stores: StoreSeed[] = [
+const ALL_9_TENANTS = [
   {
-    slug: 'adega-prime',
-    name: 'Adega & Distribuidora Prime',
-    category: 'menu',
-    theme: 'amber',
-    city: 'SAO PAULO',
-    phone: '11988889999'
-  },
-  {
-    slug: 'karine-finardi',
-    name: 'Karine Finardi Semijoias',
-    category: 'shop',
-    theme: 'rose',
-    city: 'FRANCISCO MORATO',
-    phone: '11999998888'
-  },
-  {
-    slug: 'barbearia-style',
-    name: 'Barbearia Style',
-    category: 'hub',
-    theme: 'barber',
-    city: 'SAO PAULO',
-    phone: '11977776666'
-  },
-  {
+    id: 'ten-hamburgueria-x',
     slug: 'hamburgueria-x',
     name: 'Hamburgueria X Artesanal',
-    category: 'menu',
+    description: 'Burgers artesanais grelhados na brasa, smashs crocantes e porções exclusivas.',
+    phone_whatsapp: '11988887777',
+    address: 'Rua das Hamburguerias, 123 - Centro',
+    business_category: 'menu',
     theme: 'food',
-    city: 'SAO PAULO',
-    phone: '11999999999'
+    custom_domain: 'hamburgueriax.com.br',
+    opening_hours: { open: '18:00', close: '23:30' },
+    pix_config: { key: '11988887777', keyType: 'phone', beneficiary: 'Hamburgueria X LTDA', city: 'SAO PAULO' },
+    delivery_fee_cents: 600,
+    min_order_value_cents: 2000
   },
   {
-    slug: 'clinica-sorriso',
-    name: 'Clínica Sorriso Odontologia',
-    category: 'pro',
-    theme: 'health',
-    city: 'SAO PAULO',
-    phone: '11966665555'
-  },
-  {
-    slug: 'bella-donna',
-    name: 'Bella Donna Boutique',
-    category: 'shop',
+    id: 'ten-adega-prime',
+    slug: 'adega-prime',
+    name: 'Adega Prime 24h',
+    description: 'Bebidas geladas, destilados importados, cervejas artesanais e combos com entrega expressa 24 horas.',
+    phone_whatsapp: '11988887777',
+    address: 'Av. Paulista, 1000 - Bela Vista',
+    business_category: 'menu',
     theme: 'drinks',
-    city: 'FRANCISCO MORATO',
-    phone: '11977778888'
+    custom_domain: 'adegaprime.com.br',
+    opening_hours: { open: '00:00', close: '23:59' },
+    pix_config: { key: '11988887777', keyType: 'phone', beneficiary: 'Adega Prime LTDA', city: 'SAO PAULO' },
+    delivery_fee_cents: 800,
+    min_order_value_cents: 3000
   },
   {
-    slug: 'cafe-central',
-    name: 'Café Central',
-    category: 'menu',
-    theme: 'food',
-    city: 'SAO PAULO',
-    phone: '11988887777'
-  },
-  {
+    id: 'ten-espetaria-brasa',
     slug: 'espetaria-brasa',
-    name: 'Espetaria & Jantinha Brasa Nobre',
-    category: 'menu',
-    theme: 'food',
-    city: 'SAO PAULO',
-    phone: '11999999999'
+    name: 'Espetaria Brasa & Fogo',
+    description: 'Espetinhos na brasa, jantinhas completas, acompanhamentos e cervejas geladas.',
+    phone_whatsapp: '11977776666',
+    address: 'Rua do Fogo, 450 - Vila Madalena',
+    business_category: 'menu',
+    theme: 'amber',
+    custom_domain: 'espetariabrasa.com.br',
+    opening_hours: { open: '17:00', close: '23:00' },
+    pix_config: { key: '11977776666', keyType: 'phone', beneficiary: 'Espetaria Brasa LTDA', city: 'SAO PAULO' },
+    delivery_fee_cents: 600,
+    min_order_value_cents: 2500
   },
   {
+    id: 'ten-cafe-central',
+    slug: 'cafe-central',
+    name: 'Café Central & Bistrô',
+    description: 'Cafés especiais, doces artesanais, brunches e salgados gourmet.',
+    phone_whatsapp: '11966665555',
+    address: 'Praça da Sé, 10 - Centro Histórico',
+    business_category: 'menu',
+    theme: 'amber',
+    custom_domain: 'cafecentral.com.br',
+    opening_hours: { open: '08:00', close: '19:00' },
+    pix_config: { key: '11966665555', keyType: 'phone', beneficiary: 'Cafe Central LTDA', city: 'SAO PAULO' },
+    delivery_fee_cents: 500,
+    min_order_value_cents: 1500
+  },
+  {
+    id: 'ten-restaurante-bella-italia',
     slug: 'restaurante-bella-italia',
     name: 'Restaurante Bella Italia',
-    category: 'menu',
-    theme: 'food',
-    city: 'SAO PAULO',
-    phone: '5511999999999'
+    description: 'Massas frescas feitas à mão, risotos, vinhos importados e receitas tradicionais italianas.',
+    phone_whatsapp: '11955554444',
+    address: 'Rua Avanhandava, 200 - Bela Vista',
+    business_category: 'menu',
+    theme: 'emerald',
+    custom_domain: 'bellaitalia.com.br',
+    opening_hours: { open: '11:30', close: '23:00' },
+    pix_config: { key: '11955554444', keyType: 'phone', beneficiary: 'Bella Italia LTDA', city: 'SAO PAULO' },
+    delivery_fee_cents: 1000,
+    min_order_value_cents: 4000
+  },
+  {
+    id: 'ten-bella-donna',
+    slug: 'bella-donna',
+    name: 'Bella Donna Boutique',
+    description: 'Moda feminina contemporânea, vestidos de linho, alfaiataria e acessórios elegantes.',
+    phone_whatsapp: '11944443333',
+    address: 'Rua Oscar Freire, 800 - Jardins',
+    business_category: 'shop',
+    theme: 'rose',
+    custom_domain: 'belladonna.com.br',
+    opening_hours: { open: '10:00', close: '20:00' },
+    pix_config: { key: '11944443333', keyType: 'phone', beneficiary: 'Bella Donna Moda', city: 'SAO PAULO' },
+    delivery_fee_cents: 1500,
+    min_order_value_cents: 5000
+  },
+  {
+    id: 'ten-karine-finardi',
+    slug: 'karine-finardi',
+    name: 'Karine Finardi Semijoias',
+    description: 'Semijoias finas hipoalergênicas, banhadas a ouro 18k e prata 925 com garantia de 1 ano.',
+    phone_whatsapp: '11999998888',
+    address: 'Francisco Morato - SP',
+    business_category: 'shop',
+    theme: 'rose',
+    custom_domain: 'karinefinardi.com.br',
+    opening_hours: { open: '09:00', close: '19:00' },
+    pix_config: { key: '11999998888', keyType: 'phone', beneficiary: 'Karine Finardi', city: 'FRANCISCO MORATO' },
+    delivery_fee_cents: 1000,
+    min_order_value_cents: 5000
+  },
+  {
+    id: 'ten-barbearia-style',
+    slug: 'barbearia-style',
+    name: 'Barbearia Style Club',
+    description: 'Cortes modernos, barba na toalha quente, cerveja artesanal e ambiente climatizado.',
+    phone_whatsapp: '11977776666',
+    address: 'Rua Augusta, 500 - Consolação',
+    business_category: 'hub',
+    theme: 'violet',
+    custom_domain: 'barbeariastyle.com.br',
+    opening_hours: { open: '09:00', close: '20:00' },
+    pix_config: { key: '11977776666', keyType: 'phone', beneficiary: 'Style Club Barbearia', city: 'SAO PAULO' },
+    delivery_fee_cents: 0,
+    min_order_value_cents: 0
+  },
+  {
+    id: 'ten-clinica-sorriso',
+    slug: 'clinica-sorriso',
+    name: 'Clínica Sorriso Odontologia',
+    description: 'Implantes, clareamento dental a laser, ortodontia e harmonização orofacial com especialistas.',
+    phone_whatsapp: '11966665555',
+    address: 'Av. Ibirapuera, 1500 - Moema',
+    business_category: 'pro',
+    theme: 'health',
+    custom_domain: 'clinicasorriso.com.br',
+    opening_hours: { open: '08:00', close: '19:00' },
+    pix_config: { key: '11966665555', keyType: 'phone', beneficiary: 'Clinica Sorriso LTDA', city: 'SAO PAULO' },
+    delivery_fee_cents: 0,
+    min_order_value_cents: 0
   }
 ]
 
 async function runSeed() {
-  console.log('🌱 Conectando ao PostgreSQL para sincronizar estabelecimentos...')
-  const pool = new Pool({ connectionString: databaseUrl })
+  console.log('🌱 Conectando ao PostgreSQL para sincronização dos 9 estabelecimentos...')
+  const pool = new Pool({ connectionString: DATABASE_URL })
 
   try {
-    const client = await pool.connect()
-
-    const targetPixKey = '7e3ed5e6-6097-4b15-88a3-221caba64141'
-    const targetKeyType = 'random'
-
-    console.log(`🔄 Atualizando estabelecimentos e chaves Pix (${targetPixKey})...\n`)
-
-    for (const store of stores) {
-      const pixConfig = JSON.stringify({
-        key: targetPixKey,
-        keyType: targetKeyType,
-        beneficiary: store.name,
-        city: store.city,
-        allowTestCent: true,
-        depositPercentage: 30
-      })
-
-      // 1. Tenta atualizar se o tenant já existe pelo slug
-      const res = await client.query(
-        `UPDATE tenants 
-         SET pix_config = $1::jsonb,
-             name = $2,
-             business_category = $3,
-             theme = $4,
-             updated_at = NOW()
-         WHERE LOWER(slug) = LOWER($5) 
-         RETURNING slug, name, pix_config`,
-        [pixConfig, store.name, store.category, store.theme, store.slug]
-      )
-
-      if (res.rowCount && res.rowCount > 0) {
-        const row = res.rows[0]
-        console.log(`   ✓ [${row.slug}] ${row.name}: Sincronizado`)
-      } else {
-        // 2. Se o tenant não existe no banco, insere gerando UUID explícito
-        const generatedId = randomUUID()
-        const insertRes = await client.query(
-          `INSERT INTO tenants (id, slug, name, phone_whatsapp, business_category, theme, pix_config)
-           VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb)
-           RETURNING slug, name, pix_config`,
-          [generatedId, store.slug, store.name, store.phone, store.category, store.theme, pixConfig]
+    for (const tenant of ALL_9_TENANTS) {
+      const query = `
+        INSERT INTO tenants (
+          id, slug, name, description, phone_whatsapp, address,
+          business_category, theme, custom_domain, opening_hours,
+          pix_config, delivery_fee_cents, min_order_value_cents, is_active
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, true
         )
-        const row = insertRes.rows[0]
-        console.log(`   + [${row.slug}] ${row.name} (Criado com ID ${generatedId.slice(0, 8)}...)`)
-      }
+        ON CONFLICT (id) DO UPDATE SET
+          slug = EXCLUDED.slug,
+          name = EXCLUDED.name,
+          description = EXCLUDED.description,
+          phone_whatsapp = EXCLUDED.phone_whatsapp,
+          address = EXCLUDED.address,
+          business_category = EXCLUDED.business_category,
+          theme = EXCLUDED.theme,
+          custom_domain = EXCLUDED.custom_domain,
+          opening_hours = EXCLUDED.opening_hours,
+          pix_config = EXCLUDED.pix_config,
+          delivery_fee_cents = EXCLUDED.delivery_fee_cents,
+          min_order_value_cents = EXCLUDED.min_order_value_cents,
+          is_active = true
+      `
+
+      await pool.query(query, [
+        tenant.id,
+        tenant.slug,
+        tenant.name,
+        tenant.description,
+        tenant.phone_whatsapp,
+        tenant.address,
+        tenant.business_category,
+        tenant.theme,
+        tenant.custom_domain,
+        JSON.stringify(tenant.opening_hours),
+        JSON.stringify(tenant.pix_config),
+        tenant.delivery_fee_cents,
+        tenant.min_order_value_cents
+      ])
+
+      console.log(`✅ Tenant ${tenant.name} (${tenant.id}) sincronizado com sucesso no PostgreSQL.`)
     }
 
-    client.release()
-    await pool.end()
-    console.log('\n🚀 Todos os 9 estabelecimentos foram sincronizados com sucesso no PostgreSQL!')
-  } catch (err) {
-    console.error('❌ Erro ao executar seed:', err)
+    console.log('\n🚀 Seed concluído com sucesso! Todos os 9 tenants estão cadastrados no banco.')
+  } catch (error) {
+    console.error('❌ Erro durante a execução do seed:', error)
     process.exit(1)
+  } finally {
+    await pool.end()
   }
 }
 
