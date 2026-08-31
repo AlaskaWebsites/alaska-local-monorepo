@@ -64,7 +64,7 @@
                 <span class="w-2 h-2 rounded-full" :class="isEmergencyClosed ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500 animate-pulse'"></span>
               </h1>
               <p class="text-[11px] text-slate-400">
-                {{ isServiceStore ? '💈 Gestão de Serviços & Profissionais' : '🍔 Gestão de Cardápio & Delivery' }}
+                {{ isHealthStore ? '🩺 Gestão de Consultas & Especialistas' : isServiceStore ? '💈 Gestão de Serviços & Barbeiros' : '🍔 Gestão de Cardápio & Delivery' }}
               </p>
             </div>
           </div>
@@ -93,7 +93,7 @@
             class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer"
             :class="activeTab === 'agenda' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'"
           >
-            💈 Barbeiros & Agenda
+            {{ isHealthStore ? '🩺 Especialistas & Agenda' : '💈 Barbeiros & Agenda' }}
           </button>
 
           <button
@@ -136,7 +136,7 @@
             <span class="text-lg">⚡</span>
             <div class="text-xs">
               <p class="font-bold text-emerald-400">Pausa Rápida & Preços em Tempo Real</p>
-              <p class="text-slate-300 mt-0.5">Ligue ou desligue itens esgotados e edite preços sem precisar fazer deploy.</p>
+              <p class="text-slate-300 mt-0.5">Ligue ou desligue procedimentos/produtos e edite preços sem precisar fazer deploy.</p>
             </div>
           </div>
 
@@ -200,12 +200,12 @@
           </section>
         </main>
 
-        <!-- ABA 2: Barbeiros & Agenda (Exclusivo Hub & Pro) -->
+        <!-- ABA 2: Equipe & Agenda (Exclusivo Hub & Pro) -->
         <main v-else-if="activeTab === 'agenda' && isServiceStore" class="px-4 mt-4 space-y-6">
-          <!-- 1. Gestão de Profissionais / Barbeiros -->
+          <!-- 1. Gestão de Profissionais / Especialistas -->
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
             <h2 class="text-sm font-bold text-white flex items-center gap-2">
-              <span>💈 Profissionais & Folgas da Equipe</span>
+              <span>{{ isHealthStore ? '🩺 Especialistas & Dentistas / Médicos' : '💈 Barbeiros & Profissionais' }}</span>
             </h2>
             <p class="text-xs text-slate-400">
               Gerencie a escala e marque se o profissional está de folga hoje.
@@ -228,7 +228,7 @@
                     </div>
                   </div>
 
-                  <!-- Switch de Disponibilidade do Barbeiro -->
+                  <!-- Switch de Disponibilidade do Profissional -->
                   <div class="flex items-center gap-2">
                     <span class="text-[10px] font-bold uppercase" :class="prof.isAvailable ? 'text-emerald-400' : 'text-rose-400'">
                       {{ prof.isAvailable ? 'Atendendo' : 'De Folga' }}
@@ -309,7 +309,7 @@
               <span>🛑 Pausa Geral de Atendimento</span>
             </h2>
             <p class="text-xs text-slate-400">
-              Cozinha lotada, chuva forte ou folga inesperada? Pause todo o atendimento da loja com um clique.
+              Precisa pausar o atendimento de emergência? Pause todas as solicitações com um clique.
             </p>
 
             <button
@@ -327,7 +327,7 @@
               <span>🕒 Programação Semanal & Dias de Funcionamento</span>
             </h2>
             <p class="text-xs text-slate-400">
-              Defina os dias em que a loja abre e os horários de atendimento de cada dia da semana.
+              Defina os dias em que a loja abre e os horários de cada dia da semana.
             </p>
 
             <div class="space-y-3 pt-2">
@@ -341,7 +341,7 @@
                     type="button"
                     role="switch"
                     :aria-checked="!d.closed"
-                    @click="d.closed = !d.closed"
+                    @click="toggleDayClosed(d)"
                     class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200"
                     :class="!d.closed ? 'bg-emerald-500' : 'bg-slate-800'"
                   >
@@ -360,16 +360,22 @@
                   <input
                     type="time"
                     v-model="d.open"
+                    @change="saveWeeklySchedule"
                     class="bg-slate-900 border border-slate-800 rounded-lg p-2 text-white outline-none focus:border-emerald-500"
                   />
                   <span class="text-slate-500">às</span>
                   <input
                     type="time"
                     v-model="d.close"
+                    @change="saveWeeklySchedule"
                     class="bg-slate-900 border border-slate-800 rounded-lg p-2 text-white outline-none focus:border-emerald-500"
                   />
                 </div>
               </div>
+            </div>
+
+            <div v-if="scheduleSuccessMsg" class="text-xs text-emerald-400 text-center font-bold bg-emerald-500/10 border border-emerald-500/20 py-2 rounded-lg">
+              {{ scheduleSuccessMsg }}
             </div>
 
             <button
@@ -381,7 +387,7 @@
           </div>
         </main>
 
-        <!-- ABA 4: Delivery & Taxas -->
+        <!-- ABA 4: Delivery & Taxas (Menu e Shop) -->
         <main v-else-if="activeTab === 'delivery' && !isServiceStore" class="px-4 mt-4 space-y-6">
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
             <h2 class="text-sm font-bold text-white flex items-center gap-2">
@@ -436,7 +442,7 @@
               <span>📢 Banner de Comunicado no Topo da Vitrine</span>
             </h2>
             <p class="text-xs text-slate-400">
-              Divulgue avisos importantes, folgas ou promoções diretamente no topo do cardápio para todos os clientes.
+              Divulgue avisos importantes, folgas ou comunicados diretamente no topo para todos os clientes.
             </p>
 
             <div class="flex items-center justify-between p-3 bg-slate-950 rounded-xl border border-slate-800">
@@ -461,7 +467,7 @@
               <textarea
                 v-model="announcementMessage"
                 rows="3"
-                placeholder="Ex: ⚠️ Hoje estamos atendendo exclusivamente com retirada no balcão!"
+                placeholder="Ex: ⚠️ Horário especial de feriado neste sábado!"
                 class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white outline-none focus:border-emerald-500 leading-relaxed"
               ></textarea>
             </div>
@@ -557,7 +563,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watchEffect, onMounted } from 'vue'
+import { ref, computed, watch, watchEffect, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTenant } from '~/composables/useTenant'
 import { useMerchantAdmin } from '~/composables/useMerchantAdmin'
@@ -584,12 +590,17 @@ const {
   updateAnnouncement,
   updateEmergency,
   toggleBlockSlot
-} = useMerchantAdmin(slug.value)
+} = useMerchantAdmin(slug)
 
 const pinInput = ref('')
 const activeTab = ref<'catalog' | 'agenda' | 'hours' | 'delivery' | 'announcement' | 'security'>('catalog')
 
-// Identifica se a loja é de serviços/agendamento
+// Identifica se a loja é de saúde/clínica ou barbearia/serviços
+const isHealthStore = computed(() => {
+  const cat = (tenant.value as any)?.businessCategory || (tenant.value as any)?.category || (tenant.value as any)?.template
+  return cat === 'pro' || slug.value === 'clinica-sorriso'
+})
+
 const isServiceStore = computed(() => {
   const cat = (tenant.value as any)?.businessCategory || (tenant.value as any)?.category || (tenant.value as any)?.template
   return cat === 'hub' || cat === 'pro' || slug.value === 'barbearia-style' || slug.value === 'clinica-sorriso'
@@ -634,7 +645,7 @@ async function confirmPriceEdit() {
   isPriceModalOpen.value = false
 }
 
-// 2. Programação Semanal de 7 Dias
+// 2. Programação Semanal de 7 Dias com Sincronização e Auto-Save
 const weeklyDaysConfig = ref([
   { key: 'monday', label: 'Segunda-feira', closed: false, open: '09:00', close: '20:00' },
   { key: 'tuesday', label: 'Terça-feira', closed: false, open: '09:00', close: '20:00' },
@@ -645,7 +656,9 @@ const weeklyDaysConfig = ref([
   { key: 'sunday', label: 'Domingo', closed: true, open: '09:00', close: '18:00' },
 ])
 
-onMounted(() => {
+const scheduleSuccessMsg = ref('')
+
+function loadScheduleFromOverrides() {
   const overrides = getOverrides()
   const hours = overrides.openingHours || tenant.value?.openingHours || {}
   const defOpen = hours.open || '09:00'
@@ -662,7 +675,26 @@ onMounted(() => {
       d.close = defClose
     }
   })
+}
+
+onMounted(() => {
+  loadScheduleFromOverrides()
 })
+
+watch(
+  () => tenant.value,
+  (newTenant) => {
+    if (newTenant) {
+      loadScheduleFromOverrides()
+    }
+  },
+  { deep: true }
+)
+
+function toggleDayClosed(d: any) {
+  d.closed = !d.closed
+  saveWeeklySchedule()
+}
 
 function saveWeeklySchedule() {
   const schedulePayload: Record<string, any> = {}
@@ -674,6 +706,8 @@ function saveWeeklySchedule() {
     }
   })
   updateWeeklySchedule(schedulePayload)
+  scheduleSuccessMsg.value = 'Programação semanal salva com sucesso!'
+  setTimeout(() => { scheduleSuccessMsg.value = '' }, 2500)
 }
 
 // 3. Pausa de Emergência
@@ -684,18 +718,26 @@ function toggleEmergencyPause() {
   updateEmergency(isEmergencyClosed.value, isEmergencyClosed.value ? 'Atendimento pausado temporariamente' : '')
 }
 
-// 4. Barbeiros & Profissionais
-const defaultProfessionals = [
-  { id: 'prof-1', name: 'Carlos Santos', role: 'Barbeiro Master', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6] },
-  { id: 'prof-2', name: 'Lucas Oliveira', role: 'Visagista & Barbeiro', isAvailable: true, availableDays: [2, 3, 4, 5, 6] },
-  { id: 'prof-3', name: 'Mateus Silva', role: 'Especialista em Cortes Clássicos', isAvailable: true, availableDays: [1, 3, 4, 5, 6] }
-]
+// 4. Barbeiros & Especialistas da Clínica
+const defaultProfessionalsBySlug: Record<string, Array<{ id: string; name: string; role: string; isAvailable: boolean; availableDays: number[] }>> = {
+  'clinica-sorriso': [
+    { id: 'prof-1', name: 'Dra. Camila Rocha', role: 'Cirurgiã Dentista & Implantes', isAvailable: true, availableDays: [1, 2, 3, 4, 5] },
+    { id: 'prof-2', name: 'Dr. Rafael Mendes', role: 'Ortodontista & Invisalign', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6] },
+    { id: 'prof-3', name: 'Dra. Beatriz Lima', role: 'Harmonização Orofacial & Estética', isAvailable: true, availableDays: [2, 3, 4, 5, 6] }
+  ],
+  'barbearia-style': [
+    { id: 'prof-1', name: 'Carlos Santos', role: 'Barbeiro Master', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6] },
+    { id: 'prof-2', name: 'Lucas Oliveira', role: 'Visagista & Barbeiro', isAvailable: true, availableDays: [2, 3, 4, 5, 6] },
+    { id: 'prof-3', name: 'Mateus Silva', role: 'Especialista em Cortes Clássicos', isAvailable: true, availableDays: [1, 3, 4, 5, 6] }
+  ]
+}
 
 const professionalsList = computed(() => {
   const overrides = getOverrides()
   const profOverrides = overrides.professionals || {}
+  const list = defaultProfessionalsBySlug[slug.value] || defaultProfessionalsBySlug['barbearia-style']
 
-  return defaultProfessionals.map(p => {
+  return list.map(p => {
     const ov = profOverrides[p.id]
     return {
       ...p,

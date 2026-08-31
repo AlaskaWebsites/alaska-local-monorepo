@@ -500,19 +500,24 @@ onMounted(() => {
   syncLocalOverrides()
   if (typeof window !== 'undefined') {
     window.addEventListener('storage', syncLocalOverrides)
+    window.addEventListener('alaska_overrides_updated', syncLocalOverrides)
   }
 })
 
-// 3. Objeto Tenant Efetivo e Reativo (Sincroniza vitrine e modais com overrides do admin)
+// 3. Objeto Tenant Efetivo e Reativo
 const effectiveTenant = computed<Tenant | null>(() => {
   if (!tenant.value) return null
   const ov = localOverrides.value || {}
+  const baseHours = tenant.value.openingHours || {}
+  const overrideHours = ov.openingHours || {}
+
   return {
     ...tenant.value,
     openingHours: {
-      ...tenant.value.openingHours,
-      open: ov.openingHours?.open || tenant.value.openingHours?.open || '09:00',
-      close: ov.openingHours?.close || tenant.value.openingHours?.close || '20:00',
+      ...baseHours,
+      ...overrideHours,
+      open: overrideHours.open || baseHours.open || '09:00',
+      close: overrideHours.close || baseHours.close || '20:00',
     },
     deliveryFee: ov.delivery?.deliveryFee !== undefined ? ov.delivery.deliveryFee : (tenant.value as any)?.deliveryFee,
     minOrderValue: ov.delivery?.minOrderValue !== undefined ? ov.delivery.minOrderValue : (tenant.value as any)?.minOrderValue,

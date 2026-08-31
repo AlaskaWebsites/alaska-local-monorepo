@@ -1,5 +1,5 @@
 // composables/useMerchantAdmin.ts
-import { ref, computed } from 'vue'
+import { ref, computed, isRef, type Ref } from 'vue'
 import type { Product, Category } from '@alaska/contracts'
 import { useHaptic } from './useHaptic'
 
@@ -11,7 +11,7 @@ export interface DaySchedule {
 
 export interface ProfessionalOverride {
   isAvailable?: boolean
-  availableDays?: number[] // 0 (Dom) a 6 (Sáb)
+  availableDays?: number[]
   lunchBreak?: { start: string; end: string; enabled: boolean }
 }
 
@@ -63,6 +63,7 @@ function setStorageItem(key: string, value: string): void {
     if (typeof window !== 'undefined' && window.localStorage) {
       localStorage.setItem(key, value)
       window.dispatchEvent(new Event('storage'))
+      window.dispatchEvent(new CustomEvent('alaska_overrides_updated', { detail: { key, value } }))
       return
     }
   } catch {}
@@ -98,19 +99,43 @@ function removeSessionItem(key: string): void {
   delete inMemorySession[key]
 }
 
-export function useMerchantAdmin(slug: string) {
+export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | undefined> | null) {
   const apiBaseUrl = getApiBaseUrl()
   const { triggerHaptic } = useHaptic()
-  const pinSessionKey = `alaska_admin_auth_${slug}`
-  const overridesKey = `alaska_overrides_${slug}`
 
-  const isAuthenticated = ref<boolean>(getSessionItem(pinSessionKey) === 'true')
+  const tenantSlug = computed(() => {
+    if (typeof slugOrSource === 'string' && slugOrSource.trim()) {
+      return slugOrSource.toLowerCase()
+    }
+    const raw = isRef(slugOrSource) ? slugOrSource.value : slugOrSource
+    if (typeof raw === 'string' && raw.trim()) {
+      return raw.toLowerCase()
+    }
+    try {
+      if (typeof useRoute === 'function') {
+        const route = useRoute()
+        if (route?.params?.slug) {
+          return String(route.params.slug).toLowerCase()
+        }
+      }
+    } catch {}
+    return 'default'
+  })
+
+  const pinSessionKey = computed(() => `alaska_admin_auth_${tenantSlug.value}`)
+  const overridesKey = computed(() => `alaska_overrides_${tenantSlug.value}`)
+
+  const isAuthenticated = ref<boolean>(false)
+  if (typeof window !== 'undefined') {
+    isAuthenticated.value = getSessionItem(pinSessionKey.value) === 'true'
+  }
+
   const isSubmitting = ref<boolean>(false)
   const errorMessage = ref<string>('')
 
   function getOverrides(): TenantOverrides {
     try {
-      const raw = getStorageItem(overridesKey)
+      const raw = getStorageItem(overridesKey.value)
       return raw ? JSON.parse(raw) : {}
     } catch {
       return {}
@@ -132,7 +157,7 @@ export function useMerchantAdmin(slug: string) {
         blockedSlots: newOverrides.blockedSlots ?? current.blockedSlots ?? [],
         customPin: newOverrides.customPin ?? current.customPin
       }
-      setStorageItem(overridesKey, JSON.stringify(merged))
+      setStorageItem(overridesKey.value, JSON.stringify(merged))
     } catch (e) {
       console.warn('Erro ao salvar overrides:', e)
     }
@@ -167,7 +192,7 @@ export function useMerchantAdmin(slug: string) {
     const validPin = overrides.customPin || '1234'
 
     if (pin === validPin || pin === '1234' || pin.length >= 4) {
-      setSessionItem(pinSessionKey, 'true')
+      setSessionItem(pinSessionKey.value, 'true')
       isAuthenticated.value = true
       triggerHaptic(40)
       return true
@@ -179,7 +204,7 @@ export function useMerchantAdmin(slug: string) {
   }
 
   function logout() {
-    removeSessionItem(pinSessionKey)
+    removeSessionItem(pinSessionKey.value)
     isAuthenticated.value = false
   }
 
@@ -212,7 +237,7 @@ export function useMerchantAdmin(slug: string) {
 
     try {
       if (typeof $fetch === 'function') {
-        await $fetch(`${apiBaseUrl}/tenants/${slug}/products/${productId}/availability`, {
+        await $fetch(`${apiBaseUrl}/tenants/${tenantSlug.value}/products/${productId}/availability`, {
           method: 'PATCH',
           body: { isAvailable: newStatus },
           timeout: 3000
@@ -242,7 +267,7 @@ export function useMerchantAdmin(slug: string) {
 
     try {
       if (typeof $fetch === 'function') {
-        await $fetch(`${apiBaseUrl}/tenants/${slug}/products/${productId}`, {
+        await $fetch(`${apiBaseUrl}/tenants/${tenantSlug.value}/products/${productId}`, {
           method: 'PUT',
           body: { price: newPrice, priceCents: Math.round(newPrice * 100) },
           timeout: 3000
@@ -273,7 +298,6 @@ export function useMerchantAdmin(slug: string) {
     return true
   }
 
-  // Atualiza a programação semanal completa de 7 dias
   async function updateWeeklySchedule(schedule: Record<string, DaySchedule>): Promise<boolean> {
     triggerHaptic(30)
     saveOverrides({
@@ -282,7 +306,7 @@ export function useMerchantAdmin(slug: string) {
 
     try {
       if (typeof $fetch === 'function') {
-        await $fetch(`${apiBaseUrl}/tenants/${slug}/hours`, {
+        await $fetch(`${apiBaseUrl}/tenants/${tenantSlug.value}/hours`, {
           method: 'PATCH',
           body: { openingHours: schedule },
           timeout: 3000
@@ -294,7 +318,6 @@ export function useMerchantAdmin(slug: string) {
     }
   }
 
-  // Atualiza disponibilidade e dias de atendimento do barbeiro / profissional
   function toggleProfessionalAvailability(profId: string, isAvailable: boolean) {
     triggerHaptic(30)
     const current = getOverrides()
