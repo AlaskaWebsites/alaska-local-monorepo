@@ -143,7 +143,7 @@
           <!-- STEP 2: Escolha de Profissional com Respeito a Folgas e Escala -->
           <div v-else-if="currentStep === 2" class="space-y-4 animate-in fade-in duration-150">
             <div>
-              <h3 class="font-bold text-sm text-slate-900">Escolha o profissional:</h3>
+              <h3 class="font-bold text-sm text-slate-900">Escolha o profissional / especialista:</h3>
               <p class="text-xs text-slate-500">Ou selecione "Qualquer profissional" para o primeiro horário livre.</p>
             </div>
 
@@ -249,13 +249,32 @@
               </button>
             </div>
 
-            <!-- Grade de Horários Livres -->
-            <div class="space-y-2 pt-2">
+            <!-- Aviso se o Profissional Selecionado não atende neste dia da semana -->
+            <div v-if="isProfOffOnDate" class="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-xs gap-3">
+              <div class="text-amber-800 space-y-0.5">
+                <span class="font-bold block">⚠️ {{ selectedProfessional?.name }} não atende neste dia.</span>
+                <span class="text-[11px] text-amber-700 block">Selecione outro dia ou troque para qualquer profissional disponível.</span>
+              </div>
+              <button
+                type="button"
+                @click="selectedProfessional = null"
+                class="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] shrink-0 cursor-pointer shadow-2xs"
+              >
+                Qualquer um
+              </button>
+            </div>
+
+            <!-- Grade de Horários Livres (Filtrando Bloqueios do Admin) -->
+            <div v-else class="space-y-2 pt-2">
               <span class="text-xs font-bold text-slate-700 block">Horários Disponíveis ({{ totalDuration }} min):</span>
               
               <div v-if="isDayStoreClosed" class="p-4 bg-rose-50 border border-rose-200 rounded-xl text-center">
                 <span class="text-xs font-bold text-rose-700 block">⚠️ Estabelecimento Fechado neste dia da semana</span>
                 <span class="text-[11px] text-rose-600 mt-0.5 block">Selecione outro dia no carrossel acima para ver os horários.</span>
+              </div>
+
+              <div v-else-if="availableSlots.length === 0" class="p-4 bg-slate-100 border border-slate-200 rounded-xl text-center">
+                <span class="text-xs font-bold text-slate-600 block">Todos os horários deste dia estão bloqueados ou ocupados.</span>
               </div>
 
               <div v-else class="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -265,7 +284,7 @@
                   :key="slot.time"
                   @click="selectedTime = slot.time"
                   :class="[
-                    'py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer text-center',
+                    'py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer text-center select-none active:scale-95',
                     selectedTime === slot.time
                       ? 'border-emerald-600 bg-emerald-600 text-white shadow-2xs'
                       : 'border-slate-200 bg-white text-slate-800 hover:bg-slate-50'
@@ -557,36 +576,54 @@ const availableServices = computed<BookingService[]>(() => {
   return services
 })
 
-// 4. Estado de Profissional com Overrides do Admin
+// 4. Estado de Profissional com Overrides do Admin (Dentistas/Especialistas ou Barbeiros)
 const selectedProfessional = ref<BookingProfessional | null>(null)
 
-const defaultProfessionals = [
-  { id: 'prof-1', name: 'Carlos Santos', role: 'Barbeiro Master', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6] },
-  { id: 'prof-2', name: 'Lucas Oliveira', role: 'Visagista & Barbeiro', isAvailable: true, availableDays: [2, 3, 4, 5, 6] },
-  { id: 'prof-3', name: 'Mateus Silva', role: 'Especialista em Cortes Clássicos', isAvailable: true, availableDays: [1, 3, 4, 5, 6] }
-]
+const defaultProfessionalsBySlug: Record<string, Array<{ id: string; name: string; role: string; isAvailable: boolean; availableDays: number[] }>> = {
+  'clinica-sorriso': [
+    { id: 'prof-1', name: 'Dra. Camila Rocha', role: 'Cirurgiã Dentista & Implantes', isAvailable: true, availableDays: [1, 2, 3, 4, 5] },
+    { id: 'prof-2', name: 'Dr. Rafael Mendes', role: 'Ortodontista & Invisalign', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6] },
+    { id: 'prof-3', name: 'Dra. Beatriz Lima', role: 'Harmonização Orofacial & Estética', isAvailable: true, availableDays: [2, 3, 4, 5, 6] }
+  ],
+  'barbearia-style': [
+    { id: 'prof-1', name: 'Carlos Santos', role: 'Barbeiro Master', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6] },
+    { id: 'prof-2', name: 'Lucas Oliveira', role: 'Visagista & Barbeiro', isAvailable: true, availableDays: [2, 3, 4, 5, 6] },
+    { id: 'prof-3', name: 'Mateus Silva', role: 'Especialista em Cortes Clássicos', isAvailable: true, availableDays: [1, 3, 4, 5, 6] }
+  ]
+}
 
-const availableProfessionals = computed(() => {
-  let profOverrides: Record<string, any> = {}
+const rawOverrides = ref<any>({})
+
+function syncOverrides() {
   if (typeof window !== 'undefined') {
     try {
       const raw = localStorage.getItem(`alaska_overrides_${props.tenant.slug}`)
-      if (raw) profOverrides = JSON.parse(raw).professionals || {}
+      if (raw) rawOverrides.value = JSON.parse(raw)
     } catch {}
   }
+}
 
-  // Verifica o dia da semana da data selecionada (0 = Dom a 6 = Sáb)
-  const selectedDayOfWeek = new Date(selectedDate.value + 'T12:00:00').getDay()
+onMounted(() => {
+  syncOverrides()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', syncOverrides)
+    window.addEventListener('alaska_overrides_updated', syncOverrides)
+  }
+})
 
-  return defaultProfessionals.map(p => {
+const availableProfessionals = computed(() => {
+  const profOverrides = rawOverrides.value.professionals || {}
+  const baseList = defaultProfessionalsBySlug[props.tenant.slug] || defaultProfessionalsBySlug['barbearia-style']
+
+  return baseList.map(p => {
     const ov = profOverrides[p.id]
-    const isAvail = ov?.isAvailable !== undefined ? ov.isAvailable : p.isAvailable
+    const isAvail = ov?.isAvailable !== undefined ? Boolean(ov.isAvailable) : Boolean(p.isAvailable)
     const days = ov?.availableDays || p.availableDays
-    const worksOnSelectedDay = days.includes(selectedDayOfWeek)
 
     return {
       ...p,
-      isAvailable: isAvail && worksOnSelectedDay
+      isAvailable: isAvail,
+      availableDays: days
     }
   })
 })
@@ -599,11 +636,22 @@ const daysContainerRef = ref<HTMLElement | null>(null)
 const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
 const isDayStoreClosed = computed(() => {
-  const hours = props.tenant?.openingHours as any
+  const hours = (rawOverrides.value.openingHours || props.tenant?.openingHours) as any
   if (!hours) return false
   const dayIndex = new Date(selectedDate.value + 'T12:00:00').getDay()
   const dayKey = DAY_KEYS[dayIndex]
   return Boolean(hours[dayKey]?.closed)
+})
+
+// Verifica se o profissional escolhido atende no dia da semana selecionado
+const isProfOffOnDate = computed(() => {
+  if (!selectedProfessional.value) return false
+  const prof = availableProfessionals.value.find(p => p.id === selectedProfessional.value?.id)
+  if (!prof) return false
+  if (!prof.isAvailable) return true
+
+  const dayOfWeek = new Date(selectedDate.value + 'T12:00:00').getDay()
+  return !(prof.availableDays || []).includes(dayOfWeek)
 })
 
 function scrollDays(direction: 'left' | 'right') {
@@ -643,11 +691,18 @@ const bookingDays = computed(() => {
   return days
 })
 
-const availableSlots = computed(() => [
-  { time: '09:00' }, { time: '09:45' }, { time: '10:30' }, { time: '11:15' },
-  { time: '13:00' }, { time: '13:45' }, { time: '14:30' }, { time: '15:15' },
-  { time: '16:00' }, { time: '16:45' }, { time: '17:30' }, { time: '18:15' }
-])
+const allSlots = [
+  '09:00', '09:45', '10:30', '11:15', '12:00',
+  '13:00', '13:45', '14:30', '15:15', '16:00',
+  '16:45', '17:30', '18:15', '19:00'
+]
+
+const availableSlots = computed(() => {
+  const blocked = rawOverrides.value.blockedSlots || []
+  return allSlots
+    .filter(time => !blocked.some((b: any) => b.date === selectedDate.value && b.time === time))
+    .map(time => ({ time }))
+})
 
 // 6. Estado de Identificação e Pagamento Pix
 const customerName = ref('')
@@ -742,14 +797,14 @@ function copyPixCode() {
 function canGoToStep(step: number): boolean {
   if (step === 2) return selectedServices.value.length > 0
   if (step === 3) return selectedServices.value.length > 0
-  if (step === 4) return selectedServices.value.length > 0 && !!selectedDate.value && !!selectedTime.value && !isDayStoreClosed.value
+  if (step === 4) return selectedServices.value.length > 0 && !!selectedDate.value && !!selectedTime.value && !isDayStoreClosed.value && !isProfOffOnDate.value
   return true
 }
 
 const canAdvanceFromCurrentStep = computed(() => {
   if (currentStep.value === 1) return selectedServices.value.length > 0
   if (currentStep.value === 2) return true
-  if (currentStep.value === 3) return !!selectedDate.value && !!selectedTime.value && !isDayStoreClosed.value
+  if (currentStep.value === 3) return !!selectedDate.value && !!selectedTime.value && !isDayStoreClosed.value && !isProfOffOnDate.value
   return false
 })
 
@@ -771,14 +826,14 @@ function submitBooking() {
   const phone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`
 
   const lines: string[] = []
-  lines.push(`💈 *NOVO AGENDAMENTO — ${props.tenant.name.toUpperCase()}*`)
+  lines.push(`🩺 *NOVO AGENDAMENTO — ${props.tenant.name.toUpperCase()}*`)
   lines.push(`━━━━━━━━━━━━━━━━━━━━━`)
   lines.push(`📅 *DATA & HORÁRIO:*`)
   lines.push(`• Data: ${selectedDate.value}`)
   lines.push(`• Horário: ${selectedTime.value}`)
   lines.push(`• Profissional: ${selectedProfessional.value ? selectedProfessional.value.name : 'Qualquer disponível'}`)
   lines.push(``)
-  lines.push(`✂️ *SERVIÇOS SELECIONADOS:*`)
+  lines.push(`✂️ *PROCEDIMENTOS / SERVIÇOS:*`)
   selectedServices.value.forEach(s => {
     lines.push(`• ${s.name} (${s.durationMinutes} min) — ${formatCurrency(s.price)}`)
   })
@@ -795,7 +850,7 @@ function submitBooking() {
   }
 
   lines.push(`━━━━━━━━━━━━━━━━━━━━━`)
-  lines.push(`👤 *CLIENTE:* ${customerName.value.trim()}`)
+  lines.push(`👤 *CLIENTE / PACIENTE:* ${customerName.value.trim()}`)
   lines.push(`📱 *WHATSAPP:* ${customerPhone.value.trim()}`)
 
   if (notes.value.trim()) {

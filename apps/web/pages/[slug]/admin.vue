@@ -77,6 +77,11 @@
           </button>
         </header>
 
+        <!-- Toast de Notificação Rápida -->
+        <div v-if="adminToastMsg" class="sticky top-16 z-30 mx-4 mt-2 p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold text-center shadow-lg animate-in fade-in duration-150">
+          {{ adminToastMsg }}
+        </div>
+
         <!-- Navegação em Abas Operacionais -->
         <nav class="px-4 pt-4 flex gap-2 overflow-x-auto no-scrollbar pb-2" role="tablist">
           <button
@@ -208,7 +213,7 @@
               <span>{{ isHealthStore ? '🩺 Especialistas & Dentistas / Médicos' : '💈 Barbeiros & Profissionais' }}</span>
             </h2>
             <p class="text-xs text-slate-400">
-              Gerencie a escala e marque se o profissional está de folga hoje.
+              Marque se o profissional está de folga hoje ou selecione os dias da semana em que atende.
             </p>
 
             <div class="space-y-3 pt-1">
@@ -231,13 +236,13 @@
                   <!-- Switch de Disponibilidade do Profissional -->
                   <div class="flex items-center gap-2">
                     <span class="text-[10px] font-bold uppercase" :class="prof.isAvailable ? 'text-emerald-400' : 'text-rose-400'">
-                      {{ prof.isAvailable ? 'Atendendo' : 'De Folga' }}
+                      {{ prof.isAvailable ? 'Atendendo' : 'De Folga Hoje' }}
                     </span>
                     <button
                       type="button"
                       role="switch"
                       :aria-checked="prof.isAvailable"
-                      @click="toggleProfAvailable(prof.id, prof.isAvailable)"
+                      @click="handleProfAvailabilityToggle(prof.id, prof.isAvailable, prof.name)"
                       class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200"
                       :class="prof.isAvailable ? 'bg-emerald-500' : 'bg-slate-800'"
                     >
@@ -251,12 +256,12 @@
 
                 <!-- Dias de Atendimento na Semana -->
                 <div class="pt-2 border-t border-slate-800/80 flex items-center gap-1.5 flex-wrap">
-                  <span class="text-[10px] text-slate-500 font-semibold mr-1">Dias:</span>
+                  <span class="text-[10px] text-slate-500 font-semibold mr-1">Dias de Atendimento:</span>
                   <button
                     v-for="(dayName, dIdx) in ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']"
                     :key="dIdx"
-                    @click="toggleProfDay(prof.id, dIdx)"
-                    class="px-2 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer"
+                    @click="handleProfDayToggle(prof.id, dIdx, prof.name)"
+                    class="px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer select-none"
                     :class="prof.availableDays?.includes(dIdx) ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-900 text-slate-600 border border-slate-800'"
                   >
                     {{ dayName }}
@@ -269,31 +274,33 @@
           <!-- 2. Bloqueio Rápido de Horários Específicos -->
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
             <h2 class="text-sm font-bold text-white flex items-center gap-2">
-              <span>📅 Bloqueio Rápido de Horários (Intervalos)</span>
+              <span>📅 Grade de Horários & Bloqueio Rápido</span>
             </h2>
             <p class="text-xs text-slate-400">
-              Selecione uma data para bloquear ou liberar horários específicos da agenda.
+              Selecione uma data e clique no horário para bloquear ou liberar na agenda dos clientes.
             </p>
 
-            <div>
-              <label class="block text-xs font-semibold text-slate-400 mb-1.5">Data:</label>
-              <input
-                type="date"
-                v-model="selectedAgendaDate"
-                class="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500"
-              />
+            <div class="flex items-center gap-3">
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-400 mb-1">Data da Agenda:</label>
+                <input
+                  type="date"
+                  v-model="selectedAgendaDate"
+                  class="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-emerald-500 cursor-pointer"
+                />
+              </div>
             </div>
 
-            <div class="grid grid-cols-4 gap-2 pt-2">
+            <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-2">
               <button
                 v-for="time in sampleSlots"
                 :key="time"
-                @click="toggleBlockSlot(selectedAgendaDate, time)"
-                class="py-2.5 rounded-xl text-xs font-bold transition-all border cursor-pointer flex flex-col items-center justify-center gap-0.5"
-                :class="isSlotBlocked(selectedAgendaDate, time) ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-slate-950 border-slate-800 text-slate-200 hover:border-emerald-500'"
+                @click="handleSlotToggle(selectedAgendaDate, time)"
+                class="py-2.5 px-2 rounded-xl text-xs font-bold transition-all border cursor-pointer flex flex-col items-center justify-center gap-0.5 active:scale-95 select-none"
+                :class="isSlotBlocked(selectedAgendaDate, time) ? 'bg-rose-500/20 border-rose-500/50 text-rose-300' : 'bg-slate-950 border-slate-800 text-slate-200 hover:border-emerald-500'"
               >
-                <span>{{ time }}</span>
-                <span class="text-[9px] uppercase tracking-wider font-extrabold" :class="isSlotBlocked(selectedAgendaDate, time) ? 'text-rose-500' : 'text-emerald-400'">
+                <span class="font-mono text-xs">{{ time }}</span>
+                <span class="text-[9px] uppercase tracking-wider font-extrabold" :class="isSlotBlocked(selectedAgendaDate, time) ? 'text-rose-400' : 'text-emerald-400'">
                   {{ isSlotBlocked(selectedAgendaDate, time) ? 'Bloqueado' : 'Livre' }}
                 </span>
               </button>
@@ -594,6 +601,12 @@ const {
 
 const pinInput = ref('')
 const activeTab = ref<'catalog' | 'agenda' | 'hours' | 'delivery' | 'announcement' | 'security'>('catalog')
+const adminToastMsg = ref('')
+
+function showToast(msg: string) {
+  adminToastMsg.value = msg
+  setTimeout(() => { adminToastMsg.value = '' }, 2500)
+}
 
 // Identifica se a loja é de saúde/clínica ou barbearia/serviços
 const isHealthStore = computed(() => {
@@ -707,6 +720,7 @@ function saveWeeklySchedule() {
   })
   updateWeeklySchedule(schedulePayload)
   scheduleSuccessMsg.value = 'Programação semanal salva com sucesso!'
+  showToast('Programação semanal salva com sucesso!')
   setTimeout(() => { scheduleSuccessMsg.value = '' }, 2500)
 }
 
@@ -747,11 +761,13 @@ const professionalsList = computed(() => {
   })
 })
 
-function toggleProfAvailable(profId: string, currentAvailable: boolean) {
-  toggleProfessionalAvailability(profId, !currentAvailable)
+function handleProfAvailabilityToggle(profId: string, currentAvailable: boolean, name: string) {
+  const newStatus = !currentAvailable
+  toggleProfessionalAvailability(profId, newStatus)
+  showToast(newStatus ? `✅ ${name} agora está atendendo!` : `🏖️ ${name} marcado como De Folga!`)
 }
 
-function toggleProfDay(profId: string, dayIndex: number) {
+function handleProfDayToggle(profId: string, dayIndex: number, name: string) {
   const prof = professionalsList.value.find(p => p.id === profId)
   if (!prof) return
   let days = [...(prof.availableDays || [])]
@@ -761,6 +777,7 @@ function toggleProfDay(profId: string, dayIndex: number) {
     days.push(dayIndex)
   }
   updateProfessionalDays(profId, days.sort())
+  showToast(`📅 Escala semanal de ${name} atualizada!`)
 }
 
 // 5. Delivery & Taxas
@@ -770,6 +787,7 @@ const estimatedTimeInput = ref('35-50 min')
 
 function saveDeliveryConfig() {
   updateDelivery(deliveryFeeInput.value, minOrderInput.value, estimatedTimeInput.value)
+  showToast('Configurações de delivery atualizadas!')
 }
 
 // 6. Comunicado
@@ -778,6 +796,7 @@ const announcementMessage = ref('')
 
 function saveAnnouncementConfig() {
   updateAnnouncement(announcementEnabled.value, announcementMessage.value)
+  showToast('Comunicado oficial atualizado!')
 }
 
 // 7. Troca de PIN
@@ -788,17 +807,28 @@ function saveNewPin() {
   if (updateAdminPin(newPinInput.value)) {
     pinSuccessMsg.value = 'PIN de acesso atualizado com sucesso!'
     newPinInput.value = ''
+    showToast('PIN atualizado com sucesso!')
     setTimeout(() => { pinSuccessMsg.value = '' }, 3000)
   }
 }
 
-// 8. Agenda & Bloqueios
+// 8. Agenda & Bloqueios de Horário
 const selectedAgendaDate = ref(new Date().toISOString().split('T')[0])
-const sampleSlots = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
+const sampleSlots = [
+  '09:00', '09:45', '10:30', '11:15', '12:00',
+  '13:00', '13:45', '14:30', '15:15', '16:00',
+  '16:45', '17:30', '18:15', '19:00'
+]
 
 function isSlotBlocked(date: string, time: string): boolean {
   const overrides = getOverrides()
   const slots = overrides.blockedSlots || []
   return slots.some(s => s.date === date && s.time === time)
+}
+
+function handleSlotToggle(date: string, time: string) {
+  const currentlyBlocked = isSlotBlocked(date, time)
+  toggleBlockSlot(date, time)
+  showToast(currentlyBlocked ? `🟢 Horário ${time} liberado para agendamento!` : `🛑 Horário ${time} bloqueado na agenda!`)
 }
 </script>
