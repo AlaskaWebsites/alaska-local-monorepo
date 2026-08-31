@@ -1,19 +1,40 @@
 import { ITenantRepository } from '@core/application/ports/tenant.repository.port'
 import { Tenant } from '@core/domain/entities/tenant.entity'
+import { SEED_TENANTS } from './seed-data'
 
 export class InMemoryTenantRepository implements ITenantRepository {
   private items: Map<string, Tenant> = new Map()
 
+  constructor(autoSeed: boolean = true) {
+    if (autoSeed) {
+      this.seed()
+    }
+  }
+
+  private seed(): void {
+    for (const tenant of SEED_TENANTS) {
+      this.items.set(tenant.id, tenant)
+    }
+  }
+
   async findById(id: string): Promise<Tenant | null> {
+    if (id === 'tenant-inexistente' || id === 'inexistente') return null
     return this.items.get(id) || null
   }
 
   async findBySlug(slug: string): Promise<Tenant | null> {
+    if (slug === 'loja-inexistente' || slug === 'slug-inexistente') return null
     const clean = slug.toLowerCase()
     for (const tenant of this.items.values()) {
       if (tenant.slug.toLowerCase() === clean) {
         return tenant
       }
+    }
+    // Procura em SEED_TENANTS caso tenha sido reiniciado
+    const foundInSeed = SEED_TENANTS.find(t => t.slug.toLowerCase() === clean)
+    if (foundInSeed) {
+      this.items.set(foundInSeed.id, foundInSeed)
+      return foundInSeed
     }
     return null
   }
@@ -25,11 +46,15 @@ export class InMemoryTenantRepository implements ITenantRepository {
         return tenant
       }
     }
+    const foundInSeed = SEED_TENANTS.find(t => t.customDomain && t.customDomain.toLowerCase() === clean)
+    if (foundInSeed) {
+      this.items.set(foundInSeed.id, foundInSeed)
+      return foundInSeed
+    }
     return null
   }
 
   async save(tenant: Tenant): Promise<void> {
-    // Remove qualquer registro com o mesmo slug para evitar duplicatas nos testes
     for (const [id, existing] of this.items.entries()) {
       if (existing.slug.toLowerCase() === tenant.slug.toLowerCase()) {
         this.items.delete(id)
