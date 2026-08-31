@@ -5,313 +5,373 @@ import { useBodyScrollLock } from '~/composables/useBodyScrollLock'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 import { formatCurrency } from '~/utils/formatters'
 import { handleImageError } from '~/utils/images'
-import { X, Star, Plus, Minus, Check, AlertCircle } from 'lucide-vue-next'
-import type { Tenant, Product, OptionGroup, Option, CartItem } from '~/types'
+import { useHaptic } from '~/composables/useHaptic'
+import { useMerchantAdmin } from '~/composables/useMerchantAdmin'
+import { X, Plus, Minus, Check } from 'lucide-vue-next'
+import type { Product, Tenant } from '~/types/tenant'
+import type { CartItem } from '~/types/cart'
 
 const props = defineProps<{
-    product: Product | null
-    tenant: Tenant
-    isOpen: boolean
+  product: Product
+  isOpen: boolean
+  tenant?: Tenant
 }>()
 
 const emit = defineEmits<{
-    (e: 'close'): void
-    (e: 'add-to-cart', payload: CartItem): void
+  (e: 'close'): void
+  (e: 'add-to-cart', item: CartItem): void
 }>()
+
+const { triggerHaptic } = useHaptic()
+const { getOverrides } = useMerchantAdmin(props.tenant?.slug || 'default')
 
 // 1. Tema Dinâmico
 const { themeClasses } = useTenantTheme(toRef(props, 'tenant'))
 
-// 2. Trava de Scroll e Acessibilidade ESC
+// 2. Trava de Rolagem
 useBodyScrollLock(toRef(props, 'isOpen'))
 
+// 3. Fechamento ESC
 const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && props.isOpen) {
-        emit('close')
-    }
+  if (e.key === 'Escape' && props.isOpen) {
+    emit('close')
+  }
 }
 
 onMounted(() => {
-    if (import.meta.client) {
-        window.addEventListener('keydown', handleKeyDown)
-    }
+  if (import.meta.client) {
+    window.addEventListener('keydown', handleKeyDown)
+  }
 })
 
 onUnmounted(() => {
-    if (import.meta.client) {
-        window.removeEventListener('keydown', handleKeyDown)
-    }
+  if (import.meta.client) {
+    window.removeEventListener('keydown', handleKeyDown)
+  }
 })
 
-// 3. Estado Interno de Customização
-const selectedOptions = ref<Map<string, Option[]>>(new Map())
-const productObservation = ref('')
-const productQuantity = ref(1)
+// 4. Overrides de Opcionais Pausados (Estoque em Tempo Real)
+const pausedOptionIds = computed<string[]>(() => {
+  const ov = getOverrides()
+  return ov.pausedOptionIds || []
+})
 
-// Reinicia o estado quando abre um novo produto
+function isOptionPaused(optionId: string): boolean {
+  return pausedOptionIds.value.includes(optionId)
+}
+
+// 5. Estado do Formulário de Customização
+const quantity = ref(1)
+const observation = ref('')
+const selectedOptions = ref<Record<string, string[]>>({})
+
+// Reseta o estado quando o produto mudar ou abrir o modal
 watch(
-    () => props.product,
-    (newProduct) => {
-        if (newProduct) {
-            selectedOptions.value = new Map()
-            productObservation.value = ''
-            productQuantity.value = 1
+  () => props.product,
+  (newProd) => {
+    quantity.value = 1
+    observation.value = ''
+    selectedOptions.value = {}
 
-            // Auto-seleciona a primeira opção de grupos obrigatórios com 1 opção
-            newProduct.optionGroups?.forEach((group) => {
-                const firstOption = group.options.at(0)
-                if (group.required && group.max === 1 && firstOption) {
-                    selectedOptions.value.set(group.id, [firstOption])
-                }
-            })
-        }
-    },
-    { immediate: true }
+    if (newProd?.optionGroups) {
+      newProd.optionGroups.forEach(group => {
+        selectedOptions.value[group.id] = []
+      })
+    }
+  },
+  { immediate: true }
 )
 
-// 4. Helpers de Validação e Seleção
-function isGroupValid(group: OptionGroup): boolean {
-    const selected = selectedOptions.value.get(group.id) || []
-    if (group.required) {
-        return selected.length >= (group.min || 1)
-    }
-    return true
-}
-
-function getSelectedCountInGroup(groupId: string): number {
-    return (selectedOptions.value.get(groupId) || []).length
-}
-
 function isOptionSelected(groupId: string, optionId: string): boolean {
-    const options = selectedOptions.value.get(groupId) || []
-    return options.some((o) => o.id === optionId)
+  return (selectedOptions.value[groupId] || []).includes(optionId)
 }
 
-function toggleOption(group: OptionGroup, option: Option) {
-    const current = selectedOptions.value.get(group.id) || []
-    const exists = current.some((o) => o.id === option.id)
+function toggleOption(group: any, option: any) {
+  if (isOptionPaused(option.id)) {
+    return // Bloqueia seleção de opcional esgotado
+  }
 
-    if (group.max === 1) {
-        selectedOptions.value.set(group.id, [option])
+  triggerHaptic(20)
+  const current = selectedOptions.value[group.id] || []
+  const max = group.max || 1
+
+  if (max === 1) {
+    // Escolha única (Radio-like)
+    if (current.includes(option.id)) {
+      if (!group.required) {
+        selectedOptions.value[group.id] = []
+      }
     } else {
-        if (exists) {
-            selectedOptions.value.set(group.id, current.filter((o) => o.id !== option.id))
-        } else if (current.length < group.max) {
-            selectedOptions.value.set(group.id, [...current, option])
-        }
+      selectedOptions.value[group.id] = [option.id]
     }
+  } else {
+    // Escolha múltipla (Checkbox-like)
+    if (current.includes(option.id)) {
+      selectedOptions.value[group.id] = current.filter(id => id !== option.id)
+    } else {
+      if (current.length < max) {
+        selectedOptions.value[group.id] = [...current, option.id]
+      }
+    }
+  }
 }
 
-function calculateProductTotal(): number {
-    if (!props.product) return 0
-    let total = props.product.price
-    selectedOptions.value.forEach((options) => {
-        options.forEach((opt) => {
-            total += opt.price
-        })
-    })
-    return total
-}
-
-const isProductConfigValid = computed(() => {
-    if (!props.product) return false
-    for (const group of props.product.optionGroups || []) {
-        const selected = selectedOptions.value.get(group.id) || []
-        if (group.required && selected.length < (group.min || 1)) {
-            return false
-        }
-    }
-    return true
+// 6. Validação de Grupos Obrigatórios
+const isValid = computed(() => {
+  if (!props.product?.optionGroups) return true
+  for (const group of props.product.optionGroups) {
+    const count = (selectedOptions.value[group.id] || []).length
+    const min = group.min !== undefined ? group.min : (group.required ? 1 : 0)
+    if (count < min) return false
+    if (group.max && count > group.max) return false
+  }
+  return true
 })
 
-function handleAdd() {
-    if (!props.product || !isProductConfigValid.value) return
+// 7. Cálculo do Preço Total do Item Customizado
+const unitPrice = computed(() => {
+  let total = Number(props.product?.price || 0)
+  if (!props.product?.optionGroups) return total
 
-    const allSelectedOptions: Option[] = []
-    const selectedOptionsRecord: Record<string, string | string[]> = {}
+  props.product.optionGroups.forEach(group => {
+    const selectedIds = selectedOptions.value[group.id] || []
+    group.options.forEach(opt => {
+      if (selectedIds.includes(opt.id) && !isOptionPaused(opt.id)) {
+        total += Number(opt.price || 0)
+      }
+    })
+  })
 
-    selectedOptions.value.forEach((opts, groupId) => {
-        allSelectedOptions.push(...opts)
-        if (opts.length === 1) {
-            selectedOptionsRecord[groupId] = opts[0].name
-        } else if (opts.length > 1) {
-            selectedOptionsRecord[groupId] = opts.map((o) => o.name)
+  return total
+})
+
+const totalPrice = computed(() => unitPrice.value * quantity.value)
+
+function incrementQuantity() {
+  triggerHaptic(15)
+  quantity.value++
+}
+
+function decrementQuantity() {
+  if (quantity.value > 1) {
+    triggerHaptic(15)
+    quantity.value--
+  }
+}
+
+// 8. Adicionar à Sacola
+function handleAddToCart() {
+  if (!isValid.value) return
+
+  triggerHaptic(40)
+
+  // Extrai lista plana de opções selecionadas
+  const flattenedOptions: any[] = []
+  if (props.product?.optionGroups) {
+    props.product.optionGroups.forEach(group => {
+      const selectedIds = selectedOptions.value[group.id] || []
+      group.options.forEach(opt => {
+        if (selectedIds.includes(opt.id) && !isOptionPaused(opt.id)) {
+          flattenedOptions.push({
+            id: opt.id,
+            name: opt.name,
+            price: opt.price || 0,
+            groupTitle: group.title
+          })
         }
+      })
     })
+  }
 
-    emit('add-to-cart', {
-        product: props.product,
-        quantity: productQuantity.value,
-        selectedOptions: selectedOptionsRecord,
-        options: allSelectedOptions,
-        notes: productObservation.value.trim() || undefined,
-        observation: productObservation.value.trim(),
-        unitPrice: calculateProductTotal(),
-    })
-    emit('close')
+  const cartItem: CartItem = {
+    id: `${props.product.id}-${Date.now()}`,
+    product: props.product,
+    quantity: quantity.value,
+    selectedOptions: flattenedOptions,
+    options: flattenedOptions,
+    observation: observation.value.trim() || undefined,
+    notes: observation.value.trim() || undefined,
+    unitPrice: unitPrice.value
+  }
+
+  emit('add-to-cart', cartItem)
+  emit('close')
 }
 </script>
 
 <template>
-    <Teleport to="body">
-        <div v-if="isOpen && product"
-            class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex flex-col sm:items-center sm:justify-center p-0 sm:p-4 animate-in fade-in duration-200"
-            @click="emit('close')">
-            <div role="dialog" aria-modal="true" aria-labelledby="product-modal-title"
-                class="bg-white text-slate-800 w-full h-full sm:h-auto sm:max-h-[88vh] sm:max-w-lg flex flex-col overflow-hidden sm:rounded-3xl sm:border sm:border-slate-200 sm:shadow-2xl"
-                @click.stop>
-                <!-- Header da Foto -->
-                <div class="relative h-60 sm:h-52 w-full bg-slate-100 shrink-0">
-                    <img v-if="product.image" :src="product.image" :alt="product.name"
-                        class="w-full h-full object-cover" @error="handleImageError($event, tenant?.theme)" />
-
-                    <!-- Botão Fechar -->
-                    <button @click="emit('close')"
-                        class="absolute top-4 right-4 bg-slate-900/70 hover:bg-slate-900 text-white p-2 rounded-full transition-colors backdrop-blur-md z-10 shadow-md cursor-pointer"
-                        aria-label="Fechar modal de montagem do produto">
-                        <X class="w-5 h-5" aria-hidden="true" />
-                    </button>
-
-                    <!-- Badge do Restaurante -->
-                    <div
-                        class="absolute bottom-3 left-3 bg-white/95 backdrop-blur-md rounded-full py-1 px-3 shadow-md flex items-center gap-2 border border-slate-200 text-[11px]">
-                        <img v-if="tenant.logo" :src="tenant.logo" :alt="tenant.name"
-                            class="w-4 h-4 rounded-full object-cover" @error="handleImageError($event, tenant?.theme)" />
-                        <span class="font-bold text-slate-900 truncate max-w-[130px]">{{ tenant.name }}</span>
-                        <span class="text-slate-300" aria-hidden="true">•</span>
-                        <span class="flex items-center gap-0.5 font-bold text-amber-500">
-                            <Star class="w-3.5 h-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
-                            {{ tenant.reviews ? tenant.reviews.score.toFixed(1) : '4.9' }}
-                        </span>
-                    </div>
-                </div>
-
-                <!-- Conteúdo do Modal -->
-                <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-5">
-                    <!-- Título, Descrição e Preço -->
-                    <div class="space-y-1.5">
-                        <h3 id="product-modal-title" class="text-xl font-extrabold text-slate-900 leading-tight">
-                            {{ product.name }}
-                        </h3>
-                        <p class="text-xs text-slate-500 leading-relaxed">{{ product.description }}</p>
-                        <div class="flex items-center justify-between pt-1">
-                            <span class="text-xs font-semibold text-slate-400">Serve até 1 ou 2 pessoas</span>
-                            <span class="text-xl font-black" :class="themeClasses.primaryText">
-                                {{ formatCurrency(product.price) }}
-                            </span>
-                        </div>
-                    </div>
-
-                    <!-- Grupos de Opcionais com Feedback Visual -->
-                    <div v-for="group in product.optionGroups" :key="group.id" class="space-y-2.5 pt-2" role="group"
-                        :aria-labelledby="`group-title-${group.id}`"
-                        :aria-invalid="group.required && !isGroupValid(group)">
-                        <div class="border-y px-4 py-2.5 -mx-4 sm:-mx-5 flex items-center justify-between transition-colors"
-                            :class="group.required && !isGroupValid(group) ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-200'">
-                            <div>
-                                <h4 :id="`group-title-${group.id}`" class="font-bold text-xs sm:text-sm text-slate-900">
-                                    {{ group.title }}
-                                </h4>
-                                <p class="text-[11px] font-medium"
-                                    :class="group.required && !isGroupValid(group) ? 'text-amber-800' : 'text-slate-500'">
-                                    {{ group.max === 1 ? 'Escolha 1 opção' : `Escolha até ${group.max} opções` }}
-                                    <span v-if="getSelectedCountInGroup(group.id) > 0" class="font-bold ml-1"
-                                        :class="themeClasses.primaryText">
-                                        ({{ getSelectedCountInGroup(group.id) }}/{{ group.max }} selecionado{{
-                                            getSelectedCountInGroup(group.id) > 1 ? 's' : ''
-                                        }})
-                                    </span>
-                                </p>
-                            </div>
-
-                            <!-- Badges Dinâmicos -->
-                            <span v-if="group.required && isGroupValid(group)"
-                                class="border text-[9px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider shrink-0 flex items-center gap-1 bg-emerald-50 text-emerald-700 border-emerald-200">
-                                <Check class="w-2.5 h-2.5" aria-hidden="true" />
-                                CONCLUÍDO
-                            </span>
-                            <span v-else-if="group.required && !isGroupValid(group)"
-                                class="bg-amber-100 text-amber-800 border border-amber-300 text-[9px] font-extrabold px-2 py-0.5 rounded uppercase tracking-wider shrink-0 animate-pulse">
-                                OBRIGATÓRIO
-                            </span>
-                            <span v-else
-                                class="bg-slate-200/80 text-slate-600 text-[9px] font-bold px-2 py-0.5 rounded uppercase tracking-wider shrink-0">
-                                OPCIONAL
-                            </span>
-                        </div>
-
-                        <!-- Lista de Opções (Checkboxes e Contornos Dinâmicos com a cor da Loja) -->
-                        <div class="space-y-2 pt-1">
-                            <label v-for="option in group.options" :key="option.id"
-                                class="flex items-center justify-between p-3 rounded-2xl border transition-colors cursor-pointer"
-                                :class="isOptionSelected(group.id, option.id) ? themeClasses.selectedOptionClass : 'border-slate-200 hover:bg-slate-50'">
-                                <div class="flex flex-col pr-3">
-                                    <span class="text-xs sm:text-sm font-medium text-slate-800">{{ option.name }}</span>
-                                    <span v-if="option.price > 0" class="text-xs font-bold mt-0.5"
-                                        :class="themeClasses.primaryText">
-                                        + {{ formatCurrency(option.price) }}
-                                    </span>
-                                </div>
-
-                                <input :type="group.max === 1 ? 'radio' : 'checkbox'" :name="group.id"
-                                    :aria-required="group.required" :checked="isOptionSelected(group.id, option.id)"
-                                    @change="toggleOption(group, option)"
-                                    class="w-5 h-5 rounded border-slate-300 shrink-0 cursor-pointer"
-                                    :class="themeClasses.accentClass" />
-                            </label>
-                        </div>
-                    </div>
-
-                    <!-- Observação -->
-                    <div class="pt-3 border-t border-slate-200">
-                        <label for="product-observation-input" class="block text-xs font-bold text-slate-700 mb-1.5">
-                            Alguma observação?
-                        </label>
-                        <textarea id="product-observation-input" v-model="productObservation" rows="2"
-                            placeholder="Ex: Sem gelo, copos descartáveis extras, etc."
-                            :class="['w-full text-xs p-3 rounded-2xl border border-slate-200 bg-slate-50 text-slate-800 focus:outline-none resize-none placeholder:text-slate-400', themeClasses.focusRing]"></textarea>
-                    </div>
-                </div>
-
-                <!-- Footer do Modal -->
-                <div class="p-4 pb-6 sm:pb-4 border-t border-slate-200 bg-white flex flex-col gap-2 shrink-0">
-                    <div class="flex items-center gap-3 w-full">
-                        <div class="flex items-center border border-slate-200 rounded-2xl p-1 shrink-0 bg-slate-100"
-                            role="group" aria-label="Controle de quantidade">
-                            <button @click="productQuantity > 1 ? productQuantity-- : null"
-                                class="p-2 text-slate-500 hover:text-slate-900 disabled:opacity-30 active:scale-95 transition-transform cursor-pointer"
-                                aria-label="Diminuir quantidade" :disabled="productQuantity <= 1">
-                                <Minus class="w-4 h-4" aria-hidden="true" />
-                            </button>
-                            <span class="w-8 text-center font-extrabold text-sm text-slate-900" aria-live="polite">
-                                {{ productQuantity }}
-                            </span>
-                            <button @click="productQuantity++"
-                                class="p-2 text-slate-500 hover:text-slate-900 active:scale-95 transition-transform cursor-pointer"
-                                aria-label="Aumentar quantidade">
-                                <Plus class="w-4 h-4" aria-hidden="true" />
-                            </button>
-                        </div>
-
-                        <button @click="handleAdd" :disabled="!isProductConfigValid"
-                            :aria-label="`Adicionar ${productQuantity} item ao carrinho por ${formatCurrency(calculateProductTotal() * productQuantity)}`"
-                            class="flex-1 py-3.5 px-4 rounded-2xl font-black text-xs sm:text-sm shadow-md transition-all flex items-center justify-between cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                            :class="themeClasses.buttonPrimary">
-                            <span>Adicionar</span>
-                            <span class="font-extrabold">{{ formatCurrency(calculateProductTotal() * productQuantity)
-                                }}</span>
-                        </button>
-                    </div>
-
-                    <!-- Mensagem Explicativa Contextual -->
-                    <p v-if="!isProductConfigValid"
-                        class="text-[11px] text-amber-700 font-semibold text-center flex items-center justify-center gap-1.5 pt-1 animate-in fade-in duration-200"
-                        role="alert">
-                        <AlertCircle class="w-3.5 h-3.5 text-amber-600 shrink-0" aria-hidden="true" />
-                        <span>Selecione as opções obrigatórias para poder adicionar</span>
-                    </p>
-                </div>
-            </div>
+  <Teleport to="body">
+    <div
+      v-if="isOpen"
+      class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex flex-col sm:items-center sm:justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+      @click="emit('close')"
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        :aria-labelledby="`product-customizer-title-${product.id}`"
+        class="bg-white text-slate-800 w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-lg flex flex-col overflow-hidden sm:rounded-3xl sm:border sm:border-slate-200 sm:shadow-2xl"
+        @click.stop
+      >
+        <!-- Header Fixo no Topo -->
+        <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white z-10">
+          <div class="min-w-0 flex-1 pr-3">
+            <h2 :id="`product-customizer-title-${product.id}`" class="text-base sm:text-lg font-extrabold text-slate-900 truncate">
+              {{ product.name }}
+            </h2>
+            <p class="text-xs font-mono font-bold" :class="themeClasses.primaryText">
+              {{ formatCurrency(product.price) }}
+            </p>
+          </div>
+          <button
+            @click="emit('close')"
+            class="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+            aria-label="Fechar modal de customização"
+          >
+            <X class="h-5 w-5" aria-hidden="true" />
+          </button>
         </div>
-    </Teleport>
+
+        <!-- Conteúdo com Rolagem Suave -->
+        <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-6">
+          <!-- Imagem e Descrição -->
+          <div v-if="product.image || product.description" class="space-y-3">
+            <div v-if="product.image" class="w-full h-44 rounded-2xl overflow-hidden bg-slate-100 border border-slate-100">
+              <img
+                :src="product.image"
+                :alt="product.name"
+                class="w-full h-full object-cover"
+                @error="handleImageError($event, tenant?.theme)"
+              />
+            </div>
+            <p v-if="product.description" class="text-xs text-slate-600 leading-relaxed">
+              {{ product.description }}
+            </p>
+          </div>
+
+          <!-- Grupos de Opcionais e Adicionais -->
+          <div v-if="product.optionGroups && product.optionGroups.length > 0" class="space-y-6">
+            <div
+              v-for="group in product.optionGroups"
+              :key="group.id"
+              class="border border-slate-200/90 rounded-2xl p-4 bg-slate-50/50 space-y-3"
+            >
+              <div class="flex items-center justify-between">
+                <div>
+                  <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
+                    <span>{{ group.title }}</span>
+                    <span
+                      v-if="group.required"
+                      class="text-[9px] px-1.5 py-0.2 rounded font-bold uppercase bg-amber-100 text-amber-800"
+                    >
+                      Obrigatório
+                    </span>
+                  </h3>
+                  <p class="text-[10px] text-slate-500 mt-0.5">
+                    {{ group.max === 1 ? 'Escolha 1 opção' : `Escolha até ${group.max} opções` }}
+                  </p>
+                </div>
+              </div>
+
+              <!-- Lista de Opções -->
+              <div class="space-y-2 pt-1">
+                <div
+                  v-for="opt in group.options"
+                  :key="opt.id"
+                  @click="toggleOption(group, opt)"
+                  class="p-3 rounded-xl border transition-all flex items-center justify-between select-none"
+                  :class="[
+                    isOptionPaused(opt.id)
+                      ? 'opacity-40 bg-slate-100 border-slate-200 cursor-not-allowed'
+                      : isOptionSelected(group.id, opt.id)
+                        ? 'bg-emerald-50 border-emerald-300 text-slate-900 shadow-2xs cursor-pointer'
+                        : 'bg-white border-slate-200 text-slate-700 hover:border-slate-300 cursor-pointer'
+                  ]"
+                >
+                  <div class="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
+                    <div
+                      class="w-4 h-4 rounded-md flex items-center justify-center border text-[10px] transition-colors"
+                      :class="[
+                        group.max === 1 ? 'rounded-full' : 'rounded-md',
+                        isOptionPaused(opt.id)
+                          ? 'border-slate-300 bg-slate-200'
+                          : isOptionSelected(group.id, opt.id)
+                            ? 'bg-emerald-600 border-emerald-600 text-white'
+                            : 'border-slate-300 bg-white'
+                      ]"
+                    >
+                      <Check v-if="isOptionSelected(group.id, opt.id) && !isOptionPaused(opt.id)" class="w-3 h-3 stroke-[3]" />
+                    </div>
+
+                    <span class="text-xs font-semibold truncate" :class="{ 'line-through': isOptionPaused(opt.id) }">
+                      {{ opt.name }}
+                    </span>
+
+                    <span
+                      v-if="isOptionPaused(opt.id)"
+                      class="text-[9px] px-1.5 py-0.2 rounded font-bold uppercase bg-rose-100 text-rose-700 ml-1 shrink-0"
+                    >
+                      Esgotado
+                    </span>
+                  </div>
+
+                  <span v-if="opt.price > 0 && !isOptionPaused(opt.id)" class="text-xs font-mono font-bold text-slate-600 shrink-0">
+                    + {{ formatCurrency(opt.price) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Campo de Observações do Item -->
+          <div class="space-y-1.5">
+            <label class="block text-xs font-bold text-slate-800">
+              Observações do item:
+            </label>
+            <textarea
+              v-model="observation"
+              rows="2"
+              placeholder="Ex: Tirar cebola, maionese à parte, ponto bem passado..."
+              class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-800 placeholder-slate-400 outline-none focus:border-emerald-500 focus:bg-white transition-all leading-relaxed"
+            ></textarea>
+          </div>
+        </div>
+
+        <!-- Rodapé Fixo com Quantidade e Botão Adicionar -->
+        <div class="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
+          <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-1 shadow-2xs">
+            <button
+              @click="decrementQuantity"
+              :disabled="quantity <= 1"
+              class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              aria-label="Diminuir quantidade"
+            >
+              <Minus class="w-3.5 h-3.5" />
+            </button>
+            <span class="w-6 text-center font-bold text-sm text-slate-900 font-mono">
+              {{ quantity }}
+            </span>
+            <button
+              @click="incrementQuantity"
+              class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              aria-label="Aumentar quantidade"
+            >
+              <Plus class="w-3.5 h-3.5" />
+            </button>
+          </div>
+
+          <button
+            @click="handleAddToCart"
+            :disabled="!isValid"
+            class="flex-1 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3.5 px-4 rounded-xl text-xs flex items-center justify-between shadow-lg active:scale-[0.99] transition-all cursor-pointer"
+          >
+            <span>Adicionar</span>
+            <span class="font-mono font-extrabold text-amber-400">
+              {{ formatCurrency(totalPrice) }}
+            </span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </Teleport>
 </template>
