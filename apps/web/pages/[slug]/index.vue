@@ -345,7 +345,9 @@
       v-if="effectiveTenant"
       :is-open="isCartDrawerOpen"
       :tenant="effectiveTenant"
-      :cart-items="cartItems"
+      :items="cartItems"
+      @remove-item="removeCartItem"
+      @clear-cart="clearCart"
       @close="isCartDrawerOpen = false"
     />
 
