@@ -1,3 +1,4 @@
+<!-- pages/[slug]/admin.vue -->
 <template>
   <div class="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500 selection:text-white">
     <ClientOnly>
@@ -63,7 +64,7 @@
                 <span class="w-2 h-2 rounded-full" :class="isEmergencyClosed ? 'bg-rose-500 animate-pulse' : 'bg-emerald-500 animate-pulse'"></span>
               </h1>
               <p class="text-[11px] text-slate-400">
-                {{ isServiceStore ? '💈 Modo Gestão de Serviços & Agenda' : '🍔 Modo Gestão de Delivery & Cardápio' }}
+                {{ isServiceStore ? '💈 Gestão de Serviços & Profissionais' : '🍔 Gestão de Cardápio & Delivery' }}
               </p>
             </div>
           </div>
@@ -92,7 +93,7 @@
             class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer"
             :class="activeTab === 'agenda' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'"
           >
-            📅 Agenda & Bloqueios
+            💈 Barbeiros & Agenda
           </button>
 
           <button
@@ -100,7 +101,7 @@
             class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer"
             :class="activeTab === 'hours' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'"
           >
-            🕒 Horários & Pausa
+            🕒 Horários & Dias
           </button>
 
           <button
@@ -118,6 +119,14 @@
             :class="activeTab === 'announcement' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'"
           >
             📢 Comunicado
+          </button>
+
+          <button
+            @click="activeTab = 'security'"
+            class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer"
+            :class="activeTab === 'security' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white'"
+          >
+            🔐 Segurança
           </button>
         </nav>
 
@@ -191,14 +200,79 @@
           </section>
         </main>
 
-        <!-- ABA 2: Agenda & Bloqueios (Exclusivo Hub & Pro) -->
+        <!-- ABA 2: Barbeiros & Agenda (Exclusivo Hub & Pro) -->
         <main v-else-if="activeTab === 'agenda' && isServiceStore" class="px-4 mt-4 space-y-6">
+          <!-- 1. Gestão de Profissionais / Barbeiros -->
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
             <h2 class="text-sm font-bold text-white flex items-center gap-2">
-              <span>📅 Bloqueio Rápido de Horários (Folga / Intervalo)</span>
+              <span>💈 Profissionais & Folgas da Equipe</span>
             </h2>
             <p class="text-xs text-slate-400">
-              Precisa tirar um intervalo ou bloquear um horário específico? Selecione o horário para desabilitá-lo na vitrine de agendamentos.
+              Gerencie a escala e marque se o profissional está de folga hoje.
+            </p>
+
+            <div class="space-y-3 pt-1">
+              <div
+                v-for="prof in professionalsList"
+                :key="prof.id"
+                class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-3"
+              >
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-xs">
+                      {{ prof.name.charAt(0) }}
+                    </div>
+                    <div>
+                      <h4 class="text-xs font-bold text-white">{{ prof.name }}</h4>
+                      <span class="text-[10px] text-slate-400">{{ prof.role }}</span>
+                    </div>
+                  </div>
+
+                  <!-- Switch de Disponibilidade do Barbeiro -->
+                  <div class="flex items-center gap-2">
+                    <span class="text-[10px] font-bold uppercase" :class="prof.isAvailable ? 'text-emerald-400' : 'text-rose-400'">
+                      {{ prof.isAvailable ? 'Atendendo' : 'De Folga' }}
+                    </span>
+                    <button
+                      type="button"
+                      role="switch"
+                      :aria-checked="prof.isAvailable"
+                      @click="toggleProfAvailable(prof.id, prof.isAvailable)"
+                      class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200"
+                      :class="prof.isAvailable ? 'bg-emerald-500' : 'bg-slate-800'"
+                    >
+                      <span
+                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200"
+                        :class="prof.isAvailable ? 'translate-x-5' : 'translate-x-0'"
+                      />
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Dias de Atendimento na Semana -->
+                <div class="pt-2 border-t border-slate-800/80 flex items-center gap-1.5 flex-wrap">
+                  <span class="text-[10px] text-slate-500 font-semibold mr-1">Dias:</span>
+                  <button
+                    v-for="(dayName, dIdx) in ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']"
+                    :key="dIdx"
+                    @click="toggleProfDay(prof.id, dIdx)"
+                    class="px-2 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer"
+                    :class="prof.availableDays?.includes(dIdx) ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-900 text-slate-600 border border-slate-800'"
+                  >
+                    {{ dayName }}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 2. Bloqueio Rápido de Horários Específicos -->
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <h2 class="text-sm font-bold text-white flex items-center gap-2">
+              <span>📅 Bloqueio Rápido de Horários (Intervalos)</span>
+            </h2>
+            <p class="text-xs text-slate-400">
+              Selecione uma data para bloquear ou liberar horários específicos da agenda.
             </p>
 
             <div>
@@ -227,9 +301,9 @@
           </div>
         </main>
 
-        <!-- ABA 3: Horários & Pausa de Emergência -->
+        <!-- ABA 3: Horários & Tabela Semanal de 7 Dias -->
         <main v-else-if="activeTab === 'hours'" class="px-4 mt-4 space-y-6">
-          <!-- Botão de Pausa Emergencial -->
+          <!-- Pausa de Emergência -->
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
             <h2 class="text-sm font-bold text-white flex items-center gap-2">
               <span>🛑 Pausa Geral de Atendimento</span>
@@ -247,41 +321,67 @@
             </button>
           </div>
 
-          <!-- Ajuste de Horário de Funcionamento -->
+          <!-- Tabela Semanal Completa de Segunda a Domingo -->
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
             <h2 class="text-sm font-bold text-white flex items-center gap-2">
-              <span>🕒 Horário de Atendimento Padrão</span>
+              <span>🕒 Programação Semanal & Dias de Funcionamento</span>
             </h2>
+            <p class="text-xs text-slate-400">
+              Defina os dias em que a loja abre e os horários de atendimento de cada dia da semana.
+            </p>
 
-            <div class="grid grid-cols-2 gap-4">
-              <div>
-                <label class="block text-xs text-slate-400 font-semibold mb-1">Abre às:</label>
-                <input
-                  type="time"
-                  v-model="openTimeInput"
-                  class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-white outline-none focus:border-emerald-500"
-                />
-              </div>
-              <div>
-                <label class="block text-xs text-slate-400 font-semibold mb-1">Fecha às:</label>
-                <input
-                  type="time"
-                  v-model="closeTimeInput"
-                  class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-white outline-none focus:border-emerald-500"
-                />
+            <div class="space-y-3 pt-2">
+              <div
+                v-for="d in weeklyDaysConfig"
+                :key="d.key"
+                class="p-3.5 rounded-xl bg-slate-950 border border-slate-800/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+              >
+                <div class="flex items-center justify-between sm:justify-start gap-3">
+                  <button
+                    type="button"
+                    role="switch"
+                    :aria-checked="!d.closed"
+                    @click="d.closed = !d.closed"
+                    class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200"
+                    :class="!d.closed ? 'bg-emerald-500' : 'bg-slate-800'"
+                  >
+                    <span
+                      class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200"
+                      :class="!d.closed ? 'translate-x-5' : 'translate-x-0'"
+                    />
+                  </button>
+                  <span class="text-xs font-bold text-white w-28">{{ d.label }}</span>
+                  <span class="text-[10px] font-bold uppercase px-2 py-0.5 rounded" :class="!d.closed ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'">
+                    {{ !d.closed ? 'Aberto' : 'Fechado' }}
+                  </span>
+                </div>
+
+                <div v-if="!d.closed" class="flex items-center gap-2 text-xs">
+                  <input
+                    type="time"
+                    v-model="d.open"
+                    class="bg-slate-900 border border-slate-800 rounded-lg p-2 text-white outline-none focus:border-emerald-500"
+                  />
+                  <span class="text-slate-500">às</span>
+                  <input
+                    type="time"
+                    v-model="d.close"
+                    class="bg-slate-900 border border-slate-800 rounded-lg p-2 text-white outline-none focus:border-emerald-500"
+                  />
+                </div>
               </div>
             </div>
 
             <button
-              @click="saveOpeningHours"
-              class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-xl text-xs transition-all cursor-pointer"
+              @click="saveWeeklySchedule"
+              class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3.5 rounded-xl text-xs transition-all cursor-pointer shadow-lg shadow-emerald-500/10 mt-4"
             >
-              Salvar Horários
+              Salvar Programação Semanal
             </button>
           </div>
         </main>
 
-        <!-- ABA 4: Delivery & Taxas (Menu e Shop) -->
+        <!-- ABA 4: Delivery & Taxas -->
         <main v-else-if="activeTab === 'delivery' && !isServiceStore" class="px-4 mt-4 space-y-6">
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
             <h2 class="text-sm font-bold text-white flex items-center gap-2">
@@ -329,7 +429,7 @@
           </div>
         </main>
 
-        <!-- ABA 5: Comunicado / Banner de Recado -->
+        <!-- ABA 5: Comunicado -->
         <main v-else-if="activeTab === 'announcement'" class="px-4 mt-4 space-y-6">
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
             <h2 class="text-sm font-bold text-white flex items-center gap-2">
@@ -371,6 +471,41 @@
               class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-xl text-xs transition-all cursor-pointer"
             >
               Salvar Comunicado
+            </button>
+          </div>
+        </main>
+
+        <!-- ABA 6: Segurança & Troca de PIN -->
+        <main v-else-if="activeTab === 'security'" class="px-4 mt-4 space-y-6">
+          <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
+            <h2 class="text-sm font-bold text-white flex items-center gap-2">
+              <span>🔐 Alterar PIN de Acesso da Loja</span>
+            </h2>
+            <p class="text-xs text-slate-400">
+              Defina um novo código numérico de 4 a 8 dígitos para proteger o painel da sua loja.
+            </p>
+
+            <div>
+              <label class="block text-xs text-slate-400 font-semibold mb-1">Novo PIN Numérico:</label>
+              <input
+                type="password"
+                maxlength="8"
+                inputmode="numeric"
+                v-model="newPinInput"
+                placeholder="••••"
+                class="w-full bg-slate-950 border border-slate-800 focus:border-emerald-500 rounded-xl p-3 text-center text-xl font-mono text-white outline-none"
+              />
+            </div>
+
+            <div v-if="pinSuccessMsg" class="text-xs text-emerald-400 text-center font-bold bg-emerald-500/10 border border-emerald-500/20 py-2 rounded-lg">
+              {{ pinSuccessMsg }}
+            </div>
+
+            <button
+              @click="saveNewPin"
+              class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3 rounded-xl text-xs transition-all cursor-pointer"
+            >
+              Atualizar PIN
             </button>
           </div>
         </main>
@@ -422,7 +557,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watchEffect } from 'vue'
+import { ref, computed, watchEffect, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTenant } from '~/composables/useTenant'
 import { useMerchantAdmin } from '~/composables/useMerchantAdmin'
@@ -437,11 +572,14 @@ const {
   errorMessage,
   login,
   logout,
+  updateAdminPin,
   getOverrides,
   applyOverridesToCategories,
   toggleProductAvailability,
   updateProductPrice,
-  updateHours,
+  updateWeeklySchedule,
+  toggleProfessionalAvailability,
+  updateProfessionalDays,
   updateDelivery,
   updateAnnouncement,
   updateEmergency,
@@ -449,7 +587,7 @@ const {
 } = useMerchantAdmin(slug.value)
 
 const pinInput = ref('')
-const activeTab = ref<'catalog' | 'agenda' | 'hours' | 'delivery' | 'announcement'>('catalog')
+const activeTab = ref<'catalog' | 'agenda' | 'hours' | 'delivery' | 'announcement' | 'security'>('catalog')
 
 // Identifica se a loja é de serviços/agendamento
 const isServiceStore = computed(() => {
@@ -496,21 +634,94 @@ async function confirmPriceEdit() {
   isPriceModalOpen.value = false
 }
 
-// 2. Horários & Emergência
-const openTimeInput = ref(tenant.value?.openingHours?.open || '09:00')
-const closeTimeInput = ref(tenant.value?.openingHours?.close || '20:00')
-const isEmergencyClosed = ref(false)
+// 2. Programação Semanal de 7 Dias
+const weeklyDaysConfig = ref([
+  { key: 'monday', label: 'Segunda-feira', closed: false, open: '09:00', close: '20:00' },
+  { key: 'tuesday', label: 'Terça-feira', closed: false, open: '09:00', close: '20:00' },
+  { key: 'wednesday', label: 'Quarta-feira', closed: false, open: '09:00', close: '20:00' },
+  { key: 'thursday', label: 'Quinta-feira', closed: false, open: '09:00', close: '20:00' },
+  { key: 'friday', label: 'Sexta-feira', closed: false, open: '09:00', close: '20:00' },
+  { key: 'saturday', label: 'Sábado', closed: false, open: '09:00', close: '20:00' },
+  { key: 'sunday', label: 'Domingo', closed: true, open: '09:00', close: '18:00' },
+])
 
-function saveOpeningHours() {
-  updateHours(openTimeInput.value, closeTimeInput.value)
+onMounted(() => {
+  const overrides = getOverrides()
+  const hours = overrides.openingHours || tenant.value?.openingHours || {}
+  const defOpen = hours.open || '09:00'
+  const defClose = hours.close || '20:00'
+
+  weeklyDaysConfig.value.forEach(d => {
+    const dayData = (hours as any)[d.key]
+    if (dayData) {
+      d.closed = Boolean(dayData.closed)
+      d.open = dayData.open || defOpen
+      d.close = dayData.close || defClose
+    } else {
+      d.open = defOpen
+      d.close = defClose
+    }
+  })
+})
+
+function saveWeeklySchedule() {
+  const schedulePayload: Record<string, any> = {}
+  weeklyDaysConfig.value.forEach(d => {
+    schedulePayload[d.key] = {
+      open: d.open,
+      close: d.close,
+      closed: d.closed
+    }
+  })
+  updateWeeklySchedule(schedulePayload)
 }
+
+// 3. Pausa de Emergência
+const isEmergencyClosed = ref(false)
 
 function toggleEmergencyPause() {
   isEmergencyClosed.value = !isEmergencyClosed.value
   updateEmergency(isEmergencyClosed.value, isEmergencyClosed.value ? 'Atendimento pausado temporariamente' : '')
 }
 
-// 3. Delivery & Taxas
+// 4. Barbeiros & Profissionais
+const defaultProfessionals = [
+  { id: 'prof-1', name: 'Carlos Santos', role: 'Barbeiro Master', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6] },
+  { id: 'prof-2', name: 'Lucas Oliveira', role: 'Visagista & Barbeiro', isAvailable: true, availableDays: [2, 3, 4, 5, 6] },
+  { id: 'prof-3', name: 'Mateus Silva', role: 'Especialista em Cortes Clássicos', isAvailable: true, availableDays: [1, 3, 4, 5, 6] }
+]
+
+const professionalsList = computed(() => {
+  const overrides = getOverrides()
+  const profOverrides = overrides.professionals || {}
+
+  return defaultProfessionals.map(p => {
+    const ov = profOverrides[p.id]
+    return {
+      ...p,
+      isAvailable: ov?.isAvailable !== undefined ? ov.isAvailable : p.isAvailable,
+      availableDays: ov?.availableDays || p.availableDays
+    }
+  })
+})
+
+function toggleProfAvailable(profId: string, currentAvailable: boolean) {
+  toggleProfessionalAvailability(profId, !currentAvailable)
+}
+
+function toggleProfDay(profId: string, dayIndex: number) {
+  const prof = professionalsList.value.find(p => p.id === profId)
+  if (!prof) return
+  let days = [...(prof.availableDays || [])]
+  if (days.includes(dayIndex)) {
+    days = days.filter(d => d !== dayIndex)
+  } else {
+    days.push(dayIndex)
+  }
+  updateProfessionalDays(profId, days.sort())
+}
+
+// 5. Delivery & Taxas
 const deliveryFeeInput = ref((tenant.value as any)?.deliveryFee || 6.0)
 const minOrderInput = ref((tenant.value as any)?.minOrderValue || 20.0)
 const estimatedTimeInput = ref('35-50 min')
@@ -519,7 +730,7 @@ function saveDeliveryConfig() {
   updateDelivery(deliveryFeeInput.value, minOrderInput.value, estimatedTimeInput.value)
 }
 
-// 4. Comunicado
+// 6. Comunicado
 const announcementEnabled = ref(false)
 const announcementMessage = ref('')
 
@@ -527,7 +738,19 @@ function saveAnnouncementConfig() {
   updateAnnouncement(announcementEnabled.value, announcementMessage.value)
 }
 
-// 5. Agenda & Bloqueios
+// 7. Troca de PIN
+const newPinInput = ref('')
+const pinSuccessMsg = ref('')
+
+function saveNewPin() {
+  if (updateAdminPin(newPinInput.value)) {
+    pinSuccessMsg.value = 'PIN de acesso atualizado com sucesso!'
+    newPinInput.value = ''
+    setTimeout(() => { pinSuccessMsg.value = '' }, 3000)
+  }
+}
+
+// 8. Agenda & Bloqueios
 const selectedAgendaDate = ref(new Date().toISOString().split('T')[0])
 const sampleSlots = ['09:00', '10:00', '11:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00']
 

@@ -140,11 +140,11 @@
             </div>
           </div>
 
-          <!-- STEP 2: Escolha de Profissional -->
+          <!-- STEP 2: Escolha de Profissional com Respeito a Folgas e Escala -->
           <div v-else-if="currentStep === 2" class="space-y-4 animate-in fade-in duration-150">
             <div>
               <h3 class="font-bold text-sm text-slate-900">Escolha o profissional:</h3>
-              <p class="text-xs text-slate-500">Ou selecione "Qualquer profissional" para maior disponibilidade.</p>
+              <p class="text-xs text-slate-500">Ou selecione "Qualquer profissional" para o primeiro horário livre.</p>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -169,20 +169,26 @@
               <div
                 v-for="prof in availableProfessionals"
                 :key="prof.id"
-                @click="selectedProfessional = prof"
+                @click="prof.isAvailable && (selectedProfessional = prof)"
                 :class="[
-                  'p-3.5 rounded-2xl border transition-all flex items-center gap-3 cursor-pointer',
+                  'p-3.5 rounded-2xl border transition-all flex items-center gap-3',
+                  !prof.isAvailable ? 'opacity-50 grayscale bg-slate-50 border-dashed cursor-not-allowed' :
                   selectedProfessional?.id === prof.id
-                    ? 'border-emerald-600 bg-emerald-50/70 shadow-2xs'
-                    : 'border-slate-200 bg-white hover:bg-slate-50'
+                    ? 'border-emerald-600 bg-emerald-50/70 shadow-2xs cursor-pointer'
+                    : 'border-slate-200 bg-white hover:bg-slate-50 cursor-pointer'
                 ]"
               >
                 <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-sm shrink-0">
                   {{ prof.name.charAt(0) }}
                 </div>
-                <div>
-                  <span class="font-bold text-xs text-slate-900 block">{{ prof.name }}</span>
-                  <span class="text-[11px] text-slate-500">{{ prof.role || 'Especialista' }}</span>
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-1.5">
+                    <span class="font-bold text-xs text-slate-900 truncate">{{ prof.name }}</span>
+                    <span v-if="!prof.isAvailable" class="text-[9px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded uppercase">
+                      De Folga
+                    </span>
+                  </div>
+                  <span class="text-[11px] text-slate-500 block">{{ prof.role || 'Especialista' }}</span>
                 </div>
               </div>
             </div>
@@ -246,7 +252,13 @@
             <!-- Grade de Horários Livres -->
             <div class="space-y-2 pt-2">
               <span class="text-xs font-bold text-slate-700 block">Horários Disponíveis ({{ totalDuration }} min):</span>
-              <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              
+              <div v-if="isDayStoreClosed" class="p-4 bg-rose-50 border border-rose-200 rounded-xl text-center">
+                <span class="text-xs font-bold text-rose-700 block">⚠️ Estabelecimento Fechado neste dia da semana</span>
+                <span class="text-[11px] text-rose-600 mt-0.5 block">Selecione outro dia no carrossel acima para ver os horários.</span>
+              </div>
+
+              <div v-else class="grid grid-cols-3 sm:grid-cols-4 gap-2">
                 <button
                   type="button"
                   v-for="slot in availableSlots"
@@ -468,7 +480,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, toRef, watch, onMounted } from 'vue'
+import { ref, computed, toRef, onMounted } from 'vue'
 import { useBodyScrollLock } from '~/composables/useBodyScrollLock'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 import { formatCurrency } from '~/utils/formatters'
@@ -545,18 +557,54 @@ const availableServices = computed<BookingService[]>(() => {
   return services
 })
 
-// 4. Estado de Profissional
+// 4. Estado de Profissional com Overrides do Admin
 const selectedProfessional = ref<BookingProfessional | null>(null)
-const availableProfessionals = computed<BookingProfessional[]>(() => [
-  { id: 'prof-1', name: 'Carlos Santos', role: 'Barbeiro Master', available: true },
-  { id: 'prof-2', name: 'Lucas Oliveira', role: 'Visagista & Barbeiro', available: true },
-  { id: 'prof-3', name: 'Mateus Silva', role: 'Especialista em Cortes Clássicos', available: true }
-])
+
+const defaultProfessionals = [
+  { id: 'prof-1', name: 'Carlos Santos', role: 'Barbeiro Master', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6] },
+  { id: 'prof-2', name: 'Lucas Oliveira', role: 'Visagista & Barbeiro', isAvailable: true, availableDays: [2, 3, 4, 5, 6] },
+  { id: 'prof-3', name: 'Mateus Silva', role: 'Especialista em Cortes Clássicos', isAvailable: true, availableDays: [1, 3, 4, 5, 6] }
+]
+
+const availableProfessionals = computed(() => {
+  let profOverrides: Record<string, any> = {}
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = localStorage.getItem(`alaska_overrides_${props.tenant.slug}`)
+      if (raw) profOverrides = JSON.parse(raw).professionals || {}
+    } catch {}
+  }
+
+  // Verifica o dia da semana da data selecionada (0 = Dom a 6 = Sáb)
+  const selectedDayOfWeek = new Date(selectedDate.value + 'T12:00:00').getDay()
+
+  return defaultProfessionals.map(p => {
+    const ov = profOverrides[p.id]
+    const isAvail = ov?.isAvailable !== undefined ? ov.isAvailable : p.isAvailable
+    const days = ov?.availableDays || p.availableDays
+    const worksOnSelectedDay = days.includes(selectedDayOfWeek)
+
+    return {
+      ...p,
+      isAvailable: isAvail && worksOnSelectedDay
+    }
+  })
+})
 
 // 5. Estado de Data e Horário (Próximos 30 dias com Rolagem Desktop)
-const selectedDate = ref('2026-08-30')
+const selectedDate = ref(new Date().toISOString().split('T')[0])
 const selectedTime = ref('14:00')
 const daysContainerRef = ref<HTMLElement | null>(null)
+
+const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+
+const isDayStoreClosed = computed(() => {
+  const hours = props.tenant?.openingHours as any
+  if (!hours) return false
+  const dayIndex = new Date(selectedDate.value + 'T12:00:00').getDay()
+  const dayKey = DAY_KEYS[dayIndex]
+  return Boolean(hours[dayKey]?.closed)
+})
 
 function scrollDays(direction: 'left' | 'right') {
   if (!daysContainerRef.value) return
@@ -694,14 +742,14 @@ function copyPixCode() {
 function canGoToStep(step: number): boolean {
   if (step === 2) return selectedServices.value.length > 0
   if (step === 3) return selectedServices.value.length > 0
-  if (step === 4) return selectedServices.value.length > 0 && !!selectedDate.value && !!selectedTime.value
+  if (step === 4) return selectedServices.value.length > 0 && !!selectedDate.value && !!selectedTime.value && !isDayStoreClosed.value
   return true
 }
 
 const canAdvanceFromCurrentStep = computed(() => {
   if (currentStep.value === 1) return selectedServices.value.length > 0
   if (currentStep.value === 2) return true
-  if (currentStep.value === 3) return !!selectedDate.value && !!selectedTime.value
+  if (currentStep.value === 3) return !!selectedDate.value && !!selectedTime.value && !isDayStoreClosed.value
   return false
 })
 
@@ -740,7 +788,7 @@ function submitBooking() {
   lines.push(`*VALOR TOTAL: ${formatCurrency(totalPrice.value)}*`)
 
   if (paymentMode.value === 'pix_deposit') {
-    lines.push(`💠 *SINAL VIA PIX:* ${formatCurrency(isTestCentMode.value ? 0.01 : depositAmount.value)}`)
+    lines.push(`💠 *SINAL VIA PIX:* ${formatCurrency(isTestCentMode.value ? 0.01 : depositAmount.value)}`)\
     lines.push(`💳 *Restante no Local:* ${formatCurrency(totalPrice.value - depositAmount.value)}`)
   } else {
     lines.push(`💳 *PAGAMENTO:* No local (Atendimento presencial)`)

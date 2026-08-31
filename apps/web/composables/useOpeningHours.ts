@@ -10,6 +10,9 @@ export interface OpeningStatus {
   formattedHours: string | null
 }
 
+const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
+const DAY_NAMES = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado']
+
 export function parseTimeToMinutes(timeStr?: string | null): number {
   if (!timeStr) return 0
   const [hStr, mStr] = timeStr.split(':')
@@ -35,7 +38,7 @@ export function isStoreOpenNow(openingHours?: { open?: string; close?: string } 
 }
 
 export function getOpeningStatus(
-  openingHours?: { open?: string; close?: string } | null,
+  openingHours?: any,
   now = new Date(),
   isEmergencyClosed = false
 ): OpeningStatus {
@@ -49,7 +52,48 @@ export function getOpeningStatus(
     }
   }
 
-  if (!openingHours?.open || !openingHours?.close) {
+  if (!openingHours) {
+    return {
+      isOpen: true,
+      statusText: 'Aberto agora',
+      badgeLabel: '🟢 Aberto agora',
+      nextTime: null,
+      formattedHours: null
+    }
+  }
+
+  // 1. Verifica configuração do dia da semana atual
+  const dayIndex = now.getDay()
+  const currentDayKey = DAY_KEYS[dayIndex]
+  const dayConfig = openingHours[currentDayKey]
+
+  // Se o dia da semana atual estiver marcado como fechado/folga
+  if (dayConfig && dayConfig.closed) {
+    let nextOpenText = ''
+    for (let offset = 1; offset <= 7; offset++) {
+      const nextIndex = (dayIndex + offset) % 7
+      const nextKey = DAY_KEYS[nextIndex]
+      const nextDay = openingHours[nextKey]
+      if (nextDay && !nextDay.closed && (nextDay.open || openingHours.open)) {
+        const openH = nextDay.open || openingHours.open
+        const dayLabel = offset === 1 ? 'amanhã' : DAY_NAMES[nextIndex]
+        nextOpenText = ` • Abre ${dayLabel} às ${openH}`
+        break
+      }
+    }
+    return {
+      isOpen: false,
+      statusText: `Fechado hoje${nextOpenText}`,
+      badgeLabel: `🕒 Fechado hoje${nextOpenText}`,
+      nextTime: null,
+      formattedHours: 'Fechado'
+    }
+  }
+
+  const openTime = dayConfig?.open || openingHours.open
+  const closeTime = dayConfig?.close || openingHours.close
+
+  if (!openTime || !closeTime) {
     return {
       isOpen: true,
       statusText: 'Aberto agora',
@@ -60,39 +104,39 @@ export function getOpeningStatus(
   }
 
   const currentMinutes = now.getHours() * 60 + now.getMinutes()
-  const openMin = parseTimeToMinutes(openingHours.open)
-  const closeMin = parseTimeToMinutes(openingHours.close)
-  const isOpen = isStoreOpenNow(openingHours, now)
-  const formattedHours = `${openingHours.open} às ${openingHours.close}`
+  const openMin = parseTimeToMinutes(openTime)
+  const closeMin = parseTimeToMinutes(closeTime)
+  const isOpen = isStoreOpenNow({ open: openTime, close: closeTime }, now)
+  const formattedHours = `${openTime} às ${closeTime}`
 
   if (isOpen) {
     return {
       isOpen: true,
-      statusText: `Aberto até às ${openingHours.close}`,
-      badgeLabel: `🟢 Aberto até às ${openingHours.close}`,
-      nextTime: openingHours.close,
+      statusText: `Aberto até às ${closeTime}`,
+      badgeLabel: `🟢 Aberto até às ${closeTime}`,
+      nextTime: closeTime,
       formattedHours
     }
   }
 
-  // Fechado antes do horário de abertura diurno
+  // Fechado antes do expediente diurno
   if (closeMin >= openMin && currentMinutes < openMin) {
     return {
       isOpen: false,
-      statusText: `Fechado • Abre hoje às ${openingHours.open}`,
-      badgeLabel: `🕒 Fechado • Abre hoje às ${openingHours.open}`,
-      nextTime: openingHours.open,
+      statusText: `Fechado • Abre hoje às ${openTime}`,
+      badgeLabel: `🕒 Fechado • Abre hoje às ${openTime}`,
+      nextTime: openTime,
       formattedHours
     }
   }
 
-  // Fechado durante a tarde em horário noturno
+  // Fechado durante a tarde em turno noturno
   if (closeMin < openMin && currentMinutes > closeMin && currentMinutes < openMin) {
     return {
       isOpen: false,
-      statusText: `Fechado • Abre hoje às ${openingHours.open}`,
-      badgeLabel: `🕒 Fechado • Abre hoje às ${openingHours.open}`,
-      nextTime: openingHours.open,
+      statusText: `Fechado • Abre hoje às ${openTime}`,
+      badgeLabel: `🕒 Fechado • Abre hoje às ${openTime}`,
+      nextTime: openTime,
       formattedHours
     }
   }
@@ -100,9 +144,9 @@ export function getOpeningStatus(
   // Fechado após o encerramento do dia
   return {
     isOpen: false,
-    statusText: `Fechado • Abre às ${openingHours.open}`,
-    badgeLabel: `🕒 Fechado • Abre às ${openingHours.open}`,
-    nextTime: openingHours.open,
+    statusText: `Fechado • Abre às ${openTime}`,
+    badgeLabel: `🕒 Fechado • Abre às ${openTime}`,
+    nextTime: openTime,
     formattedHours
   }
 }
@@ -114,7 +158,7 @@ export function useOpeningHours(
     const raw = isRef(tenantOrHours) ? tenantOrHours.value : tenantOrHours
     if (!raw) return getOpeningStatus(null)
 
-    let hours: { open?: string; close?: string } | null = null
+    let hours: any = null
     let isEmergencyClosed = false
 
     if (typeof raw === 'object') {
@@ -124,7 +168,7 @@ export function useOpeningHours(
       if ('openingHours' in raw && raw.openingHours) {
         hours = raw.openingHours
       } else if ('open' in raw && 'close' in raw) {
-        hours = raw as { open?: string; close?: string }
+        hours = raw
       }
     }
 

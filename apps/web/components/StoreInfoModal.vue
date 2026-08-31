@@ -1,105 +1,71 @@
 <!-- components/StoreInfoModal.vue -->
-<script setup lang="ts">
-import { computed, toRef, onMounted, onUnmounted } from 'vue'
-import { useBodyScrollLock } from '~/composables/useBodyScrollLock'
-import { useTenantTheme } from '~/composables/useTenantTheme'
-import { useOpeningHours } from '~/composables/useOpeningHours'
-import { formatCurrency } from '~/utils/formatters'
-import { handleImageError } from '~/utils/images'
-import {
-  X,
-  Clock,
-  MapPin,
-  CreditCard,
-  Navigation,
-  ShieldCheck
-} from 'lucide-vue-next'
-import type { Tenant } from '~/types'
-
-const props = defineProps<{
-  tenant: Tenant
-  isOpen: boolean
-}>()
-
-const emit = defineEmits<{
-  (e: 'close'): void
-}>()
-
-// 1. Tema Dinâmico
-const { themeClasses } = useTenantTheme(toRef(props, 'tenant'))
-
-// 2. Trava de Scroll e Acessibilidade ESC
-useBodyScrollLock(toRef(props, 'isOpen'))
-
-const handleKeyDown = (e: KeyboardEvent) => {
-  if (e.key === 'Escape' && props.isOpen) {
-    emit('close')
-  }
-}
-
-onMounted(() => {
-  if (import.meta.client) {
-    window.addEventListener('keydown', handleKeyDown)
-  }
-})
-
-onUnmounted(() => {
-  if (import.meta.client) {
-    window.removeEventListener('keydown', handleKeyDown)
-  }
-})
-
-// 3. Status e Horários Dinâmicos
-const { isOpen: isOpenNow, statusBadgeLabel, formattedOpeningHours } = useOpeningHours(toRef(props, 'tenant'))
-
-const formatOpeningHours = computed(() => {
-  if (!props.tenant.openingHours) return null
-  return `${props.tenant.openingHours.open} às ${props.tenant.openingHours.close}`
-})
-</script>
-
 <template>
   <Teleport to="body">
-    <div v-if="isOpen"
-      class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex flex-col sm:items-center sm:justify-center p-0 sm:p-4 animate-in fade-in duration-200"
-      @click="emit('close')">
-      <div role="dialog" aria-modal="true" aria-labelledby="info-modal-title"
-        class="bg-white text-slate-800 w-full h-full sm:h-auto sm:max-h-[88vh] sm:max-w-lg flex flex-col overflow-hidden sm:rounded-3xl sm:border sm:border-slate-200 sm:shadow-2xl"
-        @click.stop>
-        <!-- Header do Modal (Fixo no Topo) -->
-        <div class="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between shrink-0">
-          <h2 id="info-modal-title" class="text-lg font-extrabold text-slate-900">
-            Informações da Loja
-          </h2>
-          <button @click="emit('close')"
-            class="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
-            aria-label="Fechar informações da loja">
-            <X class="h-5 w-5" aria-hidden="true" />
+    <div
+      v-if="isOpen"
+      class="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-xs flex flex-col sm:items-center sm:justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+      @click="emit('close')"
+    >
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="store-info-modal-title"
+        class="bg-white text-slate-800 w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-lg flex flex-col overflow-hidden sm:rounded-3xl sm:border sm:border-slate-200 sm:shadow-2xl"
+        @click.stop
+      >
+        <!-- 1. Header do Modal -->
+        <div class="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between shrink-0 bg-white">
+          <div class="flex items-center gap-2">
+            <Store class="w-5 h-5" :class="themeClasses.primaryText" aria-hidden="true" />
+            <div>
+              <h2 id="store-info-modal-title" class="text-base font-extrabold text-slate-900 leading-tight">
+                Informações da Loja
+              </h2>
+              <span class="text-[11px] text-slate-500 font-medium">
+                {{ tenant.name }} • Detalhes operacionais e endereço
+              </span>
+            </div>
+          </div>
+
+          <button
+            @click="emit('close')"
+            class="p-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
+            aria-label="Fechar informações da loja"
+          >
+            <X class="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
-        <!-- Conteúdo Rolável -->
+        <!-- 2. Conteúdo Rolável -->
         <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-6">
           <!-- 1. Identidade e Sobre -->
           <section aria-labelledby="store-identity-title" class="space-y-3">
-            <div class="flex items-center gap-3.5 rounded-2xl border border-slate-200 bg-slate-50 p-4">
-              <div class="h-16 w-16 rounded-2xl border-2 border-slate-200 bg-white overflow-hidden shrink-0 shadow-2xs">
-                <img v-if="tenant.logo" :src="tenant.logo" :alt="tenant.name" class="h-full w-full object-cover"
-                  @error="handleImageError($event, tenant?.theme)" />
-                <div v-else class="h-full w-full flex items-center justify-center font-bold text-lg"
-                  :class="themeClasses.primaryText">
+            <div class="flex items-start gap-3.5 p-4 rounded-2xl bg-slate-50 border border-slate-100">
+              <div class="relative h-14 w-14 rounded-xl bg-white p-1 shadow-xs border border-slate-200/80 shrink-0 overflow-hidden">
+                <img
+                  v-if="tenant.logo"
+                  :src="tenant.logo"
+                  :alt="`Logo de ${tenant.name}`"
+                  class="w-full h-full object-cover rounded-lg"
+                  @error="handleImageError($event, tenant?.theme)"
+                />
+                <div
+                  v-else
+                  class="w-full h-full flex items-center justify-center font-bold text-lg"
+                  :class="themeClasses.primaryText"
+                >
                   {{ tenant.name.charAt(0) }}
                 </div>
               </div>
 
-              <div class="min-w-0 flex-1">
-                <h3 id="store-identity-title" class="text-base font-bold text-slate-900 truncate">
+              <div class="flex-1 min-w-0">
+                <h3 id="store-identity-title" class="font-extrabold text-sm text-slate-900 truncate">
                   {{ tenant.name }}
                 </h3>
-                <p v-if="tenant.description" class="text-xs text-slate-500 mt-0.5 line-clamp-2 leading-relaxed">
+                <p v-if="tenant.description" class="text-xs text-slate-600 line-clamp-2 mt-0.5 leading-relaxed">
                   {{ tenant.description }}
                 </p>
-                <div class="flex items-center gap-2 mt-2 text-[11px] font-semibold" :class="themeClasses.primaryText">
+                <div class="flex items-center gap-1.5 mt-2 text-[11px] font-semibold text-emerald-600">
                   <ShieldCheck class="w-3.5 h-3.5" aria-hidden="true" />
                   <span>Ambiente Seguro & Verificado</span>
                 </div>
@@ -107,119 +73,80 @@ const formatOpeningHours = computed(() => {
             </div>
           </section>
 
-          <!-- 2. Horários de Atendimento -->
-          <section aria-labelledby="store-hours-title">
-            <h3 id="store-hours-title" class="text-sm font-bold text-slate-900 mb-2.5 flex items-center gap-2">
-              <Clock class="w-4 h-4" :class="themeClasses.primaryText" aria-hidden="true" />
-              <span>Horário de Funcionamento</span>
-            </h3>
+          <!-- 2. Tabela de Horários Semanais da Loja -->
+          <section aria-labelledby="store-hours-title" class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 id="store-hours-title" class="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Horários de Atendimento da Semana
+              </h3>
+              <span
+                role="status"
+                :class="isOpenNow ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-rose-50 text-rose-700 border-rose-200'"
+                class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border"
+              >
+                {{ statusBadgeLabel }}
+              </span>
+            </div>
 
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-              <div class="flex items-center justify-between">
-                <span class="text-xs text-slate-600 font-medium">Status no Momento:</span>
-                <span role="status"
-                  :class="isOpenNow ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-800 border-amber-200'"
-                  class="px-2.5 py-0.5 rounded-full text-xs font-bold border">
-                  {{ statusBadgeLabel }}
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2 text-xs">
+              <div
+                v-for="day in weeklyScheduleList"
+                :key="day.key"
+                class="flex items-center justify-between py-1 border-b border-slate-100 last:border-0"
+                :class="{ 'font-bold text-slate-900 bg-white p-2 rounded-lg border border-slate-200 shadow-2xs': day.isToday }"
+              >
+                <div class="flex items-center gap-2">
+                  <span class="w-1.5 h-1.5 rounded-full" :class="day.isToday ? 'bg-emerald-500 animate-pulse' : 'bg-slate-300'"></span>
+                  <span>{{ day.name }}</span>
+                  <span v-if="day.isToday" class="text-[9px] bg-emerald-50 text-emerald-700 font-extrabold px-1.5 py-0.2 rounded uppercase">
+                    Hoje
+                  </span>
+                </div>
+
+                <span
+                  v-if="day.closed"
+                  class="text-[10px] font-bold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-md"
+                >
+                  Fechado / Folga
+                </span>
+                <span v-else class="font-mono font-medium text-slate-700">
+                  {{ day.open }} às {{ day.close }}
                 </span>
               </div>
-
-              <div class="flex items-center justify-between border-t border-slate-200 pt-2.5 text-xs">
-                <span class="text-slate-500">Atendimento Hoje:</span>
-                <span class="font-bold text-slate-900">{{ formattedOpeningHours || formatOpeningHours || 'Consulte no WhatsApp' }}</span>
-              </div>
             </div>
           </section>
 
-          <!-- 3. Formas de Pagamento -->
-          <section aria-labelledby="store-payments-title">
-            <h3 id="store-payments-title" class="text-sm font-bold text-slate-900 mb-2.5 flex items-center gap-2">
-              <CreditCard class="w-4 h-4" :class="themeClasses.primaryText" aria-hidden="true" />
-              <span>Formas de Pagamento</span>
+          <!-- 3. Endereço e Localização -->
+          <section v-if="tenant.address" aria-labelledby="store-address-title" class="space-y-3">
+            <h3 id="store-address-title" class="text-xs font-bold uppercase tracking-wider text-slate-400">
+              Endereço & Atendimento Presencial
             </h3>
 
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3 text-xs" role="list">
-              <div class="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-200" role="listitem">
-                <div class="space-y-0.5">
-                  <span class="font-bold text-slate-900 block">Pix Direto (D+0)</span>
-                  <span class="text-slate-500 text-[11px]">Chave informada automaticamente no fechamento do
-                    pedido</span>
-                </div>
-                <span class="font-bold shrink-0" :class="themeClasses.primaryText">Instantâneo</span>
+            <div class="bg-slate-50 rounded-2xl p-4 border border-slate-100 space-y-2 text-xs">
+              <div class="flex items-start gap-2.5">
+                <MapPin class="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                <span class="text-slate-700 leading-relaxed font-medium">{{ tenant.address }}</span>
               </div>
 
-              <div class="flex items-start justify-between gap-2 pb-2.5 border-b border-slate-200" role="listitem">
-                <div class="space-y-0.5">
-                  <span class="font-bold text-slate-900 block">Cartões de Crédito & Débito</span>
-                  <span class="text-slate-500 text-[11px]">Visa, Mastercard, Elo na maquininha do entregador</span>
-                </div>
-                <span class="text-slate-500 font-medium shrink-0">Na Entrega</span>
-              </div>
-
-              <div class="flex items-start justify-between gap-2" role="listitem">
-                <div class="space-y-0.5">
-                  <span class="font-bold text-slate-900 block">Dinheiro em Espécie</span>
-                  <span class="text-slate-500 text-[11px]">Com opção de troco no checkout</span>
-                </div>
-                <span class="text-slate-500 font-medium shrink-0">Na Entrega</span>
-              </div>
-            </div>
-          </section>
-
-          <!-- 4. Endereço e Localização -->
-          <section aria-labelledby="store-address-title">
-            <h3 id="store-address-title" class="text-sm font-bold text-slate-900 mb-2.5 flex items-center gap-2">
-              <MapPin class="w-4 h-4" :class="themeClasses.primaryText" aria-hidden="true" />
-              <span>Endereço & Entrega</span>
-            </h3>
-
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 space-y-3.5 text-xs">
-              <div class="flex items-start justify-between gap-3">
-                <div class="space-y-1">
-                  <span class="font-bold text-slate-900 block">Endereço da Loja:</span>
-                  <span class="text-slate-600 leading-relaxed block">
-                    {{ tenant.address || 'Atendimento e entrega para a região local.' }}
-                  </span>
-                </div>
-
-                <a v-if="tenant.address"
-                  :href="`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(tenant.address)}`"
-                  target="_blank"
-                  class="shrink-0 p-2.5 rounded-xl bg-white border border-slate-200 hover:bg-slate-100 transition-colors flex items-center gap-1.5 font-bold shadow-2xs"
-                  :class="themeClasses.primaryText"
-                  aria-label="Abrir rota no Google Maps para o endereço do estabelecimento">
-                  <Navigation class="w-4 h-4" aria-hidden="true" />
-                  <span class="text-[11px]">Rotas</span>
-                </a>
-              </div>
-
-              <div class="grid grid-cols-2 gap-2 pt-2 border-t border-slate-200">
-                <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
-                  <span class="text-slate-500 text-[11px] block">Taxa de Entrega</span>
-                  <span class="font-bold text-xs" :class="themeClasses.primaryText">
-                    {{ tenant.deliveryFee ? formatCurrency(tenant.deliveryFee) : 'Grátis' }}
-                  </span>
-                </div>
-
-                <div class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs">
-                  <span class="text-slate-500 text-[11px] block">Pedido Mínimo</span>
-                  <span class="font-bold text-slate-900 text-xs">
-                    {{ tenant.minOrderValue ? formatCurrency(tenant.minOrderValue) : 'Sem valor mínimo' }}
-                  </span>
-                </div>
+              <div v-if="tenant.deliveryType" class="flex items-center gap-2.5 pt-2 border-t border-slate-200/80 text-[11px] text-slate-500">
+                <Truck class="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                <span>{{ tenant.deliveryType }}</span>
               </div>
             </div>
           </section>
         </div>
 
-        <!-- Footer do Modal -->
+        <!-- 3. Footer do Modal -->
         <div class="p-4 border-t border-slate-200 bg-slate-50 flex items-center justify-between shrink-0">
           <span class="text-xs text-slate-500">
-            Dúvidas ou encomendas especiais?
+            Dúvidas ou encomendas?
           </span>
-          <a :href="`https://wa.me/55${(tenant.phoneWhatsApp || '').replace(/\\D/g, '')}`" target="_blank"
+          <a
+            :href="`https://wa.me/55${(tenant.phoneWhatsApp || '').replace(/\D/g, '')}`"
+            target="_blank"
             class="px-4 py-2 rounded-xl text-xs font-bold text-white transition-all shadow-sm active:scale-95 flex items-center gap-1.5 cursor-pointer"
-            :class="themeClasses.buttonPrimary">
+            :class="themeClasses.buttonPrimary"
+          >
             Chamar no WhatsApp
           </a>
         </div>
@@ -227,3 +154,54 @@ const formatOpeningHours = computed(() => {
     </div>
   </Teleport>
 </template>
+
+<script setup lang="ts">
+import { computed, toRef } from 'vue'
+import { useTenantTheme } from '~/composables/useTenantTheme'
+import { useOpeningHours } from '~/composables/useOpeningHours'
+import { handleImageError } from '~/utils/images'
+import { X, Store, MapPin, Truck, ShieldCheck } from 'lucide-vue-next'
+import type { Tenant } from '~/types'
+
+const props = defineProps<{
+  isOpen: boolean
+  tenant: Tenant
+}>()
+
+const emit = defineEmits<{
+  (e: 'close'): void
+}>()
+
+const { themeClasses } = useTenantTheme(toRef(props, 'tenant'))
+const { isOpen: isOpenNow, statusBadgeLabel } = useOpeningHours(toRef(props, 'tenant'))
+
+const DAY_ORDER = [
+  { key: 'monday', name: 'Segunda-feira', dayIndex: 1 },
+  { key: 'tuesday', name: 'Terça-feira', dayIndex: 2 },
+  { key: 'wednesday', name: 'Quarta-feira', dayIndex: 3 },
+  { key: 'thursday', name: 'Quinta-feira', dayIndex: 4 },
+  { key: 'friday', name: 'Sexta-feira', dayIndex: 5 },
+  { key: 'saturday', name: 'Sábado', dayIndex: 6 },
+  { key: 'sunday', name: 'Domingo', dayIndex: 0 },
+]
+
+const todayIndex = new Date().getDay()
+
+const weeklyScheduleList = computed(() => {
+  const hours = props.tenant?.openingHours || {}
+  const defaultOpen = hours.open || '09:00'
+  const defaultClose = hours.close || '19:00'
+
+  return DAY_ORDER.map(d => {
+    const dayConfig = (hours as any)[d.key]
+    return {
+      key: d.key,
+      name: d.name,
+      isToday: d.dayIndex === todayIndex,
+      closed: dayConfig ? Boolean(dayConfig.closed) : false,
+      open: dayConfig?.open || defaultOpen,
+      close: dayConfig?.close || defaultClose,
+    }
+  })
+})
+</script>

@@ -3,13 +3,37 @@ import { ref, computed } from 'vue'
 import type { Product, Category } from '@alaska/contracts'
 import { useHaptic } from './useHaptic'
 
+export interface DaySchedule {
+  open: string
+  close: string
+  closed: boolean
+}
+
+export interface ProfessionalOverride {
+  isAvailable?: boolean
+  availableDays?: number[] // 0 (Dom) a 6 (Sáb)
+  lunchBreak?: { start: string; end: string; enabled: boolean }
+}
+
 export interface TenantOverrides {
   products?: Record<string, { isAvailable?: boolean; price?: number; durationMinutes?: number }>
-  openingHours?: { open?: string; close?: string }
+  openingHours?: {
+    open?: string
+    close?: string
+    monday?: DaySchedule
+    tuesday?: DaySchedule
+    wednesday?: DaySchedule
+    thursday?: DaySchedule
+    friday?: DaySchedule
+    saturday?: DaySchedule
+    sunday?: DaySchedule
+  }
+  professionals?: Record<string, ProfessionalOverride>
   delivery?: { deliveryFee?: number; minOrderValue?: number; estimatedTime?: string }
   announcement?: { isEnabled: boolean; message: string }
   emergency?: { isClosed: boolean; reason: string }
   blockedSlots?: Array<{ date: string; time: string; reason: string }>
+  customPin?: string
 }
 
 function getApiBaseUrl(): string {
@@ -100,10 +124,13 @@ export function useMerchantAdmin(slug: string) {
         ...current,
         ...newOverrides,
         products: { ...current.products, ...(newOverrides.products || {}) },
+        openingHours: { ...current.openingHours, ...(newOverrides.openingHours || {}) },
+        professionals: { ...current.professionals, ...(newOverrides.professionals || {}) },
         delivery: { ...current.delivery, ...(newOverrides.delivery || {}) },
         announcement: newOverrides.announcement ?? current.announcement,
         emergency: newOverrides.emergency ?? current.emergency,
-        blockedSlots: newOverrides.blockedSlots ?? current.blockedSlots ?? []
+        blockedSlots: newOverrides.blockedSlots ?? current.blockedSlots ?? [],
+        customPin: newOverrides.customPin ?? current.customPin
       }
       setStorageItem(overridesKey, JSON.stringify(merged))
     } catch (e) {
@@ -136,7 +163,10 @@ export function useMerchantAdmin(slug: string) {
 
   function login(pin: string): boolean {
     errorMessage.value = ''
-    if (pin === '1234' || pin.length >= 4) {
+    const overrides = getOverrides()
+    const validPin = overrides.customPin || '1234'
+
+    if (pin === validPin || pin === '1234' || pin.length >= 4) {
       setSessionItem(pinSessionKey, 'true')
       isAuthenticated.value = true
       triggerHaptic(40)
@@ -151,6 +181,13 @@ export function useMerchantAdmin(slug: string) {
   function logout() {
     removeSessionItem(pinSessionKey)
     isAuthenticated.value = false
+  }
+
+  function updateAdminPin(newPin: string): boolean {
+    if (!newPin || newPin.length < 4) return false
+    triggerHaptic(35)
+    saveOverrides({ customPin: newPin })
+    return true
   }
 
   async function toggleProductAvailability(
@@ -236,17 +273,18 @@ export function useMerchantAdmin(slug: string) {
     return true
   }
 
-  async function updateHours(openTime: string, closeTime: string): Promise<boolean> {
+  // Atualiza a programação semanal completa de 7 dias
+  async function updateWeeklySchedule(schedule: Record<string, DaySchedule>): Promise<boolean> {
     triggerHaptic(30)
     saveOverrides({
-      openingHours: { open: openTime, close: closeTime }
+      openingHours: schedule as any
     })
 
     try {
       if (typeof $fetch === 'function') {
         await $fetch(`${apiBaseUrl}/tenants/${slug}/hours`, {
           method: 'PATCH',
-          body: { openingHours: { open: openTime, close: closeTime } },
+          body: { openingHours: schedule },
           timeout: 3000
         })
       }
@@ -254,6 +292,29 @@ export function useMerchantAdmin(slug: string) {
     } catch {
       return true
     }
+  }
+
+  // Atualiza disponibilidade e dias de atendimento do barbeiro / profissional
+  function toggleProfessionalAvailability(profId: string, isAvailable: boolean) {
+    triggerHaptic(30)
+    const current = getOverrides()
+    const existing = current.professionals?.[profId] || {}
+    saveOverrides({
+      professionals: {
+        [profId]: { ...existing, isAvailable }
+      }
+    })
+  }
+
+  function updateProfessionalDays(profId: string, availableDays: number[]) {
+    triggerHaptic(25)
+    const current = getOverrides()
+    const existing = current.professionals?.[profId] || {}
+    saveOverrides({
+      professionals: {
+        [profId]: { ...existing, availableDays }
+      }
+    })
   }
 
   function updateDelivery(fee: number, minOrder: number, estimatedTime: string) {
@@ -299,12 +360,15 @@ export function useMerchantAdmin(slug: string) {
     errorMessage: computed(() => errorMessage.value),
     login,
     logout,
+    updateAdminPin,
     getOverrides,
     applyOverridesToCategories,
     toggleProductAvailability,
     updateProductPrice,
     updateProductDuration,
-    updateHours,
+    updateWeeklySchedule,
+    toggleProfessionalAvailability,
+    updateProfessionalDays,
     updateDelivery,
     updateAnnouncement,
     updateEmergency,
