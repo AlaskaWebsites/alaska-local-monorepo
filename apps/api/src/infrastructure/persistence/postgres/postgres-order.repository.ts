@@ -8,20 +8,21 @@ export class PostgresOrderRepository implements IOrderRepository {
 
   async save(order: Order): Promise<void> {
     const raw = OrderMapper.toPersistence(order)
+    const tenantId = String(raw.tenant_id || '')
 
     // 1. Assegura que o tenant existe na tabela tenants antes de inserir para evitar violação de FK
     const tenantCheck = await this.postgresService.query(
       'SELECT id FROM tenants WHERE id = $1',
-      [raw.tenant_id]
+      [tenantId]
     )
 
     if (tenantCheck.rows.length === 0) {
-      const slug = raw.tenant_id.replace(/^ten-/, '')
+      const slug = tenantId.replace(/^ten-/, '')
       await this.postgresService.query(
         `INSERT INTO tenants (id, slug, name, phone_whatsapp, business_category, is_active)
          VALUES ($1, $2, $3, $4, $5, true)
          ON CONFLICT (id) DO NOTHING`,
-        [raw.tenant_id, slug, slug, '11999999999', 'menu']
+        [tenantId, slug, slug, '11999999999', 'menu']
       )
     }
 
@@ -52,7 +53,7 @@ export class PostgresOrderRepository implements IOrderRepository {
 
     await this.postgresService.query(query, [
       raw.id,
-      raw.tenant_id,
+      tenantId,
       raw.customer_name,
       raw.customer_phone,
       raw.delivery_type,
