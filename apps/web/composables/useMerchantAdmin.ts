@@ -12,6 +12,7 @@ export interface DaySchedule {
 export interface ProfessionalOverride {
   isAvailable?: boolean
   availableDays?: number[]
+  workHours?: { start: string; end: string }
   lunchBreak?: { start: string; end: string; enabled: boolean }
 }
 
@@ -340,6 +341,28 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     })
   }
 
+  function updateProfessionalHours(profId: string, workHours: { start: string; end: string }) {
+    triggerHaptic(25)
+    const current = getOverrides()
+    const existing = current.professionals?.[profId] || {}
+    saveOverrides({
+      professionals: {
+        [profId]: { ...existing, workHours }
+      }
+    })
+  }
+
+  function updateProfessionalLunch(profId: string, lunchBreak: { start: string; end: string; enabled: boolean }) {
+    triggerHaptic(25)
+    const current = getOverrides()
+    const existing = current.professionals?.[profId] || {}
+    saveOverrides({
+      professionals: {
+        [profId]: { ...existing, lunchBreak }
+      }
+    })
+  }
+
   function updateDelivery(fee: number, minOrder: number, estimatedTime: string) {
     triggerHaptic(30)
     saveOverrides({
@@ -392,6 +415,8 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     updateWeeklySchedule,
     toggleProfessionalAvailability,
     updateProfessionalDays,
+    updateProfessionalHours,
+    updateProfessionalLunch,
     updateDelivery,
     updateAnnouncement,
     updateEmergency,

@@ -144,7 +144,7 @@
           <div v-else-if="currentStep === 2" class="space-y-4 animate-in fade-in duration-150">
             <div>
               <h3 class="font-bold text-sm text-slate-900">Escolha o profissional / especialista:</h3>
-              <p class="text-xs text-slate-500">Ou selecione "Qualquer profissional" para o primeiro horário livre.</p>
+              <p class="text-xs text-slate-500">Ou selecione "Qualquer profissional" para maior flexibilidade.</p>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -189,6 +189,9 @@
                     </span>
                   </div>
                   <span class="text-[11px] text-slate-500 block">{{ prof.role || 'Especialista' }}</span>
+                  <span v-if="prof.isAvailable" class="text-[10px] text-emerald-700 font-semibold block mt-0.5">
+                    ⏰ {{ prof.workHours?.start || '08:00' }} às {{ prof.workHours?.end || '18:00' }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -270,18 +273,18 @@
               <span class="text-[11px] text-rose-600 block">Selecione outro dia no carrossel acima para visualizar os horários de atendimento.</span>
             </div>
 
-            <!-- 3. Grade de Horários Livres (Filtrando Bloqueios do Admin) -->
+            <!-- 3. Grade de Horários Livres (Filtrando Expediente, Almoço e Bloqueios) -->
             <div v-else class="space-y-2 pt-2">
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-700 block">
                   Horários Disponíveis ({{ totalDuration }} min)
-                  <span v-if="selectedProfessional" class="text-emerald-600 font-semibold">• {{ selectedProfessional.name }}</span>
+                  <span v-if="selectedProfessional" class="text-emerald-600 font-semibold">• {{ selectedProfessional.name }} ({{ selectedProfessional.workHours?.start }} às {{ selectedProfessional.workHours?.end }})</span>
                 </span>
-                <span class="text-[11px] text-slate-400 font-medium">{{ availableSlots.length }} opções livres</span>
+                <span class="text-[11px] text-slate-400 font-medium">{{ availableSlots.length }} opções</span>
               </div>
 
               <div v-if="availableSlots.length === 0" class="p-4 bg-slate-100 border border-slate-200 rounded-xl text-center">
-                <span class="text-xs font-bold text-slate-600 block">Todos os horários deste dia estão bloqueados ou ocupados.</span>
+                <span class="text-xs font-bold text-slate-600 block">Todos os horários deste dia estão ocupados ou fora do expediente do profissional.</span>
               </div>
 
               <div v-else class="grid grid-cols-3 sm:grid-cols-4 gap-2">
@@ -584,18 +587,18 @@ const availableServices = computed<BookingService[]>(() => {
 })
 
 // 4. Estado de Profissional com Overrides do Admin (Dentistas/Especialistas ou Barbeiros)
-const selectedProfessional = ref<BookingProfessional | null>(null)
+const selectedProfessional = ref<any | null>(null)
 
-const defaultProfessionalsBySlug: Record<string, Array<{ id: string; name: string; role: string; isAvailable: boolean; availableDays: number[] }>> = {
+const defaultProfessionalsBySlug: Record<string, Array<{ id: string; name: string; role: string; isAvailable: boolean; availableDays: number[]; workHours: { start: string; end: string }; lunchBreak: { start: string; end: string; enabled: boolean } }>> = {
   'clinica-sorriso': [
-    { id: 'prof-1', name: 'Dra. Camila Rocha', role: 'Cirurgiã Dentista & Implantes', isAvailable: true, availableDays: [1, 2, 3, 4, 5] },
-    { id: 'prof-2', name: 'Dr. Rafael Mendes', role: 'Ortodontista & Invisalign', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6] },
-    { id: 'prof-3', name: 'Dra. Beatriz Lima', role: 'Harmonização Orofacial & Estética', isAvailable: true, availableDays: [2, 3, 4, 5, 6] }
+    { id: 'prof-1', name: 'Dra. Camila Rocha', role: 'Cirurgiã Dentista & Implantes', isAvailable: true, availableDays: [1, 2, 3, 4, 5], workHours: { start: '08:00', end: '17:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: true } },
+    { id: 'prof-2', name: 'Dr. Rafael Mendes', role: 'Ortodontista & Invisalign', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6], workHours: { start: '09:00', end: '19:00' }, lunchBreak: { start: '13:00', end: '14:00', enabled: true } },
+    { id: 'prof-3', name: 'Dra. Beatriz Lima', role: 'Harmonização Orofacial & Estética', isAvailable: true, availableDays: [2, 3, 4, 5, 6], workHours: { start: '10:00', end: '19:00' }, lunchBreak: { start: '13:00', end: '14:00', enabled: false } }
   ],
   'barbearia-style': [
-    { id: 'prof-1', name: 'Carlos Santos', role: 'Barbeiro Master', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6] },
-    { id: 'prof-2', name: 'Lucas Oliveira', role: 'Visagista & Barbeiro', isAvailable: true, availableDays: [2, 3, 4, 5, 6] },
-    { id: 'prof-3', name: 'Mateus Silva', role: 'Especialista em Cortes Clássicos', isAvailable: true, availableDays: [1, 3, 4, 5, 6] }
+    { id: 'prof-1', name: 'Carlos Santos', role: 'Barbeiro Master', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6], workHours: { start: '09:00', end: '20:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: true } },
+    { id: 'prof-2', name: 'Lucas Oliveira', role: 'Visagista & Barbeiro', isAvailable: true, availableDays: [2, 3, 4, 5, 6], workHours: { start: '10:00', end: '20:00' }, lunchBreak: { start: '14:00', end: '15:00', enabled: true } },
+    { id: 'prof-3', name: 'Mateus Silva', role: 'Especialista em Cortes Clássicos', isAvailable: true, availableDays: [1, 3, 4, 5, 6], workHours: { start: '09:00', end: '18:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: false } }
   ]
 }
 
@@ -630,7 +633,16 @@ const availableProfessionals = computed(() => {
     return {
       ...p,
       isAvailable: isAvail,
-      availableDays: days
+      availableDays: days,
+      workHours: {
+        start: ov?.workHours?.start || p.workHours?.start || '08:00',
+        end: ov?.workHours?.end || p.workHours?.end || '18:00'
+      },
+      lunchBreak: {
+        start: ov?.lunchBreak?.start || p.lunchBreak?.start || '12:00',
+        end: ov?.lunchBreak?.end || p.lunchBreak?.end || '13:00',
+        enabled: ov?.lunchBreak?.enabled !== undefined ? Boolean(ov.lunchBreak.enabled) : Boolean(p.lunchBreak?.enabled)
+      }
     }
   })
 })
@@ -639,6 +651,12 @@ const availableProfessionals = computed(() => {
 const selectedDate = ref(new Date().toISOString().split('T')[0])
 const selectedTime = ref('14:00')
 const daysContainerRef = ref<HTMLElement | null>(null)
+
+function parseTimeToMin(t: string): number {
+  if (!t) return 0
+  const [h, m] = t.split(':')
+  return (parseInt(h || '0', 10) * 60) + parseInt(m || '0', 10)
+}
 
 // 1. Verifica se o profissional ESPECÍFICO selecionado não atende na data escolhida
 const isProfOffOnDate = computed(() => {
@@ -707,16 +725,68 @@ const bookingDays = computed(() => {
   return days
 })
 
-const allSlots = [
-  '09:00', '09:45', '10:30', '11:15', '12:00',
-  '13:00', '13:45', '14:30', '15:15', '16:00',
-  '16:45', '17:30', '18:15', '19:00'
+const allCandidateSlots = [
+  '08:00', '08:45', '09:30', '10:15', '11:00',
+  '11:45', '12:30', '13:15', '14:00', '14:45',
+  '15:30', '16:15', '17:00', '17:45', '18:30'
 ]
 
 const availableSlots = computed(() => {
   const blocked = rawOverrides.value.blockedSlots || []
-  return allSlots
-    .filter(time => !blocked.some((b: any) => b.date === selectedDate.value && b.time === time))
+  const dayOfWeek = new Date(selectedDate.value + 'T12:00:00').getDay()
+
+  // Se um profissional específico foi selecionado
+  if (selectedProfessional.value) {
+    const prof = availableProfessionals.value.find(p => p.id === selectedProfessional.value?.id)
+    if (!prof || !prof.isAvailable || !(prof.availableDays || []).includes(dayOfWeek)) {
+      return []
+    }
+
+    const startMin = parseTimeToMin(prof.workHours?.start || '08:00')
+    const endMin = parseTimeToMin(prof.workHours?.end || '18:00')
+    const lunchStart = parseTimeToMin(prof.lunchBreak?.start || '12:00')
+    const lunchEnd = parseTimeToMin(prof.lunchBreak?.end || '13:00')
+    const hasLunch = Boolean(prof.lunchBreak?.enabled)
+
+    return allCandidateSlots
+      .filter(time => {
+        const timeMin = parseTimeToMin(time)
+        // Dentro do expediente do profissional
+        if (timeMin < startMin || timeMin >= endMin) return false
+        // Fora do intervalo de almoço
+        if (hasLunch && timeMin >= lunchStart && timeMin < lunchEnd) return false
+        // Não está bloqueado na data
+        if (blocked.some((b: any) => b.date === selectedDate.value && b.time === time)) return false
+        return true
+      })
+      .map(time => ({ time }))
+  }
+
+  // Se escolheu "Qualquer Profissional": mostra horários onde pelo menos 1 profissional ativo atende
+  const workingProfs = availableProfessionals.value.filter(p => {
+    return p.isAvailable && (p.availableDays || []).includes(dayOfWeek)
+  })
+
+  return allCandidateSlots
+    .filter(time => {
+      const timeMin = parseTimeToMin(time)
+      if (blocked.some((b: any) => b.date === selectedDate.value && b.time === time)) return false
+
+      // Verifica se há pelo menos um profissional atendendo neste horário
+      const hasAnyProf = workingProfs.some(prof => {
+        const startMin = parseTimeToMin(prof.workHours?.start || '08:00')
+        const endMin = parseTimeToMin(prof.workHours?.end || '18:00')
+        const lunchStart = parseTimeToMin(prof.lunchBreak?.start || '12:00')
+        const lunchEnd = parseTimeToMin(prof.lunchBreak?.end || '13:00')
+        const hasLunch = Boolean(prof.lunchBreak?.enabled)
+
+        if (timeMin < startMin || timeMin >= endMin) return false
+        if (hasLunch && timeMin >= lunchStart && timeMin < lunchEnd) return false
+        return true
+      })
+
+      return hasAnyProf
+    })
     .map(time => ({ time }))
 })
 

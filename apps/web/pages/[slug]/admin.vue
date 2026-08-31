@@ -205,28 +205,29 @@
           </section>
         </main>
 
-        <!-- ABA 2: Equipe & Agenda (Exclusivo Hub & Pro) -->
+        <!-- ABA 2: Equipe & Agenda (Exclusivo Hub & Pro) com Horários Individuais e Almoço -->
         <main v-else-if="activeTab === 'agenda' && isServiceStore" class="px-4 mt-4 space-y-6">
           <!-- 1. Gestão de Profissionais / Especialistas -->
           <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
             <h2 class="text-sm font-bold text-white flex items-center gap-2">
-              <span>{{ isHealthStore ? '🩺 Especialistas & Dentistas / Médicos' : '💈 Barbeiros & Profissionais' }}</span>
+              <span>{{ isHealthStore ? '🩺 Especialistas & Horários Individuais' : '💈 Barbeiros & Horários Individuais' }}</span>
             </h2>
             <p class="text-xs text-slate-400">
-              Marque se o profissional está de folga hoje ou selecione os dias da semana em que atende.
+              Configure os dias de atendimento, horário de expediente e pausa de almoço de cada especialista.
             </p>
 
-            <div class="space-y-3 pt-1">
+            <div class="space-y-4 pt-1">
               <div
                 v-for="prof in professionalsList"
                 :key="prof.id"
-                class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-3 transition-all"
+                class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-4 transition-all"
                 :class="{ 'opacity-70 border-rose-500/20': !prof.isAvailable }"
               >
+                <!-- Linha 1: Nome, Especialidade e Switch de Folga -->
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2.5">
                     <div
-                      class="w-8 h-8 rounded-full font-bold flex items-center justify-center text-xs transition-colors"
+                      class="w-9 h-9 rounded-full font-bold flex items-center justify-center text-xs transition-colors"
                       :class="prof.isAvailable ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'"
                     >
                       {{ prof.name.charAt(0) }}
@@ -262,19 +263,81 @@
                   </div>
                 </div>
 
-                <!-- Dias de Atendimento na Semana Reativos -->
-                <div class="pt-2 border-t border-slate-800/80 flex items-center gap-1.5 flex-wrap">
-                  <span class="text-[10px] text-slate-500 font-semibold mr-1">Dias de Atendimento:</span>
-                  <button
-                    v-for="(dayName, dIdx) in ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']"
-                    :key="dIdx"
-                    type="button"
-                    @click="handleProfDayToggle(prof.id, dIdx, prof.name)"
-                    class="px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer select-none active:scale-95 border"
-                    :class="prof.availableDays?.includes(dIdx) ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-xs' : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300 hover:border-slate-700'"
-                  >
-                    {{ dayName }}
-                  </button>
+                <!-- Linha 2: Dias de Atendimento na Semana -->
+                <div class="pt-2 border-t border-slate-800/80 space-y-1.5">
+                  <span class="text-[10px] text-slate-400 font-semibold block">Dias de Atendimento na Semana:</span>
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <button
+                      v-for="(dayName, dIdx) in ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']"
+                      :key="dIdx"
+                      type="button"
+                      @click="handleProfDayToggle(prof.id, dIdx, prof.name)"
+                      class="px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer select-none active:scale-95 border"
+                      :class="prof.availableDays?.includes(dIdx) ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-xs' : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300 hover:border-slate-700'"
+                    >
+                      {{ dayName }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Linha 3: Horário de Expediente & Intervalo de Almoço -->
+                <div class="pt-2 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                  <!-- Horário de Atendimento -->
+                  <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 space-y-1">
+                    <span class="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                      <span>⏰ Expediente de Atendimento:</span>
+                    </span>
+                    <div class="flex items-center gap-1.5">
+                      <input
+                        type="time"
+                        v-model="prof.workHours.start"
+                        @change="handleProfWorkHoursChange(prof.id, prof.workHours, prof.name)"
+                        class="bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-white outline-none focus:border-emerald-500 font-mono w-20 text-center"
+                      />
+                      <span class="text-slate-500 text-xs">às</span>
+                      <input
+                        type="time"
+                        v-model="prof.workHours.end"
+                        @change="handleProfWorkHoursChange(prof.id, prof.workHours, prof.name)"
+                        class="bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-white outline-none focus:border-emerald-500 font-mono w-20 text-center"
+                      />
+                    </div>
+                  </div>
+
+                  <!-- Intervalo de Almoço / Pausa -->
+                  <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 space-y-1">
+                    <div class="flex items-center justify-between">
+                      <span class="text-[10px] font-bold text-slate-400 flex items-center gap-1">
+                        <span>🍽️ Pausa / Almoço:</span>
+                      </span>
+                      <label class="flex items-center gap-1 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          v-model="prof.lunchBreak.enabled"
+                          @change="handleProfLunchChange(prof.id, prof.lunchBreak, prof.name)"
+                          class="rounded border-slate-700 bg-slate-950 text-emerald-500 h-3 w-3"
+                        />
+                        <span class="text-[9px] text-slate-400 font-semibold">Ativar</span>
+                      </label>
+                    </div>
+
+                    <div v-if="prof.lunchBreak.enabled" class="flex items-center gap-1.5">
+                      <input
+                        type="time"
+                        v-model="prof.lunchBreak.start"
+                        @change="handleProfLunchChange(prof.id, prof.lunchBreak, prof.name)"
+                        class="bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-white outline-none focus:border-emerald-500 font-mono w-20 text-center"
+                      />
+                      <span class="text-slate-500 text-xs">às</span>
+                      <input
+                        type="time"
+                        v-model="prof.lunchBreak.end"
+                        @change="handleProfLunchChange(prof.id, prof.lunchBreak, prof.name)"
+                        class="bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-white outline-none focus:border-emerald-500 font-mono w-20 text-center"
+                      />
+                    </div>
+                    <span v-else class="text-[10px] text-slate-500 block pt-0.5">Sem intervalo programado</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -603,6 +666,8 @@ const {
   updateWeeklySchedule,
   toggleProfessionalAvailability,
   updateProfessionalDays,
+  updateProfessionalHours,
+  updateProfessionalLunch,
   updateDelivery,
   updateAnnouncement,
   updateEmergency,
@@ -760,17 +825,17 @@ function toggleEmergencyPause() {
   refreshLocalOverrides()
 }
 
-// 5. Barbeiros & Especialistas da Clínica com Reatividade Instantânea
-const defaultProfessionalsBySlug: Record<string, Array<{ id: string; name: string; role: string; isAvailable: boolean; availableDays: number[] }>> = {
+// 5. Barbeiros & Especialistas da Clínica com Horários e Almoço
+const defaultProfessionalsBySlug: Record<string, Array<{ id: string; name: string; role: string; isAvailable: boolean; availableDays: number[]; workHours: { start: string; end: string }; lunchBreak: { start: string; end: string; enabled: boolean } }>> = {
   'clinica-sorriso': [
-    { id: 'prof-1', name: 'Dra. Camila Rocha', role: 'Cirurgiã Dentista & Implantes', isAvailable: true, availableDays: [1, 2, 3, 4, 5] },
-    { id: 'prof-2', name: 'Dr. Rafael Mendes', role: 'Ortodontista & Invisalign', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6] },
-    { id: 'prof-3', name: 'Dra. Beatriz Lima', role: 'Harmonização Orofacial & Estética', isAvailable: true, availableDays: [2, 3, 4, 5, 6] }
+    { id: 'prof-1', name: 'Dra. Camila Rocha', role: 'Cirurgiã Dentista & Implantes', isAvailable: true, availableDays: [1, 2, 3, 4, 5], workHours: { start: '08:00', end: '17:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: true } },
+    { id: 'prof-2', name: 'Dr. Rafael Mendes', role: 'Ortodontista & Invisalign', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6], workHours: { start: '09:00', end: '19:00' }, lunchBreak: { start: '13:00', end: '14:00', enabled: true } },
+    { id: 'prof-3', name: 'Dra. Beatriz Lima', role: 'Harmonização Orofacial & Estética', isAvailable: true, availableDays: [2, 3, 4, 5, 6], workHours: { start: '10:00', end: '19:00', }, lunchBreak: { start: '13:00', end: '14:00', enabled: false } }
   ],
   'barbearia-style': [
-    { id: 'prof-1', name: 'Carlos Santos', role: 'Barbeiro Master', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6] },
-    { id: 'prof-2', name: 'Lucas Oliveira', role: 'Visagista & Barbeiro', isAvailable: true, availableDays: [2, 3, 4, 5, 6] },
-    { id: 'prof-3', name: 'Mateus Silva', role: 'Especialista em Cortes Clássicos', isAvailable: true, availableDays: [1, 3, 4, 5, 6] }
+    { id: 'prof-1', name: 'Carlos Santos', role: 'Barbeiro Master', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6], workHours: { start: '09:00', end: '20:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: true } },
+    { id: 'prof-2', name: 'Lucas Oliveira', role: 'Visagista & Barbeiro', isAvailable: true, availableDays: [2, 3, 4, 5, 6], workHours: { start: '10:00', end: '20:00' }, lunchBreak: { start: '14:00', end: '15:00', enabled: true } },
+    { id: 'prof-3', name: 'Mateus Silva', role: 'Especialista em Cortes Clássicos', isAvailable: true, availableDays: [1, 3, 4, 5, 6], workHours: { start: '09:00', end: '18:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: false } }
   ]
 }
 
@@ -783,7 +848,16 @@ const professionalsList = computed(() => {
     return {
       ...p,
       isAvailable: ov?.isAvailable !== undefined ? Boolean(ov.isAvailable) : Boolean(p.isAvailable),
-      availableDays: ov?.availableDays ? [...ov.availableDays] : [...p.availableDays]
+      availableDays: ov?.availableDays ? [...ov.availableDays] : [...p.availableDays],
+      workHours: {
+        start: ov?.workHours?.start || p.workHours.start,
+        end: ov?.workHours?.end || p.workHours.end
+      },
+      lunchBreak: {
+        start: ov?.lunchBreak?.start || p.lunchBreak.start,
+        end: ov?.lunchBreak?.end || p.lunchBreak.end,
+        enabled: ov?.lunchBreak?.enabled !== undefined ? Boolean(ov.lunchBreak.enabled) : p.lunchBreak.enabled
+      }
     }
   })
 })
@@ -807,6 +881,18 @@ function handleProfDayToggle(profId: string, dayIndex: number, name: string) {
   updateProfessionalDays(profId, days.sort())
   refreshLocalOverrides()
   showToast(`📅 Escala semanal de ${name} atualizada!`)
+}
+
+function handleProfWorkHoursChange(profId: string, workHours: { start: string; end: string }, name: string) {
+  updateProfessionalHours(profId, workHours)
+  refreshLocalOverrides()
+  showToast(`⏰ Horário de ${name} salvo: ${workHours.start} às ${workHours.end}!`)
+}
+
+function handleProfLunchChange(profId: string, lunchBreak: { start: string; end: string; enabled: boolean }, name: string) {
+  updateProfessionalLunch(profId, lunchBreak)
+  refreshLocalOverrides()
+  showToast(`🍽️ Intervalo de almoço de ${name} atualizado!`)
 }
 
 // 6. Delivery & Taxas
@@ -847,9 +933,9 @@ function saveNewPin() {
 // 9. Agenda & Bloqueios de Horário
 const selectedAgendaDate = ref(new Date().toISOString().split('T')[0])
 const sampleSlots = [
-  '09:00', '09:45', '10:30', '11:15', '12:00',
-  '13:00', '13:45', '14:30', '15:15', '16:00',
-  '16:45', '17:30', '18:15', '19:00'
+  '08:00', '08:45', '09:30', '10:15', '11:00',
+  '11:45', '12:30', '13:15', '14:00', '14:45',
+  '15:30', '16:15', '17:00', '17:45', '18:30'
 ]
 
 function isSlotBlocked(date: string, time: string): boolean {
