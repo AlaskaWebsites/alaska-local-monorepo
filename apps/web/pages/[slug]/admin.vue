@@ -29,6 +29,7 @@
               id="admin-pin"
               v-model="pinInput"
               type="password"
+              autocomplete="current-password"
               maxlength="8"
               inputmode="numeric"
               placeholder="••••"
@@ -1080,7 +1081,7 @@ import type { Product, Category } from '@alaska/contracts'
 const route = useRoute()
 const slug = computed(() => String(route.params.slug || ''))
 
-const { tenant, loadTenant } = useTenant()
+const { tenant, refresh } = useTenant(slug)
 const {
   isAuthenticated,
   errorMessage,
@@ -1140,8 +1141,8 @@ const isServiceStore = computed(() => {
 })
 
 onMounted(async () => {
-  if (slug.value) {
-    await loadTenant(slug.value)
+  if (slug.value && typeof refresh === 'function') {
+    await refresh()
   }
   loadScheduleFromOverrides()
   loadPixAndContactFromOverrides()
