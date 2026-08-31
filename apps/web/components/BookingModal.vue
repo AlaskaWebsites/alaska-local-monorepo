@@ -249,31 +249,38 @@
               </button>
             </div>
 
-            <!-- Aviso se o Profissional Selecionado não atende neste dia da semana -->
-            <div v-if="isProfOffOnDate" class="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-xs gap-3">
-              <div class="text-amber-800 space-y-0.5">
-                <span class="font-bold block">⚠️ {{ selectedProfessional?.name }} não atende neste dia.</span>
-                <span class="text-[11px] text-amber-700 block">Selecione outro dia ou troque para qualquer profissional disponível.</span>
+            <!-- 1. Aviso se o Profissional Selecionado não atende neste dia da semana -->
+            <div v-if="isProfOffOnDate" class="p-4 bg-amber-50 border border-amber-200 rounded-2xl flex items-center justify-between text-xs gap-3">
+              <div class="text-amber-900 space-y-0.5">
+                <span class="font-bold block">⚠️ {{ selectedProfessional?.name }} não atende neste dia da semana.</span>
+                <span class="text-[11px] text-amber-700 block">Selecione outro dia ou troque para qualquer especialista disponível.</span>
               </div>
               <button
                 type="button"
                 @click="selectedProfessional = null"
-                class="px-3 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] shrink-0 cursor-pointer shadow-2xs"
+                class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shrink-0 cursor-pointer shadow-2xs active:scale-95 transition-all"
               >
-                Qualquer um
+                Ver Disponíveis
               </button>
             </div>
 
-            <!-- Grade de Horários Livres (Filtrando Bloqueios do Admin) -->
+            <!-- 2. Aviso se nenhum profissional da equipe atende neste dia -->
+            <div v-else-if="isDayStoreClosed" class="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-center space-y-1">
+              <span class="text-xs font-bold text-rose-700 block">⚠️ Nenhum especialista disponível neste dia da semana</span>
+              <span class="text-[11px] text-rose-600 block">Selecione outro dia no carrossel acima para visualizar os horários de atendimento.</span>
+            </div>
+
+            <!-- 3. Grade de Horários Livres (Filtrando Bloqueios do Admin) -->
             <div v-else class="space-y-2 pt-2">
-              <span class="text-xs font-bold text-slate-700 block">Horários Disponíveis ({{ totalDuration }} min):</span>
-              
-              <div v-if="isDayStoreClosed" class="p-4 bg-rose-50 border border-rose-200 rounded-xl text-center">
-                <span class="text-xs font-bold text-rose-700 block">⚠️ Estabelecimento Fechado neste dia da semana</span>
-                <span class="text-[11px] text-rose-600 mt-0.5 block">Selecione outro dia no carrossel acima para ver os horários.</span>
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-700 block">
+                  Horários Disponíveis ({{ totalDuration }} min)
+                  <span v-if="selectedProfessional" class="text-emerald-600 font-semibold">• {{ selectedProfessional.name }}</span>
+                </span>
+                <span class="text-[11px] text-slate-400 font-medium">{{ availableSlots.length }} opções livres</span>
               </div>
 
-              <div v-else-if="availableSlots.length === 0" class="p-4 bg-slate-100 border border-slate-200 rounded-xl text-center">
+              <div v-if="availableSlots.length === 0" class="p-4 bg-slate-100 border border-slate-200 rounded-xl text-center">
                 <span class="text-xs font-bold text-slate-600 block">Todos os horários deste dia estão bloqueados ou ocupados.</span>
               </div>
 
@@ -284,7 +291,7 @@
                   :key="slot.time"
                   @click="selectedTime = slot.time"
                   :class="[
-                    'py-2 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer text-center select-none active:scale-95',
+                    'py-2.5 px-2.5 rounded-xl border text-xs font-bold transition-all cursor-pointer text-center select-none active:scale-95 font-mono',
                     selectedTime === slot.time
                       ? 'border-emerald-600 bg-emerald-600 text-white shadow-2xs'
                       : 'border-slate-200 bg-white text-slate-800 hover:bg-slate-50'
@@ -618,7 +625,7 @@ const availableProfessionals = computed(() => {
   return baseList.map(p => {
     const ov = profOverrides[p.id]
     const isAvail = ov?.isAvailable !== undefined ? Boolean(ov.isAvailable) : Boolean(p.isAvailable)
-    const days = ov?.availableDays || p.availableDays
+    const days = ov?.availableDays ? [...ov.availableDays] : [...p.availableDays]
 
     return {
       ...p,
@@ -633,25 +640,34 @@ const selectedDate = ref(new Date().toISOString().split('T')[0])
 const selectedTime = ref('14:00')
 const daysContainerRef = ref<HTMLElement | null>(null)
 
-const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
-
-const isDayStoreClosed = computed(() => {
-  const hours = (rawOverrides.value.openingHours || props.tenant?.openingHours) as any
-  if (!hours) return false
-  const dayIndex = new Date(selectedDate.value + 'T12:00:00').getDay()
-  const dayKey = DAY_KEYS[dayIndex]
-  return Boolean(hours[dayKey]?.closed)
-})
-
-// Verifica se o profissional escolhido atende no dia da semana selecionado
+// 1. Verifica se o profissional ESPECÍFICO selecionado não atende na data escolhida
 const isProfOffOnDate = computed(() => {
   if (!selectedProfessional.value) return false
   const prof = availableProfessionals.value.find(p => p.id === selectedProfessional.value?.id)
-  if (!prof) return false
+  if (!prof) return true
   if (!prof.isAvailable) return true
 
   const dayOfWeek = new Date(selectedDate.value + 'T12:00:00').getDay()
   return !(prof.availableDays || []).includes(dayOfWeek)
+})
+
+// 2. Verifica se a clínica inteira está fechada (sem nenhum profissional na escala do dia ou pausa de emergência)
+const isDayStoreClosed = computed(() => {
+  if (rawOverrides.value.emergency?.isClosed) return true
+
+  const dayOfWeek = new Date(selectedDate.value + 'T12:00:00').getDay()
+
+  // Se um profissional específico foi selecionado, a disponibilidade é controlada por `isProfOffOnDate`
+  if (selectedProfessional.value) {
+    return false
+  }
+
+  // Se escolheu "Qualquer Profissional", checa se há pelo menos um profissional ativo na escala deste dia
+  const activeProfsOnDay = availableProfessionals.value.filter(p => {
+    return p.isAvailable && (p.availableDays || []).includes(dayOfWeek)
+  })
+
+  return activeProfsOnDay.length === 0
 })
 
 function scrollDays(direction: 'left' | 'right') {
