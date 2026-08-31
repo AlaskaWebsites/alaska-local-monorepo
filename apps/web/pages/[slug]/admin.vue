@@ -220,11 +220,15 @@
               <div
                 v-for="prof in professionalsList"
                 :key="prof.id"
-                class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-3"
+                class="p-4 rounded-xl bg-slate-950 border border-slate-800/80 space-y-3 transition-all"
+                :class="{ 'opacity-70 border-rose-500/20': !prof.isAvailable }"
               >
                 <div class="flex items-center justify-between">
                   <div class="flex items-center gap-2.5">
-                    <div class="w-8 h-8 rounded-full bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center text-xs">
+                    <div
+                      class="w-8 h-8 rounded-full font-bold flex items-center justify-center text-xs transition-colors"
+                      :class="prof.isAvailable ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'"
+                    >
                       {{ prof.name.charAt(0) }}
                     </div>
                     <div>
@@ -233,36 +237,41 @@
                     </div>
                   </div>
 
-                  <!-- Switch de Disponibilidade do Profissional -->
+                  <!-- Switch de Disponibilidade Reativo -->
                   <div class="flex items-center gap-2">
-                    <span class="text-[10px] font-bold uppercase" :class="prof.isAvailable ? 'text-emerald-400' : 'text-rose-400'">
+                    <span
+                      class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded transition-colors"
+                      :class="prof.isAvailable ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'"
+                    >
                       {{ prof.isAvailable ? 'Atendendo' : 'De Folga Hoje' }}
                     </span>
+
                     <button
                       type="button"
                       role="switch"
                       :aria-checked="prof.isAvailable"
                       @click="handleProfAvailabilityToggle(prof.id, prof.isAvailable, prof.name)"
-                      class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200"
+                      class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out"
                       :class="prof.isAvailable ? 'bg-emerald-500' : 'bg-slate-800'"
                     >
                       <span
-                        class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200"
+                        class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out"
                         :class="prof.isAvailable ? 'translate-x-5' : 'translate-x-0'"
                       />
                     </button>
                   </div>
                 </div>
 
-                <!-- Dias de Atendimento na Semana -->
+                <!-- Dias de Atendimento na Semana Reativos -->
                 <div class="pt-2 border-t border-slate-800/80 flex items-center gap-1.5 flex-wrap">
                   <span class="text-[10px] text-slate-500 font-semibold mr-1">Dias de Atendimento:</span>
                   <button
                     v-for="(dayName, dIdx) in ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']"
                     :key="dIdx"
+                    type="button"
                     @click="handleProfDayToggle(prof.id, dIdx, prof.name)"
-                    class="px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer select-none"
-                    :class="prof.availableDays?.includes(dIdx) ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' : 'bg-slate-900 text-slate-600 border border-slate-800'"
+                    class="px-2.5 py-1 rounded-md text-[10px] font-bold transition-all cursor-pointer select-none active:scale-95 border"
+                    :class="prof.availableDays?.includes(dIdx) ? 'bg-emerald-500 text-slate-950 border-emerald-400 shadow-xs' : 'bg-slate-900 text-slate-500 border-slate-800 hover:text-slate-300 hover:border-slate-700'"
                   >
                     {{ dayName }}
                   </button>
@@ -295,9 +304,10 @@
               <button
                 v-for="time in sampleSlots"
                 :key="time"
+                type="button"
                 @click="handleSlotToggle(selectedAgendaDate, time)"
                 class="py-2.5 px-2 rounded-xl text-xs font-bold transition-all border cursor-pointer flex flex-col items-center justify-center gap-0.5 active:scale-95 select-none"
-                :class="isSlotBlocked(selectedAgendaDate, time) ? 'bg-rose-500/20 border-rose-500/50 text-rose-300' : 'bg-slate-950 border-slate-800 text-slate-200 hover:border-emerald-500'"
+                :class="isSlotBlocked(selectedAgendaDate, time) ? 'bg-rose-500/20 border-rose-500/60 text-rose-300 shadow-xs' : 'bg-slate-950 border-slate-800 text-slate-200 hover:border-emerald-500'"
               >
                 <span class="font-mono text-xs">{{ time }}</span>
                 <span class="text-[9px] uppercase tracking-wider font-extrabold" :class="isSlotBlocked(selectedAgendaDate, time) ? 'text-rose-400' : 'text-emerald-400'">
@@ -573,7 +583,7 @@
 import { ref, computed, watch, watchEffect, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTenant } from '~/composables/useTenant'
-import { useMerchantAdmin } from '~/composables/useMerchantAdmin'
+import { useMerchantAdmin, type TenantOverrides } from '~/composables/useMerchantAdmin'
 import type { Product, Category } from '@alaska/contracts'
 
 const route = useRoute()
@@ -608,6 +618,22 @@ function showToast(msg: string) {
   setTimeout(() => { adminToastMsg.value = '' }, 2500)
 }
 
+// 1. Estado Reativo dos Overrides para Atualização Imediata da UI
+const localOverrides = ref<TenantOverrides>({})
+
+function refreshLocalOverrides() {
+  localOverrides.value = getOverrides()
+}
+
+onMounted(() => {
+  refreshLocalOverrides()
+  loadScheduleFromOverrides()
+  if (typeof window !== 'undefined') {
+    window.addEventListener('storage', refreshLocalOverrides)
+    window.addEventListener('alaska_overrides_updated', refreshLocalOverrides)
+  }
+})
+
 // Identifica se a loja é de saúde/clínica ou barbearia/serviços
 const isHealthStore = computed(() => {
   const cat = (tenant.value as any)?.businessCategory || (tenant.value as any)?.category || (tenant.value as any)?.template
@@ -636,9 +662,10 @@ function handleLogin() {
 
 function toggleProduct(products: Product[], productId: string, currentStatus: boolean) {
   toggleProductAvailability(products, productId, currentStatus)
+  refreshLocalOverrides()
 }
 
-// 1. Edição de Preço
+// 2. Edição de Preço
 const isPriceModalOpen = ref(false)
 const editingProduct = ref<Product | null>(null)
 const editingProductsList = ref<Product[]>([])
@@ -654,11 +681,12 @@ function openPriceModal(products: Product[], product: Product) {
 async function confirmPriceEdit() {
   if (editingProduct.value && newPriceInput.value > 0) {
     await updateProductPrice(editingProductsList.value, editingProduct.value.id, newPriceInput.value)
+    refreshLocalOverrides()
   }
   isPriceModalOpen.value = false
 }
 
-// 2. Programação Semanal de 7 Dias com Sincronização e Auto-Save
+// 3. Programação Semanal de 7 Dias com Sincronização e Auto-Save
 const weeklyDaysConfig = ref([
   { key: 'monday', label: 'Segunda-feira', closed: false, open: '09:00', close: '20:00' },
   { key: 'tuesday', label: 'Terça-feira', closed: false, open: '09:00', close: '20:00' },
@@ -690,10 +718,6 @@ function loadScheduleFromOverrides() {
   })
 }
 
-onMounted(() => {
-  loadScheduleFromOverrides()
-})
-
 watch(
   () => tenant.value,
   (newTenant) => {
@@ -719,20 +743,24 @@ function saveWeeklySchedule() {
     }
   })
   updateWeeklySchedule(schedulePayload)
+  refreshLocalOverrides()
   scheduleSuccessMsg.value = 'Programação semanal salva com sucesso!'
   showToast('Programação semanal salva com sucesso!')
   setTimeout(() => { scheduleSuccessMsg.value = '' }, 2500)
 }
 
-// 3. Pausa de Emergência
-const isEmergencyClosed = ref(false)
+// 4. Pausa de Emergência
+const isEmergencyClosed = computed(() => {
+  return Boolean(localOverrides.value.emergency?.isClosed)
+})
 
 function toggleEmergencyPause() {
-  isEmergencyClosed.value = !isEmergencyClosed.value
-  updateEmergency(isEmergencyClosed.value, isEmergencyClosed.value ? 'Atendimento pausado temporariamente' : '')
+  const newStatus = !isEmergencyClosed.value
+  updateEmergency(newStatus, newStatus ? 'Atendimento pausado temporariamente' : '')
+  refreshLocalOverrides()
 }
 
-// 4. Barbeiros & Especialistas da Clínica
+// 5. Barbeiros & Especialistas da Clínica com Reatividade Instantânea
 const defaultProfessionalsBySlug: Record<string, Array<{ id: string; name: string; role: string; isAvailable: boolean; availableDays: number[] }>> = {
   'clinica-sorriso': [
     { id: 'prof-1', name: 'Dra. Camila Rocha', role: 'Cirurgiã Dentista & Implantes', isAvailable: true, availableDays: [1, 2, 3, 4, 5] },
@@ -747,16 +775,15 @@ const defaultProfessionalsBySlug: Record<string, Array<{ id: string; name: strin
 }
 
 const professionalsList = computed(() => {
-  const overrides = getOverrides()
-  const profOverrides = overrides.professionals || {}
+  const profOverrides = localOverrides.value.professionals || {}
   const list = defaultProfessionalsBySlug[slug.value] || defaultProfessionalsBySlug['barbearia-style']
 
   return list.map(p => {
     const ov = profOverrides[p.id]
     return {
       ...p,
-      isAvailable: ov?.isAvailable !== undefined ? ov.isAvailable : p.isAvailable,
-      availableDays: ov?.availableDays || p.availableDays
+      isAvailable: ov?.isAvailable !== undefined ? Boolean(ov.isAvailable) : Boolean(p.isAvailable),
+      availableDays: ov?.availableDays ? [...ov.availableDays] : [...p.availableDays]
     }
   })
 })
@@ -764,6 +791,7 @@ const professionalsList = computed(() => {
 function handleProfAvailabilityToggle(profId: string, currentAvailable: boolean, name: string) {
   const newStatus = !currentAvailable
   toggleProfessionalAvailability(profId, newStatus)
+  refreshLocalOverrides()
   showToast(newStatus ? `✅ ${name} agora está atendendo!` : `🏖️ ${name} marcado como De Folga!`)
 }
 
@@ -777,29 +805,32 @@ function handleProfDayToggle(profId: string, dayIndex: number, name: string) {
     days.push(dayIndex)
   }
   updateProfessionalDays(profId, days.sort())
+  refreshLocalOverrides()
   showToast(`📅 Escala semanal de ${name} atualizada!`)
 }
 
-// 5. Delivery & Taxas
+// 6. Delivery & Taxas
 const deliveryFeeInput = ref((tenant.value as any)?.deliveryFee || 6.0)
 const minOrderInput = ref((tenant.value as any)?.minOrderValue || 20.0)
 const estimatedTimeInput = ref('35-50 min')
 
 function saveDeliveryConfig() {
   updateDelivery(deliveryFeeInput.value, minOrderInput.value, estimatedTimeInput.value)
+  refreshLocalOverrides()
   showToast('Configurações de delivery atualizadas!')
 }
 
-// 6. Comunicado
+// 7. Comunicado
 const announcementEnabled = ref(false)
 const announcementMessage = ref('')
 
 function saveAnnouncementConfig() {
   updateAnnouncement(announcementEnabled.value, announcementMessage.value)
+  refreshLocalOverrides()
   showToast('Comunicado oficial atualizado!')
 }
 
-// 7. Troca de PIN
+// 8. Troca de PIN
 const newPinInput = ref('')
 const pinSuccessMsg = ref('')
 
@@ -807,12 +838,13 @@ function saveNewPin() {
   if (updateAdminPin(newPinInput.value)) {
     pinSuccessMsg.value = 'PIN de acesso atualizado com sucesso!'
     newPinInput.value = ''
+    refreshLocalOverrides()
     showToast('PIN atualizado com sucesso!')
     setTimeout(() => { pinSuccessMsg.value = '' }, 3000)
   }
 }
 
-// 8. Agenda & Bloqueios de Horário
+// 9. Agenda & Bloqueios de Horário
 const selectedAgendaDate = ref(new Date().toISOString().split('T')[0])
 const sampleSlots = [
   '09:00', '09:45', '10:30', '11:15', '12:00',
@@ -821,14 +853,14 @@ const sampleSlots = [
 ]
 
 function isSlotBlocked(date: string, time: string): boolean {
-  const overrides = getOverrides()
-  const slots = overrides.blockedSlots || []
+  const slots = localOverrides.value.blockedSlots || []
   return slots.some(s => s.date === date && s.time === time)
 }
 
 function handleSlotToggle(date: string, time: string) {
   const currentlyBlocked = isSlotBlocked(date, time)
   toggleBlockSlot(date, time)
+  refreshLocalOverrides()
   showToast(currentlyBlocked ? `🟢 Horário ${time} liberado para agendamento!` : `🛑 Horário ${time} bloqueado na agenda!`)
 }
 </script>
