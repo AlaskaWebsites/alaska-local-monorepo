@@ -788,7 +788,7 @@ function submitBooking() {
   lines.push(`*VALOR TOTAL: ${formatCurrency(totalPrice.value)}*`)
 
   if (paymentMode.value === 'pix_deposit') {
-    lines.push(`💠 *SINAL VIA PIX:* ${formatCurrency(isTestCentMode.value ? 0.01 : depositAmount.value)}`)\
+    lines.push(`💠 *SINAL VIA PIX:* ${formatCurrency(isTestCentMode.value ? 0.01 : depositAmount.value)}`)
     lines.push(`💳 *Restante no Local:* ${formatCurrency(totalPrice.value - depositAmount.value)}`)
   } else {
     lines.push(`💳 *PAGAMENTO:* No local (Atendimento presencial)`)
