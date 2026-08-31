@@ -200,7 +200,7 @@
                     <label for="checkout-cep" class="block text-xs font-bold text-slate-900">
                       Endereço de Entrega
                     </label>
-                    <span v-if="cepLoading" class="text-[11px] text-emerald-600 font-semibold animate-pulse">
+                    <span v-if="isLoadingCep" class="text-[11px] text-emerald-600 font-semibold animate-pulse">
                       Buscando CEP...
                     </span>
                   </div>
@@ -403,7 +403,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, toRef, nextTick } from 'vue'
+import { ref, computed, toRef, watch, nextTick } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
 import { useBodyScrollLock } from '~/composables/useBodyScrollLock'
 import { useTenantTheme } from '~/composables/useTenantTheme'
@@ -476,27 +476,30 @@ const form = useLocalStorage<CheckoutFormData>('alaska_checkout_profile', {
 })
 
 // 4. Integração ViaCEP
-const {
-  cepInput,
-  loading: cepLoading,
-  street: cepStreet,
-  neighborhood: cepNeighborhood,
-  city: cepCity,
-  state: cepState
-} = useCep()
-
+const { isLoadingCep, cepError, lookupCep } = useCep()
+const cepInput = ref(form.value.address?.cep || '')
 const numberInputRef = ref<HTMLInputElement | null>(null)
 
-// Quando o CEP preenche a rua, foca no número da casa
-watch(cepStreet, (newStreet) => {
-  if (newStreet) {
-    form.value.address.street = newStreet
-    form.value.address.neighborhood = cepNeighborhood.value
-    form.value.address.city = cepCity.value
-    form.value.address.state = cepState.value
-    nextTick(() => {
-      numberInputRef.value?.focus()
-    })
+async function handleCepChange(val: string) {
+  const clean = sanitizeDigits(val)
+  if (clean.length === 8) {
+    const res = await lookupCep(clean)
+    if (res) {
+      form.value.address.street = res.street
+      form.value.address.neighborhood = res.neighborhood
+      form.value.address.city = res.city
+      form.value.address.state = res.state
+      form.value.address.cep = res.cep
+      nextTick(() => {
+        numberInputRef.value?.focus()
+      })
+    }
+  }
+}
+
+watch(cepInput, (newCep) => {
+  if (newCep) {
+    handleCepChange(newCep)
   }
 })
 
