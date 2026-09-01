@@ -20,6 +20,50 @@ const emit = defineEmits<{
   (e: 'update:selectedAgendaDate', val: string): void
   (e: 'toggle-slot', date: string, time: string): void
 }>()
+
+function getSafeTime(val: any, fallback: string): string {
+  if (typeof val === 'string' && val.length >= 4) return val
+  if (val && typeof val === 'object') {
+    if (typeof val.start === 'string') return val.start
+    if (typeof val.end === 'string') return val.end
+    if (typeof val.open === 'string') return val.open
+    if (typeof val.close === 'string') return val.close
+  }
+  return fallback
+}
+
+function handleHoursChange(prof: any, field: 'start' | 'end', value: string) {
+  if (!value || value.length < 4) return
+  const currentStart = getSafeTime(prof.workHours?.start, '09:00')
+  const currentEnd = getSafeTime(prof.workHours?.end, '19:00')
+  const updated = {
+    start: field === 'start' ? value : currentStart,
+    end: field === 'end' ? value : currentEnd,
+  }
+  emit('change-prof-hours', prof.id, updated, prof.name)
+}
+
+function handleLunchChange(prof: any, field: 'start' | 'end', value: string) {
+  if (!value || value.length < 4) return
+  const currentStart = getSafeTime(prof.lunchBreak?.start, '12:00')
+  const currentEnd = getSafeTime(prof.lunchBreak?.end, '13:00')
+  const updated = {
+    start: field === 'start' ? value : currentStart,
+    end: field === 'end' ? value : currentEnd,
+    enabled: prof.lunchBreak?.enabled !== undefined ? Boolean(prof.lunchBreak.enabled) : true,
+  }
+  emit('change-prof-lunch', prof.id, updated, prof.name)
+}
+
+function handleLunchToggle(prof: any, enabled: boolean) {
+  const currentStart = getSafeTime(prof.lunchBreak?.start, '12:00')
+  const currentEnd = getSafeTime(prof.lunchBreak?.end, '13:00')
+  emit('change-prof-lunch', prof.id, {
+    start: currentStart,
+    end: currentEnd,
+    enabled,
+  }, prof.name)
+}
 </script>
 
 <template>
@@ -125,17 +169,15 @@ const emit = defineEmits<{
               <div class="flex items-center gap-1.5">
                 <input
                   type="time"
-                  :value="prof.workHours?.start || '09:00'"
-                  @input="prof.workHours.start = ($event.target as HTMLInputElement).value"
-                  @change="emit('change-prof-hours', prof.id, { start: ($event.target as HTMLInputElement).value || '09:00', end: prof.workHours?.end || '19:00' }, prof.name)"
+                  :value="getSafeTime(prof.workHours?.start, '09:00')"
+                  @change="handleHoursChange(prof, 'start', ($event.target as HTMLInputElement).value)"
                   class="bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-white outline-none focus:border-emerald-500 font-mono w-20 text-center"
                 />
                 <span class="text-slate-500 text-xs">às</span>
                 <input
                   type="time"
-                  :value="prof.workHours?.end || '19:00'"
-                  @input="prof.workHours.end = ($event.target as HTMLInputElement).value"
-                  @change="emit('change-prof-hours', prof.id, { start: prof.workHours?.start || '09:00', end: ($event.target as HTMLInputElement).value || '19:00' }, prof.name)"
+                  :value="getSafeTime(prof.workHours?.end, '19:00')"
+                  @change="handleHoursChange(prof, 'end', ($event.target as HTMLInputElement).value)"
                   class="bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-white outline-none focus:border-emerald-500 font-mono w-20 text-center"
                 />
               </div>
@@ -150,28 +192,26 @@ const emit = defineEmits<{
                 <label class="flex items-center gap-1 cursor-pointer">
                   <input
                     type="checkbox"
-                    v-model="prof.lunchBreak.enabled"
-                    @change="emit('change-prof-lunch', prof.id, { start: prof.lunchBreak?.start || '12:00', end: prof.lunchBreak?.end || '13:00', enabled: prof.lunchBreak.enabled }, prof.name)"
+                    :checked="prof.lunchBreak?.enabled !== false"
+                    @change="handleLunchToggle(prof, ($event.target as HTMLInputElement).checked)"
                     class="rounded border-slate-700 bg-slate-950 text-emerald-500 h-3 w-3"
                   />
                   <span class="text-[9px] text-slate-400 font-semibold">Ativar</span>
                 </label>
               </div>
 
-              <div v-if="prof.lunchBreak.enabled" class="flex items-center gap-1.5">
+              <div v-if="prof.lunchBreak?.enabled !== false" class="flex items-center gap-1.5">
                 <input
                   type="time"
-                  :value="prof.lunchBreak?.start || '12:00'"
-                  @input="prof.lunchBreak.start = ($event.target as HTMLInputElement).value"
-                  @change="emit('change-prof-lunch', prof.id, { start: ($event.target as HTMLInputElement).value || '12:00', end: prof.lunchBreak?.end || '13:00', enabled: true }, prof.name)"
+                  :value="getSafeTime(prof.lunchBreak?.start, '12:00')"
+                  @change="handleLunchChange(prof, 'start', ($event.target as HTMLInputElement).value)"
                   class="bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-white outline-none focus:border-emerald-500 font-mono w-20 text-center"
                 />
                 <span class="text-slate-500 text-xs">às</span>
                 <input
                   type="time"
-                  :value="prof.lunchBreak?.end || '13:00'"
-                  @input="prof.lunchBreak.end = ($event.target as HTMLInputElement).value"
-                  @change="emit('change-prof-lunch', prof.id, { start: prof.lunchBreak?.start || '12:00', end: ($event.target as HTMLInputElement).value || '13:00', enabled: true }, prof.name)"
+                  :value="getSafeTime(prof.lunchBreak?.end, '13:00')"
+                  @change="handleLunchChange(prof, 'end', ($event.target as HTMLInputElement).value)"
                   class="bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-white outline-none focus:border-emerald-500 font-mono w-20 text-center"
                 />
               </div>

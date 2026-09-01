@@ -414,26 +414,70 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     });
   }
 
-  function updateProfessionalHours(profId: string, start: string, end: string) {
+  function updateProfessionalHours(
+    profId: string,
+    workHoursOrStart: string | { start: string; end: string },
+    endParam?: string,
+  ) {
     triggerHaptic(25);
     const current = getOverrides();
     const profs = current.professionals || {};
+    const existing = profs[profId] || {};
+
+    let startVal = '09:00';
+    let endVal = '19:00';
+
+    if (typeof workHoursOrStart === 'object' && workHoursOrStart !== null) {
+      startVal = typeof workHoursOrStart.start === 'string' ? workHoursOrStart.start : '09:00';
+      endVal = typeof workHoursOrStart.end === 'string' ? workHoursOrStart.end : '19:00';
+    } else if (typeof workHoursOrStart === 'string') {
+      startVal = workHoursOrStart;
+      endVal = endParam || existing.workHours?.end || '19:00';
+    }
+
     saveOverrides({
       professionals: {
         ...profs,
-        [profId]: { ...(profs[profId] || {}), workHours: { start, end } },
+        [profId]: {
+          ...existing,
+          workHours: { start: startVal, end: endVal },
+        },
       },
     });
   }
 
-  function updateProfessionalLunch(profId: string, start: string, end: string, enabled: boolean) {
+  function updateProfessionalLunch(
+    profId: string,
+    lunchOrStart: string | { start: string; end: string; enabled?: boolean },
+    endParam?: string,
+    enabledParam?: boolean,
+  ) {
     triggerHaptic(25);
     const current = getOverrides();
     const profs = current.professionals || {};
+    const existing = profs[profId] || {};
+
+    let startVal = '12:00';
+    let endVal = '13:00';
+    let enabledVal = true;
+
+    if (typeof lunchOrStart === 'object' && lunchOrStart !== null) {
+      startVal = typeof lunchOrStart.start === 'string' ? lunchOrStart.start : '12:00';
+      endVal = typeof lunchOrStart.end === 'string' ? lunchOrStart.end : '13:00';
+      enabledVal = lunchOrStart.enabled !== undefined ? Boolean(lunchOrStart.enabled) : true;
+    } else if (typeof lunchOrStart === 'string') {
+      startVal = lunchOrStart;
+      endVal = endParam || existing.lunchBreak?.end || '13:00';
+      enabledVal = enabledParam !== undefined ? Boolean(enabledParam) : (existing.lunchBreak?.enabled ?? true);
+    }
+
     saveOverrides({
       professionals: {
         ...profs,
-        [profId]: { ...(profs[profId] || {}), lunchBreak: { start, end, enabled } },
+        [profId]: {
+          ...existing,
+          lunchBreak: { start: startVal, end: endVal, enabled: enabledVal },
+        },
       },
     });
   }
