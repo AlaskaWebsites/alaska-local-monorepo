@@ -1,22 +1,21 @@
-import { ITenantRepository } from '../ports/tenant.repository.port'
-import { Tenant } from '../../domain/entities/tenant.entity'
-import { EntityNotFoundError } from '../../domain/errors/domain.error'
+import { ITenantRepository } from '../ports/tenant.repository.port';
+import { EntityNotFoundError } from '../../domain/errors/entity-not-found.error';
 
 export interface GetTenantBySlugInput {
-  slug: string
+  slug: string;
 }
 
 export class GetTenantBySlugUseCase {
   constructor(private readonly tenantRepository: ITenantRepository) {}
 
-  async execute(input: GetTenantBySlugInput): Promise<Tenant> {
-    const slug = (input.slug || '').trim().toLowerCase()
-    const tenant = await this.tenantRepository.findBySlug(slug)
+  async execute(input: string | GetTenantBySlugInput) {
+    const slug = typeof input === 'string' ? input : input?.slug;
+    const tenant = await this.tenantRepository.findBySlug(slug);
 
     if (!tenant || !tenant.isActive) {
-      throw new EntityNotFoundError('Tenant', slug)
+      throw new EntityNotFoundError('Tenant', slug);
     }
 
-    return tenant
+    return tenant;
   }
 }

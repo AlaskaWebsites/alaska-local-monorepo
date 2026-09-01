@@ -1,64 +1,44 @@
-import { ITenantRepository } from '../ports/tenant.repository.port'
-import { IPixGateway } from '../ports/pix-gateway.port'
-import { EntityNotFoundError, ValidationError } from '../../domain/errors/domain.error'
+import { ITenantRepository } from '../ports/tenant.repository.port';
+import { IPixGateway } from '../ports/pix-gateway.port';
+import { EntityNotFoundError } from '../../domain/errors/entity-not-found.error';
+import { ValidationError } from '../../domain/errors/domain.error';
 
 export interface CalculatePixPayloadInput {
-  tenantSlug: string
-  amount: number
-  txid?: string
-  isTestCent?: boolean
-}
-
-export interface CalculatePixPayloadOutput {
-  pixKey: string
-  keyType: string
-  beneficiary: string
-  amount: number
-  copiaECola: string
-  qrCodeDataUrl: string
-  isTestMode: boolean
+  tenantSlug: string;
+  amount: number;
+  isTestCent?: boolean;
+  txid?: string;
 }
 
 export class CalculatePixPayloadUseCase {
   constructor(
     private readonly tenantRepository: ITenantRepository,
-    private readonly pixGateway: IPixGateway
+    private readonly pixGateway: IPixGateway,
   ) {}
 
-  async execute(input: CalculatePixPayloadInput): Promise<CalculatePixPayloadOutput> {
-    const tenant = await this.tenantRepository.findBySlug(input.tenantSlug)
+  async execute(input: CalculatePixPayloadInput) {
+    if (input.amount <= 0) {
+      throw new ValidationError('O valor para geração do Pix deve ser maior que zero.');
+    }
+
+    const tenant = await this.tenantRepository.findBySlug(input.tenantSlug);
     if (!tenant) {
-      throw new EntityNotFoundError('Tenant', input.tenantSlug)
+      throw new EntityNotFoundError('Tenant', input.tenantSlug);
     }
 
-    const pixConfig = tenant.pixConfig
-    const effectiveKey = pixConfig?.key || tenant.phoneWhatsApp.replace(/\D/g, '')
-    const beneficiary = pixConfig?.beneficiary || tenant.name
-    const city = pixConfig?.city || 'SAO PAULO'
-
-    const effectiveAmount = input.isTestCent ? 0.01 : input.amount
-    if (effectiveAmount <= 0) {
-      throw new ValidationError('O valor do Pix deve ser maior que zero.')
+    if (!tenant.pixConfig || !tenant.pixConfig.key) {
+      throw new ValidationError(`O estabelecimento ${tenant.name} não possui chave Pix configurada.`);
     }
 
-    const copiaECola = this.pixGateway.generateBrCode({
-      key: effectiveKey,
-      beneficiary,
-      city,
-      amount: effectiveAmount,
-      txid: input.txid || 'ALASKA'
-    })
+    const finalAmount = input.isTestCent && tenant.pixConfig.allowTestCent ? 0.01 : input.amount;
 
-    const qrCodeDataUrl = await this.pixGateway.generateQrCodeDataUrl(copiaECola)
-
-    return {
-      pixKey: effectiveKey,
-      keyType: pixConfig?.keyType || 'phone',
-      beneficiary,
-      amount: effectiveAmount,
-      copiaECola,
-      qrCodeDataUrl,
-      isTestMode: !!input.isTestCent
-    }
+    return this.pixGateway.generateQrCode({
+      key: tenant.pixConfig.key,
+      keyType: tenant.pixConfig.keyType,
+      name: tenant.pixConfig.name || tenant.name,
+      city: tenant.pixConfig.city || 'São Paulo',
+      amount: finalAmount,
+      txid: input.txid,
+    });
   }
 }

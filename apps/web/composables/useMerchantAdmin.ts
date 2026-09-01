@@ -1,155 +1,276 @@
 import { ref, computed } from 'vue';
-import type { Tenant, Product } from '~/types';
-import { useTenant } from './useTenant';
+import type { Product, Category, OpeningHours } from '@alaska/contracts';
 import { useHaptic } from './useHaptic';
 
-export interface MerchantAdminOverrides {
-  pausedProductIds?: string[];
-  productPriceOverrides?: Record<string, number>;
-  productNameOverrides?: Record<string, string>;
-  productDescriptionOverrides?: Record<string, string>;
-  openingHoursOverrides?: Tenant['openingHours'];
-  emergencyClose?: {
-    active: boolean;
-    message?: string;
-  };
-  blockedBookingSlots?: Record<string, string[]>;
+export interface TenantOverrides {
+  products?: Record<string, { isAvailable?: boolean; price?: number; durationMinutes?: number }>;
+  openingHours?: { open?: string; close?: string };
+  delivery?: { deliveryFee?: number; minOrderValue?: number; estimatedTime?: string };
+  announcement?: { isEnabled: boolean; message: string };
+  emergency?: { isClosed: boolean; reason: string };
+  blockedSlots?: Array<{ date: string; time: string; reason: string }>;
 }
 
-const isAuthenticated = ref(false);
-const adminToken = ref<string | null>(null);
+function getApiBaseUrl(): string {
+  try {
+    const config = typeof useRuntimeConfig === 'function' ? useRuntimeConfig() : null;
+    return (config?.public?.apiBaseUrl as string) || 'http://localhost:3333/api/v1';
+  } catch {
+    return 'http://localhost:3333/api/v1';
+  }
+}
 
-export function useMerchantAdmin(tenantSlug?: string) {
-  const { tenant } = useTenant(tenantSlug);
+export function useMerchantAdmin(slug: string = 'default') {
+  const pinSessionKey = `alaska_admin_session_${slug}`;
+  const tokenSessionKey = `alaska_admin_token_${slug}`;
+  const overridesKey = `alaska_overrides_${slug}`;
+
+  const isAuthenticated = ref(false);
+  const isSubmitting = ref(false);
+  const errorMessage = ref('');
+  const apiBaseUrl = getApiBaseUrl();
   const { triggerHaptic } = useHaptic();
 
-  const storageKey = computed(() => `alaska_overrides_${tenantSlug || tenant.value?.slug || 'default'}`);
-  const tokenKey = computed(() => `alaska_admin_token_${tenantSlug || tenant.value?.slug || 'default'}`);
+  if (typeof window !== 'undefined' && window.sessionStorage) {
+    isAuthenticated.value = sessionStorage.getItem(pinSessionKey) === 'true';
+  }
 
-  const loadOverrides = (): MerchantAdminOverrides => {
-    if (!import.meta.client) return {};
+  function getOverrides(): TenantOverrides {
+    if (typeof window === 'undefined') return {};
     try {
-      const raw = localStorage.getItem(storageKey.value);
+      const raw = localStorage.getItem(overridesKey);
       return raw ? JSON.parse(raw) : {};
     } catch {
       return {};
     }
-  };
+  }
 
-  const saveOverrides = (overrides: MerchantAdminOverrides) => {
-    if (!import.meta.client) return;
+  function saveOverrides(newOverrides: Partial<TenantOverrides>) {
+    if (typeof window === 'undefined') return;
     try {
-      localStorage.setItem(storageKey.value, JSON.stringify(overrides));
+      const current = getOverrides();
+      const merged: TenantOverrides = {
+        ...current,
+        ...newOverrides,
+        products: { ...current.products, ...(newOverrides.products || {}) },
+        delivery: { ...current.delivery, ...(newOverrides.delivery || {}) },
+        announcement: newOverrides.announcement ?? current.announcement,
+        emergency: newOverrides.emergency ?? current.emergency,
+        blockedSlots: newOverrides.blockedSlots ?? current.blockedSlots ?? [],
+      };
+      localStorage.setItem(overridesKey, JSON.stringify(merged));
+      window.dispatchEvent(new Event('storage'));
     } catch (e) {
-      console.error('Falha ao persistir overrides locais:', e);
+      console.warn('Erro ao salvar overrides:', e);
     }
-  };
+  }
 
-  const overrides = ref<MerchantAdminOverrides>(loadOverrides());
-
-  const login = async (pin: string): Promise<boolean> => {
-    triggerHaptic(20);
-
-    // Tentativa 1: Autenticação remota com a API NestJS
-    if (import.meta.client && tenantSlug) {
-      try {
-        const config = useRuntimeConfig();
-        const apiBase = config.public?.apiBaseUrl || 'http://localhost:3001';
-        const response = await fetch(`${apiBase}/tenants/${tenantSlug}/admin/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pin }),
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.authenticated) {
-            isAuthenticated.value = true;
-            adminToken.value = data.token || null;
-            if (data.token) {
-              localStorage.setItem(tokenKey.value, data.token);
+  function applyOverridesToCategories(categories: Category[]) {
+    const overrides = getOverrides();
+    const productOverrides = overrides.products || {};
+    for (const cat of categories) {
+      if (cat.products && Array.isArray(cat.products)) {
+        for (const p of cat.products) {
+          if (productOverrides[p.id]) {
+            if (productOverrides[p.id].isAvailable !== undefined) {
+              p.isAvailable = productOverrides[p.id].isAvailable!;
+              (p as any).available = productOverrides[p.id].isAvailable!;
             }
-            triggerHaptic([15, 50, 25]);
-            return true;
+            if (productOverrides[p.id].price !== undefined) {
+              p.price = productOverrides[p.id].price!;
+            }
+            if (productOverrides[p.id].durationMinutes !== undefined) {
+              p.durationMinutes = productOverrides[p.id].durationMinutes!;
+            }
           }
         }
-      } catch {
-        // Fallback gracioso para modo demonstração local caso a API esteja offline
       }
     }
+  }
 
-    // Tentativa 2: Fallback local para demos offline
+  async function login(pin: string): Promise<boolean> {
+    isSubmitting.value = true;
+    errorMessage.value = '';
+    triggerHaptic(30);
+
+    try {
+      if (typeof $fetch === 'function') {
+        const response = await $fetch<{ success?: boolean; token?: string; authenticated?: boolean }>(
+          `${apiBaseUrl}/tenants/${slug}/admin/login`,
+          {
+            method: 'POST',
+            body: { pin },
+            timeout: 4000,
+          },
+        );
+        if (response?.authenticated || response?.success) {
+          isAuthenticated.value = true;
+          isSubmitting.value = false;
+          if (typeof window !== 'undefined' && window.sessionStorage) {
+            sessionStorage.setItem(pinSessionKey, 'true');
+            if (response.token) sessionStorage.setItem(tokenSessionKey, response.token);
+          }
+          return true;
+        }
+      }
+    } catch (err: any) {
+      // Fallback para modo demonstração local
+    }
+
     if (pin === '1234') {
       isAuthenticated.value = true;
-      triggerHaptic([15, 50, 25]);
+      isSubmitting.value = false;
+      if (typeof window !== 'undefined' && window.sessionStorage) {
+        sessionStorage.setItem(pinSessionKey, 'true');
+      }
       return true;
     }
 
+    isSubmitting.value = false;
+    errorMessage.value = 'PIN incorreto. Tente novamente.';
     triggerHaptic(50);
     return false;
-  };
+  }
 
-  const logout = () => {
+  function logout() {
     isAuthenticated.value = false;
-    adminToken.value = null;
-    if (import.meta.client) {
-      localStorage.removeItem(tokenKey.value);
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      sessionStorage.removeItem(pinSessionKey);
+      sessionStorage.removeItem(tokenSessionKey);
     }
-  };
+  }
 
-  const toggleProductAvailability = (productId: string) => {
-    triggerHaptic(20);
-    const current = overrides.value.pausedProductIds || [];
-    const updated = current.includes(productId)
-      ? current.filter((id) => id !== productId)
-      : [...current, productId];
+  function toggleProductAvailability(products: Product[], productId: string, currentStatus: boolean) {
+    triggerHaptic(30);
+    const newStatus = !currentStatus;
 
-    overrides.value = {
-      ...overrides.value,
-      pausedProductIds: updated,
-    };
-    saveOverrides(overrides.value);
-  };
-
-  const updateProductPrice = (productId: string, newPrice: number) => {
-    triggerHaptic(20);
-    overrides.value = {
-      ...overrides.value,
-      productPriceOverrides: {
-        ...(overrides.value.productPriceOverrides || {}),
-        [productId]: newPrice,
-      },
-    };
-    saveOverrides(overrides.value);
-  };
-
-  const effectiveTenant = computed<Tenant | null>(() => {
-    if (!tenant.value) return null;
-    const ov = overrides.value;
-    const base = { ...tenant.value };
-
-    if (ov.emergencyClose?.active !== undefined) {
-      base.isClosedEmergency = ov.emergencyClose.active;
-      base.closedEmergencyMessage = ov.emergencyClose.message;
+    const product = products.find((p) => p.id === productId);
+    if (product) {
+      product.isAvailable = newStatus;
+      (product as any).available = newStatus;
     }
 
-    if (ov.openingHoursOverrides) {
-      base.openingHours = ov.openingHoursOverrides;
+    saveOverrides({
+      products: { [productId]: { isAvailable: newStatus } },
+    });
+
+    try {
+      if (typeof $fetch === 'function') {
+        $fetch(`${apiBaseUrl}/tenants/${slug}/products/${productId}/availability`, {
+          method: 'PATCH',
+          body: { isAvailable: newStatus },
+          timeout: 3000,
+        }).catch(() => {});
+      }
+    } catch {}
+  }
+
+  function updateProductPrice(products: Product[], productId: string, newPrice: number) {
+    triggerHaptic(30);
+    const product = products.find((p) => p.id === productId);
+    if (product) {
+      product.price = newPrice;
     }
 
-    return base;
-  });
+    saveOverrides({
+      products: { [productId]: { price: newPrice } },
+    });
+
+    try {
+      if (typeof $fetch === 'function') {
+        $fetch(`${apiBaseUrl}/tenants/${slug}/products/${productId}`, {
+          method: 'PATCH',
+          body: { price: newPrice },
+          timeout: 3000,
+        }).catch(() => {});
+      }
+    } catch {}
+  }
+
+  function updateProductDuration(products: Product[], productId: string, durationMinutes: number) {
+    triggerHaptic(30);
+    const product = products.find((p) => p.id === productId);
+    if (product) {
+      product.durationMinutes = durationMinutes;
+    }
+
+    saveOverrides({
+      products: { [productId]: { durationMinutes } },
+    });
+    return true;
+  }
+
+  function updateHours(openTime: string, closeTime: string) {
+    triggerHaptic(30);
+    saveOverrides({
+      openingHours: { open: openTime, close: closeTime },
+    });
+
+    try {
+      if (typeof $fetch === 'function') {
+        $fetch(`${apiBaseUrl}/tenants/${slug}/hours`, {
+          method: 'POST',
+          body: { hours: { monday: { open: openTime, close: closeTime } } },
+          timeout: 3000,
+        }).catch(() => {});
+      }
+    } catch {}
+    return true;
+  }
+
+  function updateDelivery(fee: number, minOrder: number, estimatedTime: string) {
+    triggerHaptic(30);
+    saveOverrides({
+      delivery: { deliveryFee: fee, minOrderValue: minOrder, estimatedTime },
+    });
+  }
+
+  function updateAnnouncement(isEnabled: boolean, message: string) {
+    triggerHaptic(30);
+    saveOverrides({
+      announcement: { isEnabled, message },
+    });
+  }
+
+  function updateEmergency(isClosed: boolean, reason: string = '') {
+    triggerHaptic(40);
+    saveOverrides({
+      emergency: { isClosed, reason },
+    });
+  }
+
+  function toggleBlockSlot(date: string, time: string, reason: string = 'Bloqueado') {
+    triggerHaptic(30);
+    const current = getOverrides();
+    const slots = current.blockedSlots || [];
+    const existingIndex = slots.findIndex((s) => s.date === date && s.time === time);
+
+    let updatedSlots = [...slots];
+    if (existingIndex >= 0) {
+      updatedSlots.splice(existingIndex, 1);
+    } else {
+      updatedSlots.push({ date, time, reason });
+    }
+
+    saveOverrides({ blockedSlots: updatedSlots });
+  }
 
   return {
-    isAuthenticated,
-    adminToken,
-    overrides,
-    effectiveTenant,
+    isAuthenticated: computed(() => isAuthenticated.value),
+    isSubmitting: computed(() => isSubmitting.value),
+    errorMessage: computed(() => errorMessage.value),
     login,
     logout,
+    getOverrides,
+    saveOverrides,
+    applyOverridesToCategories,
     toggleProductAvailability,
     updateProductPrice,
-    loadOverrides,
-    saveOverrides,
+    updateProductDuration,
+    updateHours,
+    updateDelivery,
+    updateAnnouncement,
+    updateEmergency,
+    toggleBlockSlot,
   };
 }

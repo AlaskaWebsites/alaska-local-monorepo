@@ -1,22 +1,27 @@
-import { ITenantRepository } from '../ports/tenant.repository.port'
-import { EntityNotFoundError } from '@core/domain/errors/domain.error'
-import { Tenant, OpeningHours } from '@core/domain/entities/tenant.entity'
+import { ITenantRepository } from '../ports/tenant.repository.port';
+import { EntityNotFoundError } from '../../domain/errors/entity-not-found.error';
 
 export interface UpdateTenantHoursInput {
-  slug: string
-  openingHours: OpeningHours
+  slug: string;
+  openingHours?: any;
+  hours?: any;
 }
 
 export class UpdateTenantHoursUseCase {
   constructor(private readonly tenantRepository: ITenantRepository) {}
 
-  async execute(input: UpdateTenantHoursInput): Promise<Tenant> {
-    const tenant = await this.tenantRepository.findBySlug(input.slug)
+  async execute(input: UpdateTenantHoursInput) {
+    const tenant = await this.tenantRepository.findBySlug(input.slug);
     if (!tenant) {
-      throw new EntityNotFoundError('Tenant', input.slug)
+      throw new EntityNotFoundError('Tenant', input.slug);
     }
-    tenant.updateOpeningHours(input.openingHours)
-    await this.tenantRepository.save(tenant)
-    return tenant
+
+    const hours = input.openingHours || input.hours;
+    if (hours) {
+      tenant.updateOpeningHours(hours);
+    }
+
+    await this.tenantRepository.save(tenant);
+    return tenant;
   }
 }
