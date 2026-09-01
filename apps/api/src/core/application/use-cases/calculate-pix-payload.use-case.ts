@@ -30,7 +30,7 @@ export class CalculatePixPayloadUseCase {
       throw new ValidationError(`O estabelecimento ${tenant.name} não possui chave Pix configurada.`);
     }
 
-    const isTestMode = Boolean(input.isTestCent || (input as any).testCent || tenant.pixConfig.allowTestCent);
+    const isTestMode = Boolean(input.isTestCent || input.testCent);
     const finalAmount = isTestMode ? 0.01 : input.amount;
 
     const payloadInput = {
@@ -61,6 +61,7 @@ export class CalculatePixPayloadUseCase {
       beneficiary: tenant.pixConfig.beneficiary || tenant.pixConfig.name || tenant.name,
       city: tenant.pixConfig.city || 'São Paulo',
       amount: finalAmount,
+      isTestMode,
       copiaECola,
       brCode: copiaECola,
       qrCodeDataUrl,
