@@ -34,7 +34,7 @@ export function generatePixEmv(params: {
   const formattedAmount = params.amount.toFixed(2);
 
   const merchantAccountInfo =
-    formatEmv('00', 'BR.GOV.BCB.PIX') +
+    formatEmv('00', 'br.gov.bcb.pix') +
     formatEmv('01', cleanKey);
 
   const additionalDataField = formatEmv('05', cleanTxid);

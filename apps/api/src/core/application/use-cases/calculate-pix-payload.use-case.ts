@@ -6,6 +6,7 @@ export interface CalculatePixPayloadInput {
   tenantSlug: string;
   amount: number;
   isTestCent?: boolean;
+  testCent?: boolean;
   txid?: string;
 }
 
@@ -29,7 +30,8 @@ export class CalculatePixPayloadUseCase {
       throw new ValidationError(`O estabelecimento ${tenant.name} não possui chave Pix configurada.`);
     }
 
-    const finalAmount = input.isTestCent && tenant.pixConfig.allowTestCent ? 0.01 : input.amount;
+    const isTestMode = Boolean(input.isTestCent || (input as any).testCent || tenant.pixConfig.allowTestCent);
+    const finalAmount = isTestMode ? 0.01 : input.amount;
 
     const payloadInput = {
       key: tenant.pixConfig.key,
