@@ -152,4 +152,16 @@ describe('Unit: useMerchantAdmin Composable (ADR 013 & Novas Funcionalidades)', 
     expect(overrides.deletedProfessionalIds).toContain(prof.id)
     expect(overrides.customProfessionals?.some(p => p.id === prof.id)).toBe(false)
   })
+
+  it('deve pausar e reabrir atendimento de emergência com sucesso', () => {
+    const admin = useMerchantAdmin(slug)
+    admin.updateEmergency(true, 'Cozinha lotada')
+    let overrides = admin.getOverrides()
+    expect(overrides.emergency?.isClosed).toBe(true)
+    expect(overrides.emergency?.message).toBe('Cozinha lotada')
+
+    admin.updateEmergency(false)
+    overrides = admin.getOverrides()
+    expect(overrides.emergency?.isClosed).toBe(false)
+  })
 })
