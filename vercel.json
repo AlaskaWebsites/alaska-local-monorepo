@@ -1,6 +1,5 @@
 {
     "$schema": "https://openapi.vercel.sh/vercel.json",
     "installCommand": "corepack enable && pnpm install",
-    "buildCommand": "npx turbo run build --filter=@alaska/web",
-    "outputDirectory": "apps/web/.output"
+    "buildCommand": "npx turbo run build --filter=@alaska/web"
 }
