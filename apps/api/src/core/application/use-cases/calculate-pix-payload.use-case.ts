@@ -31,13 +31,27 @@ export class CalculatePixPayloadUseCase {
 
     const finalAmount = input.isTestCent && tenant.pixConfig.allowTestCent ? 0.01 : input.amount;
 
-    return this.pixGateway.generateQrCode({
+    const payloadInput = {
       key: tenant.pixConfig.key,
       keyType: tenant.pixConfig.keyType,
       name: tenant.pixConfig.name || tenant.name,
       city: tenant.pixConfig.city || 'São Paulo',
       amount: finalAmount,
       txid: input.txid,
-    });
+    };
+
+    if (typeof (this.pixGateway as any).generatePayload === 'function') {
+      return (this.pixGateway as any).generatePayload(payloadInput);
+    }
+
+    if (typeof (this.pixGateway as any).generateQrCode === 'function') {
+      return (this.pixGateway as any).generateQrCode(payloadInput);
+    }
+
+    if (typeof (this.pixGateway as any).createQrCode === 'function') {
+      return (this.pixGateway as any).createQrCode(payloadInput);
+    }
+
+    return null;
   }
 }
