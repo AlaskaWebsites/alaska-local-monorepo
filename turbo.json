@@ -1,5 +1,19 @@
 {
   "$schema": "https://turbo.build/schema.json",
+  "globalEnv": [
+    "NODE_ENV",
+    "PORT",
+    "CORS_ORIGINS",
+    "DATABASE_URL",
+    "SUPABASE_URL",
+    "SUPABASE_KEY",
+    "ASAAS_API_KEY",
+    "REDIS_URL",
+    "ENABLE_EXPERIMENTAL_COREPACK",
+    "NUXT_PUBLIC_API_BASE_URL",
+    "NUXT_PUBLIC_APP_DOMAIN",
+    "NUXT_PUBLIC_DEFAULT_TENANT"
+  ],
   "tasks": {
     "build": {
       "dependsOn": [
@@ -16,6 +30,10 @@
       "dependsOn": [
         "^build"
       ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
     }
   }
 }
