@@ -1,6 +1,6 @@
 <!-- components/BookingModal.vue -->
 <script setup lang="ts">
-import { ref, computed, toRef, onMounted, onUnmounted, watch } from 'vue'
+import { ref, computed, toRef, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { useBodyScrollLock } from '~/composables/useBodyScrollLock'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 import { useHaptic } from '~/composables/useHaptic'
@@ -147,7 +147,7 @@ const availableProfessionals = computed(() => {
   const overrides = rawOverrides.value.professionals || {}
   const deletedIds = rawOverrides.value.deletedProfessionalIds || []
   const customProfs = rawOverrides.value.customProfessionals || []
-  const base = defaultProfessionalsBySlug[tenantSlug.value] || defaultProfessionalsBySlug['barbearia-style']
+  const base = defaultProfessionalsBySlug[tenantSlug.value] || defaultProfessionalsBySlug['barbearia-style'] || []
   const allProfs = [...base, ...customProfs].filter(p => !deletedIds.includes(p.id))
 
   return allProfs.map(p => {
@@ -177,7 +177,7 @@ function parseTimeToMin(t: string): number {
   return (parseInt(h || '0', 10) * 60) + parseInt(m || '0', 10)
 }
 
-// 6. Calendário e Dias de Atendimento
+// 6. Calendário e Dias de Atendimento (Próximos 30 dias)
 const bookingDays = computed(() => {
   const days = []
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
@@ -234,13 +234,35 @@ const isProfOffOnDate = computed(() => {
   return !(selectedProfessional.value.availableDays || []).includes(dayOfWeek) || !selectedProfessional.value.isAvailable
 })
 
-// Auto-seleciona a primeira data disponível e válida
+// Controle de Rolagem Horizontal do Calendário de Datas
+const daysContainerRef = ref<HTMLElement | null>(null)
+
+function scrollDays(direction: 'left' | 'right') {
+  if (!daysContainerRef.value) return
+  const offset = direction === 'left' ? -220 : 220
+  daysContainerRef.value.scrollBy({ left: offset, behavior: 'smooth' })
+}
+
+function handleDaysWheel(e: WheelEvent) {
+  if (!daysContainerRef.value) return
+  if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
+    daysContainerRef.value.scrollLeft += e.deltaY
+  }
+}
+
+// Auto-seleciona a primeira data disponível e centraliza a rolagem
 function autoSelectFirstAvailableDate() {
   const currentDay = bookingDays.value.find(d => d.date === selectedDate.value)
   if (!currentDay || isDateBlocked(currentDay)) {
     const firstAvailable = bookingDays.value.find(d => !isDateBlocked(d))
     if (firstAvailable) {
       selectedDate.value = firstAvailable.date
+      nextTick(() => {
+        const el = document.getElementById(`date-btn-${firstAvailable.date}`)
+        if (el && daysContainerRef.value) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+        }
+      })
     }
   }
 }
@@ -484,7 +506,7 @@ function confirmAndDispatchWhatsApp() {
           </div>
           <ChevronRight class="w-3.5 h-3.5 text-slate-300" />
           <div class="flex items-center gap-1.5" :class="currentStep === 4 ? 'text-emerald-600 font-bold' : 'text-slate-500'">
-            <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" :class="currentStep === 4 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'">4</span>
+            <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" :class="currentStep >= 4 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'">4</span>
             <span>Confirmar</span>
           </div>
         </div>
@@ -601,16 +623,45 @@ function confirmAndDispatchWhatsApp() {
 
           <!-- STEP 3: Escolha de Data e Horário com Bloqueio de Dias Indisponíveis -->
           <div v-else-if="currentStep === 3" class="space-y-4">
-            <div>
-              <h3 class="text-sm font-bold text-slate-900">Selecione o dia e o horário:</h3>
-              <p class="text-xs text-slate-500 mt-0.5">Dias de folga ou fechados estão automaticamente bloqueados.</p>
+            <div class="flex items-center justify-between">
+              <div>
+                <h3 class="text-sm font-bold text-slate-900">Selecione o dia e o horário:</h3>
+                <p class="text-xs text-slate-500 mt-0.5">Próximos 30 dias disponíveis para agendamento.</p>
+              </div>
+
+              <!-- Botões de Navegação Desktop (Setas ← e →) -->
+              <div class="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  @click="scrollDays('left')"
+                  class="p-1.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 shadow-2xs cursor-pointer transition-all active:scale-95 flex items-center justify-center"
+                  aria-label="Dias anteriores"
+                  title="Dias anteriores"
+                >
+                  <ChevronLeft class="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  @click="scrollDays('right')"
+                  class="p-1.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 shadow-2xs cursor-pointer transition-all active:scale-95 flex items-center justify-center"
+                  aria-label="Próximos dias"
+                  title="Próximos dias"
+                >
+                  <ChevronRight class="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
             <!-- Carrossel Horizontal de Dias com Bloqueio de Folga e Indisponibilidade -->
-            <div class="flex gap-2 overflow-x-auto pb-2 pt-1 no-scrollbar snap-x">
+            <div
+              ref="daysContainerRef"
+              @wheel.passive="handleDaysWheel"
+              class="flex gap-2 overflow-x-auto pb-2 pt-1 no-scrollbar scroll-smooth snap-x select-none"
+            >
               <button
                 v-for="d in bookingDays"
                 :key="d.date"
+                :id="`date-btn-${d.date}`"
                 type="button"
                 :disabled="isDateBlocked(d)"
                 @click="!isDateBlocked(d) && selectDate(d.date)"
