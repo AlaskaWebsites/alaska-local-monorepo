@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { ITenantRepository } from '../../../core/application/ports/tenant.repository.port';
 import { Tenant } from '../../../core/domain/entities/tenant.entity';
-import { PostgresService } from '../postgres.service';
+import { PostgresService } from './postgres.service';
 import { TOKENS } from '../../../core/application/tokens';
 import { TenantMapper } from './mappers/tenant.mapper';
 
