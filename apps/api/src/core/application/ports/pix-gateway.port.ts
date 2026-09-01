@@ -1,12 +1,23 @@
-export interface GeneratePixBrCodeInput {
-  key: string
-  beneficiary: string
-  city?: string
-  amount: number
-  txid?: string
+export interface GeneratePixPayloadInput {
+  key: string;
+  keyType?: string;
+  name: string;
+  beneficiary?: string;
+  city: string;
+  amount: number;
+  txid?: string;
+}
+
+export interface PixPayloadResult {
+  copiaECola?: string;
+  brCode?: string;
+  payload?: string;
+  qrCodeDataUrl: string;
+  amount?: number;
+  txid?: string;
 }
 
 export interface IPixGateway {
-  generateBrCode(input: GeneratePixBrCodeInput): string
-  generateQrCodeDataUrl(payload: string): Promise<string>
+  generatePayload(input: GeneratePixPayloadInput): Promise<PixPayloadResult>;
+  generateQrCode(input: GeneratePixPayloadInput): Promise<PixPayloadResult>;
 }

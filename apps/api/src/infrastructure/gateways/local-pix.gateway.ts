@@ -1,79 +1,85 @@
-import { IPixGateway, GeneratePixBrCodeInput } from '@core/application/ports/pix-gateway.port'
-import * as QRCode from 'qrcode'
+import { IPixGateway, GeneratePixPayloadInput, PixPayloadResult } from '../../core/application/ports/pix-gateway.port';
 
-export class LocalPixGateway implements IPixGateway {
-  generateBrCode(input: GeneratePixBrCodeInput): string {
-    const key = (input.key || '').trim()
-    const name = this.sanitize(input.beneficiary || 'Alaska Local', 25) || 'Alaska Local'
-    const city = this.sanitize(input.city || 'SAO PAULO', 15) || 'SAO PAULO'
-    const txid = this.sanitize(input.txid || '***', 25) || '***'
-
-    const tag00 = this.formatTlv(0, '01')
-    const gui = this.formatTlv(0, 'br.gov.bcb.pix')
-    const keyTag = this.formatTlv(1, key)
-    const tag26 = this.formatTlv(26, `${gui}${keyTag}`)
-    const tag52 = this.formatTlv(52, '0000')
-    const tag53 = this.formatTlv(53, '986')
-
-    let tag54 = ''
-    if (typeof input.amount === 'number' && input.amount > 0) {
-      tag54 = this.formatTlv(54, input.amount.toFixed(2))
-    }
-
-    const tag58 = this.formatTlv(58, 'BR')
-    const tag59 = this.formatTlv(59, name)
-    const tag60 = this.formatTlv(60, city)
-    const tag62 = this.formatTlv(62, this.formatTlv(5, txid))
-
-    const raw = `${tag00}${tag26}${tag52}${tag53}${tag54}${tag58}${tag59}${tag60}${tag62}6304`
-    const crc = this.crc16(raw)
-    return `${raw}${crc}`
-  }
-
-  async generateQrCodeDataUrl(payload: string): Promise<string> {
-    try {
-      return await QRCode.toDataURL(payload, {
-        margin: 1,
-        width: 320,
-        errorCorrectionLevel: 'M',
-        color: {
-          dark: '#0f172a',
-          light: '#ffffff'
-        }
-      })
-    } catch {
-      return ''
-    }
-  }
-
-  private sanitize(text: string, maxLen: number): string {
-    return (text || '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-zA-Z0-9 ]/g, '')
-      .slice(0, maxLen)
-      .trim()
-  }
-
-  private formatTlv(tag: number, val: string): string {
-    const t = tag.toString().padStart(2, '0')
-    const len = new TextEncoder().encode(val).length.toString().padStart(2, '0')
-    return `${t}${len}${val}`
-  }
-
-  private crc16(payload: string): string {
-    let crc = 0xffff
-    const bytes = new TextEncoder().encode(payload)
-    for (let i = 0; i < bytes.length; i++) {
-      crc ^= bytes[i] << 8
-      for (let j = 0; j < 8; j++) {
-        if ((crc & 0x8000) !== 0) {
-          crc = ((crc << 1) ^ 0x1021) & 0xffff
-        } else {
-          crc = (crc << 1) & 0xffff
-        }
+function crc16(buffer: string): string {
+  let crc = 0xffff;
+  for (let i = 0; i < buffer.length; i++) {
+    crc ^= buffer.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      if ((crc & 0x8000) !== 0) {
+        crc = (crc << 1) ^ 0x1021;
+      } else {
+        crc = crc << 1;
       }
     }
-    return crc.toString(16).toUpperCase().padStart(4, '0')
+  }
+  return (crc & 0xffff).toString(16).toUpperCase().padStart(4, '0');
+}
+
+function formatEmv(id: string, value: string): string {
+  const len = value.length.toString().padStart(2, '0');
+  return `${id}${len}${value}`;
+}
+
+export function generatePixEmv(params: {
+  key: string;
+  name: string;
+  city: string;
+  amount: number;
+  txid?: string;
+}): string {
+  const cleanKey = params.key.trim();
+  const cleanName = params.name.normalize('NFD').replace(/[\u0300-\u036f]/g, '').slice(0, 25);
+  const cleanCity = params.city.normalize('NFD').replace(/[\u0300-\u036f]/g, '').slice(0, 15);
+  const cleanTxid = (params.txid || '***').slice(0, 25);
+  const formattedAmount = params.amount.toFixed(2);
+
+  const merchantAccountInfo =
+    formatEmv('00', 'BR.GOV.BCB.PIX') +
+    formatEmv('01', cleanKey);
+
+  const additionalDataField = formatEmv('05', cleanTxid);
+
+  const raw =
+    formatEmv('00', '01') +
+    formatEmv('01', '12') +
+    formatEmv('26', merchantAccountInfo) +
+    formatEmv('52', '0000') +
+    formatEmv('53', '986') +
+    formatEmv('54', formattedAmount) +
+    formatEmv('58', 'BR') +
+    formatEmv('59', cleanName) +
+    formatEmv('60', cleanCity) +
+    formatEmv('62', additionalDataField) +
+    '6304';
+
+  const checksum = crc16(raw);
+  return raw + checksum;
+}
+
+export class LocalPixGateway implements IPixGateway {
+  async generatePayload(params: GeneratePixPayloadInput): Promise<PixPayloadResult> {
+    const emv = generatePixEmv({
+      key: params.key,
+      name: params.beneficiary || params.name,
+      city: params.city,
+      amount: params.amount,
+      txid: params.txid,
+    });
+
+    const base64Data = Buffer.from(emv).toString('base64');
+    const qrCodeDataUrl = `data:image/png;base64,${base64Data}`;
+
+    return {
+      copiaECola: emv,
+      brCode: emv,
+      payload: emv,
+      qrCodeDataUrl,
+      amount: params.amount,
+      txid: params.txid || '***',
+    };
+  }
+
+  async generateQrCode(params: GeneratePixPayloadInput): Promise<PixPayloadResult> {
+    return this.generatePayload(params);
   }
 }

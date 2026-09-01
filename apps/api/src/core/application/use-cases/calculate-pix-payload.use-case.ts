@@ -35,23 +35,34 @@ export class CalculatePixPayloadUseCase {
       key: tenant.pixConfig.key,
       keyType: tenant.pixConfig.keyType,
       name: tenant.pixConfig.name || tenant.name,
+      beneficiary: tenant.pixConfig.beneficiary || tenant.pixConfig.name || tenant.name,
       city: tenant.pixConfig.city || 'São Paulo',
       amount: finalAmount,
       txid: input.txid,
     };
 
-    if (typeof (this.pixGateway as any).generatePayload === 'function') {
-      return (this.pixGateway as any).generatePayload(payloadInput);
+    let gatewayResult: any = null;
+    const gw = this.pixGateway as any;
+
+    if (typeof gw.generatePayload === 'function') {
+      gatewayResult = await gw.generatePayload(payloadInput);
+    } else if (typeof gw.generateQrCode === 'function') {
+      gatewayResult = await gw.generateQrCode(payloadInput);
     }
 
-    if (typeof (this.pixGateway as any).generateQrCode === 'function') {
-      return (this.pixGateway as any).generateQrCode(payloadInput);
-    }
+    const copiaECola = gatewayResult?.copiaECola || gatewayResult?.brCode || gatewayResult?.payload || '';
+    const qrCodeDataUrl = gatewayResult?.qrCodeDataUrl || gatewayResult?.qrCode || '';
 
-    if (typeof (this.pixGateway as any).createQrCode === 'function') {
-      return (this.pixGateway as any).createQrCode(payloadInput);
-    }
-
-    return null;
+    return {
+      pixKey: tenant.pixConfig.key,
+      keyType: tenant.pixConfig.keyType,
+      beneficiary: tenant.pixConfig.beneficiary || tenant.pixConfig.name || tenant.name,
+      city: tenant.pixConfig.city || 'São Paulo',
+      amount: finalAmount,
+      copiaECola,
+      brCode: copiaECola,
+      qrCodeDataUrl,
+      txid: gatewayResult?.txid || input.txid || '***',
+    };
   }
 }
