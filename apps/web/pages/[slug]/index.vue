@@ -1,5 +1,25 @@
 <template>
   <div v-if="effectiveTenant" class="min-h-screen bg-slate-50 text-slate-900 font-sans pb-28 sm:pb-32 selection:bg-emerald-500 selection:text-white">
+    <!-- Banner de Alerta / Pausa Emergencial da Loja -->
+    <div
+      v-if="effectiveTenant.isEmergencyClosed"
+      class="bg-rose-600 text-white text-xs font-bold p-3 px-4 text-center sticky top-0 z-40 shadow-md flex items-center justify-center gap-2"
+      role="alert"
+    >
+      <span>⚠️</span>
+      <span>Atendimento temporariamente pausado pela loja no momento. Retornaremos em breve!</span>
+    </div>
+
+    <!-- Banner de Comunicado Oficial da Loja -->
+    <div
+      v-else-if="announcementOverride?.enabled && announcementOverride?.message"
+      class="bg-amber-500 text-slate-950 text-xs font-bold p-2.5 px-4 text-center sticky top-0 z-40 shadow-sm flex items-center justify-center gap-2"
+      role="status"
+    >
+      <span>📢</span>
+      <span>{{ announcementOverride.message }}</span>
+    </div>
+
     <!-- 1. Hero Banner Principal com Gradiente Escuro Suave -->
     <div class="relative h-48 sm:h-64 w-full bg-slate-900 overflow-hidden">
       <img
@@ -83,7 +103,7 @@
           <button
             @click="isInfoOpen = true"
             class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border shadow-2xs transition-all cursor-pointer"
-            :class="isOpen ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/80' : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100/80'"
+            :class="isOpen ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/80' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100/80'"
             :aria-label="`${openingAriaLabel || (isOpen ? 'Loja aberta' : 'Loja fechada')}. Clique para ver horários e endereço`"
           >
             <Clock class="w-3.5 h-3.5" aria-hidden="true" />
@@ -111,7 +131,7 @@
           </div>
           <div v-if="effectiveTenant.deliveryType" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="isInfoOpen = true">
             <Truck class="w-3.5 h-3.5 text-slate-400 shrink-0" />
-            <span>{{ effectiveTenant.deliveryType }}</span>
+            <span class="truncate">{{ effectiveTenant.deliveryType }}</span>
           </div>
           <div v-if="effectiveTenant.openingHours" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="isInfoOpen = true">
             <Clock class="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -119,7 +139,7 @@
           </div>
           <div class="flex items-center justify-center gap-1.5">
             <a
-              :href="`https://wa.me/${(effectiveTenant.phoneWhatsApp || '').replace(/\D/g, '')}`"
+              :href="`https://wa.me/55${(effectiveTenant.phoneWhatsApp || '').replace(/\\D/g, '')}`"
               target="_blank"
               rel="noopener noreferrer"
               class="text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1"
@@ -391,6 +411,10 @@ import { handleImageError } from '~/utils/images'
 import ProductSearchInput from '~/components/ProductSearchInput.vue'
 import BookingModal from '~/components/BookingModal.vue'
 import StoreInfoModal from '~/components/StoreInfoModal.vue'
+import StoreReviewsModal from '~/components/StoreReviewsModal.vue'
+import CartDrawerModal from '~/components/CartDrawerModal.vue'
+import ProductCustomizerModal from '~/components/ProductCustomizerModal.vue'
+import CategoryTabs from '~/components/CategoryTabs.vue'
 import {
   Phone,
   MapPin,
@@ -483,17 +507,19 @@ const effectiveTenant = computed<Tenant | null>(() => {
     },
     deliveryFee: ov.delivery?.deliveryFee !== undefined ? ov.delivery.deliveryFee : (tenant.value as any)?.deliveryFee,
     minOrderValue: ov.delivery?.minOrderValue !== undefined ? ov.delivery.minOrderValue : (tenant.value as any)?.minOrderValue,
+    deliveryType: ov.delivery?.estimatedTime || tenant.value.deliveryType,
+    isEmergencyClosed: ov.emergency?.isClosed ?? false,
     categories: effectiveCategories
-  }
+  } as Tenant
 })
+
+const announcementOverride = computed(() => localOverrides.value?.announcement)
 
 // 3. Tema Dinâmico
 const { themeClasses } = useTenantTheme(effectiveTenant)
 
-// 4. Status de Funcionamento Aberto/Fechado
-const { isOpen, statusText, ariaLabel: openingAriaLabel } = useOpeningHours(
-  computed(() => effectiveTenant.value?.openingHours)
-)
+// 4. Status de Funcionamento Aberto/Fechado (Reativo com Suporte a Pausa Emergencial)
+const { isOpen, statusText, ariaLabel: openingAriaLabel } = useOpeningHours(effectiveTenant)
 
 // 5. Categorias e Motor de Busca Client-Side (0ms)
 const categories = computed(() => effectiveTenant.value?.categories || [])
@@ -592,7 +618,7 @@ const featuredProducts = computed(() => {
   if (!effectiveTenant?.value?.categories || !Array.isArray(effectiveTenant.value.categories)) return []
   const all: Product[] = []
   for (const cat of effectiveTenant.value.categories) {
-    if (cat && Array.isArray(cat.products)) {
+    if (cat.products && Array.isArray(cat.products)) {
       all.push(...cat.products)
     }
   }
@@ -604,7 +630,7 @@ const carouselRef = ref<HTMLElement | null>(null)
 
 function scrollCarousel(direction: 'left' | 'right') {
   if (!carouselRef.value) return
-  const offset = direction === 'left' ? -280 : 280
+  const offset = direction === 'left' ? -260 : 260
   carouselRef.value.scrollBy({ left: offset, behavior: 'smooth' })
 }
 </script>
