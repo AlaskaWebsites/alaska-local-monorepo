@@ -204,11 +204,54 @@ const bookingDays = computed(() => {
   return days
 })
 
+// Função para checar se um dia específico está bloqueado (Folga / Loja Fechada / Pausa de Emergência)
+function isDateBlocked(d: { date: string; dayIndex?: number } | any): boolean {
+  if (rawOverrides.value.emergency?.isClosed || (props.tenant as any)?.isEmergencyClosed) {
+    return true
+  }
+
+  const dayIndex = d.dayIndex !== undefined ? d.dayIndex : new Date(d.date + 'T12:00:00').getDay()
+
+  // 1. Se um profissional específico foi selecionado
+  if (selectedProfessional.value) {
+    const prof = availableProfessionals.value.find(p => p.id === selectedProfessional.value?.id) || selectedProfessional.value
+    if (!prof || !prof.isAvailable) return true
+    const days = prof.availableDays || []
+    return !days.includes(dayIndex)
+  }
+
+  // 2. Se escolheu "Qualquer Profissional" (checa se há pelo menos 1 ativo atendendo neste dia da semana)
+  const hasWorkingProf = availableProfessionals.value.some(p => {
+    return p.isAvailable && (p.availableDays || []).includes(dayIndex)
+  })
+
+  return !hasWorkingProf
+}
+
 const isProfOffOnDate = computed(() => {
   if (!selectedProfessional.value) return false
   const dayOfWeek = new Date(selectedDate.value + 'T12:00:00').getDay()
   return !(selectedProfessional.value.availableDays || []).includes(dayOfWeek) || !selectedProfessional.value.isAvailable
 })
+
+// Auto-seleciona a primeira data disponível e válida
+function autoSelectFirstAvailableDate() {
+  const currentDay = bookingDays.value.find(d => d.date === selectedDate.value)
+  if (!currentDay || isDateBlocked(currentDay)) {
+    const firstAvailable = bookingDays.value.find(d => !isDateBlocked(d))
+    if (firstAvailable) {
+      selectedDate.value = firstAvailable.date
+    }
+  }
+}
+
+watch(
+  [selectedProfessional, () => currentStep.value],
+  () => {
+    autoSelectFirstAvailableDate()
+  },
+  { immediate: true }
+)
 
 const allCandidateSlots = [
   '08:00', '08:45', '09:30', '10:15', '11:00',
@@ -220,8 +263,12 @@ const availableSlots = computed(() => {
   const blocked = rawOverrides.value.blockedSlots || []
   const dayOfWeek = new Date(selectedDate.value + 'T12:00:00').getDay()
 
+  if (isDateBlocked({ date: selectedDate.value, dayIndex: dayOfWeek })) {
+    return []
+  }
+
   if (selectedProfessional.value) {
-    const prof = availableProfessionals.value.find(p => p.id === selectedProfessional.value?.id)
+    const prof = availableProfessionals.value.find(p => p.id === selectedProfessional.value?.id) || selectedProfessional.value
     if (!prof || !prof.isAvailable || !(prof.availableDays || []).includes(dayOfWeek)) {
       return []
     }
@@ -243,6 +290,7 @@ const availableSlots = computed(() => {
       .map(time => ({ time }))
   }
 
+  // Se escolheu "Qualquer Profissional": mostra horários onde pelo menos 1 profissional ativo atende
   const workingProfs = availableProfessionals.value.filter(p => {
     return p.isAvailable && (p.availableDays || []).includes(dayOfWeek)
   })
@@ -269,38 +317,31 @@ const availableSlots = computed(() => {
     .map(time => ({ time }))
 })
 
+function isServiceSelected(serviceId: string): boolean {
+  return selectedServices.value.some(s => s.id === serviceId)
+}
+
+function toggleService(service: BookingService) {
+  triggerHaptic(20)
+  const idx = selectedServices.value.findIndex(s => s.id === service.id)
+  if (idx >= 0) {
+    selectedServices.value.splice(idx, 1)
+  } else {
+    selectedServices.value.push(service)
+  }
+}
+
+const totalPrice = computed(() => {
+  return selectedServices.value.reduce((acc, s) => acc + (s.price || 0), 0)
+})
+
 const totalDuration = computed(() => {
   return selectedServices.value.reduce((acc, s) => acc + (s.durationMinutes || 30), 0)
 })
 
-const totalPrice = computed(() => {
-  return selectedServices.value.reduce((acc, s) => acc + Number(s.price || 0), 0)
-})
-
-const depositAmount = computed(() => {
-  return Math.round(totalPrice.value * 0.3)
-})
-
-function isServiceSelected(srvId: string): boolean {
-  return selectedServices.value.some(s => s.id === srvId)
-}
-
-function toggleService(srv: BookingService) {
-  triggerHaptic(20)
-  const idx = selectedServices.value.findIndex(s => s.id === srv.id)
-  if (idx >= 0) {
-    selectedServices.value.splice(idx, 1)
-  } else {
-    selectedServices.value.push(srv)
-  }
-}
-
-function selectProfessional(prof: any | null) {
-  triggerHaptic(25)
-  selectedProfessional.value = prof
-}
-
 function selectDate(dateStr: string) {
+  const day = bookingDays.value.find(d => d.date === dateStr) || { date: dateStr, dayIndex: new Date(dateStr + 'T12:00:00').getDay() }
+  if (isDateBlocked(day)) return
   triggerHaptic(20)
   selectedDate.value = dateStr
 }
@@ -313,7 +354,7 @@ function selectTime(timeStr: string) {
 // 7. Geração de Pix para Sinal de Reserva
 async function generatePixDeposit() {
   const pix = rawOverrides.value.pix || (props.tenant as any).pixConfig || (props.tenant as any).pix || {}
-  const key = pix.pixKey || pix.key || props.tenant.phoneWhatsApp.replace(/\D/g, '')
+  const key = pix.pixKey || pix.key || props.tenant.phoneWhatsApp.replace(/\\D/g, '')
 
   isGeneratingPix.value = true
   try {
@@ -327,20 +368,17 @@ async function generatePixDeposit() {
 
     pixPayload.value = payload
     qrCodeDataUrl.value = await generatePixQrCodeDataUrl(payload)
-  } catch (e) {
-    console.error('Erro ao gerar Pix de sinal:', e)
+  } catch (err) {
+    console.error('Erro ao gerar Pix de reserva:', err)
   } finally {
     isGeneratingPix.value = false
   }
 }
 
-function copyPixCode() {
-  if (!pixPayload.value) return
-  navigator.clipboard.writeText(pixPayload.value)
-  isPixCopied.value = true
-  triggerHaptic(30)
-  setTimeout(() => { isPixCopied.value = false }, 2500)
-}
+const depositPercentage = 30
+const depositAmount = computed(() => {
+  return (totalPrice.value * depositPercentage) / 100
+})
 
 watch(paymentMode, (newMode) => {
   if (newMode === 'pix_deposit' && !pixPayload.value) {
@@ -348,61 +386,43 @@ watch(paymentMode, (newMode) => {
   }
 })
 
-// 8. Despacho Estruturado no WhatsApp
+function copyPixCode() {
+  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    navigator.clipboard.writeText(pixPayload.value)
+    isPixCopied.value = true
+    triggerHaptic(40)
+    setTimeout(() => {
+      isPixCopied.value = false
+    }, 2500)
+  }
+}
+
+// 8. Despacho Final via WhatsApp
 function confirmAndDispatchWhatsApp() {
-  if (!customerName.value.trim() || !customerPhone.value.trim()) {
-    alert('Preencha seu nome e telefone para confirmar o agendamento.')
-    return
-  }
+  triggerHaptic(50)
+  const phone = props.tenant.phoneWhatsApp.replace(/\\D/g, '')
+  const servicesText = selectedServices.value.map(s => `• ${s.name} (${s.durationMinutes}min - ${formatCurrency(s.price)})`).join('\\n')
+  const profName = selectedProfessional.value ? selectedProfessional.value.name : 'Qualquer especialista disponível'
+  const payText = paymentMode.value === 'pix_deposit' ? `Sinal de ${formatCurrency(depositAmount.value)} pago via Pix (30%)` : 'Pagamento presencial no local'
 
-  triggerHaptic(40)
-  const phone = (props.tenant.phoneWhatsApp || '').replace(/\D/g, '')
-  const cleanPhone = phone.startsWith('55') ? phone : `55${phone}`
-
-  const lines: string[] = []
-  lines.push(`🩺 *NOVO AGENDAMENTO — ${props.tenant.name.toUpperCase()}*`)
-  lines.push(`━━━━━━━━━━━━━━━━━━━━━`)
-  lines.push(`📅 *DATA & HORÁRIO:*`)
-  lines.push(`• Data: ${selectedDate.value}`)
-  lines.push(`• Horário: ${selectedTime.value}`)
-
-  if (selectedProfessional.value) {
-    lines.push(`• Profissional: ${selectedProfessional.value.name} (${selectedProfessional.value.role || 'Especialista'})`)
-  } else {
-    lines.push(`• Profissional: Qualquer disponível`)
-  }
-
-  lines.push(``)
-  lines.push(`✂️ *PROCEDIMENTOS / SERVIÇOS:*`)
-  selectedServices.value.forEach(srv => {
-    lines.push(`• ${srv.name} (${srv.durationMinutes} min) — ${formatCurrency(srv.price)}`)
-  })
-
-  lines.push(``)
-  lines.push(`━━━━━━━━━━━━━━━━━━━━━`)
-  lines.push(`⏱️ Duração Estimada: ${totalDuration.value} minutos`)
-  lines.push(`*VALOR TOTAL: ${formatCurrency(totalPrice.value)}*`)
-
-  if (paymentMode.value === 'pix_deposit') {
-    lines.push(`💠 *Sinal de Reserva (30%):* ${formatCurrency(depositAmount.value)} (Pago via Pix)`)
-    lines.push(`📌 *Restante a pagar no atendimento:* ${formatCurrency(totalPrice.value - depositAmount.value)}`)
-  } else {
-    lines.push(`💳 *Pagamento:* No atendimento (Dinheiro/Cartão/Pix)`)
-  }
-
-  lines.push(`━━━━━━━━━━━━━━━━━━━━━`)
-  lines.push(`👤 *PACIENTE / CLIENTE:* ${customerName.value}`)
-  lines.push(`📱 *WHATSAPP:* ${customerPhone.value}`)
+  let msg = `Olá, gostaria de agendar um horário! 📅\\n\\n`
+  msg += `*Cliente:* ${customerName.value.trim()}\\n`
+  msg += `*WhatsApp:* ${customerPhone.value.trim()}\\n`
+  msg += `*Data:* ${selectedDate.value}\\n`
+  msg += `*Horário:* ${selectedTime.value}\\n`
+  msg += `*Profissional:* ${profName}\\n\\n`
+  msg += `*Serviços Selecionados:*\\n${servicesText}\\n\\n`
+  msg += `*Valor Total:* ${formatCurrency(totalPrice.value)} (${totalDuration.value} min)\\n`
+  msg += `*Forma:* ${payText}\\n`
 
   if (notes.value.trim()) {
-    lines.push(`💬 *OBSERVAÇÕES:* "${notes.value.trim()}"`)
+    msg += `*Observações:* ${notes.value.trim()}\\n`
   }
 
-  lines.push(``)
-  lines.push(`_Agendamento gerado via Alaska Local_`)
-
-  const url = `https://wa.me/${cleanPhone}?text=${encodeURIComponent(lines.join('\n'))}`
-  window.open(url, '_blank')
+  const url = `https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`
+  if (typeof window !== 'undefined') {
+    window.open(url, '_blank')
+  }
   emit('close')
 }
 </script>
@@ -411,7 +431,7 @@ function confirmAndDispatchWhatsApp() {
   <Teleport to="body">
     <div
       v-if="isOpen"
-      class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex flex-col sm:items-center sm:justify-center p-0 sm:p-4 animate-in fade-in duration-200"
+      class="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-xs flex flex-col sm:items-center sm:justify-center p-0 sm:p-4 animate-in fade-in duration-200"
       @click="emit('close')"
     >
       <div
@@ -421,17 +441,17 @@ function confirmAndDispatchWhatsApp() {
         class="bg-white text-slate-800 w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-lg flex flex-col overflow-hidden sm:rounded-3xl sm:border sm:border-slate-200 sm:shadow-2xl"
         @click.stop
       >
-        <!-- Header Fixo no Topo -->
-        <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white z-10">
-          <div class="flex items-center gap-2.5 min-w-0 flex-1 pr-2">
-            <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold shrink-0">
-              <Calendar class="w-4 h-4" />
+        <!-- 1. Header do Modal -->
+        <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+              📅
             </div>
-            <div class="truncate">
-              <h2 id="booking-modal-title" class="text-base font-extrabold text-slate-900 truncate">
+            <div>
+              <h2 id="booking-modal-title" class="text-base font-extrabold text-slate-900 leading-tight">
                 Agendamento Online
               </h2>
-              <p class="text-[11px] text-slate-500 truncate">
+              <p class="text-[11px] text-slate-500 font-medium">
                 {{ tenant.name }} • Escolha seus serviços e horário
               </p>
             </div>
@@ -439,90 +459,100 @@ function confirmAndDispatchWhatsApp() {
 
           <button
             @click="emit('close')"
-            class="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+            class="p-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
             aria-label="Fechar modal de agendamento"
           >
-            <X class="h-5 w-5" aria-hidden="true" />
+            <X class="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
-        <!-- Indicador Visual de Passos (1 a 4) -->
-        <div class="px-5 py-2.5 bg-slate-50/80 border-b border-slate-100 flex items-center justify-between text-xs font-semibold text-slate-500">
-          <span :class="{ 'text-emerald-700 font-bold': currentStep === 1 }">1. Serviços</span>
-          <span>›</span>
-          <span :class="{ 'text-emerald-700 font-bold': currentStep === 2 }">2. Profissional</span>
-          <span>›</span>
-          <span :class="{ 'text-emerald-700 font-bold': currentStep === 3 }">3. Horário</span>
-          <span>›</span>
-          <span :class="{ 'text-emerald-700 font-bold': currentStep === 4 }">4. Confirmar</span>
+        <!-- 2. Barra de Progresso / Steps -->
+        <div class="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-xs font-semibold shrink-0">
+          <div class="flex items-center gap-1.5" :class="currentStep === 1 ? 'text-emerald-600 font-bold' : 'text-slate-500'">
+            <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" :class="currentStep >= 1 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'">1</span>
+            <span>Serviços</span>
+          </div>
+          <ChevronRight class="w-3.5 h-3.5 text-slate-300" />
+          <div class="flex items-center gap-1.5" :class="currentStep === 2 ? 'text-emerald-600 font-bold' : 'text-slate-500'">
+            <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" :class="currentStep >= 2 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'">2</span>
+            <span>Profissional</span>
+          </div>
+          <ChevronRight class="w-3.5 h-3.5 text-slate-300" />
+          <div class="flex items-center gap-1.5" :class="currentStep === 3 ? 'text-emerald-600 font-bold' : 'text-slate-500'">
+            <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" :class="currentStep >= 3 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'">3</span>
+            <span>Horário</span>
+          </div>
+          <ChevronRight class="w-3.5 h-3.5 text-slate-300" />
+          <div class="flex items-center gap-1.5" :class="currentStep === 4 ? 'text-emerald-600 font-bold' : 'text-slate-500'">
+            <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" :class="currentStep === 4 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'">4</span>
+            <span>Confirmar</span>
+          </div>
         </div>
 
-        <!-- Conteúdo com Rolagem Suave -->
+        <!-- 3. Conteúdo Dinâmico por Step -->
         <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-5">
-          <!-- ========================================== -->
-          <!-- PASSO 1: Seleção de Serviços               -->
-          <!-- ========================================== -->
-          <div v-if="currentStep === 1" class="space-y-3 animate-in fade-in duration-150">
-            <div>
-              <h3 class="font-bold text-sm text-slate-900">Selecione os procedimentos / serviços:</h3>
-              <p class="text-xs text-slate-500">Você pode selecionar múltiplos serviços para agendar no mesmo dia.</p>
+          <!-- STEP 1: Seleção de Procedimentos/Serviços -->
+          <div v-if="currentStep === 1" class="space-y-4">
+            <div class="flex items-center justify-between">
+              <h3 class="text-sm font-bold text-slate-900">Escolha os procedimentos ou serviços:</h3>
+              <span class="text-xs text-slate-400">{{ availableServices.length }} disponíveis</span>
             </div>
 
-            <div class="space-y-2 pt-1">
+            <div class="space-y-2.5">
               <div
-                v-for="srv in availableServices"
-                :key="srv.id"
-                @click="toggleService(srv)"
-                class="p-3.5 rounded-2xl border transition-all flex items-center justify-between gap-3 cursor-pointer select-none"
-                :class="isServiceSelected(srv.id) ? 'bg-emerald-50/80 border-emerald-400 shadow-2xs' : 'bg-white border-slate-200 hover:border-slate-300'"
+                v-for="service in availableServices"
+                :key="service.id"
+                @click="toggleService(service)"
+                class="p-3.5 rounded-2xl border transition-all flex items-center justify-between cursor-pointer select-none"
+                :class="isServiceSelected(service.id) ? 'bg-emerald-50 border-emerald-500 shadow-2xs' : 'bg-white border-slate-200 hover:border-slate-300'"
               >
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-2">
-                    <h4 class="font-bold text-xs sm:text-sm text-slate-900 truncate">{{ srv.name }}</h4>
-                    <span class="text-[10px] bg-slate-100 text-slate-600 px-1.5 py-0.2 rounded font-semibold shrink-0">
-                      {{ srv.durationMinutes }} min
-                    </span>
+                <div class="space-y-0.5">
+                  <span class="text-xs font-bold text-slate-900 block">{{ service.name }}</span>
+                  <span class="text-[11px] text-slate-500 block leading-relaxed">{{ service.description }}</span>
+                  <div class="flex items-center gap-2 pt-1">
+                    <span class="text-xs font-mono font-bold text-slate-900">{{ formatCurrency(service.price) }}</span>
+                    <span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.2 rounded font-semibold">⏱️ {{ service.durationMinutes }} min</span>
                   </div>
-                  <p v-if="srv.description" class="text-[11px] text-slate-500 line-clamp-1 mt-0.5 leading-relaxed">
-                    {{ srv.description }}
-                  </p>
-                  <p class="text-xs font-mono font-extrabold text-emerald-700 mt-1">
-                    {{ formatCurrency(srv.price) }}
-                  </p>
                 </div>
 
                 <div
-                  class="w-5 h-5 rounded-lg border flex items-center justify-center transition-colors shrink-0"
-                  :class="isServiceSelected(srv.id) ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 bg-white'"
+                  class="w-5 h-5 rounded-md border flex items-center justify-center text-xs transition-colors shrink-0 ml-3"
+                  :class="isServiceSelected(service.id) ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 bg-white'"
                 >
-                  <Check v-if="isServiceSelected(srv.id)" class="w-3.5 h-3.5 stroke-[3]" />
+                  <Check v-if="isServiceSelected(service.id)" class="w-3.5 h-3.5 stroke-[3]" />
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- ========================================== -->
-          <!-- PASSO 2: Seleção de Especialista           -->
-          <!-- ========================================== -->
-          <div v-else-if="currentStep === 2" class="space-y-4 animate-in fade-in duration-150">
+          <!-- STEP 2: Seleção de Especialista / Barbeiro -->
+          <div v-else-if="currentStep === 2" class="space-y-4">
             <div>
-              <h3 class="font-bold text-sm text-slate-900">Escolha o profissional / especialista:</h3>
-              <p class="text-xs text-slate-500">Ou selecione "Qualquer profissional" para maior flexibilidade.</p>
+              <h3 class="text-sm font-bold text-slate-900">Selecione o profissional:</h3>
+              <p class="text-xs text-slate-500 mt-0.5">Escolha seu especialista de preferência ou o primeiro disponível.</p>
             </div>
 
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="space-y-2.5">
               <!-- Opção Qualquer Profissional -->
               <div
-                @click="selectProfessional(null)"
-                class="p-3.5 rounded-2xl border transition-all flex items-center gap-3 cursor-pointer select-none"
-                :class="selectedProfessional === null ? 'bg-emerald-50/80 border-emerald-400 shadow-2xs' : 'bg-white border-slate-200 hover:border-slate-300'"
+                @click="selectedProfessional = null"
+                class="p-3.5 rounded-2xl border transition-all flex items-center justify-between cursor-pointer select-none"
+                :class="selectedProfessional === null ? 'bg-emerald-50 border-emerald-500 shadow-2xs' : 'bg-white border-slate-200 hover:border-slate-300'"
               >
-                <div class="w-10 h-10 rounded-full bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-sm shrink-0">
-                  ⚡
+                <div class="flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center text-xs">
+                    ⚡
+                  </div>
+                  <div>
+                    <h4 class="text-xs font-bold text-slate-900">Qualquer Especialista Disponível</h4>
+                    <span class="text-[11px] text-slate-500">Primeiro horário livre na grade</span>
+                  </div>
                 </div>
-                <div>
-                  <h4 class="font-bold text-xs text-slate-900">Qualquer Profissional</h4>
-                  <span class="text-[11px] text-slate-500 block">Primeiro horário livre</span>
+                <div
+                  class="w-5 h-5 rounded-full border flex items-center justify-center text-xs transition-colors shrink-0"
+                  :class="selectedProfessional === null ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 bg-white'"
+                >
+                  <Check v-if="selectedProfessional === null" class="w-3.5 h-3.5 stroke-[3]" />
                 </div>
               </div>
 
@@ -530,54 +560,74 @@ function confirmAndDispatchWhatsApp() {
               <div
                 v-for="prof in availableProfessionals"
                 :key="prof.id"
-                @click="selectProfessional(prof)"
-                class="p-3.5 rounded-2xl border transition-all flex items-center gap-3 cursor-pointer select-none"
-                :class="selectedProfessional?.id === prof.id ? 'bg-emerald-50/80 border-emerald-400 shadow-2xs' : 'bg-white border-slate-200 hover:border-slate-300'"
+                @click="prof.isAvailable && (selectedProfessional = prof)"
+                class="p-3.5 rounded-2xl border transition-all flex items-center justify-between select-none"
+                :class="[
+                  !prof.isAvailable
+                    ? 'opacity-40 grayscale bg-slate-50 border-dashed cursor-not-allowed'
+                    : selectedProfessional?.id === prof.id
+                      ? 'bg-emerald-50 border-emerald-500 shadow-2xs cursor-pointer'
+                      : 'bg-white border-slate-200 hover:border-slate-300 cursor-pointer'
+                ]"
               >
-                <div
-                  class="w-10 h-10 rounded-full font-bold flex items-center justify-center text-xs shrink-0"
-                  :class="prof.isAvailable ? 'bg-emerald-500/20 text-emerald-700' : 'bg-rose-500/20 text-rose-700'"
-                >
-                  {{ prof.name.charAt(0) }}
-                </div>
-                <div class="min-w-0 flex-1">
-                  <div class="flex items-center gap-1.5">
-                    <h4 class="font-bold text-xs text-slate-900 truncate">{{ prof.name }}</h4>
-                    <span v-if="!prof.isAvailable" class="text-[9px] bg-rose-100 text-rose-700 px-1 py-0.2 rounded font-bold">
-                      Folga
-                    </span>
+                <div class="flex items-center gap-3 min-w-0">
+                  <div
+                    class="w-9 h-9 rounded-full font-bold flex items-center justify-center text-xs shrink-0"
+                    :class="prof.isAvailable ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-500'"
+                  >
+                    {{ prof.name.charAt(0) }}
                   </div>
-                  <span class="text-[11px] text-slate-500 block truncate">{{ prof.role || 'Especialista' }}</span>
-                  <span v-if="prof.isAvailable" class="text-[10px] text-emerald-700 font-semibold block mt-0.5">
-                    ⏰ {{ prof.workHours?.start || '08:00' }} às {{ prof.workHours?.end || '18:00' }}
-                  </span>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <h4 class="text-xs font-bold text-slate-900 truncate">{{ prof.name }}</h4>
+                      <span v-if="!prof.isAvailable" class="text-[9px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded uppercase shrink-0">
+                        De Folga
+                      </span>
+                    </div>
+                    <span class="text-[11px] text-slate-500 block truncate">{{ prof.role }}</span>
+                  </div>
+                </div>
+
+                <div
+                  v-if="prof.isAvailable"
+                  class="w-5 h-5 rounded-full border flex items-center justify-center text-xs transition-colors shrink-0 ml-2"
+                  :class="selectedProfessional?.id === prof.id ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 bg-white'"
+                >
+                  <Check v-if="selectedProfessional?.id === prof.id" class="w-3.5 h-3.5 stroke-[3]" />
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- ========================================== -->
-          <!-- PASSO 3: Seleção de Data e Horário         -->
-          <!-- ========================================== -->
-          <div v-else-if="currentStep === 3" class="space-y-4 animate-in fade-in duration-150">
+          <!-- STEP 3: Escolha de Data e Horário com Bloqueio de Dias Indisponíveis -->
+          <div v-else-if="currentStep === 3" class="space-y-4">
             <div>
-              <h3 class="font-bold text-sm text-slate-900">Selecione o dia e horário:</h3>
-              <p class="text-xs text-slate-500">Próximos 30 dias disponíveis para agendamento.</p>
+              <h3 class="text-sm font-bold text-slate-900">Selecione o dia e o horário:</h3>
+              <p class="text-xs text-slate-500 mt-0.5">Dias de folga ou fechados estão automaticamente bloqueados.</p>
             </div>
 
-            <!-- Carrossel Horizontal de Dias -->
+            <!-- Carrossel Horizontal de Dias com Bloqueio de Folga e Indisponibilidade -->
             <div class="flex gap-2 overflow-x-auto pb-2 pt-1 no-scrollbar snap-x">
               <button
                 v-for="d in bookingDays"
                 :key="d.date"
                 type="button"
-                @click="selectDate(d.date)"
-                class="min-w-[62px] p-2.5 rounded-2xl border text-center transition-all cursor-pointer select-none shrink-0 snap-start"
-                :class="selectedDate === d.date ? 'bg-emerald-600 text-white border-emerald-600 shadow-md scale-105' : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'"
+                :disabled="isDateBlocked(d)"
+                @click="!isDateBlocked(d) && selectDate(d.date)"
+                class="min-w-[62px] p-2.5 rounded-2xl border text-center transition-all select-none shrink-0 snap-start flex flex-col items-center justify-center relative"
+                :class="[
+                  isDateBlocked(d)
+                    ? 'opacity-40 grayscale bg-slate-100/80 text-slate-400 border-slate-200 border-dashed cursor-not-allowed pointer-events-none'
+                    : selectedDate === d.date
+                      ? 'bg-emerald-600 text-white border-emerald-600 shadow-md scale-105 cursor-pointer'
+                      : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50 cursor-pointer active:scale-95'
+                ]"
               >
-                <span class="text-[10px] font-bold uppercase block">{{ d.dayOfWeek }}</span>
-                <span class="text-base font-extrabold block my-0.5">{{ d.dayNumber }}</span>
-                <span class="text-[9px] uppercase block font-semibold opacity-80">{{ d.monthName }}</span>
+                <span class="text-[10px] font-bold uppercase block leading-tight">{{ d.dayOfWeek }}</span>
+                <span class="text-base font-extrabold block my-0.5 leading-none">{{ d.dayNumber }}</span>
+                <span class="text-[9px] uppercase block font-semibold opacity-80 leading-tight">
+                  {{ isDateBlocked(d) ? 'Folga' : d.monthName }}
+                </span>
               </button>
             </div>
 
@@ -609,8 +659,8 @@ function confirmAndDispatchWhatsApp() {
                   :key="slot.time"
                   type="button"
                   @click="selectTime(slot.time)"
-                  class="py-2.5 rounded-xl text-xs font-mono font-bold transition-all border cursor-pointer select-none text-center"
-                  :class="selectedTime === slot.time ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm scale-105' : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300'"
+                  class="p-2.5 rounded-xl border text-xs font-bold font-mono text-center transition-all cursor-pointer select-none active:scale-95"
+                  :class="selectedTime === slot.time ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs' : 'bg-white text-slate-800 border-slate-200 hover:border-emerald-500'"
                 >
                   {{ slot.time }}
                 </button>
@@ -618,27 +668,20 @@ function confirmAndDispatchWhatsApp() {
             </div>
           </div>
 
-          <!-- ========================================== -->
-          <!-- PASSO 4: Dados do Cliente & Confirmação    -->
-          <!-- ========================================== -->
-          <div v-else-if="currentStep === 4" class="space-y-4 animate-in fade-in duration-150">
-            <!-- Resumo do Agendamento -->
-            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 space-y-2.5 text-xs">
-              <div class="flex items-center justify-between pb-2 border-b border-slate-200 font-bold text-slate-900">
-                <span>Resumo da Consulta / Serviço</span>
-                <span class="text-emerald-700 font-mono text-sm">{{ formatCurrency(totalPrice) }}</span>
-              </div>
-
-              <div class="space-y-1 text-slate-600">
-                <p><strong>Data:</strong> {{ selectedDate }} às {{ selectedTime }}</p>
-                <p><strong>Profissional:</strong> {{ selectedProfessional?.name || 'Qualquer disponível' }}</p>
-                <p><strong>Procedimentos:</strong> {{ selectedServices.map(s => s.name).join(', ') }}</p>
-                <p><strong>Duração Total:</strong> {{ totalDuration }} minutos</p>
-              </div>
+          <!-- STEP 4: Confirmação & Pagamento -->
+          <div v-else-if="currentStep === 4" class="space-y-4">
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 text-xs">
+              <h4 class="font-bold text-slate-900 text-sm">Resumo do Agendamento:</h4>
+              <p><strong>Procedimentos:</strong> {{ selectedServices.map(s => s.name).join(', ') }}</p>
+              <p><strong>Profissional:</strong> {{ selectedProfessional ? selectedProfessional.name : 'Primeiro disponível' }}</p>
+              <p><strong>Data:</strong> {{ selectedDate }} às {{ selectedTime }}</p>
+              <p><strong>Duração Total:</strong> {{ totalDuration }} minutos</p>
+              <p class="text-sm font-bold text-slate-900 pt-1 border-t border-slate-200">
+                Valor Total: <span class="text-emerald-600 font-mono">{{ formatCurrency(totalPrice) }}</span>
+              </p>
             </div>
 
-            <!-- Dados de Contato -->
-            <div class="space-y-3 text-xs">
+            <div class="space-y-3 pt-1">
               <div>
                 <label class="block text-[11px] font-bold text-slate-700 mb-1">Seu Nome Completo *</label>
                 <input
@@ -646,58 +689,55 @@ function confirmAndDispatchWhatsApp() {
                   v-model="customerName"
                   placeholder="Ex: Danilo Santos"
                   class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
+                  required
                 />
               </div>
 
               <div>
-                <label class="block text-[11px] font-bold text-slate-700 mb-1">Seu WhatsApp (com DDD) *</label>
+                <label class="block text-[11px] font-bold text-slate-700 mb-1">WhatsApp para Confirmação *</label>
                 <input
                   type="tel"
                   v-model="customerPhone"
-                  placeholder="Ex: 11988887777"
-                  class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all font-mono"
+                  placeholder="Ex: (11) 98888-7777"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 font-mono outline-none focus:border-emerald-500 focus:bg-white transition-all"
+                  required
                 />
               </div>
 
-              <!-- Modalidade de Pagamento / Sinal Pix -->
-              <div class="space-y-2 pt-1">
-                <label class="block text-[11px] font-bold text-slate-700">Forma de Confirmação:</label>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <label
-                    class="p-3 rounded-xl border flex items-center gap-2.5 cursor-pointer select-none transition-all"
-                    :class="paymentMode === 'on_service' ? 'bg-emerald-50 border-emerald-400' : 'bg-white border-slate-200'"
+              <!-- Escolha de Pagamento -->
+              <div class="space-y-2 pt-2">
+                <label class="block text-[11px] font-bold text-slate-700">Forma de Garantia do Agendamento:</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    @click="paymentMode = 'on_service'"
+                    class="p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all cursor-pointer"
+                    :class="paymentMode === 'on_service' ? 'bg-emerald-50 border-emerald-500 text-emerald-800 font-bold' : 'bg-white border-slate-200 text-slate-600'"
                   >
-                    <input type="radio" value="on_service" v-model="paymentMode" class="text-emerald-600" />
-                    <div>
-                      <span class="font-bold text-xs text-slate-900 block">Pagar no Atendimento</span>
-                      <span class="text-[10px] text-slate-500">Dinheiro, Cartão ou Pix</span>
-                    </div>
-                  </label>
+                    <span>📍 Pagar no Local</span>
+                    <span class="text-[10px] font-normal text-slate-400">Cartão, Pix ou Dinheiro</span>
+                  </button>
 
-                  <label
-                    class="p-3 rounded-xl border flex items-center gap-2.5 cursor-pointer select-none transition-all"
-                    :class="paymentMode === 'pix_deposit' ? 'bg-emerald-50 border-emerald-400' : 'bg-white border-slate-200'"
+                  <button
+                    type="button"
+                    @click="paymentMode = 'pix_deposit'"
+                    class="p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all cursor-pointer"
+                    :class="paymentMode === 'pix_deposit' ? 'bg-emerald-50 border-emerald-500 text-emerald-800 font-bold' : 'bg-white border-slate-200 text-slate-600'"
                   >
-                    <input type="radio" value="pix_deposit" v-model="paymentMode" class="text-emerald-600" />
-                    <div>
-                      <span class="font-bold text-xs text-slate-900 block">Sinal Pix (30%)</span>
-                      <span class="text-[10px] text-emerald-700 font-bold font-mono">{{ formatCurrency(depositAmount) }}</span>
-                    </div>
-                  </label>
+                    <span>💠 Sinal via Pix (30%)</span>
+                    <span class="text-[10px] font-normal text-slate-400">{{ formatCurrency(depositAmount) }}</span>
+                  </button>
                 </div>
               </div>
 
               <!-- Bloco Pix Copia e Cola / QR Code para Sinal -->
-              <div v-if="paymentMode === 'pix_deposit'" class="p-4 bg-emerald-50/70 border border-emerald-200 rounded-2xl space-y-3">
-                <div class="flex items-center justify-between">
-                  <span class="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
-                    <QrCode class="w-4 h-4 text-emerald-600" /> Sinal de Reserva: {{ formatCurrency(depositAmount) }}
-                  </span>
-                  <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">Pix D+0</span>
+              <div v-if="paymentMode === 'pix_deposit'" class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-2.5 animate-in fade-in duration-150">
+                <div class="flex items-center justify-between text-xs font-bold text-emerald-900">
+                  <span>Pagar Sinal de Reserva ({{ formatCurrency(depositAmount) }})</span>
                 </div>
 
-                <div v-if="qrCodeDataUrl" class="flex justify-center py-1">
-                  <img :src="qrCodeDataUrl" alt="QR Code Pix" class="w-36 h-36 rounded-xl border border-emerald-200 shadow-sm bg-white p-1" />
+                <div v-if="qrCodeDataUrl" class="flex justify-center py-2">
+                  <img :src="qrCodeDataUrl" alt="QR Code Pix" class="w-36 h-36 rounded-xl border border-emerald-200 shadow-xs bg-white p-1" />
                 </div>
 
                 <div class="flex items-center gap-2">
@@ -705,7 +745,7 @@ function confirmAndDispatchWhatsApp() {
                     type="text"
                     readonly
                     :value="pixPayload"
-                    class="flex-1 bg-white border border-emerald-200 rounded-xl p-2.5 text-[11px] text-slate-700 font-mono select-all outline-none"
+                    class="flex-1 bg-white border border-emerald-200 rounded-xl p-2 text-[11px] font-mono text-slate-700 select-all outline-none"
                   />
                   <button
                     type="button"
@@ -748,7 +788,7 @@ function confirmAndDispatchWhatsApp() {
           <button
             v-if="currentStep < 4"
             @click="currentStep++"
-            :disabled="selectedServices.length === 0"
+            :disabled="selectedServices.length === 0 || (currentStep === 3 && isDateBlocked({ date: selectedDate }))"
             class="flex-1 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1 shadow-lg active:scale-[0.99] transition-all cursor-pointer"
           >
             <span>Avançar</span>
