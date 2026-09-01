@@ -1,30 +1,19 @@
-import { Controller, Get, Post, Body, Param, Query, Inject, UsePipes, HttpCode, HttpStatus } from '@nestjs/common';
-import { TOKENS } from '../../../core/application/tokens';
+import { Controller, Get, Post, Body, Param, Query, UsePipes, HttpCode, HttpStatus } from '@nestjs/common';
 import { GetTenantBySlugUseCase } from '../../../core/application/use-cases/get-tenant-by-slug.use-case';
 import { ResolveTenantByDomainUseCase } from '../../../core/application/use-cases/resolve-tenant-by-domain.use-case';
 import { UpdateTenantHoursUseCase } from '../../../core/application/use-cases/update-tenant-hours.use-case';
 import { AuthenticateMerchantUseCase } from '../../../core/application/use-cases/authenticate-merchant.use-case';
 import { ZodValidationPipe } from '../pipes/zod-validation.pipe';
 import { MerchantLoginSchema, type MerchantLoginInput } from '@alaska/contracts';
-import { ITenantRepository } from '../../../core/application/ports/tenant.repository.port';
-import { IPasswordHasher } from '../../../core/application/ports/password-hasher.port';
 
 @Controller('tenants')
 export class TenantController {
-  private authenticateMerchantUseCase: AuthenticateMerchantUseCase;
-
   constructor(
     private readonly getTenantBySlugUseCase: GetTenantBySlugUseCase,
     private readonly resolveTenantByDomainUseCase: ResolveTenantByDomainUseCase,
     private readonly updateTenantHoursUseCase: UpdateTenantHoursUseCase,
-    @Inject(TOKENS.TENANT_REPOSITORY) private readonly tenantRepository: ITenantRepository,
-    @Inject(TOKENS.PASSWORD_HASHER) private readonly passwordHasher: IPasswordHasher,
-  ) {
-    this.authenticateMerchantUseCase = new AuthenticateMerchantUseCase(
-      this.tenantRepository,
-      this.passwordHasher,
-    );
-  }
+    private readonly authenticateMerchantUseCase: AuthenticateMerchantUseCase,
+  ) {}
 
   @Get(':slug')
   async getBySlug(@Param('slug') slug: string) {
