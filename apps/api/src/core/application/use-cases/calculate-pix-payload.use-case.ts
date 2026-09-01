@@ -1,7 +1,6 @@
 import { ITenantRepository } from '../ports/tenant.repository.port';
 import { IPixGateway } from '../ports/pix-gateway.port';
-import { EntityNotFoundError } from '../../domain/errors/entity-not-found.error';
-import { ValidationError } from '../../domain/errors/domain.error';
+import { EntityNotFoundError, ValidationError } from '../../domain/errors/domain.error';
 
 export interface CalculatePixPayloadInput {
   tenantSlug: string;

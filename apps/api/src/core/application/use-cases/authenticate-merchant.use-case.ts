@@ -1,6 +1,6 @@
 import { ITenantRepository } from '../ports/tenant.repository.port';
 import { IPasswordHasher } from '../ports/password-hasher.port';
-import { EntityNotFoundError } from '../../domain/errors/entity-not-found.error';
+import { EntityNotFoundError } from '../../domain/errors/domain.error';
 
 export interface AuthenticateMerchantInput {
   slug: string;

@@ -1,5 +1,5 @@
 import { ITenantRepository } from '../ports/tenant.repository.port';
-import { EntityNotFoundError } from '../../domain/errors/entity-not-found.error';
+import { EntityNotFoundError } from '../../domain/errors/domain.error';
 
 export interface GetTenantBySlugInput {
   slug: string;
