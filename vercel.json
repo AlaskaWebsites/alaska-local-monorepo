@@ -1,7 +1,6 @@
 {
     "$schema": "https://openapi.vercel.sh/vercel.json",
-    "installCommand": "corepack enable && pnpm install",
+    "installCommand": "pnpm install",
     "buildCommand": "pnpm --filter @alaska/web build",
-    "outputDirectory": "apps/web/.output",
-    "framework": "nuxtjs"
+    "outputDirectory": "apps/web/.output"
 }
