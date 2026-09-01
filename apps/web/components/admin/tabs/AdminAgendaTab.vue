@@ -78,21 +78,22 @@ const emit = defineEmits<{
                 role="switch"
                 :aria-checked="prof.isAvailable"
                 @click="emit('toggle-prof-avail', prof.id, prof.isAvailable, prof.name)"
-                class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out"
+                class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200"
                 :class="prof.isAvailable ? 'bg-emerald-500' : 'bg-slate-800'"
               >
                 <span
-                  class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out"
+                  class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200"
                   :class="prof.isAvailable ? 'translate-x-5' : 'translate-x-0'"
                 />
               </button>
 
               <button
+                v-if="prof.id && prof.id.startsWith('prof-custom-')"
                 @click="emit('delete-prof', prof.id, prof.name)"
-                class="p-1.5 text-slate-500 hover:text-rose-400 rounded-lg transition-colors cursor-pointer ml-1"
-                title="Excluir especialista"
+                class="p-1 text-slate-500 hover:text-rose-400 transition-colors ml-1 cursor-pointer"
+                title="Excluir Especialista"
               >
-                <Trash2 class="w-4 h-4" />
+                <Trash2 class="w-3.5 h-3.5" />
               </button>
             </div>
           </div>
@@ -116,6 +117,7 @@ const emit = defineEmits<{
 
           <!-- Linha 3: Horário de Expediente & Intervalo de Almoço -->
           <div class="pt-2 border-t border-slate-800/80 grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+            <!-- Horário de Atendimento -->
             <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 space-y-1">
               <span class="text-[10px] font-bold text-slate-400 flex items-center gap-1">
                 <span>⏰ Expediente de Atendimento:</span>
@@ -123,20 +125,23 @@ const emit = defineEmits<{
               <div class="flex items-center gap-1.5">
                 <input
                   type="time"
-                  v-model="prof.workHours.start"
-                  @change="emit('change-prof-hours', prof.id, prof.workHours, prof.name)"
+                  :value="prof.workHours?.start || '09:00'"
+                  @input="prof.workHours.start = ($event.target as HTMLInputElement).value"
+                  @change="emit('change-prof-hours', prof.id, { start: ($event.target as HTMLInputElement).value || '09:00', end: prof.workHours?.end || '19:00' }, prof.name)"
                   class="bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-white outline-none focus:border-emerald-500 font-mono w-20 text-center"
                 />
                 <span class="text-slate-500 text-xs">às</span>
                 <input
                   type="time"
-                  v-model="prof.workHours.end"
-                  @change="emit('change-prof-hours', prof.id, prof.workHours, prof.name)"
+                  :value="prof.workHours?.end || '19:00'"
+                  @input="prof.workHours.end = ($event.target as HTMLInputElement).value"
+                  @change="emit('change-prof-hours', prof.id, { start: prof.workHours?.start || '09:00', end: ($event.target as HTMLInputElement).value || '19:00' }, prof.name)"
                   class="bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-white outline-none focus:border-emerald-500 font-mono w-20 text-center"
                 />
               </div>
             </div>
 
+            <!-- Intervalo de Almoço / Pausa -->
             <div class="bg-slate-900/90 p-2.5 rounded-xl border border-slate-800 space-y-1">
               <div class="flex items-center justify-between">
                 <span class="text-[10px] font-bold text-slate-400 flex items-center gap-1">
@@ -146,7 +151,7 @@ const emit = defineEmits<{
                   <input
                     type="checkbox"
                     v-model="prof.lunchBreak.enabled"
-                    @change="emit('change-prof-lunch', prof.id, prof.lunchBreak, prof.name)"
+                    @change="emit('change-prof-lunch', prof.id, { start: prof.lunchBreak?.start || '12:00', end: prof.lunchBreak?.end || '13:00', enabled: prof.lunchBreak.enabled }, prof.name)"
                     class="rounded border-slate-700 bg-slate-950 text-emerald-500 h-3 w-3"
                   />
                   <span class="text-[9px] text-slate-400 font-semibold">Ativar</span>
@@ -156,15 +161,17 @@ const emit = defineEmits<{
               <div v-if="prof.lunchBreak.enabled" class="flex items-center gap-1.5">
                 <input
                   type="time"
-                  v-model="prof.lunchBreak.start"
-                  @change="emit('change-prof-lunch', prof.id, prof.lunchBreak, prof.name)"
+                  :value="prof.lunchBreak?.start || '12:00'"
+                  @input="prof.lunchBreak.start = ($event.target as HTMLInputElement).value"
+                  @change="emit('change-prof-lunch', prof.id, { start: ($event.target as HTMLInputElement).value || '12:00', end: prof.lunchBreak?.end || '13:00', enabled: true }, prof.name)"
                   class="bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-white outline-none focus:border-emerald-500 font-mono w-20 text-center"
                 />
                 <span class="text-slate-500 text-xs">às</span>
                 <input
                   type="time"
-                  v-model="prof.lunchBreak.end"
-                  @change="emit('change-prof-lunch', prof.id, prof.lunchBreak, prof.name)"
+                  :value="prof.lunchBreak?.end || '13:00'"
+                  @input="prof.lunchBreak.end = ($event.target as HTMLInputElement).value"
+                  @change="emit('change-prof-lunch', prof.id, { start: prof.lunchBreak?.start || '12:00', end: ($event.target as HTMLInputElement).value || '13:00', enabled: true }, prof.name)"
                   class="bg-slate-950 border border-slate-800 rounded-lg p-1.5 text-xs text-white outline-none focus:border-emerald-500 font-mono w-20 text-center"
                 />
               </div>
@@ -175,25 +182,23 @@ const emit = defineEmits<{
       </div>
     </div>
 
-    <!-- 2. Bloqueio Rápido de Horários Específicos -->
+    <!-- 2. Bloqueio Rápido de Horários da Agenda -->
     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
       <h2 class="text-sm font-bold text-white flex items-center gap-2">
-        <span>📅 Grade de Horários & Bloqueio Rápido</span>
+        <span>📅 Bloqueio Rápido de Horários Gerais da Loja</span>
       </h2>
       <p class="text-xs text-slate-400">
-        Selecione uma data e clique no horário para bloquear ou liberar na agenda dos clientes.
+        Bloqueie horários específicos na agenda geral da loja para que nenhum cliente possa agendar.
       </p>
 
-      <div class="flex items-center gap-3">
-        <div>
-          <label class="block text-[11px] font-semibold text-slate-400 mb-1">Data da Agenda:</label>
-          <input
-            type="date"
-            :value="selectedAgendaDate"
-            @input="emit('update:selectedAgendaDate', ($event.target as HTMLInputElement).value)"
-            class="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-emerald-500 cursor-pointer"
-          />
-        </div>
+      <div>
+        <label class="block text-xs font-semibold text-slate-400 mb-1.5">Data:</label>
+        <input
+          type="date"
+          :value="selectedAgendaDate"
+          @input="emit('update:selectedAgendaDate', ($event.target as HTMLInputElement).value)"
+          class="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500"
+        />
       </div>
 
       <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-2">
@@ -202,11 +207,11 @@ const emit = defineEmits<{
           :key="time"
           type="button"
           @click="emit('toggle-slot', selectedAgendaDate, time)"
-          class="py-2.5 px-2 rounded-xl text-xs font-bold transition-all border cursor-pointer flex flex-col items-center justify-center gap-0.5 active:scale-95 select-none"
-          :class="isSlotBlocked(selectedAgendaDate, time) ? 'bg-rose-500/20 border-rose-500/60 text-rose-300 shadow-xs' : 'bg-slate-950 border-slate-800 text-slate-200 hover:border-emerald-500'"
+          class="py-2.5 rounded-xl text-xs font-bold transition-all border cursor-pointer flex flex-col items-center justify-center gap-0.5"
+          :class="isSlotBlocked(selectedAgendaDate, time) ? 'bg-rose-500/10 border-rose-500/30 text-rose-400' : 'bg-slate-950 border-slate-800 text-slate-200 hover:border-emerald-500'"
         >
-          <span class="font-mono text-xs">{{ time }}</span>
-          <span class="text-[9px] uppercase tracking-wider font-extrabold" :class="isSlotBlocked(selectedAgendaDate, time) ? 'text-rose-400' : 'text-emerald-400'">
+          <span>{{ time }}</span>
+          <span class="text-[9px] uppercase tracking-wider font-extrabold" :class="isSlotBlocked(selectedAgendaDate, time) ? 'text-rose-500' : 'text-emerald-400'">
             {{ isSlotBlocked(selectedAgendaDate, time) ? 'Bloqueado' : 'Livre' }}
           </span>
         </button>
