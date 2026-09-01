@@ -1,1 +1,1 @@
-pnpm turbo test
+pnpm exec turbo test
