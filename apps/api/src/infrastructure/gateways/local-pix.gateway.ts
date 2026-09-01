@@ -57,15 +57,18 @@ export function generatePixEmv(params: {
 }
 
 export class LocalPixGateway implements IPixGateway {
-  async generatePayload(params: GeneratePixPayloadInput): Promise<PixPayloadResult> {
-    const emv = generatePixEmv({
+  generateBrCode(params: GeneratePixPayloadInput | any): string {
+    return generatePixEmv({
       key: params.key,
       name: params.beneficiary || params.name,
       city: params.city,
       amount: params.amount,
       txid: params.txid,
     });
+  }
 
+  async generatePayload(params: GeneratePixPayloadInput): Promise<PixPayloadResult> {
+    const emv = this.generateBrCode(params);
     const base64Data = Buffer.from(emv).toString('base64');
     const qrCodeDataUrl = `data:image/png;base64,${base64Data}`;
 

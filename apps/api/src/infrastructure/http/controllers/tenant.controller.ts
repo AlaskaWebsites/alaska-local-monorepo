@@ -5,7 +5,7 @@ import { ResolveTenantByDomainUseCase } from '../../../core/application/use-case
 import { UpdateTenantHoursUseCase } from '../../../core/application/use-cases/update-tenant-hours.use-case';
 import { AuthenticateMerchantUseCase } from '../../../core/application/use-cases/authenticate-merchant.use-case';
 import { ZodValidationPipe } from '../pipes/zod-validation.pipe';
-import { MerchantLoginSchema, MerchantLoginInput } from '@alaska/contracts/tenant';
+import { MerchantLoginSchema, type MerchantLoginInput } from '@alaska/contracts';
 import { ITenantRepository } from '../../../core/application/ports/tenant.repository.port';
 import { IPasswordHasher } from '../../../core/application/ports/password-hasher.port';
 

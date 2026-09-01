@@ -18,6 +18,7 @@ export interface PixPayloadResult {
 }
 
 export interface IPixGateway {
+  generateBrCode(input: GeneratePixPayloadInput | any): string;
   generatePayload(input: GeneratePixPayloadInput): Promise<PixPayloadResult>;
   generateQrCode(input: GeneratePixPayloadInput): Promise<PixPayloadResult>;
 }
