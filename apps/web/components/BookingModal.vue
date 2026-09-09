@@ -131,8 +131,68 @@ const defaultServicesBySlug: Record<string, BookingService[]> = {
 }
 
 const availableServices = computed<BookingService[]>(() => {
-  const base = defaultServicesBySlug[tenantSlug.value] || defaultServicesBySlug['barbearia-style']
-  return base
+  const overrides = rawOverrides.value.products || {}
+  const deletedIds = rawOverrides.value.deletedProductIds || []
+  const customProducts = rawOverrides.value.customProducts || []
+
+  const services: BookingService[] = []
+
+  // 1. Extrai serviços diretamente das categorias do tenant ativo
+  if (props.tenant?.categories && Array.isArray(props.tenant.categories)) {
+    props.tenant.categories.forEach((cat: any) => {
+      const isRetailCategory =
+        cat.name?.toLowerCase().includes('produto') ||
+        cat.name?.toLowerCase().includes('venda')
+
+      cat.products?.forEach((prod: any) => {
+        // Ignora produtos físicos sem tempo de atendimento na grade de agendamento
+        if (isRetailCategory && (!prod.durationMinutes || prod.durationMinutes === 0)) {
+          return
+        }
+
+        const duration = prod.durationMinutes || (props.tenant.businessCategory === 'pro' ? 45 : 30)
+        const override = overrides[prod.id]
+        const isAvailable = override?.isAvailable !== undefined ? override.isAvailable : prod.available !== false
+        const price = override?.price !== undefined ? override.price : prod.price
+
+        if (!deletedIds.includes(prod.id) && isAvailable) {
+          services.push({
+            id: prod.id,
+            name: prod.name,
+            description: prod.description || '',
+            price: price,
+            durationMinutes: duration,
+            professionalIds: (prod as any).professionalIds || []
+          })
+        }
+      })
+    })
+  }
+
+  // 2. Inclui serviços customizados criados pelo lojista via painel admin
+  if (customProducts.length > 0) {
+    customProducts.forEach((prod: any) => {
+      if (!deletedIds.includes(prod.id)) {
+        services.push({
+          id: prod.id,
+          name: prod.name,
+          description: prod.description || '',
+          price: prod.price,
+          durationMinutes: prod.durationMinutes || 30,
+          professionalIds: (prod as any).professionalIds || []
+        })
+      }
+    })
+  }
+
+  // Se encontrou serviços reais no tenant, retorna-os
+  if (services.length > 0) {
+    return services
+  }
+
+  // Fallback de segurança apenas para slugs com catálogo legado (sem fallback arbitrário para barbearia!)
+  const fallback = defaultServicesBySlug[tenantSlug.value]
+  return fallback || []
 })
 
 // Profissionais com Suporte a Custom e Delete
@@ -140,12 +200,12 @@ const defaultProfessionalsBySlug: Record<string, Array<any>> = {
   'clinica-sorriso': [
     { id: 'prof-1', name: 'Dra. Camila Rocha', role: 'Cirurgiã Dentista & Implantes', isAvailable: true, availableDays: [1, 2, 3, 4, 5], workHours: { start: '08:00', end: '17:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: true } },
     { id: 'prof-2', name: 'Dr. Rafael Mendes', role: 'Ortodontista & Invisalign', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6], workHours: { start: '09:00', end: '19:00' }, lunchBreak: { start: '13:00', end: '14:00', enabled: true } },
-    { id: 'prof-3', name: 'Dra. Beatriz Lima', role: 'Harmonização Orofacial & Estética', isAvailable: true, availableDays: [2, 3, 4, 5, 6], workHours: { start: '10:00', end: '19:00' }, lunchBreak: { start: '13:00', end: '14:00', enabled: false } }
-  ],
-  'barbearia-style': [
-    { id: 'prof-1', name: 'Carlos Santos', role: 'Barbeiro Master', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6], workHours: { start: '09:00', end: '20:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: true } },
-    { id: 'prof-2', name: 'Lucas Oliveira', role: 'Visagista & Barbeiro', isAvailable: true, availableDays: [2, 3, 4, 5, 6], workHours: { start: '10:00', end: '20:00' }, lunchBreak: { start: '14:00', end: '15:00', enabled: true } },
-    { id: 'prof-3', name: 'Mateus Silva', role: 'Especialista em Cortes Clássicos', isAvailable: true, availableDays: [1, 3, 4, 5, 6], workHours: { start: '09:00', end: '18:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: false } }
+     { id: 'prof-3', name: 'Dra. Beatriz Lima', role: 'Harmonização Orofacial & Estética', isAvailable: true, availableDays: [2, 3, 4, 5, 6], workHours: { start: '10:00', end: '19:00' }, lunchBreak: { start: '13:00', end: '14:00', enabled: false } }
+   ],
+   'barbearia-style': [
+     { id: 'prof-1', name: 'Carlos Santos', role: 'Barbeiro Master', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6], workHours: { start: '09:00', end: '20:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: true } },
+     { id: 'prof-2', name: 'Lucas Oliveira', role: 'Visagista & Barbeiro', isAvailable: true, availableDays: [2, 3, 4, 5, 6], workHours: { start: '10:00', end: '20:00' }, lunchBreak: { start: '14:00', end: '15:00', enabled: true } },
+     { id: 'prof-3', name: 'Mateus Silva', role: 'Especialista em Cortes Clássicos', isAvailable: true, availableDays: [1, 3, 4, 5, 6], workHours: { start: '09:00', end: '18:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: false } }
   ],
   'studio-nail-design': [
     { id: 'prof-juliana', name: 'Juliana Santos (Nail Artist)', role: 'Especialista em Nail Art e Alongamentos', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6], workHours: { start: '09:00', end: '19:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: true } },
@@ -157,7 +217,13 @@ const availableProfessionals = computed(() => {
   const overrides = rawOverrides.value.professionals || {}
   const deletedIds = rawOverrides.value.deletedProfessionalIds || []
   const customProfs = rawOverrides.value.customProfessionals || []
-  const base = defaultProfessionalsBySlug[tenantSlug.value] || []
+
+  // Prioriza profissionais cadastrados no próprio tenant (JSON ou backend), com fallback legado
+  const tenantProfs = (props.tenant as any)?.professionals
+  const base = (tenantProfs && Array.isArray(tenantProfs) && tenantProfs.length > 0)
+    ? tenantProfs
+    : (defaultProfessionalsBySlug[tenantSlug.value] || [])
+
   const allProfs = [...base, ...customProfs].filter(p => !deletedIds.includes(p.id))
 
   return allProfs.map(p => {
@@ -394,10 +460,10 @@ async function generatePixDeposit() {
   try {
     const payload = generatePixPayload({
       key,
-      beneficiary: pix.beneficiary || props.tenant.name,
-      city: pix.city || 'SAO PAULO',
+      name: (pix.merchantName || pix.beneficiary || props.tenant.name).slice(0, 25),
+      city: (pix.city || 'SAO PAULO').slice(0, 15),
       amount: depositAmount.value,
-      txid: `AGEND${Date.now().toString().slice(-6)}`
+      txId: 'AGENDAMENTO'
     })
 
     pixPayload.value = payload
@@ -435,22 +501,22 @@ function copyPixCode() {
 function confirmAndDispatchWhatsApp() {
   triggerHaptic(50)
   const phone = props.tenant.phoneWhatsApp.replace(/\\D/g, '')
-  const servicesText = selectedServices.value.map(s => `• ${s.name} (${s.durationMinutes}min - ${formatCurrency(s.price)})`).join('\\n')
+  const servicesText = selectedServices.value.map(s => `• ${s.name} (${s.durationMinutes}min - ${formatCurrency(s.price)})`).join('\n')
   const profName = selectedProfessional.value ? selectedProfessional.value.name : 'Qualquer especialista disponível'
   const payText = paymentMode.value === 'pix_deposit' ? `Sinal de ${formatCurrency(depositAmount.value)} pago via Pix (30%)` : 'Pagamento presencial no local'
 
-  let msg = `Olá, gostaria de agendar um horário! 📅\\n\\n`
-  msg += `*Cliente:* ${customerName.value.trim()}\\n`
-  msg += `*WhatsApp:* ${customerPhone.value.trim()}\\n`
-  msg += `*Data:* ${selectedDate.value}\\n`
-  msg += `*Horário:* ${selectedTime.value}\\n`
-  msg += `*Profissional:* ${profName}\\n\\n`
-  msg += `*Serviços Selecionados:*\\n${servicesText}\\n\\n`
-  msg += `*Valor Total:* ${formatCurrency(totalPrice.value)} (${totalDuration.value} min)\\n`
-  msg += `*Forma:* ${payText}\\n`
+  let msg = `Olá, gostaria de agendar um horário! 📅\n\n`
+  msg += `*Cliente:* ${customerName.value.trim()}\n`
+  msg += `*WhatsApp:* ${customerPhone.value.trim()}\n`
+  msg += `*Data:* ${selectedDate.value}\n`
+  msg += `*Horário:* ${selectedTime.value}\n`
+  msg += `*Profissional:* ${profName}\n\n`
+  msg += `*Serviços Selecionados:*\n${servicesText}\n\n`
+  msg += `*Valor Total:* ${formatCurrency(totalPrice.value)} (${totalDuration.value} min)\n`
+  msg += `*Forma:* ${payText}\n`
 
   if (notes.value.trim()) {
-    msg += `*Observações:* ${notes.value.trim()}\\n`
+    msg += `*Observações:* ${notes.value.trim()}\n`
   }
 
   const url = `https://wa.me/55${phone}?text=${encodeURIComponent(msg)}`
@@ -661,7 +727,7 @@ function confirmAndDispatchWhatsApp() {
                 <span class="text-[10px] font-bold uppercase block leading-tight">{{ d.dayOfWeek }}</span>
                 <span class="text-base font-extrabold block my-0.5 leading-none">{{ d.dayNumber }}</span>
                 <span class="text-[9px] uppercase block font-semibold opacity-80 leading-tight">
-                  {{ isDateBlocked(d) ? 'Folga' : d.monthName }}
+                  {{ d.monthName }}
                 </span>
               </button>
             </div>
@@ -713,10 +779,11 @@ function confirmAndDispatchWhatsApp() {
               <p><strong>Data:</strong> {{ selectedDate }} às {{ selectedTime }}</p>
               <p><strong>Duração Total:</strong> {{ totalDuration }} minutos</p>
               <p class="text-sm font-bold text-slate-900 pt-1 border-t border-slate-200">
-                Valor Total: <span class="text-emerald-600 font-mono">{{ formatCurrency(totalPrice) }}</span>
+                Valor Total: {{ formatCurrency(totalPrice) }}
               </p>
             </div>
 
+            <!-- Dados de Contato do Cliente -->
             <div class="space-y-3 pt-1">
               <div>
                 <label class="block text-[11px] font-bold text-slate-700 mb-1">Seu Nome Completo *</label>
@@ -797,19 +864,24 @@ function confirmAndDispatchWhatsApp() {
           </div>
 
           <button v-if="currentStep < 4" @click="currentStep++"
-            :disabled="selectedServices.length === 0 || (currentStep === 3 && isDateBlocked({ date: selectedDate }))"
+            :disabled="currentStep === 1 ? selectedServices.length === 0 : false"
             class="flex-1 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1 shadow-lg active:scale-[0.99] transition-all cursor-pointer">
             <span>Avançar</span>
             <ChevronRight class="w-4 h-4" />
           </button>
 
-          <button v-else @click="confirmAndDispatchWhatsApp" :disabled="!customerName.trim() || !customerPhone.trim()"
+          <button v-else @click="confirmAndDispatchWhatsApp"
+            :disabled="!customerName.trim() || !customerPhone.trim()"
             class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20 active:scale-[0.99] transition-all cursor-pointer">
-            <span>Confirmar no WhatsApp</span>
-            <ChevronRight class="w-4 h-4" />
+            <Send class="w-4 h-4" />
+            <span>Confirmar Agendamento</span>
           </button>
         </div>
       </div>
     </div>
   </Teleport>
 </template>
+
+<style scoped>
+/* Transições suaves e scrollbar estilizada */
+</style>
