@@ -7,7 +7,7 @@ const DATABASE_URL =
   process.env.DATABASE_URL ||
   'postgres://alaska_admin:alaska_secret_2026@localhost:5432/alaska_local_db'
 
-const ALL_9_TENANTS = [
+const ALL_10_TENANTS = [
   {
     id: 'ten-hamburgueria-x',
     slug: 'hamburgueria-x',
@@ -142,15 +142,30 @@ const ALL_9_TENANTS = [
     pix_config: { key: '11966665555', keyType: 'phone', beneficiary: 'Clinica Sorriso LTDA', city: 'SAO PAULO' },
     delivery_fee_cents: 0,
     min_order_value_cents: 0
+  },
+  {
+    id: 'ten-studio-nail-design',
+    slug: 'studio-nail-design',
+    name: 'Studio Nail Design',
+    description: 'Especialistas em nail art, manicure, pedicure, alongamentos e esmaltes de alta qualidade. Agendamento fácil e venda de produtos profissionais.',
+    phone_whatsapp: '11955553333',
+    address: 'Rua das Unhas, 789 - Jardins',
+    business_category: 'hub',
+    theme: 'rose',
+    custom_domain: 'studionaildesign.com.br',
+    opening_hours: { open: '09:00', close: '19:00' },
+    pix_config: { key: '11955553333', keyType: 'phone', beneficiary: 'Studio Nail Design LTDA', city: 'SAO PAULO' },
+    delivery_fee_cents: 0,
+    min_order_value_cents: 0
   }
 ]
 
 async function runSeed() {
-  console.log('🌱 Conectando ao PostgreSQL para sincronização dos 9 estabelecimentos...')
+  console.log('🌱 Conectando ao PostgreSQL para sincronização dos 10 estabelecimentos...')
   const pool = new Pool({ connectionString: DATABASE_URL })
 
   try {
-    for (const tenant of ALL_9_TENANTS) {
+    for (const tenant of ALL_10_TENANTS) {
       const query = `
         INSERT INTO tenants (
           id, slug, name, description, phone_whatsapp, address,
@@ -159,8 +174,7 @@ async function runSeed() {
         ) VALUES (
           $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, true
         )
-        ON CONFLICT (id) DO UPDATE SET
-          slug = EXCLUDED.slug,
+        ON CONFLICT (slug) DO UPDATE SET
           name = EXCLUDED.name,
           description = EXCLUDED.description,
           phone_whatsapp = EXCLUDED.phone_whatsapp,
@@ -194,7 +208,7 @@ async function runSeed() {
       console.log(`✅ Tenant ${tenant.name} (${tenant.id}) sincronizado com sucesso no PostgreSQL.`)
     }
 
-    console.log('\n🚀 Seed concluído com sucesso! Todos os 9 tenants estão cadastrados no banco.')
+    console.log('\n🚀 Seed concluído com sucesso! Todos os 10 tenants estão cadastrados no banco.')
   } catch (error) {
     console.error('❌ Erro durante a execução do seed:', error)
     process.exit(1)

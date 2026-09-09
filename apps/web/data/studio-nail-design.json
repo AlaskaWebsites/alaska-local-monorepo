@@ -1,0 +1,216 @@
+{
+  "slug": "studio-nail-design",
+  "name": "Studio Nail Design",
+  "description": "Especialistas em nail art, manicure, pedicure, alongamentos e esmaltes de alta qualidade. Agendamento fácil e venda de produtos profissionais.",
+  "logo": "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=200&h=200&fit=crop&q=80",
+  "banner": "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=1200&h=400&fit=crop&q=80",
+  "phoneWhatsApp": "11955553333",
+  "address": "Rua das Unhas, 789 - Jardins",
+  "currency": "R$",
+  "deliveryFee": 0.0,
+  "minOrderValue": 0.0,
+  "theme": "rose",
+  "businessCategory": "hub",
+  "category": "Nail Design & Beleza de Unhas",
+  "distance": "0,6 km",
+  "priceRange": "$$",
+  "paymentMethods": [
+    "Pix",
+    "Cartão de Crédito",
+    "Cartão de Débito",
+    "Dinheiro"
+  ],
+  "openingHours": {
+    "open": "09:00",
+    "close": "19:00"
+  },
+  "pixConfig": {
+    "key": "7e3ed5e6-6097-4b15-88a3-221caba64141",
+    "keyType": "random",
+    "beneficiary": "Studio Nail Design LTDA",
+    "city": "SAO PAULO",
+    "allowTestCent": true,
+    "depositPercentage": 30
+  },
+  "professionals": [
+    {
+      "id": "prof-juliana",
+      "name": "Juliana Santos (Nail Artist)",
+      "role": "Especialista em Nail Art e Alongamentos"
+    },
+    {
+      "id": "prof-fernanda",
+      "name": "Fernanda Lima",
+      "role": "Manicure e Pedicure Premium"
+    }
+  ],
+  "categories": [
+    {
+      "id": "cat-manicure",
+      "name": "Manicure & Pedicure",
+      "icon": "sparkles",
+      "products": [
+        {
+          "id": "prod-manicure-tradicional",
+          "name": "Manicure Tradicional",
+          "description": "Cuidado completo das unhas naturais: corte, lixamento, cutícula esfoliada e esmaltação com base e top coat.",
+          "price": 35.0,
+          "durationMinutes": 40,
+          "image": "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-pedicure-completa",
+          "name": "Pedicure Completa",
+          "description": "Pedicure com esfoliação dos pés, corte de cutícula, lixamento e hidratação profunda com cremes profissionais.",
+          "price": 45.0,
+          "durationMinutes": 50,
+          "image": "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-combo-mano-pe",
+          "name": "Combo Relax: Manicure + Pedicure",
+          "description": "Experiência completa de cuidados das mãos e pés com massagem relaxante e hidratação intensiva.",
+          "price": 70.0,
+          "durationMinutes": 90,
+          "image": "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cat-nail-art",
+      "name": "Nail Art & Alongamentos",
+      "icon": "palette",
+      "products": [
+        {
+          "id": "prod-nail-art-simples",
+          "name": "Nail Art Decorativa",
+          "description": "Decoração criativa com pedrarias, glitter, desenhos franceses ou arabescos em 3-4 dedos.",
+          "price": 25.0,
+          "durationMinutes": 30,
+          "image": "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-acrigel-fibra",
+          "name": "Acrigel com Fibra de Vidro",
+          "description": "Alongamento em acrigel com fibra de vidro para fortalecimento e alongamento natural das unhas.",
+          "price": 120.0,
+          "durationMinutes": 90,
+          "image": "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-UV-gel",
+          "name": "Unhas em Gel (UV)",
+          "description": "Esmalte em gel curado em lâmpada UV com durabilidade de até 3 semanas, ideal para quem busca praticidade.",
+          "price": 80.0,
+          "durationMinutes": 60,
+          "image": "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cat-produtos",
+      "name": "Produtos para Venda",
+      "icon": "shopping-bag",
+      "products": [
+        {
+          "id": "prod-kit-esmaltes",
+          "name": "Kit 5 Esmaltes Premium",
+          "description": "Kit com 5 esmaltes profissionais de alta pigmentação e longa duração em cores variadas.",
+          "price": 89.90,
+          "durationMinutes": 0,
+          "image": "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-creme-hidratante",
+          "name": "Creme Hidratante Profissional",
+          "description": "Creme hidratante para mãos e pés com ingredientes naturais e fragrância suave.",
+          "price": 29.90,
+          "durationMinutes": 0,
+          "image": "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-kit-cuidados",
+          "name": "Kit Cuidados Home Care",
+          "description": "Kit completo com lixa, alicate, óleo cutícula e esmalte base para manutenção em casa.",
+          "price": 49.90,
+          "durationMinutes": 0,
+          "image": "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    }
+  ],
+  "reviews": {
+    "score": 4.8,
+    "totalReviews": 287,
+    "serviceQuality": {
+      "level": 4,
+      "experienceLabel": "Serviços impecáveis",
+      "description": "Com base nos atendimentos dos últimos 3 meses, o studio oferece manicure, pedicure e nail art de alta qualidade.",
+      "badges": [
+        {
+          "icon": "star",
+          "label": "Profissionais especializados",
+          "status": "success"
+        },
+        {
+          "icon": "clean-hands",
+          "label": "Materiais esterilizados",
+          "status": "success"
+        },
+        {
+          "icon": "clock",
+          "label": "Pontualidade",
+          "status": "success"
+        }
+      ]
+    },
+    "distribution": {
+      "5": 88,
+      "4": 9,
+      "3": 2,
+      "2": 1,
+      "1": 0
+    },
+    "comments": [
+      {
+        "id": "rev-1",
+        "author": "Mariana Costa",
+        "rating": 5,
+        "date": "Há 2 dias",
+        "comment": "Nail art incrível! A Juliana fez um desenho francês perfeito, ficou exatamente como eu queria. Materiais de qualidade e ambiente super higienizado.",
+        "itemsOrdered": [
+          "1x Manicure Tradicional",
+          "1x Nail Art Decorativa"
+        ]
+      },
+      {
+        "id": "rev-2",
+        "author": "Carla Oliveira",
+        "rating": 5,
+        "date": "Há 5 dias",
+        "comment": "Pedicure completa maravilhosa! A Fernanda é muito atenciosa, fez esfoliação e hidratação que deixaram meus pés super macios. Recomendo demais!",
+        "itemsOrdered": [
+          "1x Pedicure Completa"
+        ]
+      }
+    ]
+  }
+}

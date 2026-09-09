@@ -23,6 +23,9 @@ import {
 } from 'lucide-vue-next'
 import type { BookingService, BookingProfessional, Tenant } from '~/types'
 
+// Verificação de ambiente para evitar acessos ao DOM durante SSR
+const isClient = import.meta.client
+
 const props = defineProps<{
   isOpen: boolean
   tenant: Tenant
@@ -82,6 +85,9 @@ const tenantSlug = computed(() => props.tenant?.slug || 'clinica-sorriso')
 const currentStep = ref<1 | 2 | 3 | 4>(1)
 const selectedServices = ref<BookingService[]>([])
 const selectedProfessional = ref<any | null>(null)
+const professionalSummaryLabel = computed(() =>
+  selectedProfessional.value ? selectedProfessional.value.name : 'Primeiro disponível'
+)
 const selectedDate = ref(new Date().toISOString().split('T')[0])
 const selectedTime = ref('14:00')
 
@@ -140,6 +146,10 @@ const defaultProfessionalsBySlug: Record<string, Array<any>> = {
     { id: 'prof-1', name: 'Carlos Santos', role: 'Barbeiro Master', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6], workHours: { start: '09:00', end: '20:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: true } },
     { id: 'prof-2', name: 'Lucas Oliveira', role: 'Visagista & Barbeiro', isAvailable: true, availableDays: [2, 3, 4, 5, 6], workHours: { start: '10:00', end: '20:00' }, lunchBreak: { start: '14:00', end: '15:00', enabled: true } },
     { id: 'prof-3', name: 'Mateus Silva', role: 'Especialista em Cortes Clássicos', isAvailable: true, availableDays: [1, 3, 4, 5, 6], workHours: { start: '09:00', end: '18:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: false } }
+  ],
+  'studio-nail-design': [
+    { id: 'prof-juliana', name: 'Juliana Santos (Nail Artist)', role: 'Especialista em Nail Art e Alongamentos', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6], workHours: { start: '09:00', end: '19:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: true } },
+    { id: 'prof-fernanda', name: 'Fernanda Lima', role: 'Manicure e Pedicure Premium', isAvailable: true, availableDays: [2, 3, 4, 5, 6], workHours: { start: '09:00', end: '19:00' }, lunchBreak: { start: '13:00', end: '14:00', enabled: true } }
   ]
 }
 
@@ -147,7 +157,7 @@ const availableProfessionals = computed(() => {
   const overrides = rawOverrides.value.professionals || {}
   const deletedIds = rawOverrides.value.deletedProfessionalIds || []
   const customProfs = rawOverrides.value.customProfessionals || []
-  const base = defaultProfessionalsBySlug[tenantSlug.value] || defaultProfessionalsBySlug['barbearia-style'] || []
+  const base = defaultProfessionalsBySlug[tenantSlug.value] || []
   const allProfs = [...base, ...customProfs].filter(p => !deletedIds.includes(p.id))
 
   return allProfs.map(p => {
@@ -258,9 +268,11 @@ function autoSelectFirstAvailableDate() {
     if (firstAvailable) {
       selectedDate.value = firstAvailable.date
       nextTick(() => {
-        const el = document.getElementById(`date-btn-${firstAvailable.date}`)
-        if (el && daysContainerRef.value) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+        if (isClient) {
+          const el = document.getElementById(`date-btn-${firstAvailable.date}`)
+          if (el && daysContainerRef.value) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+          }
         }
       })
     }
@@ -451,18 +463,12 @@ function confirmAndDispatchWhatsApp() {
 
 <template>
   <Teleport to="body">
-    <div
-      v-if="isOpen"
+    <div v-if="isOpen"
       class="fixed inset-0 z-50 overflow-hidden bg-slate-900/60 backdrop-blur-xs flex flex-col sm:items-center sm:justify-center p-0 sm:p-4 animate-in fade-in duration-200"
-      @click="emit('close')"
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="booking-modal-title"
+      @click="emit('close')">
+      <div role="dialog" aria-modal="true" aria-labelledby="booking-modal-title"
         class="bg-white text-slate-800 w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-lg flex flex-col overflow-hidden sm:rounded-3xl sm:border sm:border-slate-200 sm:shadow-2xl"
-        @click.stop
-      >
+        @click.stop>
         <!-- 1. Header do Modal -->
         <div class="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
           <div class="flex items-center gap-2.5">
@@ -479,34 +485,41 @@ function confirmAndDispatchWhatsApp() {
             </div>
           </div>
 
-          <button
-            @click="emit('close')"
+          <button @click="emit('close')"
             class="p-2 text-slate-400 hover:text-slate-700 rounded-full hover:bg-slate-100 transition-colors cursor-pointer"
-            aria-label="Fechar modal de agendamento"
-          >
+            aria-label="Fechar modal de agendamento">
             <X class="w-5 h-5" aria-hidden="true" />
           </button>
         </div>
 
         <!-- 2. Barra de Progresso / Steps -->
-        <div class="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-xs font-semibold shrink-0">
-          <div class="flex items-center gap-1.5" :class="currentStep === 1 ? 'text-emerald-600 font-bold' : 'text-slate-500'">
-            <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" :class="currentStep >= 1 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'">1</span>
+        <div
+          class="px-4 py-3 bg-slate-50 border-b border-slate-100 flex items-center justify-between text-xs font-semibold shrink-0">
+          <div class="flex items-center gap-1.5"
+            :class="currentStep === 1 ? 'text-emerald-600 font-bold' : 'text-slate-500'">
+            <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+              :class="currentStep >= 1 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'">1</span>
             <span>Serviços</span>
           </div>
           <ChevronRight class="w-3.5 h-3.5 text-slate-300" />
-          <div class="flex items-center gap-1.5" :class="currentStep === 2 ? 'text-emerald-600 font-bold' : 'text-slate-500'">
-            <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" :class="currentStep >= 2 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'">2</span>
+          <div class="flex items-center gap-1.5"
+            :class="currentStep === 2 ? 'text-emerald-600 font-bold' : 'text-slate-500'">
+            <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+              :class="currentStep >= 2 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'">2</span>
             <span>Profissional</span>
           </div>
           <ChevronRight class="w-3.5 h-3.5 text-slate-300" />
-          <div class="flex items-center gap-1.5" :class="currentStep === 3 ? 'text-emerald-600 font-bold' : 'text-slate-500'">
-            <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" :class="currentStep >= 3 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'">3</span>
+          <div class="flex items-center gap-1.5"
+            :class="currentStep === 3 ? 'text-emerald-600 font-bold' : 'text-slate-500'">
+            <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+              :class="currentStep >= 3 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'">3</span>
             <span>Horário</span>
           </div>
           <ChevronRight class="w-3.5 h-3.5 text-slate-300" />
-          <div class="flex items-center gap-1.5" :class="currentStep === 4 ? 'text-emerald-600 font-bold' : 'text-slate-500'">
-            <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold" :class="currentStep >= 4 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'">4</span>
+          <div class="flex items-center gap-1.5"
+            :class="currentStep === 4 ? 'text-emerald-600 font-bold' : 'text-slate-500'">
+            <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold"
+              :class="currentStep >= 4 ? 'bg-emerald-600 text-white' : 'bg-slate-200 text-slate-600'">4</span>
             <span>Confirmar</span>
           </div>
         </div>
@@ -521,26 +534,22 @@ function confirmAndDispatchWhatsApp() {
             </div>
 
             <div class="space-y-2.5">
-              <div
-                v-for="service in availableServices"
-                :key="service.id"
-                @click="toggleService(service)"
+              <div v-for="service in availableServices" :key="service.id" @click="toggleService(service)"
                 class="p-3.5 rounded-2xl border transition-all flex items-center justify-between cursor-pointer select-none"
-                :class="isServiceSelected(service.id) ? 'bg-emerald-50 border-emerald-500 shadow-2xs' : 'bg-white border-slate-200 hover:border-slate-300'"
-              >
+                :class="isServiceSelected(service.id) ? 'bg-emerald-50 border-emerald-500 shadow-2xs' : 'bg-white border-slate-200 hover:border-slate-300'">
                 <div class="space-y-0.5">
                   <span class="text-xs font-bold text-slate-900 block">{{ service.name }}</span>
                   <span class="text-[11px] text-slate-500 block leading-relaxed">{{ service.description }}</span>
                   <div class="flex items-center gap-2 pt-1">
                     <span class="text-xs font-mono font-bold text-slate-900">{{ formatCurrency(service.price) }}</span>
-                    <span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.2 rounded font-semibold">⏱️ {{ service.durationMinutes }} min</span>
+                    <span class="text-[10px] text-slate-400 bg-slate-100 px-1.5 py-0.2 rounded font-semibold">⏱️ {{
+                      service.durationMinutes }} min</span>
                   </div>
                 </div>
 
                 <div
                   class="w-5 h-5 rounded-md border flex items-center justify-center text-xs transition-colors shrink-0 ml-3"
-                  :class="isServiceSelected(service.id) ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 bg-white'"
-                >
+                  :class="isServiceSelected(service.id) ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 bg-white'">
                   <Check v-if="isServiceSelected(service.id)" class="w-3.5 h-3.5 stroke-[3]" />
                 </div>
               </div>
@@ -551,18 +560,18 @@ function confirmAndDispatchWhatsApp() {
           <div v-else-if="currentStep === 2" class="space-y-4">
             <div>
               <h3 class="text-sm font-bold text-slate-900">Selecione o profissional:</h3>
-              <p class="text-xs text-slate-500 mt-0.5">Escolha seu especialista de preferência ou o primeiro disponível.</p>
+              <p class="text-xs text-slate-500 mt-0.5">Escolha seu especialista de preferência ou o primeiro disponível.
+              </p>
             </div>
 
             <div class="space-y-2.5">
               <!-- Opção Qualquer Profissional -->
-              <div
-                @click="selectedProfessional = null"
+              <div @click="selectedProfessional = null"
                 class="p-3.5 rounded-2xl border transition-all flex items-center justify-between cursor-pointer select-none"
-                :class="selectedProfessional === null ? 'bg-emerald-50 border-emerald-500 shadow-2xs' : 'bg-white border-slate-200 hover:border-slate-300'"
-              >
+                :class="selectedProfessional === null ? 'bg-emerald-50 border-emerald-500 shadow-2xs' : 'bg-white border-slate-200 hover:border-slate-300'">
                 <div class="flex items-center gap-3">
-                  <div class="w-9 h-9 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center text-xs">
+                  <div
+                    class="w-9 h-9 rounded-full bg-slate-100 text-slate-700 font-bold flex items-center justify-center text-xs">
                     ⚡
                   </div>
                   <div>
@@ -572,37 +581,31 @@ function confirmAndDispatchWhatsApp() {
                 </div>
                 <div
                   class="w-5 h-5 rounded-full border flex items-center justify-center text-xs transition-colors shrink-0"
-                  :class="selectedProfessional === null ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 bg-white'"
-                >
+                  :class="selectedProfessional === null ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 bg-white'">
                   <Check v-if="selectedProfessional === null" class="w-3.5 h-3.5 stroke-[3]" />
                 </div>
               </div>
 
               <!-- Lista de Especialistas -->
-              <div
-                v-for="prof in availableProfessionals"
-                :key="prof.id"
+              <div v-for="prof in availableProfessionals" :key="prof.id"
                 @click="prof.isAvailable && (selectedProfessional = prof)"
-                class="p-3.5 rounded-2xl border transition-all flex items-center justify-between select-none"
-                :class="[
+                class="p-3.5 rounded-2xl border transition-all flex items-center justify-between select-none" :class="[
                   !prof.isAvailable
                     ? 'opacity-40 grayscale bg-slate-50 border-dashed cursor-not-allowed'
                     : selectedProfessional?.id === prof.id
                       ? 'bg-emerald-50 border-emerald-500 shadow-2xs cursor-pointer'
                       : 'bg-white border-slate-200 hover:border-slate-300 cursor-pointer'
-                ]"
-              >
+                ]">
                 <div class="flex items-center gap-3 min-w-0">
-                  <div
-                    class="w-9 h-9 rounded-full font-bold flex items-center justify-center text-xs shrink-0"
-                    :class="prof.isAvailable ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-500'"
-                  >
+                  <div class="w-9 h-9 rounded-full font-bold flex items-center justify-center text-xs shrink-0"
+                    :class="prof.isAvailable ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-200 text-slate-500'">
                     {{ prof.name.charAt(0) }}
                   </div>
                   <div class="min-w-0">
                     <div class="flex items-center gap-1.5">
                       <h4 class="text-xs font-bold text-slate-900 truncate">{{ prof.name }}</h4>
-                      <span v-if="!prof.isAvailable" class="text-[9px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded uppercase shrink-0">
+                      <span v-if="!prof.isAvailable"
+                        class="text-[9px] font-bold text-rose-600 bg-rose-50 px-1.5 py-0.2 rounded uppercase shrink-0">
                         De Folga
                       </span>
                     </div>
@@ -610,11 +613,9 @@ function confirmAndDispatchWhatsApp() {
                   </div>
                 </div>
 
-                <div
-                  v-if="prof.isAvailable"
+                <div v-if="prof.isAvailable"
                   class="w-5 h-5 rounded-full border flex items-center justify-center text-xs transition-colors shrink-0 ml-2"
-                  :class="selectedProfessional?.id === prof.id ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 bg-white'"
-                >
+                  :class="selectedProfessional?.id === prof.id ? 'bg-emerald-600 border-emerald-600 text-white' : 'border-slate-300 bg-white'">
                   <Check v-if="selectedProfessional?.id === prof.id" class="w-3.5 h-3.5 stroke-[3]" />
                 </div>
               </div>
@@ -631,40 +632,24 @@ function confirmAndDispatchWhatsApp() {
 
               <!-- Botões de Navegação Desktop (Setas ← e →) -->
               <div class="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  @click="scrollDays('left')"
+                <button type="button" @click="scrollDays('left')"
                   class="p-1.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 shadow-2xs cursor-pointer transition-all active:scale-95 flex items-center justify-center"
-                  aria-label="Dias anteriores"
-                  title="Dias anteriores"
-                >
+                  aria-label="Dias anteriores" title="Dias anteriores">
                   <ChevronLeft class="w-4 h-4" />
                 </button>
-                <button
-                  type="button"
-                  @click="scrollDays('right')"
+                <button type="button" @click="scrollDays('right')"
                   class="p-1.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 shadow-2xs cursor-pointer transition-all active:scale-95 flex items-center justify-center"
-                  aria-label="Próximos dias"
-                  title="Próximos dias"
-                >
+                  aria-label="Próximos dias" title="Próximos dias">
                   <ChevronRight class="w-4 h-4" />
                 </button>
               </div>
             </div>
 
             <!-- Carrossel Horizontal de Dias com Bloqueio de Folga e Indisponibilidade -->
-            <div
-              ref="daysContainerRef"
-              @wheel.passive="handleDaysWheel"
-              class="flex gap-2 overflow-x-auto pb-2 pt-1 no-scrollbar scroll-smooth snap-x select-none"
-            >
-              <button
-                v-for="d in bookingDays"
-                :key="d.date"
-                :id="`date-btn-${d.date}`"
-                type="button"
-                :disabled="isDateBlocked(d)"
-                @click="!isDateBlocked(d) && selectDate(d.date)"
+            <div ref="daysContainerRef" @wheel.passive="handleDaysWheel"
+              class="flex gap-2 overflow-x-auto pb-2 pt-1 no-scrollbar scroll-smooth snap-x select-none">
+              <button v-for="d in bookingDays" :key="d.date" :id="`date-btn-${d.date}`" type="button"
+                :disabled="isDateBlocked(d)" @click="!isDateBlocked(d) && selectDate(d.date)"
                 class="min-w-[62px] p-2.5 rounded-2xl border text-center transition-all select-none shrink-0 snap-start flex flex-col items-center justify-center relative"
                 :class="[
                   isDateBlocked(d)
@@ -672,8 +657,7 @@ function confirmAndDispatchWhatsApp() {
                     : selectedDate === d.date
                       ? 'bg-emerald-600 text-white border-emerald-600 shadow-md scale-105 cursor-pointer'
                       : 'bg-white text-slate-700 border-slate-200 hover:border-slate-300 hover:bg-slate-50 cursor-pointer active:scale-95'
-                ]"
-              >
+                ]">
                 <span class="text-[10px] font-bold uppercase block leading-tight">{{ d.dayOfWeek }}</span>
                 <span class="text-base font-extrabold block my-0.5 leading-none">{{ d.dayNumber }}</span>
                 <span class="text-[9px] uppercase block font-semibold opacity-80 leading-tight">
@@ -683,11 +667,13 @@ function confirmAndDispatchWhatsApp() {
             </div>
 
             <!-- Aviso caso o profissional selecionado esteja de folga no dia -->
-            <div v-if="isProfOffOnDate" class="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800 space-y-1">
+            <div v-if="isProfOffOnDate"
+              class="p-3.5 bg-amber-50 border border-amber-200 rounded-2xl text-xs text-amber-800 space-y-1">
               <p class="font-bold flex items-center gap-1.5">
                 <span>⚠️</span> {{ selectedProfessional?.name }} não atende neste dia da semana.
               </p>
-              <span class="text-[11px] text-slate-600 block">Selecione outro dia no carrossel acima para visualizar os horários de atendimento.</span>
+              <span class="text-[11px] text-slate-600 block">Selecione outro dia no carrossel acima para visualizar os
+                horários de atendimento.</span>
             </div>
 
             <!-- Grade de Horários Livres -->
@@ -695,24 +681,23 @@ function confirmAndDispatchWhatsApp() {
               <div class="flex items-center justify-between">
                 <span class="text-xs font-bold text-slate-700 block">
                   Horários Disponíveis ({{ totalDuration }} min)
-                  <span v-if="selectedProfessional" class="text-emerald-600 font-semibold">• {{ selectedProfessional.name }} ({{ selectedProfessional.workHours?.start }} às {{ selectedProfessional.workHours?.end }})</span>
+                  <span v-if="selectedProfessional" class="text-emerald-600 font-semibold">• {{
+                    selectedProfessional.name }} ({{ selectedProfessional.workHours?.start }} às {{
+                      selectedProfessional.workHours?.end }})</span>
                 </span>
                 <span class="text-[11px] text-slate-400 font-medium">{{ availableSlots.length }} opções</span>
               </div>
 
-              <div v-if="availableSlots.length === 0" class="p-4 bg-slate-100 border border-slate-200 rounded-xl text-center">
-                <span class="text-xs font-bold text-slate-600 block">Todos os horários deste dia estão ocupados ou fora do expediente do profissional.</span>
+              <div v-if="availableSlots.length === 0"
+                class="p-4 bg-slate-100 border border-slate-200 rounded-xl text-center">
+                <span class="text-xs font-bold text-slate-600 block">Todos os horários deste dia estão ocupados ou fora
+                  do expediente do profissional.</span>
               </div>
 
               <div v-else class="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                <button
-                  v-for="slot in availableSlots"
-                  :key="slot.time"
-                  type="button"
-                  @click="selectTime(slot.time)"
+                <button v-for="slot in availableSlots" :key="slot.time" type="button" @click="selectTime(slot.time)"
                   class="p-2.5 rounded-xl border text-xs font-bold font-mono text-center transition-all cursor-pointer select-none active:scale-95"
-                  :class="selectedTime === slot.time ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs' : 'bg-white text-slate-800 border-slate-200 hover:border-emerald-500'"
-                >
+                  :class="selectedTime === slot.time ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs' : 'bg-white text-slate-800 border-slate-200 hover:border-emerald-500'">
                   {{ slot.time }}
                 </button>
               </div>
@@ -723,8 +708,8 @@ function confirmAndDispatchWhatsApp() {
           <div v-else-if="currentStep === 4" class="space-y-4">
             <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-2 text-xs">
               <h4 class="font-bold text-slate-900 text-sm">Resumo do Agendamento:</h4>
-              <p><strong>Procedimentos:</strong> {{ selectedServices.map(s => s.name).join(', ') }}</p>
-              <p><strong>Profissional:</strong> {{ selectedProfessional ? selectedProfessional.name : 'Primeiro disponível' }}</p>
+              <p><strong>Procedimentos:</strong> {{selectedServices.map(s => s.name).join(', ')}}</p>
+              <p><strong>Profissional:</strong> {{ professionalSummaryLabel }}</p>
               <p><strong>Data:</strong> {{ selectedDate }} às {{ selectedTime }}</p>
               <p><strong>Duração Total:</strong> {{ totalDuration }} minutos</p>
               <p class="text-sm font-bold text-slate-900 pt-1 border-t border-slate-200">
@@ -735,46 +720,32 @@ function confirmAndDispatchWhatsApp() {
             <div class="space-y-3 pt-1">
               <div>
                 <label class="block text-[11px] font-bold text-slate-700 mb-1">Seu Nome Completo *</label>
-                <input
-                  type="text"
-                  v-model="customerName"
-                  placeholder="Ex: Danilo Santos"
+                <input type="text" v-model="customerName" placeholder="Ex: Danilo Santos"
                   class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
-                  required
-                />
+                  required />
               </div>
 
               <div>
                 <label class="block text-[11px] font-bold text-slate-700 mb-1">WhatsApp para Confirmação *</label>
-                <input
-                  type="tel"
-                  v-model="customerPhone"
-                  placeholder="Ex: (11) 98888-7777"
+                <input type="tel" v-model="customerPhone" placeholder="Ex: (11) 98888-7777"
                   class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 font-mono outline-none focus:border-emerald-500 focus:bg-white transition-all"
-                  required
-                />
+                  required />
               </div>
 
               <!-- Escolha de Pagamento -->
               <div class="space-y-2 pt-2">
                 <label class="block text-[11px] font-bold text-slate-700">Forma de Garantia do Agendamento:</label>
                 <div class="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    @click="paymentMode = 'on_service'"
+                  <button type="button" @click="paymentMode = 'on_service'"
                     class="p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all cursor-pointer"
-                    :class="paymentMode === 'on_service' ? 'bg-emerald-50 border-emerald-500 text-emerald-800 font-bold' : 'bg-white border-slate-200 text-slate-600'"
-                  >
+                    :class="paymentMode === 'on_service' ? 'bg-emerald-50 border-emerald-500 text-emerald-800 font-bold' : 'bg-white border-slate-200 text-slate-600'">
                     <span>📍 Pagar no Local</span>
                     <span class="text-[10px] font-normal text-slate-400">Cartão, Pix ou Dinheiro</span>
                   </button>
 
-                  <button
-                    type="button"
-                    @click="paymentMode = 'pix_deposit'"
+                  <button type="button" @click="paymentMode = 'pix_deposit'"
                     class="p-3 rounded-xl border text-xs font-semibold flex flex-col items-center gap-1 transition-all cursor-pointer"
-                    :class="paymentMode === 'pix_deposit' ? 'bg-emerald-50 border-emerald-500 text-emerald-800 font-bold' : 'bg-white border-slate-200 text-slate-600'"
-                  >
+                    :class="paymentMode === 'pix_deposit' ? 'bg-emerald-50 border-emerald-500 text-emerald-800 font-bold' : 'bg-white border-slate-200 text-slate-600'">
                     <span>💠 Sinal via Pix (30%)</span>
                     <span class="text-[10px] font-normal text-slate-400">{{ formatCurrency(depositAmount) }}</span>
                   </button>
@@ -782,27 +753,22 @@ function confirmAndDispatchWhatsApp() {
               </div>
 
               <!-- Bloco Pix Copia e Cola / QR Code para Sinal -->
-              <div v-if="paymentMode === 'pix_deposit'" class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-2.5 animate-in fade-in duration-150">
+              <div v-if="paymentMode === 'pix_deposit'"
+                class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-2.5 animate-in fade-in duration-150">
                 <div class="flex items-center justify-between text-xs font-bold text-emerald-900">
                   <span>Pagar Sinal de Reserva ({{ formatCurrency(depositAmount) }})</span>
                 </div>
 
                 <div v-if="qrCodeDataUrl" class="flex justify-center py-2">
-                  <img :src="qrCodeDataUrl" alt="QR Code Pix" class="w-36 h-36 rounded-xl border border-emerald-200 shadow-xs bg-white p-1" />
+                  <img :src="qrCodeDataUrl" alt="QR Code Pix"
+                    class="w-36 h-36 rounded-xl border border-emerald-200 shadow-xs bg-white p-1" />
                 </div>
 
                 <div class="flex items-center gap-2">
-                  <input
-                    type="text"
-                    readonly
-                    :value="pixPayload"
-                    class="flex-1 bg-white border border-emerald-200 rounded-xl p-2 text-[11px] font-mono text-slate-700 select-all outline-none"
-                  />
-                  <button
-                    type="button"
-                    @click="copyPixCode"
-                    class="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm"
-                  >
+                  <input type="text" readonly :value="pixPayload"
+                    class="flex-1 bg-white border border-emerald-200 rounded-xl p-2 text-[11px] font-mono text-slate-700 select-all outline-none" />
+                  <button type="button" @click="copyPixCode"
+                    class="px-3.5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs transition-all flex items-center gap-1.5 shrink-0 cursor-pointer shadow-sm">
                     <Copy class="w-3.5 h-3.5" />
                     <span>{{ isPixCopied ? 'Copiado!' : 'Copiar' }}</span>
                   </button>
@@ -812,12 +778,9 @@ function confirmAndDispatchWhatsApp() {
               <!-- Observações -->
               <div>
                 <label class="block text-[11px] font-bold text-slate-700 mb-1">Observações adicionais (opcional)</label>
-                <textarea
-                  v-model="notes"
-                  rows="2"
+                <textarea v-model="notes" rows="2"
                   placeholder="Ex: Primeira consulta, preferência por sala silenciosa..."
-                  class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"
-                ></textarea>
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 outline-none focus:border-emerald-500 focus:bg-white transition-all"></textarea>
               </div>
             </div>
           </div>
@@ -825,33 +788,23 @@ function confirmAndDispatchWhatsApp() {
 
         <!-- Rodapé Fixo com Navegação de Passos -->
         <div class="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
-          <button
-            v-if="currentStep > 1"
-            @click="currentStep--"
-            class="px-4 py-3 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer"
-          >
+          <button v-if="currentStep > 1" @click="currentStep--"
+            class="px-4 py-3 bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 font-bold rounded-xl text-xs transition-colors cursor-pointer">
             Voltar
           </button>
           <div v-else class="text-xs font-mono font-bold text-slate-500 pl-1">
             {{ selectedServices.length }} {{ selectedServices.length === 1 ? 'serviço' : 'serviços' }}
           </div>
 
-          <button
-            v-if="currentStep < 4"
-            @click="currentStep++"
+          <button v-if="currentStep < 4" @click="currentStep++"
             :disabled="selectedServices.length === 0 || (currentStep === 3 && isDateBlocked({ date: selectedDate }))"
-            class="flex-1 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1 shadow-lg active:scale-[0.99] transition-all cursor-pointer"
-          >
+            class="flex-1 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1 shadow-lg active:scale-[0.99] transition-all cursor-pointer">
             <span>Avançar</span>
             <ChevronRight class="w-4 h-4" />
           </button>
 
-          <button
-            v-else
-            @click="confirmAndDispatchWhatsApp"
-            :disabled="!customerName.trim() || !customerPhone.trim()"
-            class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20 active:scale-[0.99] transition-all cursor-pointer"
-          >
+          <button v-else @click="confirmAndDispatchWhatsApp" :disabled="!customerName.trim() || !customerPhone.trim()"
+            class="flex-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20 active:scale-[0.99] transition-all cursor-pointer">
             <span>Confirmar no WhatsApp</span>
             <ChevronRight class="w-4 h-4" />
           </button>

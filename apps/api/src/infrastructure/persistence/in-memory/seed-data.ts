@@ -162,5 +162,23 @@ export const SEED_TENANTS: Tenant[] = [
       city: 'SAO PAULO'
     },
     customDomain: 'bellaitalia.com.br'
+  }),
+  new Tenant({
+    id: 'ten-studio-nail-design',
+    slug: 'studio-nail-design',
+    name: 'Studio Nail Design',
+    description: 'Especialistas em nail art, manicure, pedicure, alongamentos e esmaltes de alta qualidade. Agendamento fácil e venda de produtos profissionais.',
+    phoneWhatsApp: '11955553333',
+    address: 'Rua das Unhas, 789 - Jardins',
+    businessCategory: 'hub',
+    theme: 'rose',
+    openingHours: { open: '09:00', close: '19:00' },
+    pixConfig: {
+      key: '7e3ed5e6-6097-4b15-88a3-221caba64141',
+      keyType: 'random',
+      beneficiary: 'Studio Nail Design LTDA',
+      city: 'SAO PAULO'
+    },
+    customDomain: 'studionaildesign.com.br'
   })
 ]

@@ -480,6 +480,10 @@ const defaultProfessionalsBySlug: Record<string, Array<{ id: string; name: strin
     { id: 'prof-1', name: 'Carlos Santos', role: 'Barbeiro Master', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6], workHours: { start: '09:00', end: '20:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: true } },
     { id: 'prof-2', name: 'Lucas Oliveira', role: 'Visagista & Barbeiro', isAvailable: true, availableDays: [2, 3, 4, 5, 6], workHours: { start: '10:00', end: '20:00' }, lunchBreak: { start: '14:00', end: '15:00', enabled: true } },
     { id: 'prof-3', name: 'Mateus Silva', role: 'Especialista em Cortes Clássicos', isAvailable: true, availableDays: [1, 3, 4, 5, 6], workHours: { start: '09:00', end: '18:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: false } }
+  ],
+  'studio-nail-design': [
+    { id: 'prof-juliana', name: 'Juliana Santos (Nail Artist)', role: 'Especialista em Nail Art e Alongamentos', isAvailable: true, availableDays: [1, 2, 3, 4, 5, 6], workHours: { start: '09:00', end: '19:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: true } },
+    { id: 'prof-fernanda', name: 'Fernanda Lima', role: 'Manicure e Pedicure Premium', isAvailable: true, availableDays: [2, 3, 4, 5, 6], workHours: { start: '09:00', end: '19:00' }, lunchBreak: { start: '13:00', end: '14:00', enabled: true } }
   ]
 }
 
@@ -488,7 +492,7 @@ const professionalsList = computed(() => {
   const deletedProfIds = localOverrides.value.deletedProfessionalIds || []
   const customProfs = localOverrides.value.customProfessionals || []
 
-  const baseList = defaultProfessionalsBySlug[slug.value] || defaultProfessionalsBySlug['barbearia-style']
+  const baseList = defaultProfessionalsBySlug[slug.value] || []
   const filteredBase = baseList.filter(p => !deletedProfIds.includes(p.id))
 
   const all = [...filteredBase, ...customProfs.filter(p => !deletedProfIds.includes(p.id))]
