@@ -338,7 +338,8 @@ function autoSelectFirstAvailableDate() {
         if (isClient) {
           const el = document.getElementById(`date-btn-${firstAvailable.date}`)
           if (el && daysContainerRef.value) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })\n          }
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
+          }
         }
       })
     }
@@ -454,7 +455,7 @@ function selectTime(timeStr: string) {
 // 7. Geração de Pix para Sinal de Reserva
 async function generatePixDeposit() {
   const pix = rawOverrides.value.pix || (props.tenant as any).pixConfig || (props.tenant as any).pix || {}
-  const key = pix.pixKey || pix.key || props.tenant.phoneWhatsApp.replace(/\\D/g, '')
+  const key = pix.pixKey || pix.key || props.tenant.phoneWhatsApp.replace(/\D/g, '')
 
   isGeneratingPix.value = true
   try {
@@ -500,7 +501,7 @@ function copyPixCode() {
 // 8. Despacho Final via WhatsApp
 function confirmAndDispatchWhatsApp() {
   triggerHaptic(50)
-  const phone = props.tenant.phoneWhatsApp.replace(/\\D/g, '')
+  const phone = props.tenant.phoneWhatsApp.replace(/\D/g, '')
   const servicesText = selectedServices.value.map(s => `• ${s.name} (${s.durationMinutes}min - ${formatCurrency(s.price)})`).join('\n')
   const profName = selectedProfessional.value ? selectedProfessional.value.name : 'Qualquer especialista disponível'
   const payText = paymentMode.value === 'pix_deposit' ? `Sinal de ${formatCurrency(depositAmount.value)} pago via Pix (30%)` : 'Pagamento presencial no local'
