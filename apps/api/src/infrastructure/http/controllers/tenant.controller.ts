@@ -4,7 +4,7 @@ import { ResolveTenantByDomainUseCase } from '../../../core/application/use-case
 import { UpdateTenantHoursUseCase } from '../../../core/application/use-cases/update-tenant-hours.use-case';
 import { AuthenticateMerchantUseCase } from '../../../core/application/use-cases/authenticate-merchant.use-case';
 import { ZodValidationPipe } from '../pipes/zod-validation.pipe';
-import { MerchantLoginSchema, MerchantLoginInput } from '@alaska/contracts/tenant';
+import { MerchantLoginSchema, type MerchantLoginInput } from '@alaska/contracts';
 
 @Controller('tenants')
 export class TenantController {
@@ -17,17 +17,23 @@ export class TenantController {
 
   @Get(':slug')
   async getBySlug(@Param('slug') slug: string) {
-    const tenant = await this.getTenantBySlugUseCase.execute(slug);
-    return tenant.toJSON();
+    const tenant = await this.getTenantBySlugUseCase.execute({ slug });
+    return {
+      success: true,
+      data: tenant,
+    };
   }
 
-  @Get('resolve/domain')
+  @Get('resolve')
   async resolveByDomain(@Query('host') host: string) {
-    const tenant = await this.resolveTenantByDomainUseCase.execute(host);
-    return tenant ? tenant.toJSON() : null;
+    const tenant = await this.resolveTenantByDomainUseCase.execute({ host });
+    return {
+      success: true,
+      data: tenant,
+    };
   }
 
-  @Post(':slug/admin/login')
+  @Post(':slug/auth')
   @HttpCode(HttpStatus.OK)
   @UsePipes(new ZodValidationPipe(MerchantLoginSchema))
   async login(

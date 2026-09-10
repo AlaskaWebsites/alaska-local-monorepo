@@ -18,6 +18,8 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
+      "@alaska/contracts": ["../../packages/contracts/src/index.ts"],
+      "@alaska/contracts/*": ["../../packages/contracts/src/*"],
       "@core/*": ["src/core/*"],
       "@infra/*": ["src/infrastructure/*"],
       "@config/*": ["src/config/*"]
