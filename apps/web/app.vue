@@ -28,7 +28,8 @@ html {
    Alaska Local - Tema Claro Suave do Painel do Lojista (Light Eye-Friendly)
    Padroniza o Admin com os mesmos tons de branco e descanso visual da vitrine
    ========================================================================== */
-.admin-themed-root {
+.admin-themed-root,
+.min-h-screen.bg-slate-950 {
   background-color: #f8fafc !important; /* bg-slate-50 */
   color: #0f172a !important; /* text-slate-900 */
 }
@@ -37,7 +38,11 @@ html {
 .admin-themed-root .bg-slate-900,
 .admin-themed-root .bg-slate-900\/90,
 .admin-themed-root .bg-slate-900\/80,
-.admin-themed-root .bg-slate-900\/60 {
+.admin-themed-root .bg-slate-900\/60,
+.min-h-screen.bg-slate-950 .bg-slate-900,
+.min-h-screen.bg-slate-950 .bg-slate-900\/90,
+.min-h-screen.bg-slate-950 .bg-slate-900\/80,
+.min-h-screen.bg-slate-950 .bg-slate-900\/60 {
   background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04) !important;
@@ -45,7 +50,10 @@ html {
 
 .admin-themed-root .bg-slate-950,
 .admin-themed-root .bg-slate-950\/90,
-.admin-themed-root .bg-slate-950\/40 {
+.admin-themed-root .bg-slate-950\/40,
+.min-h-screen.bg-slate-950 .bg-slate-950,
+.min-h-screen.bg-slate-950 .bg-slate-950\/90,
+.min-h-screen.bg-slate-950 .bg-slate-950\/40 {
   background-color: #f8fafc !important;
   border-color: #e2e8f0 !important;
 }
@@ -53,7 +61,10 @@ html {
 /* Inputs, Textareas e Selects do Admin */
 .admin-themed-root input,
 .admin-themed-root textarea,
-.admin-themed-root select {
+.admin-themed-root select,
+.min-h-screen.bg-slate-950 input,
+.min-h-screen.bg-slate-950 textarea,
+.min-h-screen.bg-slate-950 select {
   background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
   color: #0f172a !important;
@@ -65,29 +76,38 @@ html {
 }
 
 /* Tipografia Suave */
-.admin-themed-root .text-white {
+.admin-themed-root .text-white,
+.min-h-screen.bg-slate-950 .text-white {
   color: #0f172a !important;
 }
-.admin-themed-root .text-slate-100 {
+.admin-themed-root .text-slate-100,
+.min-h-screen.bg-slate-950 .text-slate-100 {
   color: #1e293b !important;
 }
-.admin-themed-root .text-slate-300 {
+.admin-themed-root .text-slate-300,
+.min-h-screen.bg-slate-950 .text-slate-300 {
   color: #334155 !important;
 }
-.admin-themed-root .text-slate-400 {
+.admin-themed-root .text-slate-400,
+.min-h-screen.bg-slate-950 .text-slate-400 {
   color: #64748b !important;
 }
 
 /* Bordas suaves */
 .admin-themed-root .border-slate-800,
 .admin-themed-root .border-slate-800\/80,
-.admin-themed-root .border-slate-700 {
+.admin-themed-root .border-slate-700,
+.min-h-screen.bg-slate-950 .border-slate-800,
+.min-h-screen.bg-slate-950 .border-slate-800\/80,
+.min-h-screen.bg-slate-950 .border-slate-700 {
   border-color: #e2e8f0 !important;
 }
 
 /* Botões Secundários */
 .admin-themed-root .bg-slate-800,
-.admin-themed-root .bg-slate-800\/80 {
+.admin-themed-root .bg-slate-800\/80,
+.min-h-screen.bg-slate-950 .bg-slate-800,
+.min-h-screen.bg-slate-950 .bg-slate-800\/80 {
   background-color: #f1f5f9 !important;
   color: #334155 !important;
   border-color: #e2e8f0 !important;
@@ -97,7 +117,8 @@ html {
 }
 
 /* Switch inativo */
-.admin-themed-root button[role="switch"].bg-slate-800 {
+.admin-themed-root button[role="switch"].bg-slate-800,
+.min-h-screen.bg-slate-950 button[role="switch"].bg-slate-800 {
   background-color: #cbd5e1 !important;
 }
 

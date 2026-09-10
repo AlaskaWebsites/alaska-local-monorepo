@@ -1,5 +1,8 @@
 <!-- components/admin/tabs/AdminAgendaTab.vue -->
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { useTenant } from '~/composables/useTenant'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 import { Plus, Trash2 } from 'lucide-vue-next'
 
@@ -22,7 +25,10 @@ const emit = defineEmits<{
   (e: 'toggle-slot', date: string, time: string): void
 }>()
 
-const { themeClasses } = useTenantTheme()
+const route = useRoute()
+const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
+const { tenant } = useTenant(slug)
+const { themeClasses } = useTenantTheme(tenant)
 </script>
 
 <template>
@@ -172,7 +178,7 @@ const { themeClasses } = useTenantTheme()
                 <input
                   type="time"
                   :value="prof.lunchBreak?.end || '13:00'"
-                  @change="emit('change-prof-lunch', prof.id, { start: prof.lunchBreak?.start || '12:00', end: ($event.target as HTMLInputElement).value, enabled: true }, prof.name)"
+                  @change="emit('change-prof-lunch', prof.id, { start: prof.lunchBreak?.start || '12:00', end: ($event.target as HTMLInputElement).value }, prof.name)"
                   class="bg-slate-50 border border-slate-200 rounded-lg p-1.5 text-xs text-slate-900 outline-none focus:border-slate-400 font-mono w-20 text-center"
                 />
               </div>

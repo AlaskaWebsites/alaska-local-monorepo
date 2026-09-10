@@ -1,6 +1,8 @@
 <!-- components/admin/AdminTabsNav.vue -->
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
+import { useTenant } from '~/composables/useTenant'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
@@ -16,7 +18,10 @@ const emit = defineEmits<{
   (e: 'update:activeTab', tab: AdminTabKey): void
 }>()
 
-const { themeClasses } = useTenantTheme()
+const route = useRoute()
+const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
+const { tenant } = useTenant(slug)
+const { themeClasses } = useTenantTheme(tenant)
 
 const navContainerRef = ref<HTMLElement | null>(null)
 const canScrollNavLeft = ref(false)
@@ -32,7 +37,8 @@ function checkNavScroll() {
 function scrollNav(direction: 'left' | 'right') {
   if (!navContainerRef.value) return
   const offset = direction === 'left' ? -220 : 220
-  navContainerRef.value.scrollBy({ left: offset, behavior: 'smooth' })\n  setTimeout(checkNavScroll, 300)
+  navContainerRef.value.scrollBy({ left: offset, behavior: 'smooth' })
+  setTimeout(checkNavScroll, 300)
 }
 
 function handleNavWheel(e: WheelEvent) {

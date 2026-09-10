@@ -1,5 +1,8 @@
 <!-- components/admin/tabs/AdminCatalogTab.vue -->
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { useTenant } from '~/composables/useTenant'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 import { Plus, Trash2 } from 'lucide-vue-next'
 import { formatCurrency } from '~/utils/formatters'
@@ -19,7 +22,10 @@ const emit = defineEmits<{
   (e: 'delete-product', productId: string, productName: string): void
 }>()
 
-const { themeClasses } = useTenantTheme()
+const route = useRoute()
+const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
+const { tenant } = useTenant(slug)
+const { themeClasses } = useTenantTheme(tenant)
 </script>
 
 <template>

@@ -1,6 +1,5 @@
 // composables/useTenantTheme.ts
 import { computed, isRef, watch, type Ref } from 'vue'
-import { useState } from '#app'
 import type { Tenant, TenantTheme } from '~/types/tenant'
 
 export interface ThemeColors {
@@ -174,43 +173,21 @@ export const THEME_PRESETS: Record<TenantTheme, ThemeColors> = {
 export function useTenantTheme(
   tenantOrTheme?: Tenant | Partial<Tenant> | TenantTheme | Ref<Tenant | Partial<Tenant> | TenantTheme | null | undefined> | null
 ) {
-  const globalTheme = useState<TenantTheme>('alaska-active-theme', () => 'food')
-
-  const resolvedTheme = computed<TenantTheme>(() => {
-    if (!tenantOrTheme) return globalTheme.value
+  const activeTheme = computed<TenantTheme>(() => {
+    if (!tenantOrTheme) return 'food'
     const val = isRef(tenantOrTheme) ? tenantOrTheme.value : tenantOrTheme
-    if (!val) return globalTheme.value
+    if (!val) return 'food'
 
     if (typeof val === 'string') {
-      return (val as TenantTheme) in THEME_PRESETS ? (val as TenantTheme) : globalTheme.value
+      return (val as TenantTheme) in THEME_PRESETS ? (val as TenantTheme) : 'food'
     }
 
     if (typeof val === 'object' && 'theme' in val && val.theme) {
-      return val.theme in THEME_PRESETS ? (val.theme as TenantTheme) : globalTheme.value
+      return val.theme in THEME_PRESETS ? val.theme : 'food'
     }
 
-    if (typeof val === 'object' && 'businessCategory' in val && (val as any).businessCategory) {
-      const cat = (val as any).businessCategory
-      if (cat === 'hub') return 'barber'
-      if (cat === 'pro') return 'health'
-      if (cat === 'shop') return 'rose'
-      return 'food'
-    }
-
-    return globalTheme.value
+    return 'food'
   })
-
-  watch(
-    resolvedTheme,
-    (newTheme) => {
-      if (newTheme && newTheme !== globalTheme.value) {
-        globalTheme.value = newTheme
-      }
-    },
-    { immediate: true }
-  )
-
-  const activeTheme = computed<TenantTheme>(() => globalTheme.value)
 
   const themeClasses = computed<ThemeColors>(() => {
     return THEME_PRESETS[activeTheme.value] || THEME_PRESETS.food
