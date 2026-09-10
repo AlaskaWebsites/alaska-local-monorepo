@@ -34,106 +34,132 @@
   },
   "professionals": [
     {
-      "id": "prof-dra-camila",
-      "name": "Dra. Camila Nogueira (CRO 123456)",
-      "role": "Especialista em Estética Dental e Clareamento",
-      "avatar": "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?w=150&h=150&fit=crop&q=80"
+      "id": "prof-1",
+      "name": "Dra. Camila Rocha",
+      "role": "Cirurgiã Dentista & Implantes",
+      "isAvailable": true,
+      "availableDays": [1, 2, 3, 4, 5],
+      "workHours": { "start": "08:00", "end": "17:00" },
+      "lunchBreak": { "start": "12:00", "end": "13:00", "enabled": true }
     },
     {
-      "id": "prof-dr-rodrigo",
-      "name": "Dr. Rodrigo Santos (CRO 654321)",
-      "role": "Implantodontia e Reabilitação Oral",
-      "avatar": "https://images.unsplash.com/photo-1622253692010-333f2da6031d?w=150&h=150&fit=crop&q=80"
+      "id": "prof-2",
+      "name": "Dr. Rafael Mendes",
+      "role": "Ortodontista & Invisalign",
+      "isAvailable": true,
+      "availableDays": [1, 2, 3, 4, 5, 6],
+      "workHours": { "start": "09:00", "end": "19:00" },
+      "lunchBreak": { "start": "13:00", "end": "14:00", "enabled": true }
+    },
+    {
+      "id": "prof-3",
+      "name": "Dra. Beatriz Lima",
+      "role": "Harmonização Orofacial & Estética",
+      "isAvailable": true,
+      "availableDays": [2, 3, 4, 5, 6],
+      "workHours": { "start": "10:00", "end": "19:00" },
+      "lunchBreak": { "start": "13:00", "end": "14:00", "enabled": false }
     }
   ],
   "categories": [
     {
-      "id": "cat-estetica-dental",
-      "name": "Estética & Clareamento",
-      "icon": "sparkles",
+      "id": "cat-consultas",
+      "name": "Consultas & Avaliação",
+      "icon": "Stethoscope",
       "products": [
         {
-          "id": "prod-clareamento-laser",
-          "name": "Clareamento Dental em Consultório (Sessão)",
-          "description": "Clareamento a laser de alta potência com gel protetor gengival e resultado visível na primeira sessão.",
-          "price": 450.0,
-          "durationMinutes": 60,
-          "image": "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=500&h=350&fit=crop&q=80",
-          "available": true,
-          "optionGroups": []
+          "id": "prod-avaliacao",
+          "name": "Avaliação Inicial & Planejamento 3D",
+          "description": "Consulta clínica completa com scanner intraoral 3D e plano de tratamento digital.",
+          "price": 120.0,
+          "durationMinutes": 45,
+          "image": "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=400&h=400&fit=crop&q=80",
+          "isAvailable": true
         },
         {
-          "id": "prod-limpeza-completa",
-          "name": "Profilaxia Completa & Remoção de Tártaro",
-          "description": "Limpeza profunda com ultrassom, jato de bicarbonato e aplicação tópica de flúor.",
+          "id": "prod-limpeza",
+          "name": "Profilaxia & Limpeza Dental Profunda",
+          "description": "Remoção de tártaro, jato de bicarbonato, polimento e aplicação tópica de flúor.",
           "price": 180.0,
           "durationMinutes": 45,
-          "image": "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=500&h=350&fit=crop&q=80",
-          "available": true,
-          "optionGroups": []
+          "image": "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=400&h=400&fit=crop&q=80",
+          "isAvailable": true
         }
       ]
     },
     {
-      "id": "cat-avaliacoes-clinicas",
-      "name": "Avaliações & Procedimentos",
-      "icon": "check-circle",
+      "id": "cat-estetica",
+      "name": "Estética & Clareamento",
+      "icon": "Sparkles",
       "products": [
         {
-          "id": "prod-avaliacao-estetica",
-          "name": "Avaliação Inicial & Planejamento 3D",
-          "description": "Consulta completa com diagnóstico digital, fotos intraorais e plano de tratamento personalizado.",
-          "price": 120.0,
+          "id": "prod-clareamento",
+          "name": "Clareamento Dental a Laser em Consultório",
+          "description": "Sessão clínica com gel fotoativado de alta potência para resultados imediatos.",
+          "price": 450.0,
+          "durationMinutes": 60,
+          "image": "https://images.unsplash.com/photo-1598256989800-fe5f95da9787?w=400&h=400&fit=crop&q=80",
+          "isAvailable": true
+        },
+        {
+          "id": "prod-harmonizacao",
+          "name": "Harmonização Orofacial / Aplicação de Toxina",
+          "description": "Procedimento estético facial preventivo e corretivo por região com anestesia local.",
+          "price": 850.0,
           "durationMinutes": 45,
-          "image": "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=500&h=350&fit=crop&q=80",
-          "available": true,
-          "optionGroups": []
+          "image": "https://images.unsplash.com/photo-1512290900672-1f41ec438c8f?w=400&h=400&fit=crop&q=80",
+          "isAvailable": true
+        }
+      ]
+    },
+    {
+      "id": "cat-ortodontia",
+      "name": "Ortodontia & Alinhadores",
+      "icon": "ShieldCheck",
+      "products": [
+        {
+          "id": "prod-aparelho",
+          "name": "Manutenção Mensal de Aparelho Ortodôntico",
+          "description": "Troca de arcos estéticos, elásticos coloridos e ativação do alinhamento dental.",
+          "price": 150.0,
+          "durationMinutes": 30,
+          "image": "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=400&h=400&fit=crop&q=80",
+          "isAvailable": true
         }
       ]
     }
   ],
   "reviews": {
-    "score": 4.8,
-    "totalReviews": 267,
+    "score": 4.9,
+    "totalReviews": 184,
     "serviceQuality": {
-      "level": 4,
-      "experienceLabel": "Atendimento humanizado",
-      "description": "Com base nos atendimentos dos últimos 3 meses, a clínica oferece odontologia moderna com profissionais qualificados.",
-      "badges": [
-        {
-          "icon": "star",
-          "label": "Profissionais atenciosos",
-          "status": "success"
-        },
-        {
-          "icon": "chat-alert",
-          "label": "Ambiente esterilizado",
-          "status": "success"
-        },
-        {
-          "icon": "check-doc",
-          "label": "Tratamentos indolores",
-          "status": "success"
-        }
-      ]
+      "level": 5,
+      "experienceLabel": "Atendimento Odontológico Humanizado",
+      "description": "Pontualidade britânica, consultórios esterilizados com biossegurança hospitalar e conforto."
     },
     "distribution": {
-      "5": 86,
-      "4": 10,
-      "3": 3,
-      "2": 1,
+      "5": 94,
+      "4": 5,
+      "3": 1,
+      "2": 0,
       "1": 0
     },
     "comments": [
       {
         "id": "rev-1",
-        "author": "Patrícia Mendes",
+        "author": "Juliana Silveira",
+        "date": "Há 3 dias",
         "rating": 5,
-        "date": "Há 2 dias",
-        "comment": "Limpeza completa super profissional! Raspagem ultrassônica delicada, sem dor nenhuma.",
-        "itemsOrdered": [
-          "1x Limpeza Completa"
-        ]
+        "comment": "Clareamento impecável! Não senti nenhuma sensibilidade e a Dra. Camila foi maravilhosa.",
+        "itemsOrdered": ["Clareamento Dental a Laser em Consultório"]
+      },
+      {
+        "id": "rev-2",
+        "author": "Felipe Antunes",
+        "date": "Há 1 semana",
+        "rating": 5,
+        "comment": "Estrutura moderna, equipamentos de última geração e equipe super atenciosa.",
+        "itemsOrdered": ["Avaliação Inicial & Planejamento 3D"]
       }
     ]
   }

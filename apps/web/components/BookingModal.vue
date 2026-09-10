@@ -229,20 +229,24 @@ const availableProfessionals = computed(() => {
 
   return allProfs.map(p => {
     const ov = overrides[p.id]
-    const isAvail = ov?.isAvailable !== undefined ? Boolean(ov.isAvailable) : Boolean(p.isAvailable)
-    const days = ov?.availableDays ? [...ov.availableDays] : [...(p.availableDays || [1, 2, 3, 4, 5])]
+    const isAvail = ov?.isAvailable !== undefined
+      ? Boolean(ov.isAvailable)
+      : (p.isAvailable !== undefined ? Boolean(p.isAvailable) : true)
+    const days = ov?.availableDays
+      ? [...ov.availableDays]
+      : (p.availableDays ? [...p.availableDays] : [1, 2, 3, 4, 5, 6])
     return {
       ...p,
       isAvailable: isAvail,
       availableDays: days,
       workHours: {
-        start: ov?.workHours?.start || p.workHours?.start || '08:00',
-        end: ov?.workHours?.end || p.workHours?.end || '18:00'
+        start: ov?.workHours?.start || p.workHours?.start || '09:00',
+        end: ov?.workHours?.end || p.workHours?.end || '19:00'
       },
       lunchBreak: {
         start: ov?.lunchBreak?.start || p.lunchBreak?.start || '12:00',
         end: ov?.lunchBreak?.end || p.lunchBreak?.end || '13:00',
-        enabled: ov?.lunchBreak?.enabled !== undefined ? Boolean(ov.lunchBreak.enabled) : Boolean(p.lunchBreak?.enabled)
+        enabled: ov?.lunchBreak?.enabled !== undefined ? Boolean(ov.lunchBreak.enabled) : (p.lunchBreak?.enabled !== undefined ? Boolean(p.lunchBreak.enabled) : true)
       }
     }
   })
