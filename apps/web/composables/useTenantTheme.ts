@@ -1,5 +1,5 @@
 // composables/useTenantTheme.ts
-import { computed, isRef, type Ref } from 'vue'
+import { computed, isRef, watch, type Ref } from 'vue'
 import type { Tenant, TenantTheme } from '~/types/tenant'
 
 export interface ThemeColors {
@@ -192,6 +192,18 @@ export function useTenantTheme(
   const themeClasses = computed<ThemeColors>(() => {
     return THEME_PRESETS[activeTheme.value] || THEME_PRESETS.food
   })
+
+  if (import.meta.client) {
+    watch(
+      activeTheme,
+      (t) => {
+        if (typeof document !== 'undefined' && document.documentElement) {
+          document.documentElement.setAttribute('data-theme', t)
+        }
+      },
+      { immediate: true }
+    )
+  }
 
   return {
     theme: activeTheme,

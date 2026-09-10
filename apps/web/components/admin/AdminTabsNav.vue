@@ -1,6 +1,9 @@
 <!-- components/admin/AdminTabsNav.vue -->
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
+import { useTenant } from '~/composables/useTenant'
+import { useTenantTheme } from '~/composables/useTenantTheme'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
 export type AdminTabKey = 'catalog' | 'agenda' | 'pix_contact' | 'hours' | 'delivery' | 'announcement' | 'security'
@@ -14,6 +17,11 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:activeTab', tab: AdminTabKey): void
 }>()
+
+const route = useRoute()
+const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
+const { tenant } = useTenant(slug)
+useTenantTheme(tenant)
 
 const navContainerRef = ref<HTMLElement | null>(null)
 const canScrollNavLeft = ref(false)

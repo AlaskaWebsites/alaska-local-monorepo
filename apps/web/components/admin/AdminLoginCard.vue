@@ -1,6 +1,8 @@
 <!-- components/admin/AdminLoginCard.vue -->
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useTenant } from '~/composables/useTenant'
+import { useTenantTheme } from '~/composables/useTenantTheme'
 
 const props = defineProps<{
   errorMessage?: string
@@ -10,6 +12,9 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'login', pin: string): void
 }>()
+
+const { tenant } = useTenant(props.slug)
+useTenantTheme(tenant)
 
 const pinInput = ref('')
 

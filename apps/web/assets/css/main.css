@@ -27,3 +27,214 @@
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+/* ==========================================================================
+   Alaska Local - Tema Dinâmico do Painel do Lojista (Dark Modern)
+   Sobrescreve os destaques (emerald) para o tema/categoria do negócio
+   ========================================================================== */
+.admin-themed-root,
+html[data-theme] {
+  --admin-accent-500: #10b981;
+  --admin-accent-400: #34d399;
+  --admin-accent-300: #6ee7b7;
+  --admin-accent-600: #059669;
+  --admin-accent-rgb: 16, 185, 129;
+  --admin-contrast: #020617;
+}
+
+/* Tema Amber (Adega Prime, Bebidas) */
+html[data-theme="amber"],
+[data-theme="amber"] {
+  --admin-accent-500: #f59e0b;
+  --admin-accent-400: #fbbf24;
+  --admin-accent-300: #fcd34d;
+  --admin-accent-600: #d97706;
+  --admin-accent-rgb: 245, 158, 11;
+  --admin-contrast: #020617;
+}
+
+/* Tema Barber (Barbearia Style, Dourado/Gold) */
+html[data-theme="barber"],
+[data-theme="barber"] {
+  --admin-accent-500: #f59e0b;
+  --admin-accent-400: #fbbf24;
+  --admin-accent-300: #fcd34d;
+  --admin-accent-600: #d97706;
+  --admin-accent-rgb: 245, 158, 11;
+  --admin-contrast: #020617;
+}
+
+/* Tema Food & Default (Hamburgueria, Pizzaria, Gastronomia) */
+html[data-theme="food"],
+html[data-theme="default"],
+[data-theme="food"],
+[data-theme="default"] {
+  --admin-accent-500: #ef4444;
+  --admin-accent-400: #f87171;
+  --admin-accent-300: #fca5a5;
+  --admin-accent-600: #dc2626;
+  --admin-accent-rgb: 239, 68, 68;
+  --admin-contrast: #ffffff;
+}
+
+/* Tema Health (Clínica Sorriso, Odontologia, Saúde) */
+html[data-theme="health"],
+[data-theme="health"] {
+  --admin-accent-500: #14b8a6;
+  --admin-accent-400: #2dd4bf;
+  --admin-accent-300: #5eead4;
+  --admin-accent-600: #0d9488;
+  --admin-accent-rgb: 20, 184, 166;
+  --admin-contrast: #020617;
+}
+
+/* Tema Rose (Studio Nail Design, Salão, Estética) */
+html[data-theme="rose"],
+[data-theme="rose"] {
+  --admin-accent-500: #f43f5e;
+  --admin-accent-400: #fb7185;
+  --admin-accent-300: #fda4af;
+  --admin-accent-600: #e11d48;
+  --admin-accent-rgb: 244, 63, 94;
+  --admin-contrast: #ffffff;
+}
+
+/* Tema Drinks (Bares, Baladas, Drinks Especiais) */
+html[data-theme="drinks"],
+[data-theme="drinks"] {
+  --admin-accent-500: #9333ea;
+  --admin-accent-400: #a855f7;
+  --admin-accent-300: #c084fc;
+  --admin-accent-600: #7e22ce;
+  --admin-accent-rgb: 147, 51, 234;
+  --admin-contrast: #ffffff;
+}
+
+/* Tema Violet (Moda, Semijoias, Boutiques) */
+html[data-theme="violet"],
+[data-theme="violet"] {
+  --admin-accent-500: #8b5cf6;
+  --admin-accent-400: #a78bfa;
+  --admin-accent-300: #c4b5fd;
+  --admin-accent-600: #7c3aed;
+  --admin-accent-rgb: 139, 92, 246;
+  --admin-contrast: #ffffff;
+}
+
+/* Tema Blue (Serviços Corporativos, Tecnologia) */
+html[data-theme="blue"],
+[data-theme="blue"] {
+  --admin-accent-500: #3b82f6;
+  --admin-accent-400: #60a5fa;
+  --admin-accent-300: #93c5fd;
+  --admin-accent-600: #2563eb;
+  --admin-accent-rgb: 59, 130, 246;
+  --admin-contrast: #ffffff;
+}
+
+/* Tema Slate (Minimalista) */
+html[data-theme="slate"],
+[data-theme="slate"] {
+  --admin-accent-500: #94a3b8;
+  --admin-accent-400: #cbd5e1;
+  --admin-accent-300: #e2e8f0;
+  --admin-accent-600: #64748b;
+  --admin-accent-rgb: 148, 163, 184;
+  --admin-contrast: #020617;
+}
+
+/* Mapeamento das classes do Tailwind nos elementos com data-theme */
+html[data-theme] .bg-emerald-500,
+[data-theme] .bg-emerald-500 {
+  background-color: var(--admin-accent-500) !important;
+  color: var(--admin-contrast) !important;
+}
+
+html[data-theme] .hover\:bg-emerald-400:hover,
+html[data-theme] button.bg-emerald-500:hover,
+[data-theme] .hover\:bg-emerald-400:hover,
+[data-theme] button.bg-emerald-500:hover {
+  background-color: var(--admin-accent-400) !important;
+}
+
+html[data-theme] .hover\:bg-emerald-600:hover,
+[data-theme] .hover\:bg-emerald-600:hover {
+  background-color: var(--admin-accent-600) !important;
+}
+
+html[data-theme] .text-emerald-400,
+[data-theme] .text-emerald-400 {
+  color: var(--admin-accent-400) !important;
+}
+
+html[data-theme] .text-emerald-500,
+[data-theme] .text-emerald-500 {
+  color: var(--admin-accent-500) !important;
+}
+
+html[data-theme] .text-emerald-300,
+html[data-theme] .hover\:text-emerald-300:hover,
+[data-theme] .text-emerald-300,
+[data-theme] .hover\:text-emerald-300:hover {
+  color: var(--admin-accent-300) !important;
+}
+
+html[data-theme] .border-emerald-400,
+html[data-theme] .border-emerald-500,
+[data-theme] .border-emerald-400,
+[data-theme] .border-emerald-500 {
+  border-color: var(--admin-accent-500) !important;
+}
+
+html[data-theme] .hover\:border-emerald-500:hover,
+[data-theme] .hover\:border-emerald-500:hover {
+  border-color: var(--admin-accent-400) !important;
+}
+
+html[data-theme] .bg-emerald-500\/10,
+[data-theme] .bg-emerald-500\/10 {
+  background-color: rgba(var(--admin-accent-rgb), 0.12) !important;
+}
+
+html[data-theme] .bg-emerald-500\/20,
+[data-theme] .bg-emerald-500\/20 {
+  background-color: rgba(var(--admin-accent-rgb), 0.22) !important;
+}
+
+html[data-theme] .border-emerald-500\/20,
+[data-theme] .border-emerald-500\/20 {
+  border-color: rgba(var(--admin-accent-rgb), 0.25) !important;
+}
+
+html[data-theme] .border-emerald-500\/30,
+[data-theme] .border-emerald-500\/30 {
+  border-color: rgba(var(--admin-accent-rgb), 0.35) !important;
+}
+
+html[data-theme] .border-emerald-500\/40,
+[data-theme] .border-emerald-500\/40 {
+  border-color: rgba(var(--admin-accent-rgb), 0.45) !important;
+}
+
+html[data-theme] .focus\:border-emerald-500:focus,
+[data-theme] .focus\:border-emerald-500:focus {
+  border-color: var(--admin-accent-500) !important;
+}
+
+html[data-theme] .focus\:ring-emerald-500:focus,
+[data-theme] .focus\:ring-emerald-500:focus {
+  --tw-ring-color: var(--admin-accent-500) !important;
+}
+
+html[data-theme] .shadow-emerald-500\/10,
+html[data-theme] .shadow-emerald-500\/20,
+[data-theme] .shadow-emerald-500\/10,
+[data-theme] .shadow-emerald-500\/20 {
+  --tw-shadow-color: rgba(var(--admin-accent-rgb), 0.25) !important;
+}
+
+html[data-theme] ::selection,
+[data-theme] ::selection {
+  background-color: var(--admin-accent-500) !important;
+  color: #020617 !important;
+}
