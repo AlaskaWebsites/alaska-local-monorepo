@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Param, Query, UsePipes, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, UsePipes, HttpCode, HttpStatus } from '@nestjs/common';
 import { GetTenantBySlugUseCase } from '../../../core/application/use-cases/get-tenant-by-slug.use-case';
 import { ResolveTenantByDomainUseCase } from '../../../core/application/use-cases/resolve-tenant-by-domain.use-case';
 import { UpdateTenantHoursUseCase } from '../../../core/application/use-cases/update-tenant-hours.use-case';
 import { AuthenticateMerchantUseCase } from '../../../core/application/use-cases/authenticate-merchant.use-case';
 import { ZodValidationPipe } from '../pipes/zod-validation.pipe';
-import { MerchantLoginSchema, type MerchantLoginInput } from '@alaska/contracts';
+import { MerchantLoginSchema, MerchantLoginInput } from '@alaska/contracts/tenant';
 
 @Controller('tenants')
 export class TenantController {
@@ -40,14 +40,15 @@ export class TenantController {
     });
   }
 
+  @Patch(':slug/hours')
   @Post(':slug/hours')
   async updateHours(
     @Param('slug') slug: string,
-    @Body() body: { hours: Record<string, { open: string; close: string; closed?: boolean }> },
+    @Body() body: { hours?: any; openingHours?: any },
   ) {
     return this.updateTenantHoursUseCase.execute({
       slug,
-      hours: body.hours,
+      hours: body.hours || body.openingHours,
     });
   }
 }
