@@ -25,87 +25,154 @@ html {
 }
 
 /* ==========================================================================
-   Alaska Local - Tema Claro Suave do Painel do Lojista (Light Eye-Friendly)
-   Padroniza o Admin com os mesmos tons de branco e descanso visual da vitrine
+   Alaska Local - Tema Claro Suave do Fundo do Admin (bg-slate-50)
+   Transforma o background escuro (bg-slate-950) na tonalidade suave de descanso
    ========================================================================== */
-.admin-themed-root {
+html[data-theme] .bg-slate-950,
+[data-theme] .bg-slate-950 {
   background-color: #f8fafc !important; /* bg-slate-50 */
   color: #0f172a !important; /* text-slate-900 */
 }
 
-/* Containers e Cards do Admin */
-.admin-themed-root .bg-slate-900,
-.admin-themed-root .bg-slate-900\/90,
-.admin-themed-root .bg-slate-900\/80,
-.admin-themed-root .bg-slate-900\/60 {
+html[data-theme] .bg-slate-950\/90,
+[data-theme] .bg-slate-950\/90 {
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html[data-theme] .bg-slate-900,
+html[data-theme] .bg-slate-900\/90,
+html[data-theme] .bg-slate-900\/80,
+[data-theme] .bg-slate-900,
+[data-theme] .bg-slate-900\/90,
+[data-theme] .bg-slate-900\/80 {
   background-color: #ffffff !important;
   border-color: #e2e8f0 !important;
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.04) !important;
 }
 
-.admin-themed-root .bg-slate-950,
-.admin-themed-root .bg-slate-950\/90,
-.admin-themed-root .bg-slate-950\/40 {
-  background-color: #f8fafc !important;
-  border-color: #e2e8f0 !important;
-}
-
-/* Inputs, Textareas e Selects do Admin */
-.admin-themed-root input,
-.admin-themed-root textarea,
-.admin-themed-root select {
-  background-color: #ffffff !important;
-  border-color: #e2e8f0 !important;
-  color: #0f172a !important;
-}
-
-.admin-themed-root input::placeholder,
-.admin-themed-root textarea::placeholder {
-  color: #94a3b8 !important;
-}
-
-/* Tipografia Suave */
-.admin-themed-root .text-white {
-  color: #0f172a !important;
-}
-.admin-themed-root .text-slate-100 {
-  color: #1e293b !important;
-}
-.admin-themed-root .text-slate-300 {
-  color: #334155 !important;
-}
-.admin-themed-root .text-slate-400 {
+html[data-theme] .text-slate-400,
+[data-theme] .text-slate-400 {
   color: #64748b !important;
 }
 
-/* Bordas suaves */
-.admin-themed-root .border-slate-800,
-.admin-themed-root .border-slate-800\/80,
-.admin-themed-root .border-slate-700 {
-  border-color: #e2e8f0 !important;
-}
-
-/* Botões Secundários */
-.admin-themed-root .bg-slate-800,
-.admin-themed-root .bg-slate-800\/80 {
+html[data-theme] .bg-slate-800,
+[data-theme] .bg-slate-800 {
   background-color: #f1f5f9 !important;
-  color: #334155 !important;
+  color: #475569 !important;
   border-color: #e2e8f0 !important;
 }
-.admin-themed-root .hover\:bg-slate-700:hover {
-  background-color: #e2e8f0 !important;
-}
 
-/* Switch inativo */
-.admin-themed-root button[role="switch"].bg-slate-800 {
-  background-color: #cbd5e1 !important;
-}
-
-/* Modais do Admin */
-.admin-themed-root .fixed .bg-slate-900 {
-  background-color: #ffffff !important;
+html[data-theme] .border-slate-800,
+[data-theme] .border-slate-800 {
   border-color: #e2e8f0 !important;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* ==========================================================================
+   Seleção Dinâmica de Texto (Mouse Drag Highlight) por Categoria / Loja
+   ========================================================================== */
+html[data-theme="amber"] *::selection,
+[data-theme="amber"] *::selection {
+  background-color: #f59e0b !important;
+  color: #020617 !important;
+}
+html[data-theme="amber"] *::-moz-selection,
+[data-theme="amber"] *::-moz-selection {
+  background-color: #f59e0b !important;
+  color: #020617 !important;
+}
+
+html[data-theme="barber"] *::selection,
+[data-theme="barber"] *::selection {
+  background-color: #f59e0b !important;
+  color: #020617 !important;
+}
+html[data-theme="barber"] *::-moz-selection,
+[data-theme="barber"] *::-moz-selection {
+  background-color: #f59e0b !important;
+  color: #020617 !important;
+}
+
+html[data-theme="rose"] *::selection,
+[data-theme="rose"] *::selection {
+  background-color: #f43f5e !important;
+  color: #ffffff !important;
+}
+html[data-theme="rose"] *::-moz-selection,
+[data-theme="rose"] *::-moz-selection {
+  background-color: #f43f5e !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="health"] *::selection,
+[data-theme="health"] *::selection {
+  background-color: #14b8a6 !important;
+  color: #020617 !important;
+}
+html[data-theme="health"] *::-moz-selection,
+[data-theme="health"] *::-moz-selection {
+  background-color: #14b8a6 !important;
+  color: #020617 !important;
+}
+
+html[data-theme="food"] *::selection,
+html[data-theme="default"] *::selection,
+[data-theme="food"] *::selection,
+[data-theme="default"] *::selection {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+}
+html[data-theme="food"] *::-moz-selection,
+html[data-theme="default"] *::-moz-selection,
+[data-theme="food"] *::-moz-selection,
+[data-theme="default"] *::-moz-selection {
+  background-color: #ef4444 !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="drinks"] *::selection,
+[data-theme="drinks"] *::selection {
+  background-color: #9333ea !important;
+  color: #ffffff !important;
+}
+html[data-theme="drinks"] *::-moz-selection,
+[data-theme="drinks"] *::-moz-selection {
+  background-color: #9333ea !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="violet"] *::selection,
+[data-theme="violet"] *::selection {
+  background-color: #8b5cf6 !important;
+  color: #ffffff !important;
+}
+html[data-theme="violet"] *::-moz-selection,
+[data-theme="violet"] *::-moz-selection {
+  background-color: #8b5cf6 !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="blue"] *::selection,
+[data-theme="blue"] *::selection {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+html[data-theme="blue"] *::-moz-selection,
+[data-theme="blue"] *::-moz-selection {
+  background-color: #3b82f6 !important;
+  color: #ffffff !important;
+}
+
+html[data-theme="slate"] *::selection,
+[data-theme="slate"] *::selection {
+  background-color: #94a3b8 !important;
+  color: #020617 !important;
+}
+html[data-theme="slate"] *::-moz-selection,
+[data-theme="slate"] *::-moz-selection {
+  background-color: #94a3b8 !important;
+  color: #020617 !important;
 }
 
 /* ==========================================================================
