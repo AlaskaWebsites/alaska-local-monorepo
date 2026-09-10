@@ -34,5 +34,6 @@ COPY --from=builder /app/node_modules ./node_modules
 
 EXPOSE 10000
 
-# Executa o build compilado do NestJS (com fallback de caminho raiz/src)
-CMD ["sh", "-c", "node apps/api/dist/main.js || node apps/api/dist/src/main.js"]
+# Executa o build compilado do NestJS localizando dinamicamente o entrypoint
+WORKDIR /app/apps/api
+CMD ["sh", "-c", "ENTRY=$(find dist -name 'main.js' 2>/dev/null | head -n 1); if [ -z \"$ENTRY\" ]; then ENTRY=$(find /app -name 'main.js' 2>/dev/null | grep -v node_modules | head -n 1); fi; echo \"==> Starting NestJS API from $ENTRY...\"; node \"$ENTRY\""]
