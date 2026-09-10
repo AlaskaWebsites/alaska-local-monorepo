@@ -1,9 +1,7 @@
 <!-- components/admin/tabs/AdminAnnouncementTab.vue -->
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { useTenant } from '~/composables/useTenant'
 import { useTenantTheme } from '~/composables/useTenantTheme'
+import { Megaphone, Check } from 'lucide-vue-next'
 
 const props = defineProps<{
   announcementEnabled: boolean
@@ -16,57 +14,57 @@ const emit = defineEmits<{
   (e: 'save-announcement'): void
 }>()
 
-const route = useRoute()
-const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
-const { tenant } = useTenant(slug)
-const { themeClasses } = useTenantTheme(tenant)
+const { themeClasses } = useTenantTheme()
 </script>
 
 <template>
   <main class="px-4 mt-4 space-y-6">
     <div class="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-4 shadow-2xs">
       <div class="flex items-center justify-between">
-        <div>
-          <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <span>📢 Comunicado no Topo da Vitrine</span>
-          </h2>
-          <p class="text-xs text-slate-500 mt-0.5">
-            Exiba um banner de aviso para os clientes na página inicial da loja.
-          </p>
-        </div>
+        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <Megaphone class="w-4 h-4 text-amber-500" />
+          <span>Comunicado Oficial no Topo da Loja</span>
+        </h2>
 
         <button
           type="button"
           role="switch"
           :aria-checked="announcementEnabled"
           @click="emit('update:announcementEnabled', !announcementEnabled)"
-          class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white"
-          :class="announcementEnabled ? [themeClasses.primaryBg, themeClasses.focusRing] : 'bg-slate-200'"
+          class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white"
+          :class="announcementEnabled ? [themeClasses.primaryBg, themeClasses.focusRing] : 'bg-slate-300'"
         >
           <span
             aria-hidden="true"
-            class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out"
+            class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out"
             :class="announcementEnabled ? 'translate-x-5' : 'translate-x-0'"
           />
         </button>
       </div>
 
-      <div class="space-y-3 pt-2">
-        <label class="block text-xs font-semibold text-slate-600">Mensagem do Comunicado:</label>
-        <textarea
-          :value="announcementMessage"
-          @input="emit('update:announcementMessage', ($event.target as HTMLTextAreaElement).value)"
-          rows="3"
-          placeholder="Ex: Entregas com tempo estendido devido à chuva. Agradecemos a compreensão!"
-          class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl p-3 text-xs text-slate-900 outline-none focus:border-slate-400"
-        />
+      <p class="text-xs text-slate-500">
+        Exibe uma faixa de aviso no topo da vitrine para promoções, feriados ou comunicados especiais.
+      </p>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Mensagem do Comunicado:</label>
+          <textarea
+            :value="announcementMessage"
+            @input="emit('update:announcementMessage', ($event.target as HTMLInputElement).value)"
+            rows="3"
+            placeholder="Ex: Estaremos atendendo excepcionalmente até as 23h hoje!"
+            class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 outline-none focus:border-slate-400 leading-relaxed"
+          ></textarea>
+        </div>
 
         <button
           @click="emit('save-announcement')"
-          class="w-full text-slate-950 font-bold py-3 rounded-xl text-xs transition-colors shadow-md active:scale-[0.99] cursor-pointer mt-2"
+          class="w-full text-slate-950 font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer active:scale-[0.99]"
           :class="themeClasses.primaryBg"
         >
-          Salvar Comunicado
+          <Check class="w-4 h-4" />
+          <span>Salvar Comunicado</span>
         </button>
       </div>
     </div>

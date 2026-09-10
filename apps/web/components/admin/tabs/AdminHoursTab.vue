@@ -1,120 +1,105 @@
 <!-- components/admin/tabs/AdminHoursTab.vue -->
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
-import { useTenant } from '~/composables/useTenant'
 import { useTenantTheme } from '~/composables/useTenantTheme'
+import { Clock, AlertTriangle, Check } from 'lucide-vue-next'
 
 const props = defineProps<{
   isEmergencyClosed: boolean
-  weeklyDaysConfig: Array<{ key: string; label: string; closed: boolean; open: string; close: string }>
+  weeklyDaysConfig: Record<number, { closed: boolean; open: string; close: string }>
   scheduleSuccessMsg?: string
 }>()
 
 const emit = defineEmits<{
   (e: 'toggle-emergency'): void
-  (e: 'toggle-day-closed', day: any): void
+  (e: 'toggle-day-closed', dayIndex: number): void
   (e: 'save-schedule'): void
 }>()
 
-const route = useRoute()
-const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
-const { tenant } = useTenant(slug)
-const { themeClasses } = useTenantTheme(tenant)
+const { themeClasses } = useTenantTheme()
+const weekDays = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado']
 </script>
 
 <template>
   <main class="px-4 mt-4 space-y-6">
-    <!-- 1. Pausa Emergencial Geral -->
-    <div class="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-3 shadow-2xs">
+    <!-- Pausa de Emergência -->
+    <div class="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-4 shadow-2xs">
       <div class="flex items-center justify-between">
-        <div>
+        <div class="space-y-0.5">
           <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-            <span>🚨 Fechamento de Emergência</span>
+            <AlertTriangle class="w-4 h-4 text-amber-500" />
+            <span>Pausa Imediata / Emergencial</span>
           </h2>
-          <p class="text-xs text-slate-500 mt-0.5">
-            Pausa o atendimento imediatamente na vitrine com um aviso aos clientes.
+          <p class="text-xs text-slate-500">
+            Pausa todos os pedidos e agendamentos instantaneamente na vitrine.
           </p>
         </div>
 
         <button
-          type="button"
-          role="switch"
-          :aria-checked="isEmergencyClosed"
           @click="emit('toggle-emergency')"
-          class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white"
-          :class="isEmergencyClosed ? 'bg-rose-500 focus:ring-rose-500' : 'bg-slate-200 focus:ring-slate-400'"
+          class="px-4 py-2.5 rounded-xl font-bold text-xs transition-all shadow-sm cursor-pointer active:scale-95"
+          :class="isEmergencyClosed ? 'bg-emerald-600 hover:bg-emerald-700 text-white' : 'bg-rose-600 hover:bg-rose-700 text-white'"
         >
-          <span
-            aria-hidden="true"
-            class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out"
-            :class="isEmergencyClosed ? 'translate-x-5' : 'translate-x-0'"
-          />
+          {{ isEmergencyClosed ? 'Reabrir Loja Agora' : 'Pausar Atendimento' }}
         </button>
       </div>
     </div>
 
-    <!-- 2. Horários Semanais -->
+    <!-- Escala Semanal de Funcionamento -->
     <div class="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-4 shadow-2xs">
-      <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
-        <span>🕒 Grade de Horários por Dia da Semana</span>
-      </h2>
-      <p class="text-xs text-slate-500">
-        Defina o horário de abertura e fechamento de cada dia.
-      </p>
+      <div class="flex items-center justify-between">
+        <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+          <Clock class="w-4 h-4 text-slate-600" />
+          <span>Horário de Funcionamento Semanal</span>
+        </h2>
+      </div>
 
-      <div class="space-y-2.5 pt-1">
+      <div class="space-y-2 pt-1">
         <div
-          v-for="day in weeklyDaysConfig"
-          :key="day.key"
-          class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3"
+          v-for="(dayName, dIdx) in weekDays"
+          :key="dIdx"
+          class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3 text-xs"
         >
-          <div class="flex items-center gap-3">
+          <span class="font-bold text-slate-800 w-28">{{ dayName }}</span>
+
+          <div class="flex items-center gap-2">
             <button
               type="button"
-              role="switch"
-              :aria-checked="!day.closed"
-              @click="emit('toggle-day-closed', day)"
-              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
-              :class="!day.closed ? [themeClasses.primaryBg, themeClasses.focusRing] : 'bg-slate-300'"
+              @click="emit('toggle-day-closed', dIdx)"
+              class="px-2.5 py-1 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer"
+              :class="weeklyDaysConfig[dIdx]?.closed ? 'bg-rose-50 text-rose-700 border-rose-200' : 'bg-white text-slate-700 border-slate-200'"
             >
-              <span
-                aria-hidden="true"
-                class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out"
-                :class="!day.closed ? 'translate-x-5' : 'translate-x-0'"
-              />
+              {{ weeklyDaysConfig[dIdx]?.closed ? 'Fechado' : 'Aberto' }}
             </button>
-            <span class="text-xs font-bold text-slate-900">{{ day.label }}</span>
+
+            <div v-if="!weeklyDaysConfig[dIdx]?.closed" class="flex items-center gap-1.5 font-mono">
+              <input
+                type="time"
+                v-model="weeklyDaysConfig[dIdx].open"
+                class="bg-white border border-slate-200 rounded-lg p-1.5 text-xs text-slate-900 outline-none w-20 text-center"
+              />
+              <span class="text-slate-400">às</span>
+              <input
+                type="time"
+                v-model="weeklyDaysConfig[dIdx].close"
+                class="bg-white border border-slate-200 rounded-lg p-1.5 text-xs text-slate-900 outline-none w-20 text-center"
+              />
+            </div>
           </div>
-
-          <div v-if="!day.closed" class="flex items-center gap-2">
-            <input
-              v-model="day.open"
-              type="time"
-              class="bg-white border border-slate-200 rounded-lg p-1.5 text-xs text-slate-900 outline-none focus:border-slate-400 font-mono text-center"
-            />
-            <span class="text-xs text-slate-500">às</span>
-            <input
-              v-model="day.close"
-              type="time"
-              class="bg-white border border-slate-200 rounded-lg p-1.5 text-xs text-slate-900 outline-none focus:border-slate-400 font-mono text-center"
-            />
-          </div>
-          <span v-else class="text-xs text-rose-600 font-bold">Fechado</span>
         </div>
-
-        <div v-if="scheduleSuccessMsg" class="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl text-center font-bold">
-          {{ scheduleSuccessMsg }}
-        </div>
-
-        <button
-          @click="emit('save-schedule')"
-          class="w-full text-slate-950 font-bold py-3 rounded-xl text-xs transition-colors shadow-md active:scale-[0.99] cursor-pointer mt-2"
-          :class="themeClasses.primaryBg"
-        >
-          Salvar Grade de Horários
-        </button>
       </div>
+
+      <div v-if="scheduleSuccessMsg" class="p-3 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold text-center animate-in fade-in">
+        {{ scheduleSuccessMsg }}
+      </div>
+
+      <button
+        @click="emit('save-schedule')"
+        class="w-full text-slate-950 font-bold py-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-all shadow-md cursor-pointer active:scale-[0.99]"
+        :class="themeClasses.primaryBg"
+      >
+        <Check class="w-4 h-4" />
+        <span>Salvar Horários da Semana</span>
+      </button>
     </div>
   </main>
 </template>
