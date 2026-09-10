@@ -314,7 +314,7 @@
                   >
                     <div class="flex items-center justify-between">
                       <span class="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
-                        <QrCode class="w-4 h-4 text-emerald-600" /> Pix Copia e Cola (D+0)
+                        <QrCode class="w-4 h-4 text-emerald-600" /> Pix Copia e Cola & QR Code
                       </span>
                       <span class="text-[10px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">
                         Sem Taxas
@@ -324,6 +324,15 @@
                     <p class="text-[11px] text-slate-600 leading-relaxed">
                       Pague diretamente na chave <strong>{{ tenantPixConfig.key }}</strong> ({{ tenantPixConfig.keyType }}).
                     </p>
+
+                    <!-- QR Code Imagem -->
+                    <div v-if="qrCodeDataUrl" class="flex justify-center py-2">
+                      <img
+                        :src="qrCodeDataUrl"
+                        alt="QR Code Pix"
+                        class="w-36 h-36 rounded-xl border border-emerald-200 shadow-xs bg-white p-1"
+                      />
+                    </div>
 
                     <div class="flex items-center gap-2">
                       <input
@@ -365,19 +374,26 @@
             </div>
           </div>
 
-          <!-- 3. Rodapé Fixo com Resumo de Valores e Botão de Envio WhatsApp -->
-          <div v-if="items.length > 0" class="p-4 sm:p-5 border-t border-slate-200 bg-slate-50 space-y-3 shrink-0">
-            <!-- Linhas de Resumo Financeiro -->
-            <div class="space-y-1.5 text-xs text-slate-600">
-              <div class="flex justify-between items-center">
+          <!-- 3. Footer Fixo com Totais e Botão de Envio (Opaque Background) -->
+          <div
+            v-if="items.length > 0"
+            class="p-4 sm:p-5 border-t border-slate-200 bg-white/95 backdrop-blur-md shrink-0 space-y-3 shadow-lg"
+          >
+            <!-- Detalhamento de Valores -->
+            <div class="space-y-1.5 text-xs">
+              <div class="flex justify-between text-slate-600">
                 <span>Subtotal dos itens</span>
-                <span class="font-mono font-semibold text-slate-900">{{ formatCurrency(subtotal) }}</span>
+                <span class="font-mono font-medium">{{ formatCurrency(itemsSubtotal) }}</span>
               </div>
-              <div v-if="form.deliveryType === 'delivery'" class="flex justify-between items-center">
+
+              <div v-if="form.deliveryType === 'delivery'" class="flex justify-between text-slate-600">
                 <span>Taxa de entrega</span>
-                <span class="font-mono font-semibold text-slate-900">{{ formatCurrency(deliveryFee) }}</span>
+                <span class="font-mono font-medium">
+                  {{ deliveryFee === 0 ? 'Grátis' : formatCurrency(deliveryFee) }}
+                </span>
               </div>
-              <div class="flex justify-between items-center text-sm font-extrabold text-slate-900 pt-1 border-t border-slate-200">
+
+              <div class="flex justify-between text-sm font-extrabold text-slate-900 pt-2 border-t border-slate-100">
                 <span>Total</span>
                 <span class="font-mono text-base" :class="themeClasses.primaryText">
                   {{ formatCurrency(finalTotal) }}
@@ -385,12 +401,13 @@
               </div>
             </div>
 
-            <!-- Botão de Despacho para o WhatsApp -->
+            <!-- Botão de Finalizar Pedido -->
             <button
               type="button"
-              @click="handleSubmitOrder"
               :disabled="!isFormValid"
-              class="w-full bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-extrabold py-3.5 px-4 rounded-2xl text-xs flex items-center justify-center gap-2 shadow-lg shadow-emerald-600/20 active:scale-[0.99] transition-all cursor-pointer"
+              @click="handleSubmitOrder"
+              class="w-full py-3.5 px-4 rounded-2xl text-xs font-bold text-white flex items-center justify-center gap-2 shadow-lg transition-all active:scale-[0.99] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              :class="themeClasses.buttonPrimary"
             >
               <Send class="w-4 h-4" aria-hidden="true" />
               <span>Enviar Pedido para o WhatsApp</span>
@@ -410,7 +427,7 @@ import { useTenantTheme } from '~/composables/useTenantTheme'
 import { useCep } from '~/composables/useCep'
 import { formatCurrency, formatCep, sanitizeDigits } from '~/utils/formatters'
 import { generateWhatsAppOrderUrl } from '~/utils/whatsapp'
-import { generatePixPayload, getTenantPixConfig } from '~/utils/pix'
+import { generatePixPayload, getTenantPixConfig, generatePixQrCodeDataUrl } from '~/utils/pix'
 import {
   X,
   Trash2,
@@ -464,14 +481,14 @@ const form = useLocalStorage<CheckoutFormData>('alaska_checkout_profile', {
     cep: '',
     street: '',
     number: '',
-    neighborhood: '',
     complement: '',
-    reference: '',
-    city: 'São Paulo',
-    state: 'SP'
+    neighborhood: '',
+    city: '',
+    state: '',
+    reference: ''
   },
   paymentMethod: 'Pix',
-  changeFor: null,
+  changeFor: undefined,
   notes: ''
 })
 
@@ -503,38 +520,42 @@ watch(cepInput, (newCep) => {
   }
 })
 
-// 5. Cálculos Financeiros
-const subtotal = computed(() => {
-  return items.value.reduce((acc, item) => {
-    return acc + getItemPrice(item) * (item.quantity || 1)
-  }, 0)
-})
-
-const deliveryFee = computed(() => {
-  if (form.value.deliveryType === 'pickup') return 0
-  return Number(props.tenant.deliveryFee || 0)
-})
-
-const finalTotal = computed(() => subtotal.value + deliveryFee.value)
-
+// 5. Cálculos Financeiros da Sacola
 const totalItemsCount = computed(() => {
   return items.value.reduce((acc, item) => acc + (item.quantity || 1), 0)
 })
 
 function getItemPrice(item: CartItem): number {
-  let price = Number(item.unitPrice || item.product?.price || 0)
-  return price
+  const base = item.product?.price || 0
+  const opts = getCartItemOptions(item).reduce((sum, opt) => sum + (opt.price || 0), 0)
+  return (base + opts) * (item.quantity || 1)
 }
 
-function getCartItemOptions(item: CartItem): any[] {
-  return (item as any).options || (item as any).selectedOptions || []
+function getCartItemOptions(item: any): Array<{ id: string; name: string; price: number }> {
+  return Array.isArray(item.selectedOptions)
+    ? item.selectedOptions
+    : Array.isArray(item.options)
+    ? item.options
+    : []
 }
 
-function getCartItemNotes(item: CartItem): string {
-  return (item as any).observation || (item as any).notes || ''
+function getCartItemNotes(item: any): string {
+  return item.observations || item.notes || item.observation || ''
 }
 
-// 6. Formas de Pagamento e Pix
+const itemsSubtotal = computed(() => {
+  return items.value.reduce((total, item) => total + getItemPrice(item), 0)
+})
+
+const deliveryFee = computed(() => {
+  return form.value.deliveryType === 'delivery' ? (props.tenant.deliveryFee ?? 6.0) : 0
+})
+
+const finalTotal = computed(() => {
+  return itemsSubtotal.value + deliveryFee.value
+})
+
+// 6. Formas de Pagamento & Configuração Pix
 const paymentMethods = computed(() => {
   return props.tenant.paymentMethods || ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro']
 })
@@ -544,6 +565,7 @@ const tenantPixConfig = computed(() => {
 })
 
 const isPixCopied = ref(false)
+const qrCodeDataUrl = ref('')
 
 const pixPayload = computed(() => {
   if (!tenantPixConfig.value) return ''
@@ -555,6 +577,24 @@ const pixPayload = computed(() => {
     txid: `PED${Date.now().toString().slice(-6)}`
   })
 })
+
+// Gera dinamicamente o QR Code para o Pix do pedido
+watch(
+  [pixPayload, () => form.value.paymentMethod],
+  async ([payload, method]) => {
+    if (payload && method === 'Pix') {
+      try {
+        qrCodeDataUrl.value = await generatePixQrCodeDataUrl(payload)
+      } catch (err) {
+        console.error('Erro ao gerar QR Code Pix:', err)
+        qrCodeDataUrl.value = ''
+      }
+    } else {
+      qrCodeDataUrl.value = ''
+    }
+  },
+  { immediate: true }
+)
 
 function copyPixCode() {
   if (!pixPayload.value) return
@@ -587,21 +627,20 @@ function handleClearCart() {
 function handleSubmitOrder() {
   if (!isFormValid.value) return
 
-  const cartState = {
+  const url = generateWhatsAppOrderUrl({
+    tenant: props.tenant,
     items: items.value,
-    deliveryType: form.value.deliveryType,
+    form: form.value,
+    subtotal: itemsSubtotal.value,
     deliveryFee: deliveryFee.value,
-    customerName: form.value.customerName,
-    customerPhone: form.value.customerPhone,
-    address: form.value.address,
-    paymentMethod: form.value.paymentMethod as any,
-    changeFor: form.value.changeFor,
-    subtotal: subtotal.value,
-    total: finalTotal.value
+    total: finalTotal.value,
+    pixPayload: form.value.paymentMethod === 'Pix' ? pixPayload.value : undefined
+  })
+
+  if (typeof window !== 'undefined') {
+    window.open(url, '_blank')
   }
 
-  const url = generateWhatsAppOrderUrl(props.tenant, cartState)
-  window.open(url, '_blank')
   emit('close')
 }
 </script>
