@@ -19,7 +19,8 @@ import {
   QrCode,
   Copy,
   AlertCircle,
-  Sparkles
+  Sparkles,
+  Send
 } from 'lucide-vue-next'
 import type { BookingService, BookingProfessional, Tenant } from '~/types'
 
@@ -337,8 +338,7 @@ function autoSelectFirstAvailableDate() {
         if (isClient) {
           const el = document.getElementById(`date-btn-${firstAvailable.date}`)
           if (el && daysContainerRef.value) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
-          }
+            el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })\n          }
         }
       })
     }
