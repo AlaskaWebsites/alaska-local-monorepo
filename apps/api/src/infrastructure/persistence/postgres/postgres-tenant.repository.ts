@@ -1,7 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { ITenantRepository } from '../../../core/application/ports/tenant.repository.port';
 import { Tenant } from '../../../core/domain/entities/tenant.entity';
-import { PostgresService } from '../postgres.service';
+import { PostgresService } from './postgres.service';
 import { TenantMapper, TenantRow } from './mappers/tenant.mapper';
 import { SEED_TENANTS } from '../in-memory/seed-data';
 
@@ -64,7 +64,7 @@ export class PostgresTenantRepository implements ITenantRepository {
   }
 
   async save(tenant: Tenant): Promise<void> {
-    const row = TenantMapper.toPersistence(tenant);
+    const row: TenantRow = TenantMapper.toPersistence(tenant);
     await this.db.query(
       `INSERT INTO tenants (
         id, slug, name, description, logo, banner, phone_whatsapp, address,
@@ -113,10 +113,6 @@ export class PostgresTenantRepository implements ITenantRepository {
         row.updated_at,
       ],
     );
-  }
-
-  async update(tenant: Tenant): Promise<void> {
-    await this.save(tenant);
   }
 
   async listAllActive(): Promise<Tenant[]> {
