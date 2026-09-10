@@ -63,6 +63,7 @@ export interface TenantProps {
   deliveryFeeCents?: number;
   minOrderValueCents?: number;
   categories?: unknown[];
+  professionals?: unknown[];
   reviews?: unknown;
   isActive?: boolean;
   isClosedEmergency?: boolean;
@@ -86,6 +87,7 @@ export class Tenant {
       deliveryFeeCents: props.deliveryFeeCents ?? 0,
       minOrderValueCents: props.minOrderValueCents ?? 0,
       categories: props.categories || [],
+      professionals: props.professionals || [],
       isActive: props.isActive ?? true,
       isClosedEmergency: props.isClosedEmergency ?? false,
       createdAt: props.createdAt || new Date(),
@@ -124,6 +126,7 @@ export class Tenant {
   get deliveryFeeCents(): number { return this.props.deliveryFeeCents ?? 0; }
   get minOrderValueCents(): number { return this.props.minOrderValueCents ?? 0; }
   get categories(): unknown[] { return this.props.categories || []; }
+  get professionals(): unknown[] { return this.props.professionals || []; }
   get reviews(): unknown | undefined { return this.props.reviews; }
   get isActive(): boolean { return this.props.isActive ?? true; }
   get isClosedEmergency(): boolean { return this.props.isClosedEmergency ?? false; }
@@ -217,6 +220,7 @@ export class Tenant {
       logo: this.props.logo,
       banner: this.props.banner,
       categories: this.props.categories || [],
+      professionals: this.props.professionals || [],
       reviews: this.props.reviews,
       isActive: this.props.isActive ?? true,
       isClosedEmergency: this.props.isClosedEmergency ?? false,
