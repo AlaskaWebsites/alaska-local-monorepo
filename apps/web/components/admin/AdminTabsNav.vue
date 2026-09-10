@@ -75,7 +75,7 @@ onUnmounted(() => {
       v-if="canScrollNavLeft"
       type="button"
       @click="scrollNav('left')"
-      class="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-slate-900/95 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 transition-all shadow-lg cursor-pointer backdrop-blur-xs active:scale-95"
+      class="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-white/95 border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all shadow-md cursor-pointer backdrop-blur-xs active:scale-95"
       aria-label="Rolar abas para a esquerda"
     >
       <ChevronLeft class="w-4 h-4" />
@@ -84,7 +84,7 @@ onUnmounted(() => {
     <!-- Fade Gradient Esquerdo -->
     <div
       v-if="canScrollNavLeft"
-      class="hidden sm:block pointer-events-none absolute left-4 top-4 bottom-2 w-8 bg-gradient-to-r from-slate-950 to-transparent z-10"
+      class="hidden sm:block pointer-events-none absolute left-4 top-4 bottom-2 w-8 bg-gradient-to-r from-slate-50 to-transparent z-10"
     ></div>
 
     <!-- Container de Abas -->
@@ -98,7 +98,7 @@ onUnmounted(() => {
       <button
         @click="selectTab('catalog')"
         class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
-        :class="activeTab === 'catalog' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md'] : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
+        :class="activeTab === 'catalog' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md font-bold'] : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300 shadow-2xs'"
       >
         <span>{{ isServiceStore ? '📋 Serviços & Itens' : '📋 Cardápio & Preços' }}</span>
       </button>
@@ -107,7 +107,7 @@ onUnmounted(() => {
         v-if="isServiceStore"
         @click="selectTab('agenda')"
         class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
-        :class="activeTab === 'agenda' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md'] : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
+        :class="activeTab === 'agenda' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md font-bold'] : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300 shadow-2xs'"
       >
         <span>{{ isHealthStore ? '🩺 Especialistas & Agenda' : '💈 Barbeiros & Agenda' }}</span>
       </button>
@@ -115,7 +115,7 @@ onUnmounted(() => {
       <button
         @click="selectTab('pix_contact')"
         class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
-        :class="activeTab === 'pix_contact' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md'] : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
+        :class="activeTab === 'pix_contact' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md font-bold'] : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300 shadow-2xs'"
       >
         <span>💠 Pix & Contato</span>
       </button>
@@ -123,7 +123,7 @@ onUnmounted(() => {
       <button
         @click="selectTab('hours')"
         class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
-        :class="activeTab === 'hours' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md'] : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
+        :class="activeTab === 'hours' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md font-bold'] : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300 shadow-2xs'"
       >
         <span>🕒 Horários & Pausa</span>
       </button>
@@ -132,7 +132,7 @@ onUnmounted(() => {
         v-if="!isServiceStore"
         @click="selectTab('delivery')"
         class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
-        :class="activeTab === 'delivery' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md'] : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
+        :class="activeTab === 'delivery' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md font-bold'] : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300 shadow-2xs'"
       >
         <span>🛵 Delivery & Taxas</span>
       </button>
@@ -140,7 +140,7 @@ onUnmounted(() => {
       <button
         @click="selectTab('announcement')"
         class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
-        :class="activeTab === 'announcement' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md'] : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
+        :class="activeTab === 'announcement' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md font-bold'] : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300 shadow-2xs'"
       >
         <span>📢 Comunicado</span>
       </button>
@@ -148,7 +148,7 @@ onUnmounted(() => {
       <button
         @click="selectTab('security')"
         class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
-        :class="activeTab === 'security' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md'] : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
+        :class="activeTab === 'security' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md font-bold'] : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300 shadow-2xs'"
       >
         <span>🔒 PIN & Segurança</span>
       </button>
@@ -157,7 +157,7 @@ onUnmounted(() => {
     <!-- Fade Gradient Direito -->
     <div
       v-if="canScrollNavRight"
-      class="hidden sm:block pointer-events-none absolute right-4 top-4 bottom-2 w-8 bg-gradient-to-l from-slate-950 to-transparent z-10"
+      class="hidden sm:block pointer-events-none absolute right-4 top-4 bottom-2 w-8 bg-gradient-to-l from-slate-50 to-transparent z-10"
     ></div>
 
     <!-- Botão Scroll Direita -->
@@ -165,7 +165,7 @@ onUnmounted(() => {
       v-if="canScrollNavRight"
       type="button"
       @click="scrollNav('right')"
-      class="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-slate-900/95 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-800 transition-all shadow-lg cursor-pointer backdrop-blur-xs active:scale-95"
+      class="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-white/95 border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all shadow-md cursor-pointer backdrop-blur-xs active:scale-95"
       aria-label="Rolar abas para a direita"
     >
       <ChevronRight class="w-4 h-4" />
