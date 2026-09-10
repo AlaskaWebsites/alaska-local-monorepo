@@ -19,9 +19,17 @@ CREATE TABLE IF NOT EXISTS tenants (
     delivery_fee_cents INT DEFAULT 0,
     min_order_value_cents INT DEFAULT 0,
     is_active BOOLEAN DEFAULT true,
+    professionals JSONB DEFAULT '[]'::jsonb,
+    reviews JSONB,
+    pin_hash VARCHAR(255),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
+
+-- Garantir colunas adicionais
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS professionals JSONB DEFAULT '[]'::jsonb;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS reviews JSONB;
+ALTER TABLE tenants ADD COLUMN IF NOT EXISTS pin_hash VARCHAR(255);
 
 -- 2. Tabela de Categorias
 CREATE TABLE IF NOT EXISTS categories (
