@@ -1,62 +1,85 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ITenantRepository } from '../../../core/application/ports/tenant.repository.port';
 import { Tenant } from '../../../core/domain/entities/tenant.entity';
 import { PostgresService } from './postgres.service';
-import { TenantMapper, TenantRow } from './mappers/tenant.mapper';
+import { TenantMapper } from './mappers/tenant.mapper';
 import { SEED_TENANTS } from '../in-memory/seed-data';
 
 @Injectable()
 export class PostgresTenantRepository implements ITenantRepository {
+  private readonly logger = new Logger(PostgresTenantRepository.name);
+
   constructor(private readonly db: PostgresService) {}
 
   async findById(id: string): Promise<Tenant | null> {
-    const result = await this.db.query(
-      'SELECT * FROM tenants WHERE id = $1',
-      [id],
-    );
-    if (result.rows.length === 0) return null;
-    const categories = await this.fetchCategoriesAndProducts(result.rows[0].id);
-    return TenantMapper.toDomain(result.rows[0], categories);
+    try {
+      const result = await this.db.query(
+        'SELECT * FROM tenants WHERE id = $1',
+        [id],
+      );
+      if (result.rows.length === 0) return null;
+      const categories = await this.fetchCategoriesAndProducts(result.rows[0].id);
+      return TenantMapper.toDomain(result.rows[0], categories);
+    } catch (err) {
+      this.logger.warn(`Erro ao buscar tenant por ID ${id}: ${(err as Error).message}`);
+      return SEED_TENANTS.find((t) => t.id === id) || null;
+    }
   }
 
   async findBySlug(slug: string): Promise<Tenant | null> {
     const cleanSlug = (slug || '').trim().toLowerCase();
-    const result = await this.db.query(
-      'SELECT * FROM tenants WHERE LOWER(slug) = $1',
-      [cleanSlug],
-    );
-    if (result.rows.length === 0) {
-      const seed = SEED_TENANTS.find((t) => t.slug.toLowerCase() === cleanSlug);
-      if (seed) {
-        try {
-          await this.save(seed);
-        } catch {}
-        return seed;
+    try {
+      const result = await this.db.query(
+        'SELECT * FROM tenants WHERE LOWER(slug) = $1',
+        [cleanSlug],
+      );
+      if (result.rows.length === 0) {
+        const seed = SEED_TENANTS.find((t) => t.slug.toLowerCase() === cleanSlug);
+        if (seed) {
+          try {
+            await this.save(seed);
+          } catch (saveErr) {
+            this.logger.warn(`Seed do tenant ${cleanSlug} retornado sem persistência: ${(saveErr as Error).message}`);
+          }
+          return seed;
+        }
+        return null;
       }
+      const categories = await this.fetchCategoriesAndProducts(result.rows[0].id);
+      return TenantMapper.toDomain(result.rows[0], categories);
+    } catch (err) {
+      this.logger.warn(`Erro em findBySlug(${slug}): ${(err as Error).message}`);
+      const seed = SEED_TENANTS.find((t) => t.slug.toLowerCase() === cleanSlug);
+      if (seed) return seed;
       return null;
     }
-    const categories = await this.fetchCategoriesAndProducts(result.rows[0].id);
-    return TenantMapper.toDomain(result.rows[0], categories);
   }
 
   async findByCustomDomain(domain: string): Promise<Tenant | null> {
-    const clean = domain.toLowerCase().replace(/^www\./, '').split(':')[0];
-    const result = await this.db.query(
-      'SELECT * FROM tenants WHERE custom_domain = $1',
-      [clean],
-    );
-    if (result.rows.length === 0) {
-      const seed = SEED_TENANTS.find((t) => t.customDomain && t.customDomain.toLowerCase() === clean);
-      if (seed) {
-        try {
-          await this.save(seed);
-        } catch {}
-        return seed;
+    const clean = (domain || '').trim().toLowerCase().replace(/^www\./, '').split(':')[0];
+    try {
+      const result = await this.db.query(
+        'SELECT * FROM tenants WHERE custom_domain = $1',
+        [clean],
+      );
+      if (result.rows.length === 0) {
+        const seed = SEED_TENANTS.find((t) => t.customDomain && t.customDomain.toLowerCase() === clean);
+        if (seed) {
+          try {
+            await this.save(seed);
+          } catch {}
+          return seed;
+        }
+        return null;
       }
+      const categories = await this.fetchCategoriesAndProducts(result.rows[0].id);
+      return TenantMapper.toDomain(result.rows[0], categories);
+    } catch (err) {
+      this.logger.warn(`Erro em findByCustomDomain(${domain}): ${(err as Error).message}`);
+      const seed = SEED_TENANTS.find((t) => t.customDomain && t.customDomain.toLowerCase() === clean);
+      if (seed) return seed;
       return null;
     }
-    const categories = await this.fetchCategoriesAndProducts(result.rows[0].id);
-    return TenantMapper.toDomain(result.rows[0], categories);
   }
 
   async findByDomain(domain: string): Promise<Tenant | null> {
@@ -64,7 +87,7 @@ export class PostgresTenantRepository implements ITenantRepository {
   }
 
   async save(tenant: Tenant): Promise<void> {
-    const row = TenantMapper.toPersistence(tenant) as unknown as TenantRow;
+    const row = TenantMapper.toPersistence(tenant);
     await this.db.query(
       `INSERT INTO tenants (
         id, slug, name, description, logo, banner, phone_whatsapp, address,
@@ -81,9 +104,9 @@ export class PostgresTenantRepository implements ITenantRepository {
         address = EXCLUDED.address,
         business_category = EXCLUDED.business_category,
         theme = EXCLUDED.theme,
+        custom_domain = EXCLUDED.custom_domain,
         opening_hours = EXCLUDED.opening_hours,
         pix_config = EXCLUDED.pix_config,
-        custom_domain = EXCLUDED.custom_domain,
         delivery_fee_cents = EXCLUDED.delivery_fee_cents,
         min_order_value_cents = EXCLUDED.min_order_value_cents,
         is_active = EXCLUDED.is_active,
@@ -120,18 +143,23 @@ export class PostgresTenantRepository implements ITenantRepository {
   }
 
   async listAllActive(): Promise<Tenant[]> {
-    const result = await this.db.query(
-      'SELECT * FROM tenants WHERE is_active = true ORDER BY name ASC',
-    );
-    if (result.rows.length === 0) {
+    try {
+      const result = await this.db.query(
+        'SELECT * FROM tenants WHERE is_active = true ORDER BY name ASC',
+      );
+      if (result.rows.length === 0) {
+        return SEED_TENANTS.filter((t) => t.isActive);
+      }
+      const tenants: Tenant[] = [];
+      for (const row of result.rows) {
+        const categories = await this.fetchCategoriesAndProducts(row.id);
+        tenants.push(TenantMapper.toDomain(row, categories));
+      }
+      return tenants;
+    } catch (err) {
+      this.logger.warn(`Erro em listAllActive: ${(err as Error).message}`);
       return SEED_TENANTS.filter((t) => t.isActive);
     }
-    const tenants: Tenant[] = [];
-    for (const row of result.rows) {
-      const categories = await this.fetchCategoriesAndProducts(row.id);
-      tenants.push(TenantMapper.toDomain(row, categories));
-    }
-    return tenants;
   }
 
   private async fetchCategoriesAndProducts(tenantId: string): Promise<unknown[]> {
@@ -167,7 +195,7 @@ export class PostgresTenantRepository implements ITenantRepository {
           })),
       }));
     } catch (err) {
-      console.error('Erro ao buscar categorias e produtos:', err);
+      this.logger.error('Erro ao buscar categorias e produtos:', err);
       return [];
     }
   }
