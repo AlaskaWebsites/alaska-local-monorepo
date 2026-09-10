@@ -30,3 +30,96 @@
   -ms-overflow-style: none !important;
   scrollbar-width: none !important;
 }
+
+/* ==========================================================================
+   Alaska Local - Design Tokens Globais (Descanso Visual & Temas por Categoria)
+   ========================================================================== */
+:root {
+  /* Tonalidades de Branco & Neutros Suaves (Eye-Friendly) */
+  --bg-app: #f8fafc;          /* Slate 50: Fundo suave de tela que previne cansaço visual */
+  --surface-card: #ffffff;    /* Branco puro para cards, modais e superfícies elevadas */
+  --surface-subtle: #f1f5f9;  /* Slate 100: Sub-cards, linhas e estados inativos */
+  --border-subtle: #e2e8f0;   /* Slate 200: Bordas refinadas sem cortes secos */
+  --text-primary: #0f172a;    /* Slate 900: Contraste acessível para títulos e valores */
+  --text-secondary: #475569;  /* Slate 600: Descrições e textos informativos */
+  --text-muted: #94a3b8;      /* Slate 400: Placeholders, ícones secundários e legendas */
+
+  /* Acento Padrão (Emerald) */
+  --accent-primary: #10b981;
+  --accent-hover: #059669;
+  --accent-subtle: #ecfdf5;
+  --accent-border: #a7f3d0;
+  --accent-contrast: #020617;
+}
+
+/* Adega & Bebidas (Amber) */
+[data-theme="amber"], html[data-theme="amber"] {
+  --accent-primary: #f59e0b;
+  --accent-hover: #d97706;
+  --accent-subtle: #fef3c7;
+  --accent-border: #fde68a;
+  --accent-contrast: #020617;
+}
+
+/* Barbearia & Estética Masculina (Barber - Dourado/Gold) */
+[data-theme="barber"], html[data-theme="barber"] {
+  --accent-primary: #f59e0b;
+  --accent-hover: #d97706;
+  --accent-subtle: #fef3c7;
+  --accent-border: #fde68a;
+  --accent-contrast: #020617;
+}
+
+/* Nail Design & Beleza (Rose) */
+[data-theme="rose"], html[data-theme="rose"] {
+  --accent-primary: #f43f5e;
+  --accent-hover: #e11d48;
+  --accent-subtle: #ffe4e6;
+  --accent-border: #fecdd3;
+  --accent-contrast: #ffffff;
+}
+
+/* Clínicas & Saúde (Health - Teal) */
+[data-theme="health"], html[data-theme="health"] {
+  --accent-primary: #14b8a6;
+  --accent-hover: #0d9488;
+  --accent-subtle: #ccfbf1;
+  --accent-border: #99f6e4;
+  --accent-contrast: #020617;
+}
+
+/* Hamburgueria, Pizzaria & Gastronomia (Food) */
+[data-theme="food"], [data-theme="default"], html[data-theme="food"], html[data-theme="default"] {
+  --accent-primary: #ef4444;
+  --accent-hover: #dc2626;
+  --accent-subtle: #fee2e2;
+  --accent-border: #fecaca;
+  --accent-contrast: #ffffff;
+}
+
+/* Bares & Baladas (Drinks - Roxo/Púrpura) */
+[data-theme="drinks"], html[data-theme="drinks"] {
+  --accent-primary: #9333ea;
+  --accent-hover: #7e22ce;
+  --accent-subtle: #f3e8ff;
+  --accent-border: #e9d5ff;
+  --accent-contrast: #ffffff;
+}
+
+/* Boutiques & Moda (Violet) */
+[data-theme="violet"], html[data-theme="violet"] {
+  --accent-primary: #8b5cf6;
+  --accent-hover: #7c3aed;
+  --accent-subtle: #ede9fe;
+  --accent-border: #ddd6fe;
+  --accent-contrast: #ffffff;
+}
+
+/* Serviços Gerais & Tecnologia (Blue) */
+[data-theme="blue"], html[data-theme="blue"] {
+  --accent-primary: #3b82f6;
+  --accent-hover: #2563eb;
+  --accent-subtle: #eff6ff;
+  --accent-border: #bfdbfe;
+  --accent-contrast: #ffffff;
+}
