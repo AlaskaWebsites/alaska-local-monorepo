@@ -20,12 +20,19 @@ export class PostgresService implements IDatabaseService, OnModuleInit, OnModule
     const connectionString = env.DATABASE_URL || 'postgres://alaska:alaskapassword@localhost:5432/alaska_local'
 
     this.logger.log('Inicializando Pool de conexões PostgreSQL...')
+    const requiresSsl =
+      connectionString.includes('supabase.co') ||
+      connectionString.includes('render.com') ||
+      connectionString.includes('dpg-') ||
+      connectionString.includes('oregon-postgres') ||
+      connectionString.includes('sslmode=require')
+
     this.pool = new Pool({
       connectionString,
       max: 20,
       idleTimeoutMillis: 30000,
       connectionTimeoutMillis: 5000,
-      ssl: connectionString.includes('supabase.co') ? { rejectUnauthorized: false } : undefined
+      ssl: requiresSsl ? { rejectUnauthorized: false } : undefined
     })
 
     this.pool.on('error', (err) => {

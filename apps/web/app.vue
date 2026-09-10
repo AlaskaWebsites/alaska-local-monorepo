@@ -28,14 +28,6 @@ html {
    Alaska Local - Tema Claro Suave do Painel do Lojista (Light Eye-Friendly)
    Padroniza o Admin com os mesmos tons de branco e descanso visual da vitrine
    ========================================================================== */
-/* Override do fundo escuro geral do Admin para o Claro Suave */
-.min-h-screen.bg-slate-950,
-#__nuxt > .min-h-screen.bg-slate-950,
-div.min-h-screen.bg-slate-950 {
-  background-color: #f8fafc !important; /* bg-slate-50 */
-  color: #0f172a !important; /* text-slate-900 */
-}
-
 .admin-themed-root {
   background-color: #f8fafc !important; /* bg-slate-50 */
   color: #0f172a !important; /* text-slate-900 */
