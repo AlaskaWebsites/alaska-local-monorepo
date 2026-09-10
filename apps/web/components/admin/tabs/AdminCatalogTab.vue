@@ -1,5 +1,9 @@
 <!-- components/admin/tabs/AdminCatalogTab.vue -->
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { useTenant } from '~/composables/useTenant'
+import { useTenantTheme } from '~/composables/useTenantTheme'
 import { Plus, Trash2 } from 'lucide-vue-next'
 import { formatCurrency } from '~/utils/formatters'
 import type { Category, Product } from '~/types'
@@ -17,22 +21,28 @@ const emit = defineEmits<{
   (e: 'manage-options', product: Product): void
   (e: 'delete-product', productId: string, productName: string): void
 }>()
+
+const route = useRoute()
+const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
+const { tenant } = useTenant(slug)
+const { themeClasses } = useTenantTheme(tenant)
 </script>
 
 <template>
   <main class="px-4 mt-4 space-y-6">
-    <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-xl p-3.5 flex items-center justify-between gap-3">
+    <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3.5 flex items-center justify-between gap-3 shadow-xs">
       <div class="flex items-start gap-3">
         <span class="text-lg">⚡</span>
         <div class="text-xs">
-          <p class="font-bold text-emerald-400">Pausa Rápida & Preços em Tempo Real</p>
+          <p class="font-bold" :class="themeClasses.primaryText">Pausa Rápida & Preços em Tempo Real</p>
           <p class="text-slate-300 mt-0.5">Ligue ou desligue procedimentos/produtos e edite preços sem precisar fazer deploy.</p>
         </div>
       </div>
 
       <button
         @click="emit('create-product')"
-        class="px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs flex items-center gap-1.5 shrink-0 transition-all cursor-pointer shadow-md"
+        class="px-3 py-2 rounded-xl text-slate-950 font-bold text-xs flex items-center gap-1.5 shrink-0 transition-all cursor-pointer shadow-md active:scale-95"
+        :class="themeClasses.primaryBg"
       >
         <Plus class="w-4 h-4" />
         <span>Novo Item</span>
@@ -59,7 +69,7 @@ const emit = defineEmits<{
               <h3 class="text-sm font-semibold text-white truncate">{{ product.name }}</h3>
               <span
                 class="text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider"
-                :class="isProductAvailable(product) ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'"
+                :class="isProductAvailable(product) ? [themeClasses.badgeBg, themeClasses.badgeText, 'border', themeClasses.badgeBorder] : 'bg-rose-500/10 text-rose-400 border border-rose-500/20'"
               >
                 {{ isProductAvailable(product) ? 'Ativo' : 'Esgotado' }}
               </span>
@@ -70,7 +80,8 @@ const emit = defineEmits<{
               </p>
               <button
                 @click="emit('edit-price', category.products, product)"
-                class="text-[11px] text-emerald-400 hover:text-emerald-300 underline font-medium cursor-pointer"
+                class="text-[11px] underline font-medium cursor-pointer transition-colors"
+                :class="themeClasses.primaryText"
               >
                 Alterar Preço
               </button>
@@ -98,8 +109,8 @@ const emit = defineEmits<{
             :aria-checked="isProductAvailable(product)"
             :aria-label="`Alternar disponibilidade de ${product.name}`"
             @click="emit('toggle-product', category.products, product.id, isProductAvailable(product))"
-            class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-slate-950"
-            :class="isProductAvailable(product) ? 'bg-emerald-500' : 'bg-slate-800'"
+            class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-950"
+            :class="isProductAvailable(product) ? [themeClasses.primaryBg, themeClasses.focusRing] : 'bg-slate-800'"
           >
             <span
               aria-hidden="true"

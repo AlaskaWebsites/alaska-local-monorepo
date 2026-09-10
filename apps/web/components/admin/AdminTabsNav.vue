@@ -21,7 +21,7 @@ const emit = defineEmits<{
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
 const { tenant } = useTenant(slug)
-useTenantTheme(tenant)
+const { themeClasses } = useTenantTheme(tenant)
 
 const navContainerRef = ref<HTMLElement | null>(null)
 const canScrollNavLeft = ref(false)
@@ -98,7 +98,7 @@ onUnmounted(() => {
       <button
         @click="selectTab('catalog')"
         class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
-        :class="activeTab === 'catalog' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
+        :class="activeTab === 'catalog' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md'] : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
       >
         <span>{{ isServiceStore ? '📋 Serviços & Itens' : '📋 Cardápio & Preços' }}</span>
       </button>
@@ -107,7 +107,7 @@ onUnmounted(() => {
         v-if="isServiceStore"
         @click="selectTab('agenda')"
         class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
-        :class="activeTab === 'agenda' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
+        :class="activeTab === 'agenda' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md'] : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
       >
         <span>{{ isHealthStore ? '🩺 Especialistas & Agenda' : '💈 Barbeiros & Agenda' }}</span>
       </button>
@@ -115,7 +115,7 @@ onUnmounted(() => {
       <button
         @click="selectTab('pix_contact')"
         class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
-        :class="activeTab === 'pix_contact' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
+        :class="activeTab === 'pix_contact' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md'] : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
       >
         <span>💠 Pix & Contato</span>
       </button>
@@ -123,7 +123,7 @@ onUnmounted(() => {
       <button
         @click="selectTab('hours')"
         class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
-        :class="activeTab === 'hours' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
+        :class="activeTab === 'hours' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md'] : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
       >
         <span>🕒 Horários & Pausa</span>
       </button>
@@ -132,7 +132,7 @@ onUnmounted(() => {
         v-if="!isServiceStore"
         @click="selectTab('delivery')"
         class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
-        :class="activeTab === 'delivery' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
+        :class="activeTab === 'delivery' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md'] : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
       >
         <span>🛵 Delivery & Taxas</span>
       </button>
@@ -140,7 +140,7 @@ onUnmounted(() => {
       <button
         @click="selectTab('announcement')"
         class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
-        :class="activeTab === 'announcement' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
+        :class="activeTab === 'announcement' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md'] : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
       >
         <span>📢 Comunicado</span>
       </button>
@@ -148,7 +148,7 @@ onUnmounted(() => {
       <button
         @click="selectTab('security')"
         class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
-        :class="activeTab === 'security' ? 'bg-emerald-500 text-slate-950 shadow-md' : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
+        :class="activeTab === 'security' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md'] : 'bg-slate-900 text-slate-400 border border-slate-800 hover:text-white hover:border-slate-700'"
       >
         <span>🔒 PIN & Segurança</span>
       </button>
