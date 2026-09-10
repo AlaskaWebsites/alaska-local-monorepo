@@ -1,5 +1,10 @@
 <!-- components/admin/tabs/AdminPixContactTab.vue -->
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { useTenant } from '~/composables/useTenant'
+import { useTenantTheme } from '~/composables/useTenantTheme'
+
 const props = defineProps<{
   pixConfigInput: {
     keyType: 'cpf' | 'cnpj' | 'phone' | 'email' | 'random'
@@ -17,108 +22,116 @@ const emit = defineEmits<{
   (e: 'save-pix'): void
   (e: 'save-contact'): void
 }>()
+
+const route = useRoute()
+const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
+const { tenant } = useTenant(slug)
+const { themeClasses } = useTenantTheme(tenant)
 </script>
 
 <template>
   <main class="px-4 mt-4 space-y-6">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <h2 class="text-sm font-bold text-white flex items-center gap-2">
+    <div class="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-4 shadow-2xs">
+      <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
         <span>💠 Configurações Pix Copia e Cola (D+0)</span>
       </h2>
-      <p class="text-xs text-slate-400">
+      <p class="text-xs text-slate-500">
         Receba pagamentos diretamente na sua conta bancária sem intermediários e com taxa zero.
       </p>
 
-      <div class="space-y-3 pt-1">
+      <div class="space-y-3 pt-2">
         <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Tipo de Chave Pix:</label>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Tipo de Chave Pix:</label>
           <select
             v-model="pixConfigInput.keyType"
-            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500"
+            class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-slate-400"
           >
             <option value="random">Chave Aleatória (EVP)</option>
             <option value="cpf">CPF</option>
             <option value="cnpj">CNPJ</option>
-            <option value="phone">Celular / Telefone</option>
+            <option value="phone">Telefone Celular</option>
             <option value="email">E-mail</option>
           </select>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Chave Pix:</label>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Chave Pix:</label>
           <input
-            type="text"
             v-model="pixConfigInput.pixKey"
-            placeholder="Cole sua chave Pix aqui..."
-            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500 font-mono"
+            type="text"
+            placeholder="Ex: 7e3ed5e6-6097-4b15-88a3-221caba64141"
+            class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-slate-400 font-mono"
           />
         </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Nome do Beneficiário (Titular da Conta):</label>
-          <input
-            type="text"
-            v-model="pixConfigInput.beneficiary"
-            placeholder="Ex: Danilo Santos LTDA"
-            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500"
-          />
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Nome do Titular da Conta:</label>
+            <input
+              v-model="pixConfigInput.beneficiary"
+              type="text"
+              placeholder="Ex: Nome da Loja ou Razão Social"
+              class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-slate-400"
+            />
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-600 mb-1">Cidade da Conta (Sem acento):</label>
+            <input
+              v-model="pixConfigInput.city"
+              type="text"
+              placeholder="Ex: SAO PAULO"
+              class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-slate-400"
+            />
+          </div>
         </div>
 
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Cidade do Titular:</label>
-          <input
-            type="text"
-            v-model="pixConfigInput.city"
-            placeholder="Ex: SAO PAULO"
-            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500 uppercase"
-          />
-        </div>
+        <button
+          @click="emit('save-pix')"
+          class="w-full text-slate-950 font-bold py-3 rounded-xl text-xs transition-colors shadow-md active:scale-[0.99] cursor-pointer mt-2"
+          :class="themeClasses.primaryBg"
+        >
+          Salvar Dados Pix
+        </button>
       </div>
-
-      <button
-        @click="emit('save-pix')"
-        class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3.5 rounded-xl text-xs transition-all cursor-pointer shadow-lg shadow-emerald-500/10 mt-2"
-      >
-        Salvar Dados Pix
-      </button>
     </div>
 
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <h2 class="text-sm font-bold text-white flex items-center gap-2">
+    <div class="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-4 shadow-2xs">
+      <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
         <span>📱 Canais de Contato & Redes Sociais</span>
       </h2>
-      <p class="text-xs text-slate-400">
+      <p class="text-xs text-slate-500">
         Atualize seu número oficial de WhatsApp para receber os pedidos dos clientes.
       </p>
 
-      <div class="space-y-3 pt-1">
+      <div class="space-y-3 pt-2">
         <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">WhatsApp da Loja (com DDD):</label>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">WhatsApp da Loja (com DDD):</label>
           <input
-            type="text"
             v-model="contactInput.whatsapp"
-            placeholder="Ex: 11988887777"
-            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500 font-mono"
+            type="text"
+            placeholder="Ex: 11999998888"
+            class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-slate-400 font-mono"
           />
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Instagram (opcional):</label>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Instagram (opcional):</label>
           <input
-            type="text"
             v-model="contactInput.instagram"
-            placeholder="Ex: @minhaloja"
-            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-xs text-white outline-none focus:border-emerald-500"
+            type="text"
+            placeholder="Ex: @sualoja"
+            class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-slate-400"
           />
         </div>
-      </div>
 
-      <button
-        @click="emit('save-contact')"
-        class="w-full bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-3.5 rounded-xl text-xs transition-all cursor-pointer shadow-lg shadow-emerald-500/10 mt-2"
-      >
-        Salvar Contatos
-      </button>
+        <button
+          @click="emit('save-contact')"
+          class="w-full text-slate-950 font-bold py-3 rounded-xl text-xs transition-colors shadow-md active:scale-[0.99] cursor-pointer mt-2"
+          :class="themeClasses.primaryBg"
+        >
+          Salvar Contatos
+        </button>
+      </div>
     </div>
   </main>
 </template>

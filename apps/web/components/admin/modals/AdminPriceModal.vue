@@ -1,54 +1,69 @@
 <!-- components/admin/modals/AdminPriceModal.vue -->
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { useTenant } from '~/composables/useTenant'
+import { useTenantTheme } from '~/composables/useTenantTheme'
 import type { Product } from '~/types'
 
 const props = defineProps<{
   isOpen: boolean
-  product: Product | null
-  initialPrice: number
+  editingProduct: Product | null
+  priceInput: number
 }>()
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'confirm', newPrice: number): void
+  (e: 'update:priceInput', val: number): void
+  (e: 'confirm'): void
 }>()
 
-const priceInput = ref(props.initialPrice)
-
-watch(
-  () => props.initialPrice,
-  (val) => { priceInput.value = val }
-)
+const route = useRoute()
+const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
+const { tenant } = useTenant(slug)
+const { themeClasses } = useTenantTheme(tenant)
 </script>
 
 <template>
-  <div v-if="isOpen" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4" @click="emit('close')">
-    <div class="w-full max-w-sm bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl space-y-4" @click.stop>
-      <h3 class="text-sm font-bold text-white">Editar Preço do Item</h3>
-      <p class="text-xs text-slate-400">{{ product?.name }}</p>
+  <div
+    v-if="isOpen"
+    class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4"
+    @click="emit('close')"
+  >
+    <div
+      class="w-full max-w-sm bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl space-y-4 text-slate-900"
+      @click.stop
+    >
+      <div class="space-y-1">
+        <h3 class="text-base font-bold text-slate-900">Editar Preço</h3>
+        <p class="text-xs text-slate-500 truncate">{{ editingProduct?.name }}</p>
+      </div>
 
-      <div>
-        <label class="block text-xs font-semibold text-slate-400 mb-1">Novo Preço (R$):</label>
+      <div class="space-y-2">
+        <label class="block text-xs font-semibold text-slate-600 mb-1">Novo Preço (R$):</label>
         <input
+          :value="priceInput"
+          @input="emit('update:priceInput', Number(($event.target as HTMLInputElement).value))"
           type="number"
-          step="0.50"
-          v-model.number="priceInput"
-          class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono outline-none focus:border-emerald-500"
+          step="0.01"
+          class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2.5 text-sm text-slate-900 font-mono outline-none focus:border-slate-400"
           autofocus
         />
       </div>
 
-      <div class="flex gap-2 pt-2">
+      <div class="flex items-center gap-2 pt-2">
         <button
+          type="button"
           @click="emit('close')"
-          class="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
+          class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
         >
           Cancelar
         </button>
         <button
-          @click="emit('confirm', priceInput)"
-          class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
+          type="button"
+          @click="emit('confirm')"
+          class="flex-1 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer shadow-md active:scale-95"
+          :class="themeClasses.primaryBg"
         >
           Salvar Preço
         </button>

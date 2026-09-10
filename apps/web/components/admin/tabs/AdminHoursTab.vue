@@ -1,103 +1,120 @@
 <!-- components/admin/tabs/AdminHoursTab.vue -->
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { useTenant } from '~/composables/useTenant'
+import { useTenantTheme } from '~/composables/useTenantTheme'
 
 const props = defineProps<{
-  openingHours?: any
-  isEmergencyClosed?: boolean
+  isEmergencyClosed: boolean
+  weeklyDaysConfig: Array<{ key: string; label: string; closed: boolean; open: string; close: string }>
+  scheduleSuccessMsg?: string
 }>()
 
 const emit = defineEmits<{
-  (e: 'save-hours', openTime: string, closeTime: string): void
   (e: 'toggle-emergency'): void
+  (e: 'toggle-day-closed', day: any): void
+  (e: 'save-schedule'): void
 }>()
 
-function extractTime(val: any, fallback: string): string {
-  if (typeof val === 'string' && val.length >= 4) return val
-  if (val && typeof val === 'object') {
-    if (typeof val.open === 'string') return val.open
-    if (typeof val.close === 'string') return val.close
-    if (val.monday && typeof val.monday.open === 'string') return val.monday.open
-    if (val.monday && typeof val.monday.close === 'string') return val.monday.close
-  }
-  return fallback
-}
-
-const openTimeInput = ref(extractTime(props.openingHours?.open || props.openingHours?.monday?.open, '09:00'))
-const closeTimeInput = ref(extractTime(props.openingHours?.close || props.openingHours?.monday?.close, '20:00'))
-
-watch(
-  () => props.openingHours,
-  (hours) => {
-    if (hours) {
-      openTimeInput.value = extractTime(hours.open || hours.monday?.open, '09:00')
-      closeTimeInput.value = extractTime(hours.close || hours.monday?.close, '20:00')
-    }
-  },
-  { deep: true }
-)
-
-function handleSave() {
-  if (openTimeInput.value && closeTimeInput.value) {
-    emit('save-hours', openTimeInput.value, closeTimeInput.value)
-  }
-}
+const route = useRoute()
+const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
+const { tenant } = useTenant(slug)
+const { themeClasses } = useTenantTheme(tenant)
 </script>
 
 <template>
   <main class="px-4 mt-4 space-y-6">
-    <!-- Botão de Pausa Emergencial -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <h2 class="text-sm font-bold text-white flex items-center gap-2">
-        <span>🛑 Pausa Geral de Atendimento</span>
-      </h2>
-      <p class="text-xs text-slate-400">
-        Cozinha lotada, chuva forte ou folga inesperada? Pause todo o atendimento da loja com um clique.
-      </p>
+    <!-- 1. Pausa Emergencial Geral -->
+    <div class="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-3 shadow-2xs">
+      <div class="flex items-center justify-between">
+        <div>
+          <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <span>🚨 Fechamento de Emergência</span>
+          </h2>
+          <p class="text-xs text-slate-500 mt-0.5">
+            Pausa o atendimento imediatamente na vitrine com um aviso aos clientes.
+          </p>
+        </div>
 
-      <button
-        @click="emit('toggle-emergency')"
-        class="w-full py-3.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-lg active:scale-[0.98]"
-        :class="isEmergencyClosed ? 'bg-emerald-500 text-slate-950 hover:bg-emerald-400' : 'bg-rose-600 text-white hover:bg-rose-700'"
-      >
-        {{ isEmergencyClosed ? '🟢 Reabrir Atendimento Agora' : '🛑 Pausar Atendimento da Loja Agora' }}
-      </button>
+        <button
+          type="button"
+          role="switch"
+          :aria-checked="isEmergencyClosed"
+          @click="emit('toggle-emergency')"
+          class="relative inline-flex h-7 w-12 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-white"
+          :class="isEmergencyClosed ? 'bg-rose-500 focus:ring-rose-500' : 'bg-slate-200 focus:ring-slate-400'"
+        >
+          <span
+            aria-hidden="true"
+            class="pointer-events-none inline-block h-6 w-6 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out"
+            :class="isEmergencyClosed ? 'translate-x-5' : 'translate-x-0'"
+          />
+        </button>
+      </div>
     </div>
 
-    <!-- Ajuste de Horário de Funcionamento -->
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4">
-      <h2 class="text-sm font-bold text-white flex items-center gap-2">
-        <span>🕒 Horário de Atendimento Padrão</span>
+    <!-- 2. Horários Semanais -->
+    <div class="bg-white border border-slate-200/90 rounded-2xl p-5 space-y-4 shadow-2xs">
+      <h2 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+        <span>🕒 Grade de Horários por Dia da Semana</span>
       </h2>
-      <p class="text-xs text-slate-400">
-        Defina o horário de abertura e fechamento padrão para os dias normais de funcionamento.
+      <p class="text-xs text-slate-500">
+        Defina o horário de abertura e fechamento de cada dia.
       </p>
 
-      <div class="grid grid-cols-2 gap-4">
-        <div>
-          <label class="block text-xs text-slate-400 font-semibold mb-1">Abre às:</label>
-          <input
-            type="time"
-            v-model="openTimeInput"
-            class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-white font-mono outline-none focus:border-emerald-500"
-          />
-        </div>
-        <div>
-          <label class="block text-xs text-slate-400 font-semibold mb-1">Fecha às:</label>
-          <input
-            type="time"
-            v-model="closeTimeInput"
-            class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm text-white font-mono outline-none focus:border-emerald-500"
-          />
-        </div>
-      </div>
+      <div class="space-y-2.5 pt-1">
+        <div
+          v-for="day in weeklyDaysConfig"
+          :key="day.key"
+          class="p-3 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3"
+        >
+          <div class="flex items-center gap-3">
+            <button
+              type="button"
+              role="switch"
+              :aria-checked="!day.closed"
+              @click="emit('toggle-day-closed', day)"
+              class="relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+              :class="!day.closed ? [themeClasses.primaryBg, themeClasses.focusRing] : 'bg-slate-300'"
+            >
+              <span
+                aria-hidden="true"
+                class="pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out"
+                :class="!day.closed ? 'translate-x-5' : 'translate-x-0'"
+              />
+            </button>
+            <span class="text-xs font-bold text-slate-900">{{ day.label }}</span>
+          </div>
 
-      <button
-        @click="handleSave"
-        class="w-full bg-emerald-500 hover:bg-emerald-400 active:scale-[0.98] text-slate-950 font-bold py-3 rounded-xl text-xs transition-all cursor-pointer shadow-md"
-      >
-        Salvar Horários
-      </button>
+          <div v-if="!day.closed" class="flex items-center gap-2">
+            <input
+              v-model="day.open"
+              type="time"
+              class="bg-white border border-slate-200 rounded-lg p-1.5 text-xs text-slate-900 outline-none focus:border-slate-400 font-mono text-center"
+            />
+            <span class="text-xs text-slate-500">às</span>
+            <input
+              v-model="day.close"
+              type="time"
+              class="bg-white border border-slate-200 rounded-lg p-1.5 text-xs text-slate-900 outline-none focus:border-slate-400 font-mono text-center"
+            />
+          </div>
+          <span v-else class="text-xs text-rose-600 font-bold">Fechado</span>
+        </div>
+
+        <div v-if="scheduleSuccessMsg" class="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 p-2.5 rounded-xl text-center font-bold">
+          {{ scheduleSuccessMsg }}
+        </div>
+
+        <button
+          @click="emit('save-schedule')"
+          class="w-full text-slate-950 font-bold py-3 rounded-xl text-xs transition-colors shadow-md active:scale-[0.99] cursor-pointer mt-2"
+          :class="themeClasses.primaryBg"
+        >
+          Salvar Grade de Horários
+        </button>
+      </div>
     </div>
   </main>
 </template>

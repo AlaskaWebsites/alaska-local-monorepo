@@ -1,105 +1,120 @@
 <!-- components/admin/modals/AdminCreateProductModal.vue -->
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import { Plus } from 'lucide-vue-next'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
+import { useTenant } from '~/composables/useTenant'
+import { useTenantTheme } from '~/composables/useTenantTheme'
 import type { Category } from '~/types'
 
 const props = defineProps<{
   isOpen: boolean
   categories: Category[]
-  isServiceStore?: boolean
+  newProductInput: {
+    categoryId: string
+    name: string
+    description: string
+    price: number
+    image: string
+  }
 }>()
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'submit', form: { name: string; price: number; categoryId: string; description: string }): void
+  (e: 'confirm'): void
 }>()
 
-const form = ref({
-  name: '',
-  price: 0,
-  categoryId: '',
-  description: ''
-})
-
-watch(
-  () => props.isOpen,
-  (open) => {
-    if (open) {
-      form.value = {
-        name: '',
-        price: 0,
-        categoryId: props.categories[0]?.id || '',
-        description: ''
-      }
-    }
-  }
-)
+const route = useRoute()
+const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
+const { tenant } = useTenant(slug)
+const { themeClasses } = useTenantTheme(tenant)
 </script>
 
 <template>
-  <div v-if="isOpen" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4" @click="emit('close')">
-    <div class="w-full max-w-md bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto" @click.stop>
-      <h3 class="text-sm font-bold text-white flex items-center gap-2">
-        <Plus class="w-4 h-4 text-emerald-400" />
-        <span>Cadastrar Novo {{ isServiceStore ? 'Serviço' : 'Produto' }}</span>
-      </h3>
+  <div
+    v-if="isOpen"
+    class="fixed inset-0 z-50 bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4"
+    @click="emit('close')"
+  >
+    <div
+      class="w-full max-w-md bg-white border border-slate-200 rounded-3xl p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto text-slate-900"
+      @click.stop
+    >
+      <div class="space-y-1">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <span>➕ Novo Item no Catálogo</span>
+        </h3>
+        <p class="text-xs text-slate-500">Adicione um novo produto ou serviço ao catálogo da loja.</p>
+      </div>
 
       <div class="space-y-3">
         <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Nome:</label>
-          <input
-            type="text"
-            v-model="form.name"
-            placeholder="Ex: Combo Burger Duplo"
-            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-emerald-500"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Categoria:</label>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Categoria:</label>
           <select
-            v-model="form.categoryId"
-            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-emerald-500"
+            v-model="newProductInput.categoryId"
+            class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-slate-400"
           >
-            <option v-for="c in categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+            <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+              {{ cat.name }}
+            </option>
           </select>
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Preço (R$):</label>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Nome do Item:</label>
           <input
-            type="number"
-            step="0.50"
-            v-model.number="form.price"
-            placeholder="0.00"
-            class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-emerald-500 font-mono"
+            v-model="newProductInput.name"
+            type="text"
+            placeholder="Ex: Combo Especial Prime"
+            class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-slate-400"
           />
         </div>
 
         <div>
-          <label class="block text-xs font-semibold text-slate-400 mb-1">Descrição (opcional):</label>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Preço (R$):</label>
+          <input
+            v-model.number="newProductInput.price"
+            type="number"
+            step="0.01"
+            class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-slate-400 font-mono"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição / Detalhes:</label>
           <textarea
-            v-model="form.description"
+            v-model="newProductInput.description"
             rows="2"
-            placeholder="Detalhes dos ingredientes ou benefícios..."
-            class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white outline-none focus:border-emerald-500"
-          ></textarea>
+            placeholder="Ingredientes, o que inclui, detalhes do item..."
+            class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl p-2.5 text-xs text-slate-900 outline-none focus:border-slate-400"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold text-slate-600 mb-1">URL da Foto (Opcional):</label>
+          <input
+            v-model="newProductInput.image"
+            type="text"
+            placeholder="https://images.unsplash.com/..."
+            class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-slate-400"
+          />
         </div>
       </div>
 
-      <div class="flex gap-2 pt-2">
+      <div class="flex items-center gap-2 pt-2">
         <button
+          type="button"
           @click="emit('close')"
-          class="flex-1 bg-slate-800 hover:bg-slate-700 text-white font-semibold py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
+          class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
         >
           Cancelar
         </button>
         <button
-          @click="emit('submit', form)"
-          class="flex-1 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
+          type="button"
+          @click="emit('confirm')"
+          class="flex-1 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer shadow-md active:scale-95"
+          :class="themeClasses.primaryBg"
         >
-          Cadastrar
+          Criar Item
         </button>
       </div>
     </div>
