@@ -64,7 +64,7 @@ export class PostgresTenantRepository implements ITenantRepository {
   }
 
   async save(tenant: Tenant): Promise<void> {
-    const row: TenantRow = TenantMapper.toPersistence(tenant);
+    const row = TenantMapper.toPersistence(tenant) as unknown as TenantRow;
     await this.db.query(
       `INSERT INTO tenants (
         id, slug, name, description, logo, banner, phone_whatsapp, address,
@@ -113,6 +113,10 @@ export class PostgresTenantRepository implements ITenantRepository {
         row.updated_at,
       ],
     );
+  }
+
+  async update(tenant: Tenant): Promise<void> {
+    await this.save(tenant);
   }
 
   async listAllActive(): Promise<Tenant[]> {
