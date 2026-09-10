@@ -34,7 +34,7 @@ const { themeClasses } = useTenantTheme(tenant)
       <div class="flex items-start gap-3">
         <span class="text-lg">⚡</span>
         <div class="text-xs">
-          <p class="font-bold text-slate-900" :class="themeClasses.primaryText">Pausa Rápida & Preços em Tempo Real</p>
+          <p class="font-bold" :class="themeClasses.primaryText">Pausa Rápida & Preços em Tempo Real</p>
           <p class="text-slate-500 mt-0.5">Ligue ou desligue procedimentos/produtos e edite preços sem precisar fazer deploy.</p>
         </div>
       </div>
