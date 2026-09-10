@@ -1,27 +1,59 @@
 <!-- components/admin/modals/AdminCreateProfModal.vue -->
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTenant } from '~/composables/useTenant'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 
-const props = defineProps<{
-  isOpen: boolean
-  newProfInput: {
-    name: string
-    role: string
+const props = withDefaults(
+  defineProps<{
+    isOpen: boolean
+    newProfInput?: {
+      name: string
+      role: string
+    }
+  }>(),
+  {
+    newProfInput: () => ({
+      name: '',
+      role: ''
+    })
   }
-}>()
+)
 
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'confirm'): void
+  (e: 'submit', form: { name: string; role: string }): void
 }>()
 
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
 const { tenant } = useTenant(slug)
 const { themeClasses } = useTenantTheme(tenant)
+
+const localProf = ref({
+  name: '',
+  role: ''
+})
+
+const activeProf = computed(() => {
+  return props.newProfInput?.name ? props.newProfInput : localProf.value
+})
+
+watch(
+  () => props.isOpen,
+  (open) => {
+    if (open) {
+      localProf.value = { name: '', role: '' }
+    }
+  }
+)
+
+function handleConfirm() {
+  emit('confirm')
+  emit('submit', activeProf.value)
+}
 </script>
 
 <template>
@@ -45,7 +77,7 @@ const { themeClasses } = useTenantTheme(tenant)
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Nome Completo:</label>
           <input
-            v-model="newProfInput.name"
+            v-model="activeProf.name"
             type="text"
             placeholder="Ex: Mariana Silva"
             class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-slate-400"
@@ -55,7 +87,7 @@ const { themeClasses } = useTenantTheme(tenant)
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Especialidade / Cargo:</label>
           <input
-            v-model="newProfInput.role"
+            v-model="activeProf.role"
             type="text"
             placeholder="Ex: Barbeiro Master / Odontopediatra / Nail Artist"
             class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-slate-400"
@@ -73,7 +105,7 @@ const { themeClasses } = useTenantTheme(tenant)
         </button>
         <button
           type="button"
-          @click="emit('confirm')"
+          @click="handleConfirm"
           class="flex-1 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer shadow-md active:scale-95"
           :class="themeClasses.primaryBg"
         >

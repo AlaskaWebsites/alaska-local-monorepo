@@ -1,32 +1,79 @@
 <!-- components/admin/modals/AdminCreateProductModal.vue -->
 <script setup lang="ts">
-import { computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTenant } from '~/composables/useTenant'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 import type { Category } from '~/types'
 
-const props = defineProps<{
-  isOpen: boolean
-  categories: Category[]
-  newProductInput: {
-    categoryId: string
-    name: string
-    description: string
-    price: number
-    image: string
+const props = withDefaults(
+  defineProps<{
+    isOpen: boolean
+    categories?: Category[]
+    isServiceStore?: boolean
+    newProductInput?: {
+      categoryId: string
+      name: string
+      description: string
+      price: number
+      image?: string
+    }
+  }>(),
+  {
+    categories: () => [],
+    isServiceStore: false,
+    newProductInput: () => ({
+      categoryId: '',
+      name: '',
+      description: '',
+      price: 0,
+      image: ''
+    })
   }
-}>()
+)
 
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'confirm'): void
+  (e: 'submit', form: { name: string; price: number; categoryId: string; description: string; image?: string }): void
 }>()
 
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
 const { tenant } = useTenant(slug)
 const { themeClasses } = useTenantTheme(tenant)
+
+const localForm = ref({
+  categoryId: props.categories[0]?.id || '',
+  name: '',
+  description: '',
+  price: 0,
+  image: ''
+})
+
+const formData = computed(() => {
+  return props.newProductInput?.name ? props.newProductInput : localForm.value
+})
+
+watch(
+  () => props.isOpen,
+  (open) => {
+    if (open) {
+      localForm.value = {
+        categoryId: props.categories[0]?.id || '',
+        name: '',
+        description: '',
+        price: 0,
+        image: ''
+      }
+    }
+  }
+)
+
+function handleConfirm() {
+  emit('confirm')
+  emit('submit', formData.value)
+}
 </script>
 
 <template>
@@ -50,7 +97,7 @@ const { themeClasses } = useTenantTheme(tenant)
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Categoria:</label>
           <select
-            v-model="newProductInput.categoryId"
+            v-model="formData.categoryId"
             class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-slate-400"
           >
             <option v-for="cat in categories" :key="cat.id" :value="cat.id">
@@ -62,7 +109,7 @@ const { themeClasses } = useTenantTheme(tenant)
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Nome do Item:</label>
           <input
-            v-model="newProductInput.name"
+            v-model="formData.name"
             type="text"
             placeholder="Ex: Combo Especial Prime"
             class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-slate-400"
@@ -72,7 +119,7 @@ const { themeClasses } = useTenantTheme(tenant)
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Preço (R$):</label>
           <input
-            v-model.number="newProductInput.price"
+            v-model.number="formData.price"
             type="number"
             step="0.01"
             class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-slate-400 font-mono"
@@ -82,7 +129,7 @@ const { themeClasses } = useTenantTheme(tenant)
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Descrição / Detalhes:</label>
           <textarea
-            v-model="newProductInput.description"
+            v-model="formData.description"
             rows="2"
             placeholder="Ingredientes, o que inclui, detalhes do item..."
             class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl p-2.5 text-xs text-slate-900 outline-none focus:border-slate-400"
@@ -92,7 +139,7 @@ const { themeClasses } = useTenantTheme(tenant)
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">URL da Foto (Opcional):</label>
           <input
-            v-model="newProductInput.image"
+            v-model="formData.image"
             type="text"
             placeholder="https://images.unsplash.com/..."
             class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2 text-xs text-slate-900 outline-none focus:border-slate-400"
@@ -110,7 +157,7 @@ const { themeClasses } = useTenantTheme(tenant)
         </button>
         <button
           type="button"
-          @click="emit('confirm')"
+          @click="handleConfirm"
           class="flex-1 text-slate-950 font-bold py-2.5 rounded-xl text-xs transition-colors cursor-pointer shadow-md active:scale-95"
           :class="themeClasses.primaryBg"
         >
