@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common'
 import { Pool, PoolClient, QueryResult, QueryResultRow } from 'pg'
 import { validateEnv } from '../../../config/env.schema'
+import { seedAllStores } from './seed-catalog'
 
 export interface IDatabaseService {
   query<T extends QueryResultRow = any>(text: string, params?: unknown[]): Promise<QueryResult<T>>
@@ -153,6 +154,15 @@ export class PostgresService implements IDatabaseService, OnModuleInit, OnModule
       `)
 
       this.logger.log('✅ Schema do PostgreSQL verificado e sincronizado com sucesso.')
+
+      const catCountRes = await this.pool.query('SELECT COUNT(*) as count FROM categories')
+      const catCount = parseInt(catCountRes.rows[0]?.count || '0', 10)
+
+      if (catCount === 0) {
+        this.logger.log('🌱 Categorias vazias detectadas. Executando auto-seed inicial dos 10 estabelecimentos...')
+        const stats = await seedAllStores(this)
+        this.logger.log(`🎉 Auto-seed concluído com sucesso: ${stats.totalTenants} lojas, ${stats.totalCats} categorias e ${stats.totalProds} produtos cadastrados no PostgreSQL.`)
+      }
     } catch (err) {
       this.logger.error('Aviso na auto-inicialização do schema PostgreSQL:', (err as Error).message)
     }
