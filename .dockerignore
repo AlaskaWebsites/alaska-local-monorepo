@@ -1,0 +1,13 @@
+node_modules
+.git
+.github
+.cursor
+.husky
+dist
+.turbo
+.nuxt
+.output
+coverage
+*.log
+.env
+.env.*
