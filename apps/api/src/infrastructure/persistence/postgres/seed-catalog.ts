@@ -13,7 +13,7 @@ export interface StoreSeedData {
   deliveryFee?: number
   minOrderValue?: number
   customDomain?: string
-  openingHours?: Record<string, { open: string; close: string; closed?: boolean }> & { open?: string; close?: string }
+  openingHours?: Record<string, any>
   pixConfig?: {
     key: string
     keyType: 'cpf' | 'cnpj' | 'phone' | 'email' | 'random'
