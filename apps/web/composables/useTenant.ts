@@ -5,13 +5,13 @@ import { TenantSchema, type Tenant } from '~/types/tenant'
 
 /**
  * Composable reativo e SSR-safe para resolução de Tenant pelo slug da rota ou customizado.
- * Adota estratégia híbrida e resiliente: busca dados da API se disponível e mescla
- * com os catálogos locais e com os overrides operacionais do Painel do Lojista (ADR 013).
+ * Estratégia API-First: consome os dados reais e completos do backend NestJS / PostgreSQL.
+ * Mantém fallback local apenas para resiliência e modo offline de demonstração.
  */
 export function useTenant(customSlug?: string | Ref<string | null | undefined>) {
     const route = useRoute()
     const config = useRuntimeConfig()
-    const apiBaseUrl = config.public?.apiBaseUrl
+    const apiBaseUrl = config.public?.apiBaseUrl || 'http://localhost:3333/api/v1'
 
     const slug = computed(() => {
         if (customSlug !== undefined && customSlug !== null) {
@@ -24,100 +24,81 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
     const { data: tenant, pending, error, refresh } = useAsyncData<Tenant | null>(
         `tenant-${slug.value}`,
         async () => {
-            // 1. Helper para carregar o catálogo completo do JSON local
-            const loadLocalJson = (): Tenant | null => {
-                try {
-                    const files = import.meta.glob('~/data/*.json', { eager: true }) as Record<
-                        string,
-                        { default?: Tenant; [key: string]: unknown }
-                    >
-
-                    for (const path in files) {
-                        const fileContent = files[path]
-                        const rawData = (fileContent?.default || fileContent) as Partial<Tenant>
-                        if (rawData && rawData.slug && rawData.slug.toLowerCase() === slug.value) {
-                            return TenantSchema.parse(rawData)
-                        }
-                    }
-
-                    for (const path in files) {
-                        const fileName = path.split('/').pop()?.replace('.json', '').toLowerCase()
-                        if (fileName === slug.value) {
-                            const fileContent = files[path]
-                            const rawData = (fileContent?.default || fileContent) as Partial<Tenant>
-                            return TenantSchema.parse(rawData)
-                        }
-                    }
-                } catch (e) {
-                    console.error('Erro ao carregar catálogo local JSON:', e)
-                }
-                return null
-            }
-
-            let loadedTenant = loadLocalJson()
-
-            // 2. Estratégia API-First Resiliente: Tenta buscar do backend NestJS se houver baseURL
+            // 1. Estratégia API-First: Busca dados reais diretamente do backend NestJS / Postgres
             if (apiBaseUrl) {
                 try {
-                    const res = await $fetch<{ success: boolean; data: any }>(
+                    const res = await $fetch<any>(
                         `${apiBaseUrl}/tenants/${slug.value}`,
-                        { timeout: 2500 }
+                        { timeout: 4000 }
                     )
-                    if (res && res.success && res.data) {
-                        const apiData = res.data
+                    const apiData = (res && typeof res === 'object') ? (res.data || res) : null
+
+                    if (apiData && (apiData.slug || apiData.id)) {
+                        // Se o backend retornou com categorias e produtos populados do banco, usa 100% API
                         if (Array.isArray(apiData.categories) && apiData.categories.length > 0) {
-                            loadedTenant = TenantSchema.parse(apiData)
-                        } else if (loadedTenant) {
-                            loadedTenant = TenantSchema.parse({
-                                ...loadedTenant,
+                            return TenantSchema.parse(apiData)
+                        }
+
+                        // Se o banco foi conectado mas ainda não recebeu o seed de categorias, tenta o fallback local temporário
+                        const local = loadLocalJson()
+                        if (local) {
+                            return TenantSchema.parse({
+                                ...local,
                                 ...apiData,
-                                categories: (loadedTenant.categories && loadedTenant.categories.length > 0)
-                                    ? loadedTenant.categories
-                                    : (apiData.categories || []),
-                                reviews: loadedTenant.reviews || apiData.reviews
+                                categories: (apiData.categories && apiData.categories.length > 0)
+                                    ? apiData.categories
+                                    : (local.categories || []),
+                                professionals: (apiData.professionals && apiData.professionals.length > 0)
+                                    ? apiData.professionals
+                                    : (local.professionals || []),
+                                reviews: apiData.reviews || local.reviews
                             })
                         }
-                    }
-                } catch {
-                    // Fallback silencioso para o catálogo local
-                }
-            }
 
-            // 3. Aplica overrides operacionais do Painel do Lojista (ADR 013) salvos em tempo real
-            if (loadedTenant && typeof window !== 'undefined') {
-                try {
-                    const rawOverrides = localStorage.getItem(`alaska_overrides_${slug.value}`)
-                    if (rawOverrides) {
-                        const overrides = JSON.parse(rawOverrides)
-                        if (loadedTenant.categories && Array.isArray(loadedTenant.categories)) {
-                            for (const cat of loadedTenant.categories) {
-                                if (cat.products && Array.isArray(cat.products)) {
-                                    for (const p of cat.products) {
-                                        if (overrides[p.id]) {
-                                            if (overrides[p.id].isAvailable !== undefined) {
-                                                p.isAvailable = overrides[p.id].isAvailable
-                                                ;(p as any).available = overrides[p.id].isAvailable
-                                            }
-                                            if (overrides[p.id].price !== undefined) {
-                                                p.price = overrides[p.id].price
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        return TenantSchema.parse(apiData)
                     }
                 } catch (e) {
-                    console.warn('Erro ao mesclar overrides operacionais:', e)
+                    // Falha de conexão: API offline ou em inicialização
                 }
             }
 
-            return loadedTenant
+            // 2. Fallback de resiliência: catálogo local em ~/data/*.json
+            return loadLocalJson()
         },
         {
             watch: [slug]
         }
     )
+
+    // Helper defensivo para carregar o catálogo JSON local caso o backend esteja offline
+    function loadLocalJson(): Tenant | null {
+        try {
+            const files = import.meta.glob('~/data/*.json', { eager: true }) as Record<
+                string,
+                { default?: Tenant; [key: string]: unknown }
+            >
+
+            for (const path in files) {
+                const fileContent = files[path]
+                const rawData = (fileContent?.default || fileContent) as Partial<Tenant>
+                if (rawData && rawData.slug && rawData.slug.toLowerCase() === slug.value) {
+                    return TenantSchema.parse(rawData)
+                }
+            }
+
+            for (const path in files) {
+                const fileName = path.split('/').pop()?.replace('.json', '').toLowerCase()
+                if (fileName === slug.value) {
+                    const fileContent = files[path]
+                    const rawData = (fileContent?.default || fileContent) as Partial<Tenant>
+                    return TenantSchema.parse(rawData)
+                }
+            }
+        } catch (e) {
+            console.warn('Erro ao carregar catálogo local JSON:', e)
+        }
+        return null
+    }
 
     return {
         tenant,
