@@ -26,6 +26,8 @@
     "rating": 5.0,
     "count": 274,
     "serviceQuality": {
+      "level": 3,
+      "experienceLabel": "Entrega rápida noturna",
       "status": "Análise em andamento",
       "description": "A loja receberá um nível de 1 a 5 para indicar a qualidade do serviço aos seus clientes"
     },
@@ -43,6 +45,7 @@
         "rating": 5,
         "date": "há 5 dias",
         "likes": 0,
+        "comment": "Muito atenciosos, obrigada pelo brinde!!",
         "text": "Muito atenciosos, obrigada pelo brinde!!",
         "storeReply": {
           "text": "Muito obrigado, Ana! 🥰❤️ Ficamos muito felizes com sua avaliação e em saber que gostou do atendimento O brinde é uma forma de agradecer pela preferência e confiança! Volte sempre!"
@@ -54,6 +57,7 @@
         "rating": 5,
         "date": "há 1 semana",
         "likes": 1,
+        "comment": "Bebidas trincando de geladas e entrega antes do prazo! Salvou o final de semana.",
         "text": "Bebidas trincando de geladas e entrega antes do prazo! Salvou o final de semana.",
         "storeReply": {
           "text": "Show demais, Josiele! Obrigado pela preferência e confiança. Pode contar sempre com a gente!"
@@ -65,6 +69,7 @@
         "rating": 5,
         "date": "há 2 semanas",
         "likes": 2,
+        "comment": "Kit gin impecável, com todas as tônicas originais e o gelo de sabor no ponto. Preço super justo.",
         "text": "Kit gin impecável, com todas as tônicas originais e o gelo de sabor no ponto. Preço super justo.",
         "storeReply": {
           "text": "Valeu pelo feedback Carlos! Trabalhamos só com produtos 100% originais e procedência garantida. Tmj!"
@@ -88,6 +93,7 @@
           "optionGroups": [
             {
               "id": "opt-sabores-gelo-gin",
+              "title": "Escolha o sabor do Gelo",
               "name": "Escolha o sabor do Gelo",
               "min": 1,
               "max": 1,
@@ -121,6 +127,7 @@
           "optionGroups": [
             {
               "id": "opt-copo-whisky",
+              "title": "Acompanhamento Extra",
               "name": "Acompanhamento Extra",
               "min": 0,
               "max": 1,
