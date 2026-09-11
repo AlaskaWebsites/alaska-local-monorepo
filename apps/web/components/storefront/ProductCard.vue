@@ -26,7 +26,7 @@ const emit = defineEmits<{
   <article
     @click="emit('click', product)"
     class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-4 cursor-pointer active:scale-[0.99]"
-    :class="{ 'opacity-60 bg-slate-50/50': !product.isAvailable }"
+    :class="{ 'opacity-60 bg-slate-50/50': product.isAvailable === false }"
   >
     <div class="min-w-0 flex-1 space-y-1">
       <h3 class="font-bold text-xs sm:text-sm text-slate-900 line-clamp-1 leading-snug">
@@ -40,7 +40,7 @@ const emit = defineEmits<{
           {{ formatCurrency(product.price) }}
         </span>
         <span
-          v-if="!product.isAvailable"
+          v-if="product.isAvailable === false"
           class="text-[10px] font-bold uppercase tracking-wider text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md"
         >
           Esgotado
@@ -56,7 +56,7 @@ const emit = defineEmits<{
         @error="handleImageError($event, theme)"
       />
       <span
-        v-if="!product.isAvailable"
+        v-if="product.isAvailable === false"
         class="absolute inset-0 bg-black/60 backdrop-blur-2xs flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-wider text-center p-1"
       >
         Esgotado

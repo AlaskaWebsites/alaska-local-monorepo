@@ -33,7 +33,7 @@ function scrollCarousel(direction: 'left' | 'right') {
     aria-labelledby="featured-heading"
   >
     <div class="flex items-center justify-between mb-4">
-      <h2 id="featured-heading" class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+      <h2 id=\"featured-heading\" class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
         <Sparkles class="w-4 h-4 text-amber-500" />
         <span>Destaques da Casa</span>
       </h2>
@@ -67,7 +67,7 @@ function scrollCarousel(direction: 'left' | 'right') {
         :key="product.id"
         @click="emit('select-product', product)"
         class="min-w-[240px] sm:min-w-[260px] max-w-[260px] bg-white rounded-2xl border border-slate-100 p-3 shadow-md hover:shadow-lg transition-all snap-start flex flex-col justify-between cursor-pointer active:scale-[0.99]"
-        :class="{ 'opacity-60 bg-slate-50/50': !product.isAvailable }"
+        :class="{ 'opacity-60 bg-slate-50/50': product.isAvailable === false }"
       >
         <div class="space-y-2.5">
           <div class="w-full h-32 rounded-xl overflow-hidden bg-slate-100 relative">
@@ -78,7 +78,7 @@ function scrollCarousel(direction: 'left' | 'right') {
               @error="handleImageError($event, theme)"
             />
             <span
-              v-if="!product.isAvailable"
+              v-if="product.isAvailable === false"
               class="absolute inset-0 bg-black/60 backdrop-blur-2xs flex items-center justify-center text-white text-xs font-bold uppercase tracking-wider"
             >
               Esgotado

@@ -11,7 +11,7 @@
     />
 
     <!-- 2. Header & Card de Identidade da Loja -->
-    <StoreIdentityCard
+    <StoreHeaderCard
       :tenant="effectiveTenant"
       :is-open="isOpen"
       :status-text="statusText"
@@ -33,86 +33,15 @@
       />
     </div>
 
-    <!-- 4. Carrossel de Destaques (Quando não estiver buscando) -->
-    <section
-      v-if="!isSearching && featuredProducts.length > 0"
-      class="max-w-4xl mx-auto px-4 mt-8"
-      aria-labelledby="featured-heading"
-    >
-      <div class="flex items-center justify-between mb-4">
-        <h2 id="featured-heading" class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-          <Sparkles class="w-4 h-4 text-amber-500" />
-          <span>Destaques da Casa</span>
-        </h2>
-        <div class="flex items-center gap-1.5">
-          <button
-            @click="scrollCarousel('left')"
-            class="p-1.5 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
-            aria-label="Rolar carrossel para a esquerda"
-          >
-            <ChevronLeft class="w-4 h-4" />
-          </button>
-          <button
-            @click="scrollCarousel('right')"
-            class="p-1.5 rounded-full bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-colors shadow-2xs cursor-pointer"
-            aria-label="Rolar carrossel para a direita"
-          >
-            <ChevronRight class="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      <!-- Grid Horizontal de Destaques -->
-      <div
-        ref="carouselRef"
-        class="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x snap-mandatory no-scrollbar"
-        role="region"
-        aria-label="Carrossel de produtos em destaque"
-      >
-        <article
-          v-for="product in featuredProducts"
-          :key="product.id"
-          @click="handleProductClick(product)"
-          class="min-w-[240px] sm:min-w-[260px] max-w-[260px] bg-white rounded-2xl border border-slate-100 p-3 shadow-md hover:shadow-lg transition-all snap-start flex flex-col justify-between cursor-pointer active:scale-[0.99]"
-          :class="{ 'opacity-60 bg-slate-50/50': product.isAvailable === false }"
-        >
-          <div class="space-y-2.5">
-            <div class="w-full h-32 rounded-xl overflow-hidden bg-slate-100 relative">
-              <img
-                :src="product.image"
-                :alt="product.name"
-                class="w-full h-full object-cover"
-                @error="handleImageError($event, effectiveTenant?.theme)"
-              />
-              <span
-                v-if="product.isAvailable === false"
-                class="absolute inset-0 bg-black/60 backdrop-blur-2xs flex items-center justify-center text-white text-xs font-bold uppercase tracking-wider"
-              >
-                Esgotado
-              </span>
-            </div>
-            <h3 class="font-bold text-xs sm:text-sm text-slate-900 line-clamp-1 leading-snug">
-              {{ product.name }}
-            </h3>
-            <p v-if="product.description" class="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-              {{ product.description }}
-            </p>
-          </div>
-
-          <div class="mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-between">
-            <span class="text-xs sm:text-sm font-extrabold font-mono text-slate-900">
-              {{ formatCurrency(product.price) }}
-            </span>
-            <span
-              class="text-[11px] font-bold px-2.5 py-1 rounded-lg transition-colors"
-              :class="themeClasses.primaryBg + ' text-white'"
-            >
-              {{ isServiceStore ? 'Agendar' : 'Pedir' }}
-            </span>
-          </div>
-        </article>
-      </div>
-    </section>
+    <!-- 4. Carrossel de Destaques -->
+    <FeaturedProductsCarousel
+      v-if="!isSearching"
+      :products="featuredProducts"
+      :theme="effectiveTenant.theme"
+      :theme-classes="themeClasses"
+      :is-service-store="isServiceStore"
+      @select-product="handleProductClick"
+    />
 
     <!-- 5. Navegação por Categorias com CategoryTabs -->
     <div v-if="!isSearching" class="max-w-4xl mx-auto px-4 mt-6">
@@ -125,91 +54,25 @@
     </div>
 
     <!-- 6. Listagem de Categorias e Produtos -->
-    <main class="max-w-4xl mx-auto px-4 mt-6 space-y-10">
-      <div v-if="filteredCategories.length === 0" class="text-center py-12 bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
-        <p class="text-slate-400 text-sm font-medium">Nenhum produto encontrado para "{{ searchQuery }}"</p>
-        <button
-          @click="clearSearch"
-          class="mt-3 text-xs font-bold text-emerald-600 hover:underline"
-        >
-          Limpar busca
-        </button>
-      </div>
-
-      <section
-        v-for="category in filteredCategories"
-        :key="category.id"
-        :id="`category-${category.id}`"
-        class="space-y-4 scroll-mt-24"
-        :aria-labelledby="`cat-heading-${category.id}`"
-      >
-        <div class="flex items-center gap-2 border-b border-slate-200 pb-2">
-          <h2 :id="`cat-heading-${category.id}`" class="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
-            {{ category.name }}
-          </h2>
-          <span class="text-xs text-slate-400 font-semibold bg-slate-100 px-2 py-0.5 rounded-full">
-            {{ category.products.length }}
-          </span>
-        </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-          <article
-            v-for="product in category.products"
-            :key="product.id"
-            @click="handleProductClick(product)"
-            class="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm hover:shadow-md transition-all flex items-center justify-between gap-4 cursor-pointer active:scale-[0.99]"
-            :class="{ 'opacity-60 bg-slate-50/50': product.isAvailable === false }"
-          >
-            <div class="min-w-0 flex-1 space-y-1">
-              <h3 class="font-bold text-xs sm:text-sm text-slate-900 line-clamp-1 leading-snug">
-                {{ product.name }}
-              </h3>
-              <p v-if="product.description" class="text-[11px] text-slate-500 line-clamp-2 leading-relaxed">
-                {{ product.description }}
-              </p>
-              <div class="pt-1 flex items-center gap-2">
-                <span class="text-xs sm:text-sm font-extrabold font-mono text-slate-900">
-                  {{ formatCurrency(product.price) }}
-                </span>
-                <span
-                  v-if="product.isAvailable === false"
-                  class="text-[10px] font-bold uppercase tracking-wider text-rose-600 bg-rose-50 px-2 py-0.5 rounded-md"
-                >
-                  Esgotado
-                </span>
-              </div>
-            </div>
-
-            <div class="w-20 h-20 sm:w-22 sm:h-22 rounded-xl overflow-hidden bg-slate-100 shrink-0 relative border border-slate-100">
-              <img
-                :src="product.image"
-                :alt="product.name"
-                class="w-full h-full object-cover"
-                @error="handleImageError($event, effectiveTenant?.theme)"
-              />
-              <span
-                v-if="product.isAvailable === false"
-                class="absolute inset-0 bg-black/60 backdrop-blur-2xs flex items-center justify-center text-white text-[10px] font-bold uppercase tracking-wider text-center p-1"
-              >
-                Esgotado
-              </span>
-            </div>
-          </article>
-        </div>
-      </section>
-    </main>
-
-    <!-- 7. Barra Fixa Flutuante Inferior (Bottom Bar / Cart CTA) com ClientOnly -->
-    <BottomCartBar
-      :cart-items="cartItems"
-      :cart-subtotal="cartSubtotal"
+    <ProductCatalogGrid
+      :categories="filteredCategories"
       :theme="effectiveTenant.theme"
       :theme-classes="themeClasses"
-      :is-service-store="isServiceStore"
+      :is-searching="isSearching"
+      :search-query="searchQuery"
+      @select-product="handleProductClick"
+      @clear-search="clearSearch"
+    />
+
+    <!-- 7. Barra Fixa Flutuante Inferior (Bottom Bar / Cart CTA) -->
+    <BottomCartFloatingBar
+      :total-items="totalItemsCount"
+      :subtotal="cartSubtotal"
+      :is-booking-open="isBookingOpen"
       @open-cart="isCartDrawerOpen = true"
     />
 
-    <!-- 8. Modais do Sistema (Lazy/Client-Side) -->
+    <!-- 8. Modais do Sistema -->
     <ProductCustomizerModal
       v-if="selectedProductForCustomization"
       :is-open="isCustomizerOpen"
@@ -256,8 +119,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, toRef, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
 import { useTenant } from '~/composables/useTenant'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 import { useOpeningHours } from '~/composables/useOpeningHours'
@@ -265,23 +127,18 @@ import { useProductSearch } from '~/composables/useProductSearch'
 import { useCart } from '~/composables/useCart'
 import { useShare } from '~/composables/useShare'
 import { useMerchantAdmin } from '~/composables/useMerchantAdmin'
-import { formatCurrency } from '~/utils/formatters'
-import { handleImageError } from '~/utils/images'
 import ProductSearchInput from '~/components/ProductSearchInput.vue'
+import BookingModal from '~/components/BookingModal.vue'
+import StoreInfoModal from '~/components/StoreInfoModal.vue'
+import StoreReviewsModal from '~/components/StoreReviewsModal.vue'
+import CartDrawerModal from '~/components/CartDrawerModal.vue'
+import ProductCustomizerModal from '~/components/ProductCustomizerModal.vue'
 import CategoryTabs from '~/components/CategoryTabs.vue'
 import StoreHeroBanner from '~/components/storefront/StoreHeroBanner.vue'
-import StoreIdentityCard from '~/components/storefront/StoreIdentityCard.vue'
-import BottomCartBar from '~/components/storefront/BottomCartBar.vue'
-import ProductCustomizerModal from '~/components/ProductCustomizerModal.vue'
-import StoreInfoModal from '~/components/StoreInfoModal.vue'
-import CartDrawerModal from '~/components/CartDrawerModal.vue'
-import BookingModal from '~/components/BookingModal.vue'
-import StoreReviewsModal from '~/components/StoreReviewsModal.vue'
-import {
-  ChevronLeft,
-  ChevronRight,
-  Sparkles
-} from 'lucide-vue-next'
+import StoreHeaderCard from '~/components/storefront/StoreHeaderCard.vue'
+import FeaturedProductsCarousel from '~/components/storefront/FeaturedProductsCarousel.vue'
+import ProductCatalogGrid from '~/components/storefront/ProductCatalogGrid.vue'
+import BottomCartFloatingBar from '~/components/storefront/BottomCartFloatingBar.vue'
 import type { Product, CartItem, BookingService, Tenant } from '~/types'
 
 // 1. Resolução do Tenant Atual (Retorna referências reativas síncronas)
@@ -404,7 +261,8 @@ function scrollToCategory(catId: string) {
 // 6. Sacola de Compras Namespaced por Tenant
 const {
   items: cartItems,
-  cartSubtotal
+  cartSubtotal,
+  totalItemsCount
 } = useCart(effectiveTenant)
 
 // 7. Compartilhamento
@@ -476,13 +334,7 @@ const featuredProducts = computed(() => {
   }
   return all.slice(0, 6)
 })
-
-// 11. Controle de Rolagem Horizontal do Carrossel
-const carouselRef = ref<HTMLElement | null>(null)
-
-function scrollCarousel(direction: 'left' | 'right') {
-  if (!carouselRef.value) return
-  const offset = direction === 'left' ? -280 : 280
-  carouselRef.value.scrollBy({ left: offset, behavior: 'smooth' })
-}
 </script>
+
+<style scoped>
+</style>
