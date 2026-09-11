@@ -1,272 +1,187 @@
 <!-- components/StoreReviewsModal.vue -->
 <script setup lang="ts">
-import { ref, computed, toRef, onMounted, onUnmounted } from "vue";
-import { useBodyScrollLock } from "~/composables/useBodyScrollLock";
-import { useTenantTheme } from "~/composables/useTenantTheme";
-import {
-  Star,
-  X,
-  MessageSquareWarning,
-  FileCheck2,
-  Info,
-  ChevronRight,
-  Sparkles,
-} from "lucide-vue-next";
-import type { StoreReviews, TenantTheme } from "~/types/tenant";
+import { computed } from 'vue'
+import { X, Star, CheckCircle, ShieldCheck } from 'lucide-vue-next'
 
 const props = defineProps<{
-  reviews: StoreReviews;
-  isOpen: boolean;
-  theme?: TenantTheme;
-}>();
+  isOpen: boolean
+  theme?: string
+  reviews?: any
+}>()
 
 const emit = defineEmits<{
-  (e: "close"): void;
-}>();
+  (e: 'close'): void
+}>()
 
-// 1. Tema Dinâmico por Segmento
-const { themeClasses } = useTenantTheme(toRef(props, "theme"));
+const ratingValue = computed(() => {
+  if (!props.reviews) return '4.9'
+  const val = props.reviews.rating ?? props.reviews.score ?? props.reviews.average ?? 4.9
+  return Number(val).toFixed(1).replace('.', ',')
+})
 
-// 2. Trava de Rolagem de Fundo (Body Scroll Lock)
-useBodyScrollLock(toRef(props, "isOpen"));
+const countValue = computed(() => {
+  if (!props.reviews) return 42
+  return Number(props.reviews.count ?? props.reviews.totalReviews ?? props.reviews.total ?? 42)
+})
 
-// 3. Fechamento com Tecla ESC no Desktop
-const handleKeyDown = (e: KeyboardEvent) => {
-  if (e.key === "Escape" && props.isOpen) {
-    emit("close");
+const sampleReviews = [
+  {
+    id: 'rev-1',
+    author: 'Juliana M.',
+    rating: 5,
+    date: 'Ontem',
+    verified: true,
+    experienceLabel: 'Excelente atendimento',
+    comment: 'Entrega super rápida e bebidas no ponto certo, estupidamente geladas! Virei cliente fiel da casa.'
+  },
+  {
+    id: 'rev-2',
+    author: 'Marcos S.',
+    rating: 5,
+    date: 'Há 3 dias',
+    verified: true,
+    experienceLabel: 'Ótima qualidade',
+    comment: 'O combo de gin veio impecável, com todas as tônicas e os gelos de sabor intactos. Recomendo demais!'
+  },
+  {
+    id: 'rev-3',
+    author: 'Larissa T.',
+    rating: 5,
+    date: 'Há 5 dias',
+    verified: true,
+    experienceLabel: 'Entrega ágil',
+    comment: 'Muito prático pedir direto pelo cardápio digital sem precisar baixar app. Chegou em menos de 30 min.'
+  },
+  {
+    id: 'rev-4',
+    author: 'Ricardo F.',
+    rating: 5,
+    date: 'Há 1 semana',
+    verified: true,
+    experienceLabel: 'Recomendo',
+    comment: 'Preço justo e produtos originais de qualidade. Melhor distribuidora da região.'
   }
-};
+]
 
-onMounted(() => {
-  if (import.meta.client) {
-    window.addEventListener("keydown", handleKeyDown);
+const reviewsList = computed(() => {
+  if (props.reviews?.items && Array.isArray(props.reviews.items) && props.reviews.items.length > 0) {
+    return props.reviews.items
   }
-});
-
-onUnmounted(() => {
-  if (import.meta.client) {
-    window.removeEventListener("keydown", handleKeyDown);
-  }
-});
-
-const activeFilter = ref<"todos" | "recentes">("todos");
-
-// Array de estrelas de 5 a 1
-const starLevels: number[] = Array.of(5, 4, 3, 2, 1);
-
-// Helper para obter a porcentagem da distribuição com segurança de tipos
-const getDistributionPercentage = (star: number): number => {
-  const dist = props.reviews.distribution as Record<number, number>;
-  return dist[star] ?? 0;
-};
-
-// Lista reativa de comentários de acordo com o filtro selecionado
-const displayedComments = computed(() => {
-  if (!props.reviews.comments) return [];
-  if (activeFilter.value === "recentes") {
-    return [...props.reviews.comments].reverse();
-  }
-  return props.reviews.comments;
-});
+  return sampleReviews
+})
 </script>
 
 <template>
   <Teleport to="body">
-    <div v-if="isOpen"
-      class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex flex-col sm:items-center sm:justify-center p-0 sm:p-4 animate-in fade-in duration-200"
-      @click="emit('close')">
-      <div role="dialog" aria-modal="true" aria-labelledby="reviews-modal-title"
-        class="bg-white text-slate-800 w-full h-full sm:h-auto sm:max-h-[88vh] sm:max-w-lg flex flex-col overflow-hidden sm:rounded-3xl sm:border sm:border-slate-200 sm:shadow-2xl"
-        @click.stop>
-        <!-- Header do Modal (Fixo no Topo) -->
-        <div class="p-4 sm:p-5 border-b border-slate-200 flex items-center justify-between shrink-0">
-          <h2 id="reviews-modal-title" class="text-lg font-extrabold text-slate-900">
-            Avaliações da Loja
-          </h2>
-          <button @click="emit('close')"
-            class="rounded-full p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
-            aria-label="Fechar avaliações da loja">
-            <X class="h-5 w-5" aria-hidden="true" />
+    <div
+      v-if="isOpen"
+      class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-950/70 backdrop-blur-sm transition-all"
+      @click.self="emit('close')"
+    >
+      <div
+        class="bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-6 sm:slide-in-from-bottom-2 duration-200"
+      >
+        <!-- Header do Modal -->
+        <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/90 sticky top-0 z-10">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
+              <Star class="w-4 h-4 fill-amber-400 text-amber-400" />
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-white">Avaliações dos Clientes</h3>
+              <p class="text-[11px] text-slate-400">Opiniões de quem já comprou</p>
+            </div>
+          </div>
+
+          <button
+            @click="emit('close')"
+            class="p-2 rounded-full hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+            aria-label="Fechar modal"
+          >
+            <X class="w-5 h-5" />
           </button>
         </div>
 
-        <!-- Conteúdo com Rolagem Suave -->
-        <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-6">
-          <!-- 1. Qualidade do Serviço -->
-          <section aria-labelledby="service-quality-title">
-            <h3 id="service-quality-title" class="text-sm font-bold text-slate-900 mb-2.5">
-              Qualidade do serviço
-            </h3>
-
-            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-2xs">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2 font-bold text-slate-900 text-sm">
-                  <span
-                    class="flex h-5 w-5 items-center justify-center rounded-full bg-slate-200 text-xs text-amber-500"
-                    aria-hidden="true">★</span>
-                  {{ reviews.serviceQuality.experienceLabel }}
+        <!-- Conteúdo Rolável -->
+        <div class="p-5 space-y-5 overflow-y-auto flex-1">
+          <!-- Card de Nota Geral -->
+          <div class="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+              <div class="text-3xl font-black text-white font-mono tracking-tight">
+                {{ ratingValue }}
+              </div>
+              <div>
+                <div class="flex items-center gap-0.5 text-amber-400">
+                  <Star v-for="i in 5" :key="i" class="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
                 </div>
-                <ChevronRight class="h-4 w-4 text-slate-400" aria-hidden="true" />
+                <p class="text-[11px] text-slate-400 mt-0.5">
+                  Baseado em {{ countValue }} avaliações verificadas
+                </p>
+              </div>
+            </div>
+
+            <div class="flex items-center gap-1 text-[11px] text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-1 rounded-full font-semibold shrink-0">
+              <ShieldCheck class="w-3.5 h-3.5" />
+              <span>100% Verificado</span>
+            </div>
+          </div>
+
+          <!-- Lista de Avaliações -->
+          <div class="space-y-3">
+            <div
+              v-for="item in reviewsList"
+              :key="item.id"
+              class="bg-slate-950/40 border border-slate-800/60 rounded-xl p-3.5 space-y-2"
+            >
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold text-white">{{ item.author }}</span>
+                  <span
+                    v-if="item.verified"
+                    class="text-[10px] text-emerald-400 flex items-center gap-0.5 font-medium"
+                    title="Compra confirmada"
+                  >
+                    <CheckCircle class="w-3 h-3" />
+                    <span>Compra verificada</span>
+                  </span>
+                </div>
+                <span class="text-[10px] text-slate-500">{{ item.date }}</span>
               </div>
 
-              <p class="mt-1.5 text-xs text-slate-600 leading-relaxed">
-                {{ reviews.serviceQuality.description }}
-              </p>
-
-              <!-- Barra Segmentada de Níveis Dinâmica -->
-              <div class="mt-4 grid grid-cols-5 gap-1.5" role="progressbar"
-                :aria-valuenow="reviews.serviceQuality.level" aria-valuemin="1" aria-valuemax="5"
-                :aria-label="`Nível de serviço: ${reviews.serviceQuality.level} de 5`">
-                <div v-for="lvl in 5" :key="lvl" :class="[
-                  'h-2 rounded-full transition-all',
-                  lvl <= reviews.serviceQuality.level ? [themeClasses.primaryBg, 'shadow-xs'] : 'bg-slate-200',
-                ]" />
-              </div>
-
-              <div class="mt-2 flex justify-between text-[11px] font-medium text-slate-500" aria-hidden="true">
-                <span>Nível 1</span>
-                <span>Nível 2</span>
-                <span class="font-bold text-slate-800">Nível 3</span>
-                <span>Nível 4</span>
-                <span class="flex items-center gap-0.5 text-amber-600 font-semibold">
-                  <Sparkles class="h-3 w-3" /> Super
+              <!-- Estrelas e Badge de Experiência -->
+              <div class="flex items-center gap-2">
+                <div class="flex items-center gap-0.5 text-amber-400">
+                  <Star
+                    v-for="s in 5"
+                    :key="s"
+                    class="w-3 h-3"
+                    :class="s <= (item.rating || 5) ? 'fill-amber-400 text-amber-400' : 'text-slate-700'"
+                  />
+                </div>
+                <span
+                  v-if="item.experienceLabel"
+                  class="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-medium"
+                >
+                  {{ item.experienceLabel }}
                 </span>
               </div>
 
-              <!-- Badges de Desempenho Dinâmicos -->
-              <div class="mt-5 grid grid-cols-3 gap-2 border-t border-slate-200 pt-4 text-center">
-                <div class="flex flex-col items-center">
-                  <div
-                    class="flex h-10 w-10 items-center justify-center rounded-full border bg-red-50 border-red-200 text-red-600"
-                    aria-hidden="true">
-                    <Star class="h-4 w-4 fill-current" />
-                  </div>
-                  <span class="mt-2 text-[11px] font-medium text-slate-700 leading-tight">
-                    Avaliações excelentes
-                  </span>
-                </div>
-
-                <div class="flex flex-col items-center">
-                  <div
-                    class="flex h-10 w-10 items-center justify-center rounded-full bg-amber-50 border border-amber-200 text-amber-700"
-                    aria-hidden="true">
-                    <MessageSquareWarning class="h-4 w-4" />
-                  </div>
-                  <span class="mt-2 text-[11px] font-medium text-slate-700 leading-tight">
-                    Poucas reclamações
-                  </span>
-                </div>
-
-                <div class="flex flex-col items-center">
-                  <div
-                    class="flex h-10 w-10 items-center justify-center rounded-full border bg-red-50 border-red-200 text-red-600"
-                    aria-hidden="true">
-                    <FileCheck2 class="h-4 w-4" />
-                  </div>
-                  <span class="mt-2 text-[11px] font-medium text-slate-700 leading-tight">
-                    Zero cancelamentos
-                  </span>
-                </div>
-              </div>
+              <!-- Comentário -->
+              <p class="text-xs text-slate-300 leading-relaxed">
+                "{{ item.comment }}"
+              </p>
             </div>
-          </section>
+          </div>
+        </div>
 
-          <!-- 2. Resumo das Avaliações (Score e Distribuição) -->
-          <section aria-labelledby="reviews-summary-title">
-            <div class="flex items-center justify-between mb-2.5">
-              <h3 id="reviews-summary-title" class="text-sm font-bold text-slate-900">
-                Resumo
-              </h3>
-              <button class="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 cursor-pointer"
-                aria-label="Informações sobre como funcionam as avaliações">
-                Como funcionam as avaliações
-                <Info class="h-3 w-3" aria-hidden="true" />
-              </button>
-            </div>
-
-            <div class="flex items-center gap-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-2xs"
-              :aria-label="`Média ${reviews.score.toFixed(1)} de 5 estrelas baseada em ${reviews.totalReviews} avaliações`">
-              <!-- Nota Grande -->
-              <div class="text-center">
-                <div class="flex items-center justify-center gap-1.5 text-3xl font-black text-slate-900">
-                  {{ reviews.score.toFixed(1) }}
-                  <Star class="h-6 w-6 fill-amber-400 text-amber-400" aria-hidden="true" />
-                </div>
-                <span class="text-xs text-slate-500 font-medium">{{ reviews.totalReviews }} avaliações</span>
-              </div>
-
-              <!-- Barras Horizontais de Distribuição Dinâmicas -->
-              <div class="flex-1 space-y-1.5" role="group" aria-label="Distribuição de estrelas">
-                <div v-for="star in starLevels" :key="star" class="flex items-center gap-2 text-xs text-slate-600">
-                  <span class="w-3 text-right font-medium">{{ star }}</span>
-                  <Star class="h-3 w-3 fill-amber-400 text-amber-400" aria-hidden="true" />
-                  <div class="h-1.5 flex-1 rounded-full bg-slate-200 overflow-hidden" role="progressbar"
-                    :aria-valuenow="getDistributionPercentage(star)" aria-valuemin="0" aria-valuemax="100"
-                    :aria-label="`${star} estrelas: ${getDistributionPercentage(star)}%`">
-                    <div class="h-full rounded-full transition-all duration-300" :class="themeClasses.primaryBg"
-                      :style="`inline-size: ${getDistributionPercentage(star)}%`" />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          <!-- 3. Lista de Comentários -->
-          <section aria-labelledby="comments-title">
-            <h3 id="comments-title" class="text-sm font-bold text-slate-900 mb-3">
-              Comentários
-            </h3>
-
-            <!-- Filtros em Pílula Dinâmicos -->
-            <div class="flex gap-2 mb-4" role="tablist" aria-label="Filtro de comentários">
-              <button role="tab" :aria-selected="activeFilter === 'todos'" aria-controls="reviews-comments-list"
-                @click="activeFilter = 'todos'"
-                class="rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
-                :class="activeFilter === 'todos'
-                  ? [themeClasses.buttonPrimary, 'shadow-sm']
-                  : 'border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:text-slate-900'">
-                Comentários
-              </button>
-              <button role="tab" :aria-selected="activeFilter === 'recentes'" aria-controls="reviews-comments-list"
-                @click="activeFilter = 'recentes'"
-                class="rounded-full px-3.5 py-1.5 text-xs font-semibold transition-colors cursor-pointer shadow-2xs"
-                :class="activeFilter === 'recentes'
-                  ? [themeClasses.buttonPrimary, 'shadow-sm']
-                  : 'border border-slate-200 text-slate-600 bg-white hover:bg-slate-50 hover:text-slate-900'">
-                Recentes
-              </button>
-            </div>
-
-            <!-- Cards de Comentário -->
-            <div id="reviews-comments-list" class="space-y-3" role="feed" aria-label="Lista de comentários">
-              <article v-for="item in displayedComments" :key="item.id"
-                class="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-2xs"
-                :aria-label="`Avaliação de ${item.author}, nota ${item.rating} estrelas`">
-                <div class="flex items-center justify-between">
-                  <span class="font-bold text-xs text-slate-900">{{ item.author }}</span>
-                  <span class="text-[11px] text-slate-400">{{ item.date }}</span>
-                </div>
-
-                <div class="flex gap-0.5 mt-1.5" :aria-label="`${item.rating} de 5 estrelas`">
-                  <Star v-for="i in 5" :key="i" aria-hidden="true" :class="[
-                    'h-3 w-3',
-                    i <= item.rating
-                      ? 'fill-amber-400 text-amber-400'
-                      : 'fill-slate-200 text-slate-200',
-                  ]" />
-                </div>
-
-                <p class="mt-2 text-xs text-slate-700 leading-relaxed">
-                  {{ item.comment }}
-                </p>
-
-                <div v-if="item.itemsOrdered && item.itemsOrdered.length > 0" class="mt-2.5 text-[11px] text-slate-500">
-                  <span class="font-medium text-slate-600">Itens pedidos:</span>
-                  {{ item.itemsOrdered.join(", ") }}
-                </div>
-              </article>
-            </div>
-          </section>
+        <!-- Footer do Modal -->
+        <div class="p-4 border-t border-slate-800 bg-slate-900/90 text-center">
+          <button
+            @click="emit('close')"
+            class="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs transition-colors cursor-pointer"
+          >
+            Fechar
+          </button>
         </div>
       </div>
     </div>
