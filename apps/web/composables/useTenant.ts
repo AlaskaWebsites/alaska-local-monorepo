@@ -148,6 +148,7 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
             let lastRefreshTime = 0
             const debouncedRefresh = () => {
                 const now = Date.now()
+                // Limite de 2 segundos entre revalidações automáticas em foco
                 if (now - lastRefreshTime > 2000) {
                     lastRefreshTime = now
                     refresh()
