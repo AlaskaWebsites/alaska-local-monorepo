@@ -1,12 +1,5 @@
 import { Controller, Patch, Put, Body, Param, HttpCode, HttpStatus } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiParam } from '@nestjs/swagger'
-import {
-  ToggleProductAvailabilitySchema,
-  UpdateProductSchema,
-  type ToggleProductAvailabilityDto,
-  type UpdateProductDto
-} from '@alaska/contracts'
-import { ZodValidationPipe } from '../pipes/zod-validation.pipe'
 import { ToggleProductAvailabilityUseCase } from '@core/application/use-cases/toggle-product-availability.use-case'
 import { UpdateProductUseCase } from '@core/application/use-cases/update-product.use-case'
 import { ToggleOptionAvailabilityUseCase } from '@core/application/use-cases/toggle-option-availability.use-case'
@@ -28,11 +21,12 @@ export class ProductController {
   async toggleAvailability(
     @Param('slug') slug: string,
     @Param('productId') productId: string,
-    @Body(new ZodValidationPipe(ToggleProductAvailabilitySchema)) dto: ToggleProductAvailabilityDto
+    @Body() body: any
   ) {
+    const isAvailable = body.isAvailable ?? body.available ?? false
     const product = await this.toggleAvailabilityUseCase.execute({
       productId,
-      isAvailable: dto.isAvailable
+      isAvailable
     })
     return {
       success: true,
@@ -52,14 +46,14 @@ export class ProductController {
   async updateProduct(
     @Param('slug') slug: string,
     @Param('productId') productId: string,
-    @Body(new ZodValidationPipe(UpdateProductSchema)) dto: UpdateProductDto
+    @Body() body: any
   ) {
     const product = await this.updateProductUseCase.execute({
       productId,
-      name: dto.name,
-      description: dto.description,
-      priceCents: dto.priceCents ?? (dto.price ? Math.round(dto.price * 100) : undefined),
-      isAvailable: dto.isAvailable
+      name: body.name,
+      description: body.description,
+      priceCents: body.priceCents ?? (body.price ? Math.round(body.price * 100) : undefined),
+      isAvailable: body.isAvailable ?? body.available
     })
     return {
       success: true,
@@ -82,7 +76,7 @@ export class ProductController {
     @Param('slug') slug: string,
     @Param('productId') productId: string,
     @Param('optionId') optionId: string,
-    @Body() body: { isAvailable?: boolean; available?: boolean }
+    @Body() body: any
   ) {
     const isAvailable = body.isAvailable ?? body.available ?? true
     const product = await this.toggleOptionUseCase.execute({
@@ -109,7 +103,7 @@ export class ProductController {
   async toggleOptionDirect(
     @Param('slug') slug: string,
     @Param('optionId') optionId: string,
-    @Body() body: { isAvailable?: boolean; available?: boolean; productId?: string }
+    @Body() body: any
   ) {
     const isAvailable = body.isAvailable ?? body.available ?? true
     const product = await this.toggleOptionUseCase.execute({
