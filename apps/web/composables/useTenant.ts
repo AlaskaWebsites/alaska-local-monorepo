@@ -142,16 +142,23 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
         }
     )
 
-    // Auto-refresh inteligente quando o usuário volta para a aba no celular ou desktop
+    // Auto-refresh inteligente com debounce quando o usuário volta para a aba no celular ou desktop
     if (typeof window !== 'undefined') {
         onMounted(() => {
-            const handleVisibility = () => {
-                if (document.visibilityState === 'visible') {
+            let lastRefreshTime = 0
+            const debouncedRefresh = () => {
+                const now = Date.now()
+                if (now - lastRefreshTime > 2000) {
+                    lastRefreshTime = now
                     refresh()
                 }
             }
-            window.addEventListener('visibilitychange', handleVisibility)
-            window.addEventListener('focus', () => refresh())
+            window.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    debouncedRefresh()
+                }
+            })
+            window.addEventListener('focus', debouncedRefresh)
         })
     }
 
