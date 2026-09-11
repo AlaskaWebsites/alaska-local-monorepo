@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ITenantRepository } from '../../../core/application/ports/tenant.repository.port';
 import { Tenant } from '../../../core/domain/entities/tenant.entity';
-import { PostgresService } from './postgres.service';
+import { PostgresService } from '../postgres.service';
 import { TenantMapper } from './mappers/tenant.mapper';
 import { SEED_TENANTS } from '../in-memory/seed-data';
 
@@ -138,10 +138,6 @@ export class PostgresTenantRepository implements ITenantRepository {
     );
   }
 
-  async update(tenant: Tenant): Promise<void> {
-    await this.save(tenant);
-  }
-
   async listAllActive(): Promise<Tenant[]> {
     try {
       const result = await this.db.query(
@@ -172,7 +168,7 @@ export class PostgresTenantRepository implements ITenantRepository {
 
       const prodRes = await this.db.query(
         `SELECT id, category_id, name, description, price_cents, image, available, option_groups, duration_minutes
-         FROM products WHERE tenant_id = $1 AND available = true ORDER BY name ASC`,
+         FROM products WHERE tenant_id = $1 ORDER BY name ASC`,
         [tenantId],
       );
 
@@ -188,8 +184,8 @@ export class PostgresTenantRepository implements ITenantRepository {
             description: p.description,
             price: p.price_cents / 100,
             image: p.image,
-            isAvailable: p.available,
-            available: p.available,
+            isAvailable: p.available ?? true,
+            available: p.available ?? true,
             optionGroups: p.option_groups || [],
             durationMinutes: p.duration_minutes,
           })),
