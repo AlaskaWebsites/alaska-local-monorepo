@@ -109,12 +109,9 @@
       v-if="effectiveTenant && effectiveTenant.reviews"
       :is-open="isReviewsOpen"
       :theme="effectiveTenant.theme"
-      :reviews="effectiveTenant.reviews"
       :store-name="effectiveTenant.name"
-      :category="effectiveTenant.businessCategory"
-      :address="effectiveTenant.address"
+      :reviews="effectiveTenant.reviews"
       @close="isReviewsOpen = false"
-      @open-info="isReviewsOpen = false; isInfoOpen = true"
     />
   </div>
 </template>
