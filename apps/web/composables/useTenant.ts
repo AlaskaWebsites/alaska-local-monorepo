@@ -69,7 +69,16 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
                 try {
                     const res = await $fetch<any>(
                         `${apiBaseUrl}/tenants/${slug.value}`,
-                        { timeout: 4000 }
+                        {
+                            timeout: 5000,
+                            headers: {
+                                'Cache-Control': 'no-cache',
+                                'Pragma': 'no-cache'
+                            },
+                            query: {
+                                _t: Date.now()
+                            }
+                        }
                     )
                     const apiData = (res && typeof res === 'object') ? (res.data || res) : null
                     if (apiData && (apiData.slug || apiData.id)) {

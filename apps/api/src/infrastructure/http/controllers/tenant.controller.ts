@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Query, Inject, UsePipes, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Inject, UsePipes, HttpCode, HttpStatus, Header } from '@nestjs/common';
 import { TOKENS } from '../../../core/application/tokens';
 import { GetTenantBySlugUseCase } from '../../../core/application/use-cases/get-tenant-by-slug.use-case';
 import { ResolveTenantByDomainUseCase } from '../../../core/application/use-cases/resolve-tenant-by-domain.use-case';
@@ -26,19 +26,18 @@ export class TenantController {
     );
   }
 
-  @Get()
-  async listAll() {
-    const tenants = await this.tenantRepository.listAllActive();
-    return tenants.map((t) => t.toJSON());
-  }
-
   @Get(':slug')
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+  @Header('Pragma', 'no-cache')
+  @Header('Expires', '0')
   async getBySlug(@Param('slug') slug: string) {
     const tenant = await this.getTenantBySlugUseCase.execute(slug);
+    if (!tenant) return null;
     return tenant.toJSON();
   }
 
   @Get('resolve/domain')
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate')
   async resolveByDomain(@Query('host') host: string) {
     const tenant = await this.resolveTenantByDomainUseCase.execute(host);
     return tenant ? tenant.toJSON() : null;
@@ -51,20 +50,15 @@ export class TenantController {
     @Param('slug') slug: string,
     @Body() body: MerchantLoginInput,
   ) {
-    return this.authenticateMerchantUseCase.execute({
-      slug,
-      pin: body.pin,
-    });
+    return this.authenticateMerchantUseCase.execute(slug, body.pin);
   }
 
   @Post(':slug/hours')
+  @HttpCode(HttpStatus.OK)
   async updateHours(
     @Param('slug') slug: string,
-    @Body() body: { hours: Record<string, { open: string; close: string; closed?: boolean }> },
+    @Body('hours') hours: Record<string, { open: string; close: string; closed?: boolean }>,
   ) {
-    return this.updateTenantHoursUseCase.execute({
-      slug,
-      hours: body.hours,
-    });
+    return this.updateTenantHoursUseCase.execute({ slug, hours });
   }
 }
