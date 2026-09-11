@@ -1,5 +1,5 @@
 // composables/useTenant.ts
-import { ref, computed, type Ref } from 'vue'
+import { ref, computed, onMounted, type Ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { TenantSchema, type Tenant } from '~/types/tenant'
 
@@ -21,8 +21,7 @@ function getApiBaseUrl(): string {
 
 /**
  * Composable reativo e SSR-safe para resolução de Tenant pelo slug da rota ou customizado.
- * Adota estratégia híbrida e resiliente: busca dados da API se disponível e mescla
- * com os catálogos locais e com os overrides operacionais do Painel do Lojista (ADR 013).
+ * Conecta diretamente ao PostgreSQL via API NestJS no Render (Fonte Única da Verdade).
  */
 export function useTenant(customSlug?: string | Ref<string | null | undefined>) {
     const route = useRoute()
@@ -39,7 +38,7 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
     const { data: tenant, pending, error, refresh } = useAsyncData<Tenant | null>(
         `tenant-${slug.value}`,
         async () => {
-            // 1. Helper para carregar o catálogo completo do JSON local
+            // 1. Helper para carregar o catálogo local de contingência (offline fallback)
             const loadLocalJson = (): Tenant | null => {
                 try {
                     const files = import.meta.glob('~/data/*.json', { eager: true }) as Record<
@@ -63,8 +62,9 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
             }
 
             let loadedTenant = loadLocalJson()
+            let fromApi = false
 
-            // 2. Estratégia API-First Resiliente: Tenta buscar do backend NestJS no Render
+            // 2. Estratégia API-First: Busca dados reais diretamente do PostgreSQL no Render
             if (apiBaseUrl) {
                 try {
                     const res = await $fetch<{ success: boolean; data: any }>(
@@ -75,6 +75,7 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
                         const apiData = res.data
                         if (Array.isArray(apiData.categories) && apiData.categories.length > 0) {
                             loadedTenant = TenantSchema.parse(apiData)
+                            fromApi = true
                         } else if (loadedTenant) {
                             loadedTenant = TenantSchema.parse({
                                 ...loadedTenant,
@@ -84,15 +85,16 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
                                     : (apiData.categories || []),
                                 reviews: loadedTenant.reviews || apiData.reviews
                             })
+                            fromApi = true
                         }
                     }
                 } catch (e) {
-                    console.warn('Fallback para catálogo local:', e)
+                    console.warn('Backend offline ou inacessível, utilizando catálogo local:', e)
                 }
             }
 
-            // 3. Aplica overrides operacionais do Painel do Lojista (ADR 013) salvos em tempo real
-            if (loadedTenant && typeof window !== 'undefined') {
+            // 3. Overrides do localStorage são aplicados estritamente como fallback se a API falhar
+            if (!fromApi && loadedTenant && typeof window !== 'undefined') {
                 try {
                     const rawOverrides = localStorage.getItem(`alaska_overrides_${slug.value}`)
                     if (rawOverrides) {
@@ -117,7 +119,7 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
                         }
                     }
                 } catch (e) {
-                    console.warn('Erro ao mesclar overrides operacionais:', e)
+                    console.warn('Erro ao mesclar overrides locais:', e)
                 }
             }
 
@@ -127,6 +129,19 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
             watch: [slug]
         }
     )
+
+    // Auto-refresh inteligente quando o usuário volta para a aba no celular ou desktop
+    if (typeof window !== 'undefined') {
+        onMounted(() => {
+            const handleVisibility = () => {
+                if (document.visibilityState === 'visible') {
+                    refresh()
+                }
+            }
+            window.addEventListener('visibilitychange', handleVisibility)
+            window.addEventListener('focus', () => refresh())
+        })
+    }
 
     return {
         tenant,
