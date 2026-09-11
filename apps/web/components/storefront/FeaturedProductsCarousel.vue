@@ -33,7 +33,7 @@ function scrollCarousel(direction: 'left' | 'right') {
     aria-labelledby="featured-heading"
   >
     <div class="flex items-center justify-between mb-4">
-      <h2 id=\"featured-heading\" class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+      <h2 id="featured-heading" class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
         <Sparkles class="w-4 h-4 text-amber-500" />
         <span>Destaques da Casa</span>
       </h2>
