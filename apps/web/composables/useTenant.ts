@@ -1,5 +1,5 @@
 // composables/useTenant.ts
-import { ref, computed, onMounted, type Ref } from 'vue'
+import { ref, computed, onMounted, onUnmounted, type Ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { TenantSchema, type Tenant } from '~/types/tenant'
 
@@ -136,30 +136,28 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
             }
 
             return loadedTenant
-        },
-        {
-            watch: [slug]
         }
     )
 
-    // Auto-refresh inteligente com debounce quando o usuário volta para a aba no celular ou desktop
+    // Revalidação inteligente apenas quando a aba volta ao primeiro plano (mínimo de 30 segundos)
     if (typeof window !== 'undefined') {
-        onMounted(() => {
-            let lastRefreshTime = 0
-            const debouncedRefresh = () => {
+        let lastFetchTime = Date.now()
+        const handleVisibility = () => {
+            if (document.visibilityState === 'visible') {
                 const now = Date.now()
-                // Limite de 2 segundos entre revalidações automáticas em foco
-                if (now - lastRefreshTime > 2000) {
-                    lastRefreshTime = now
+                if (now - lastFetchTime > 30000) {
+                    lastFetchTime = now
                     refresh()
                 }
             }
-            window.addEventListener('visibilitychange', () => {
-                if (document.visibilityState === 'visible') {
-                    debouncedRefresh()
-                }
-            })
-            window.addEventListener('focus', debouncedRefresh)
+        }
+
+        onMounted(() => {
+            document.addEventListener('visibilitychange', handleVisibility)
+        })
+
+        onUnmounted(() => {
+            document.removeEventListener('visibilitychange', handleVisibility)
         })
     }
 
