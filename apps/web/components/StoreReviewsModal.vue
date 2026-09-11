@@ -7,8 +7,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Info,
-  Heart,
-  Share2
+  Heart
 } from 'lucide-vue-next'
 
 const props = defineProps<{
@@ -168,19 +167,6 @@ const displayedComments = computed(() => {
   }
   return list
 })
-
-const handleShare = async () => {
-  if (typeof navigator !== 'undefined' && navigator.share) {
-    try {
-      await navigator.share({
-        title: props.storeName || 'Avaliações da Loja',
-        url: window.location.href
-      })
-    } catch {
-      // cancelado pelo usuário
-    }
-  }
-}
 </script>
 
 <template>
@@ -198,8 +184,8 @@ const handleShare = async () => {
         class="bg-white text-slate-800 w-full h-full sm:h-auto sm:max-h-[92vh] sm:max-w-lg flex flex-col overflow-hidden sm:rounded-3xl shadow-2xl transition-all"
         @click.stop
       >
-        <!-- Top Bar com Botão Voltar e Ações -->
-        <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white sticky top-0 z-20">
+        <!-- Top Bar com Botão Voltar -->
+        <div class="px-4 py-3 border-b border-slate-100 flex items-center shrink-0 bg-white sticky top-0 z-20">
           <button
             @click="emit('close')"
             class="p-2 -ml-2 rounded-full text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
@@ -207,22 +193,6 @@ const handleShare = async () => {
           >
             <ChevronLeft class="w-6 h-6 text-slate-800" />
           </button>
-
-          <div class="flex items-center gap-2">
-            <button
-              @click="handleShare"
-              class="p-2 rounded-full text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-              aria-label="Compartilhar"
-            >
-              <Share2 class="w-5 h-5" />
-            </button>
-            <button
-              class="p-2 rounded-full text-slate-600 hover:bg-slate-100 hover:text-red-500 transition-colors cursor-pointer"
-              aria-label="Favoritar"
-            >
-              <Heart class="w-5 h-5" />
-            </button>
-          </div>
         </div>
 
         <!-- Conteúdo com Rolagem -->
