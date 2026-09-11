@@ -86,9 +86,6 @@
       v-if="effectiveTenant"
       :is-open="isInfoOpen"
       :tenant="effectiveTenant"
-      :is-open-now="isOpen"
-      :status-text="statusText"
-      :theme="effectiveTenant.theme"
       @close="isInfoOpen = false"
     />
 
