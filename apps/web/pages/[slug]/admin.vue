@@ -1,50 +1,40 @@
 <!-- pages/[slug]/admin.vue -->
 <template>
-  <ClientOnly>
-    <div class="min-h-screen bg-slate-950 text-slate-100 font-sans pb-20 selection:bg-emerald-500 selection:text-white">
-      <!-- Toast de Sucesso Flutuante Global do Painel -->
-      <Transition
-        enter-active-class="transform ease-out duration-300 transition"
-        enter-from-class="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
-        enter-to-class="translate-y-0 opacity-100 sm:translate-x-0"
-        leave-active-class="transition ease-in duration-200"
-        leave-from-class="opacity-100"
-        leave-to-class="opacity-0"
-      >
-        <div
-          v-if="adminToastMsg"
-          class="fixed bottom-6 right-6 z-50 bg-emerald-500 text-slate-950 px-4 py-3 rounded-2xl shadow-2xl font-bold text-xs flex items-center gap-2 border border-emerald-400"
-        >
-          <span>✓</span>
-          <span>{{ adminToastMsg }}</span>
-        </div>
-      </Transition>
-
-      <!-- 1. Tela de Login por PIN de 4 Dígitos -->
+  <div class="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500 selection:text-white">
+    <ClientOnly>
+      <!-- 1. Tela de Login por PIN -->
       <AdminLoginCard
         v-if="!isAuthenticated"
-        :tenant-name="tenant?.name"
         :error-message="errorMessage"
+        :slug="slug"
         @login="handleLogin"
       />
 
-      <!-- 2. Painel Operacional Logado -->
-      <div v-else class="max-w-4xl mx-auto">
+      <!-- 2. Painel Operacional Ativo -->
+      <div v-else class="max-w-2xl mx-auto pb-24">
         <!-- Header Superior Fixo -->
         <AdminTopHeader
-          :tenant-name="tenant?.name"
+          :store-name="tenant?.name"
+          :is-emergency-closed="isEmergencyClosed"
+          :is-health-store="isHealthStore"
+          :is-service-store="isServiceStore"
           :slug="slug"
           @logout="logout"
         />
 
-        <!-- Barra de Navegação Horizontal das Abas -->
+        <!-- Toast de Notificação Rápida -->
+        <div v-if="adminToastMsg" class="sticky top-16 z-30 mx-4 mt-2 p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold text-center shadow-lg animate-in fade-in duration-150">
+          {{ adminToastMsg }}
+        </div>
+
+        <!-- Navegação em Abas Operacionais com Rolagem e Setas Desktop/Mobile -->
         <AdminTabsNav
-          v-model="activeTab"
+          v-model:active-tab="activeTab"
           :is-service-store="isServiceStore"
           :is-health-store="isHealthStore"
         />
 
-        <!-- ABA 1: Catálogo & Preços em Tempo Real -->
+        <!-- ABA 1: Catálogo e Serviços (Pausa, Criação, Exclusão e Preços) -->
         <AdminCatalogTab
           v-if="activeTab === 'catalog'"
           :categories="categories"
@@ -61,61 +51,64 @@
         <AdminAgendaTab
           v-else-if="activeTab === 'agenda' && isServiceStore"
           :is-health-store="isHealthStore"
-          :professionals="professionals"
-          :blocked-slots="localOverrides.blockedSlots || []"
-          @open-create-prof="openCreateProfModal"
-          @toggle-prof="toggleProf"
-          @days-change="handleProfDaysChange"
-          @hours-change="handleProfHoursChange"
-          @lunch-change="handleProfLunchChange"
+          :professionals-list="professionalsList"
+          v-model:selected-agenda-date="selectedAgendaDate"
+          :sample-slots="sampleSlots"
+          :is-slot-blocked="isSlotBlocked"
+          @create-prof="openCreateProfModal"
+          @toggle-prof-avail="handleProfAvailabilityToggle"
+          @toggle-prof-day="handleProfDayToggle"
+          @change-prof-hours="handleProfWorkHoursChange"
+          @change-prof-lunch="handleProfLunchChange"
           @delete-prof="handleDeleteProf"
-          @toggle-slot="handleToggleSlot"
+          @toggle-slot="handleSlotToggle"
         />
 
         <!-- ABA 3: Pix & Contato -->
         <AdminPixContactTab
           v-else-if="activeTab === 'pix_contact'"
-          v-model:pix-form="pixForm"
-          v-model:contact-form="contactForm"
+          :pix-config-input="pixConfigInput"
+          :contact-input="contactInput"
           @save-pix="savePixConfig"
           @save-contact="saveContactConfig"
         />
 
-        <!-- ABA 4: Horários & Emergência -->
+        <!-- ABA 4: Horários & Pausa Geral -->
         <AdminHoursTab
           v-else-if="activeTab === 'hours'"
-          v-model:schedule-form="scheduleForm"
-          v-model:emergency-closed="emergencyClosed"
-          v-model:emergency-message="emergencyMessage"
-          @save="saveSchedule"
+          :is-emergency-closed="isEmergencyClosed"
+          :weekly-days-config="weeklyDaysConfig"
+          :schedule-success-msg="scheduleSuccessMsg"
+          @toggle-emergency="toggleEmergencyPause"
+          @toggle-day-closed="toggleDayClosed"
+          @save-schedule="saveWeeklySchedule"
         />
 
         <!-- ABA 5: Delivery & Taxas -->
         <AdminDeliveryTab
-          v-else-if="activeTab === 'delivery'"
-          v-model:delivery-fee="deliveryFeeInput"
-          v-model:min-order="minOrderInput"
-          v-model:estimated-time="estimatedTimeInput"
-          @save="saveDeliveryConfig"
+          v-else-if="activeTab === 'delivery' && !isServiceStore"
+          v-model:delivery-fee-input="deliveryFeeInput"
+          v-model:min-order-input="minOrderInput"
+          v-model:estimated-time-input="estimatedTimeInput"
+          @save-delivery="saveDeliveryConfig"
         />
 
-        <!-- ABA 6: Comunicado Oficial da Loja -->
+        <!-- ABA 6: Comunicado Oficial -->
         <AdminAnnouncementTab
           v-else-if="activeTab === 'announcement'"
-          v-model:enabled="announcementEnabled"
-          v-model:message="announcementMessage"
-          @save="saveAnnouncementConfig"
+          v-model:announcement-enabled="announcementEnabled"
+          v-model:announcement-message="announcementMessage"
+          @save-announcement="saveAnnouncementConfig"
         />
 
-        <!-- ABA 7: Segurança & PIN de Acesso -->
+        <!-- ABA 7: Segurança e PIN -->
         <AdminSecurityTab
           v-else-if="activeTab === 'security'"
-          :success-message="pinSuccessMsg"
-          :error-message="errorMessage"
+          :pin-success-msg="pinSuccessMsg"
           @save-pin="saveNewPin"
         />
 
-        <!-- MODAIS DO PAINEL ADMIN -->
+        <!-- Modais Operacionais -->
         <AdminPriceModal
           :is-open="isPriceModalOpen"
           :product="editingProduct"
@@ -146,15 +139,8 @@
           @toggle-option="toggleOptionStatus"
         />
       </div>
-
-      <!-- Fallback SSR / Loading -->
-      <template #fallback>
-        <div class="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-          <div class="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
-        </div>
-      </template>
-    </div>
-  </ClientOnly>
+    </ClientOnly>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -189,7 +175,6 @@ const {
   logout,
   changePin,
   getOverrides,
-  saveOverrides,
   toggleProductAvailability,
   updateProductPrice,
   createProduct,
@@ -358,26 +343,43 @@ const isHealthStore = computed(() => {
   return tenant.value?.businessCategory === 'pro' || slug.value === 'clinica-sorriso'
 })
 
-const professionals = computed(() => {
+const isEmergencyClosed = computed(() => {
+  return Boolean(localOverrides.value?.emergency?.isClosed)
+})
+
+const professionalsList = computed(() => {
   return (tenant.value?.professionals || []) as any[]
 })
 
-function toggleProf(profId: string, isAvailable: boolean) {
-  toggleProfessionalAvailability(profId, isAvailable)
+const selectedAgendaDate = ref(new Date().toISOString().split('T')[0])
+const sampleSlots = ref(['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'])
+
+function isSlotBlocked(slot: string): boolean {
+  const blocked = localOverrides.value?.blockedSlots || []
+  return blocked.some(b => b.date === selectedAgendaDate.value && b.time === slot)
+}
+
+function handleProfAvailabilityToggle(profId: string, currentAvailable: boolean, name: string) {
+  toggleProfessionalAvailability(profId, !currentAvailable)
+  refreshLocalOverrides()
+  showToast(`Status de ${name} atualizado!`)
+}
+
+function handleProfDayToggle(profId: string, dayIndex: number, name: string) {
+  const currentDays = localOverrides.value?.professionals?.[profId]?.availableDays || [1, 2, 3, 4, 5]
+  const updatedDays = currentDays.includes(dayIndex)
+    ? currentDays.filter(d => d !== dayIndex)
+    : [...currentDays, dayIndex]
+  updateProfessionalDays(profId, updatedDays)
   refreshLocalOverrides()
 }
 
-function handleProfDaysChange(profId: string, availableDays: number[]) {
-  updateProfessionalDays(profId, availableDays)
-  refreshLocalOverrides()
-}
-
-function handleProfHoursChange(profId: string, workHours: { start: string; end: string }) {
+function handleProfWorkHoursChange(profId: string, workHours: { start: string; end: string }, name: string) {
   updateProfessionalHours(profId, workHours)
   refreshLocalOverrides()
 }
 
-function handleProfLunchChange(profId: string, lunchBreak: { start: string; end: string; enabled: boolean }) {
+function handleProfLunchChange(profId: string, lunchBreak: { start: string; end: string; enabled: boolean }, name: string) {
   updateProfessionalLunch(profId, lunchBreak)
   refreshLocalOverrides()
 }
@@ -415,92 +417,114 @@ function handleDeleteProf(profId: string, profName: string) {
 }
 
 // 7. Bloqueio de Horários na Agenda
-function handleToggleSlot(date: string, time: string) {
+function handleSlotToggle(date: string, time: string) {
   const isBlocked = toggleBlockSlot(date, time)
   refreshLocalOverrides()
   showToast(isBlocked ? `Horário ${time} bloqueado!` : `Horário ${time} liberado!`)
 }
 
 // 8. Configurações Pix & Contato
-const pixForm = ref({
+const pixConfigInput = ref({
   keyType: 'phone' as 'cpf' | 'cnpj' | 'phone' | 'email' | 'random',
   pixKey: '',
   beneficiary: '',
-  city: '',
-  enabled: true
+  city: ''
 })
 
-const contactForm = ref({
+const contactInput = ref({
   whatsapp: '',
-  phone: '',
   instagram: ''
 })
 
 function loadPixAndContactFromOverrides() {
   const ov = localOverrides.value || {}
   const basePix = tenant.value?.pixConfig || (tenant.value as any)?.pix || {}
-  pixForm.value = {
+  pixConfigInput.value = {
     keyType: ov.pix?.keyType || basePix.keyType || 'phone',
     pixKey: ov.pix?.pixKey || basePix.key || basePix.pixKey || '',
     beneficiary: ov.pix?.beneficiary || basePix.beneficiary || tenant.value?.name || '',
-    city: ov.pix?.city || basePix.city || 'SAO PAULO',
-    enabled: ov.pix?.enabled ?? true
+    city: ov.pix?.city || basePix.city || 'SAO PAULO'
   }
 
-  contactForm.value = {
+  contactInput.value = {
     whatsapp: ov.contact?.whatsapp || tenant.value?.phoneWhatsApp || '',
-    phone: ov.contact?.phone || '',
     instagram: ov.contact?.instagram || (tenant.value as any)?.instagram || ''
   }
 }
 
 function savePixConfig() {
-  updatePixConfig(pixForm.value)
+  updatePixConfig(pixConfigInput.value)
   refreshLocalOverrides()
   showToast('Configurações Pix salvas com sucesso!')
 }
 
 function saveContactConfig() {
-  updateContact(contactForm.value)
+  updateContact(contactInput.value)
   refreshLocalOverrides()
   showToast('Contatos salvos com sucesso!')
 }
 
 // 9. Horários & Escala Semanal
-const scheduleForm = ref<Record<string, DaySchedule>>({})
-const emergencyClosed = ref(false)
-const emergencyMessage = ref('')
+const weeklyDaysConfig = ref<Array<{ key: string; label: string; closed: boolean; open: string; close: string }>>([])
+const scheduleSuccessMsg = ref('')
 
 function loadScheduleFromOverrides() {
   const ov = localOverrides.value || {}
   const baseHours = (tenant.value?.openingHours || {}) as Record<string, DaySchedule> & { open?: string; close?: string }
   const overrideHours = ov.openingHours || {}
-  const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']
+  const days = [
+    { key: 'monday', label: 'Segunda-feira' },
+    { key: 'tuesday', label: 'Terça-feira' },
+    { key: 'wednesday', label: 'Quarta-feira' },
+    { key: 'thursday', label: 'Quinta-feira' },
+    { key: 'friday', label: 'Sexta-feira' },
+    { key: 'saturday', label: 'Sábado' },
+    { key: 'sunday', label: 'Domingo' }
+  ]
 
-  const result: Record<string, DaySchedule> = {}
-  days.forEach(day => {
-    const dOverride = (overrideHours as any)[day]
-    const dBase = (baseHours as any)[day]
-    result[day] = {
+  weeklyDaysConfig.value = days.map(d => {
+    const dOverride = (overrideHours as any)[d.key]
+    const dBase = (baseHours as any)[d.key]
+    return {
+      key: d.key,
+      label: d.label,
       open: dOverride?.open || dBase?.open || baseHours.open || '09:00',
       close: dOverride?.close || dBase?.close || baseHours.close || '22:00',
       closed: dOverride?.closed ?? dBase?.closed ?? false
     }
   })
-
-  scheduleForm.value = result
-  emergencyClosed.value = ov.emergency?.isClosed ?? false
-  emergencyMessage.value = ov.emergency?.message || ''
 }
 
-async function saveSchedule() {
-  await updateWeeklySchedule(scheduleForm.value)
-  updateEmergency(emergencyClosed.value, emergencyMessage.value)
+function toggleEmergencyPause() {
+  const nextVal = !isEmergencyClosed.value
+  updateEmergency(nextVal, '')
+  refreshLocalOverrides()
+  showToast(nextVal ? 'Atendimento emergencial pausado!' : 'Atendimento reativado!')
+}
+
+function toggleDayClosed(day: any) {
+  day.closed = !day.closed
+}
+
+async function saveWeeklySchedule() {
+  const schedule: Record<string, DaySchedule> = {}
+  weeklyDaysConfig.value.forEach(d => {
+    schedule[d.key] = {
+      open: d.open,
+      close: d.close,
+      closed: d.closed
+    }
+  })
+  await updateWeeklySchedule(schedule)
   refreshLocalOverrides()
   if (typeof refresh === 'function') {
     await refresh()
   }
+  scheduleSuccessMsg.value = 'Horários atualizados com sucesso!'
   showToast('Horários de funcionamento atualizados!')
+  setTimeout(() => {
+    scheduleSuccessMsg.value = ''
+  }, 3000)
 }
 
 // 10. Delivery & Taxas
