@@ -50,7 +50,7 @@ export class TenantController {
     @Param('slug') slug: string,
     @Body() body: MerchantLoginInput,
   ) {
-    return this.authenticateMerchantUseCase.execute(slug, body.pin);
+    return this.authenticateMerchantUseCase.execute({ slug, pin: body.pin });
   }
 
   @Post(':slug/hours')
