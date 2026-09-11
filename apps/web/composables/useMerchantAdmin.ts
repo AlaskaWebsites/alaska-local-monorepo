@@ -61,9 +61,16 @@ export interface TenantOverrides {
 function getApiBaseUrl(): string {
   try {
     const config = typeof useRuntimeConfig === 'function' ? useRuntimeConfig() : null
-    return (config?.public?.apiBaseUrl as string) || 'http://localhost:3333/api/v1'
+    const url = (config?.public?.apiBaseUrl as string)
+    if (url && !url.includes('localhost')) return url
+    if (typeof window !== 'undefined') {
+      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        return 'https://alaska-local-api.onrender.com/api/v1'
+      }
+    }
+    return url || 'https://alaska-local-api.onrender.com/api/v1'
   } catch {
-    return 'http://localhost:3333/api/v1'
+    return 'https://alaska-local-api.onrender.com/api/v1'
   }
 }
 
