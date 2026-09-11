@@ -5,7 +5,7 @@ import {
   UpdateProductSchema,
   type ToggleProductAvailabilityDto,
   type UpdateProductDto
-} from '@alaska/contracts/catalog'
+} from '@alaska/contracts'
 import { ZodValidationPipe } from '../pipes/zod-validation.pipe'
 import { ToggleProductAvailabilityUseCase } from '@core/application/use-cases/toggle-product-availability.use-case'
 import { UpdateProductUseCase } from '@core/application/use-cases/update-product.use-case'
@@ -66,7 +66,7 @@ export class ProductController {
       data: {
         id: product.id,
         name: product.name,
-        priceCents: product.price.cents,
+        priceCents: product.price.inCents,
         isAvailable: product.isAvailable
       }
     }

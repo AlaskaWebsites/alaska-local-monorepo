@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { ITenantRepository } from '../../../core/application/ports/tenant.repository.port';
 import { Tenant } from '../../../core/domain/entities/tenant.entity';
-import { PostgresService } from '../postgres.service';
+import { PostgresService } from './postgres.service';
 import { TenantMapper } from './mappers/tenant.mapper';
 import { SEED_TENANTS } from '../in-memory/seed-data';
 
@@ -136,6 +136,10 @@ export class PostgresTenantRepository implements ITenantRepository {
         row.updated_at,
       ],
     );
+  }
+
+  async update(tenant: Tenant): Promise<void> {
+    await this.save(tenant);
   }
 
   async listAllActive(): Promise<Tenant[]> {
