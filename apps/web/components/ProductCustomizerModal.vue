@@ -56,7 +56,11 @@ const pausedOptionIds = computed<string[]>(() => {
   return ov.pausedOptionIds || []
 })
 
-function isOptionPaused(optionId: string): boolean {
+function isOptionPaused(opt: any): boolean {
+  const optionId = typeof opt === 'string' ? opt : opt?.id
+  if (typeof opt === 'object' && opt !== null) {
+    if (opt.isAvailable === false || opt.available === false) return true
+  }
   return pausedOptionIds.value.includes(optionId)
 }
 
@@ -87,7 +91,7 @@ function isOptionSelected(groupId: string, optionId: string): boolean {
 }
 
 function toggleOption(group: any, option: any) {
-  if (isOptionPaused(option.id)) {
+  if (isOptionPaused(option)) {
     return // Bloqueia seleção de opcional esgotado
   }
 
@@ -136,7 +140,7 @@ const unitPrice = computed(() => {
   props.product.optionGroups.forEach(group => {
     const selectedIds = selectedOptions.value[group.id] || []
     group.options.forEach(opt => {
-      if (selectedIds.includes(opt.id) && !isOptionPaused(opt.id)) {
+      if (selectedIds.includes(opt.id) && !isOptionPaused(opt)) {
         total += Number(opt.price || 0)
       }
     })
@@ -171,7 +175,7 @@ function handleAddToCart() {
     props.product.optionGroups.forEach(group => {
       const selectedIds = selectedOptions.value[group.id] || []
       group.options.forEach(opt => {
-        if (selectedIds.includes(opt.id) && !isOptionPaused(opt.id)) {
+        if (selectedIds.includes(opt.id) && !isOptionPaused(opt)) {
           flattenedOptions.push({
             id: opt.id,
             name: opt.name,
@@ -281,7 +285,7 @@ function handleAddToCart() {
                   @click="toggleOption(group, opt)"
                   class="p-3 rounded-xl border transition-all flex items-center justify-between select-none"
                   :class="[
-                    isOptionPaused(opt.id)
+                    isOptionPaused(opt)
                       ? 'opacity-40 bg-slate-100 border-slate-200 cursor-not-allowed'
                       : isOptionSelected(group.id, opt.id)
                         ? 'bg-emerald-50 border-emerald-300 text-slate-900 shadow-2xs cursor-pointer'
@@ -293,29 +297,29 @@ function handleAddToCart() {
                       class="w-4 h-4 rounded-md flex items-center justify-center border text-[10px] transition-colors"
                       :class="[
                         group.max === 1 ? 'rounded-full' : 'rounded-md',
-                        isOptionPaused(opt.id)
+                        isOptionPaused(opt)
                           ? 'border-slate-300 bg-slate-200'
                           : isOptionSelected(group.id, opt.id)
                             ? 'bg-emerald-600 border-emerald-600 text-white'
                             : 'border-slate-300 bg-white'
                       ]"
                     >
-                      <Check v-if="isOptionSelected(group.id, opt.id) && !isOptionPaused(opt.id)" class="w-3 h-3 stroke-[3]" />
+                      <Check v-if="isOptionSelected(group.id, opt.id) && !isOptionPaused(opt)" class="w-3 h-3 stroke-[3]" />
                     </div>
 
-                    <span class="text-xs font-semibold truncate" :class="{ 'line-through': isOptionPaused(opt.id) }">
+                    <span class="text-xs font-semibold truncate" :class="{ 'line-through': isOptionPaused(opt) }">
                       {{ opt.name }}
                     </span>
 
                     <span
-                      v-if="isOptionPaused(opt.id)"
+                      v-if="isOptionPaused(opt)"
                       class="text-[9px] px-1.5 py-0.2 rounded font-bold uppercase bg-rose-100 text-rose-700 ml-1 shrink-0"
                     >
                       Esgotado
                     </span>
                   </div>
 
-                  <span v-if="opt.price > 0 && !isOptionPaused(opt.id)" class="text-xs font-mono font-bold text-slate-600 shrink-0">
+                  <span v-if="opt.price > 0 && !isOptionPaused(opt)" class="text-xs font-mono font-bold text-slate-600 shrink-0">
                     + {{ formatCurrency(opt.price) }}
                   </span>
                 </div>
@@ -341,34 +345,36 @@ function handleAddToCart() {
         <div class="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
           <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-1 shadow-2xs">
             <button
+              type="button"
               @click="decrementQuantity"
               :disabled="quantity <= 1"
-              class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors cursor-pointer"
+              class="p-2 rounded-lg text-slate-500 hover:text-slate-900 disabled:opacity-30 active:scale-95 transition-all cursor-pointer"
               aria-label="Diminuir quantidade"
             >
-              <Minus class="w-3.5 h-3.5" />
+              <Minus class="w-4 h-4" />
             </button>
-            <span class="w-6 text-center font-bold text-sm text-slate-900 font-mono">
+            <span class="w-7 text-center font-bold text-xs text-slate-900 font-mono">
               {{ quantity }}
             </span>
             <button
+              type="button"
               @click="incrementQuantity"
-              class="w-8 h-8 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              class="p-2 rounded-lg text-slate-500 hover:text-slate-900 active:scale-95 transition-all cursor-pointer"
               aria-label="Aumentar quantidade"
             >
-              <Plus class="w-3.5 h-3.5" />
+              <Plus class="w-4 h-4" />
             </button>
           </div>
 
           <button
+            type="button"
             @click="handleAddToCart"
             :disabled="!isValid"
-            class="flex-1 bg-slate-900 hover:bg-slate-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold py-3.5 px-4 rounded-xl text-xs flex items-center justify-between shadow-lg active:scale-[0.99] transition-all cursor-pointer"
+            class="flex-1 py-3 px-4 rounded-xl font-bold text-xs flex items-center justify-between shadow-md transition-all active:scale-[0.98] cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            :class="themeClasses.buttonPrimary"
           >
-            <span>Adicionar</span>
-            <span class="font-mono font-extrabold text-amber-400">
-              {{ formatCurrency(totalPrice) }}
-            </span>
+            <span>Adicionar à Sacola</span>
+            <span class="font-mono font-extrabold">{{ formatCurrency(totalPrice) }}</span>
           </button>
         </div>
       </div>
