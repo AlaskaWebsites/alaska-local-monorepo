@@ -22,7 +22,6 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void
-  (e: 'open-info'): void
 }>()
 
 // 1. Trava de Rolagem de Fundo (Body Scroll Lock)
@@ -47,7 +46,6 @@ onUnmounted(() => {
   }
 })
 
-const activeTab = ref<'avaliacoes' | 'informacoes'>('avaliacoes')
 const activeFilter = ref<'comentarios' | 'recentes'>('comentarios')
 
 // Array de estrelas de 5 a 1 para o gráfico de barras
@@ -183,13 +181,6 @@ const handleShare = async () => {
     }
   }
 }
-
-const handleTabClick = (tab: 'avaliacoes' | 'informacoes') => {
-  activeTab.value = tab
-  if (tab === 'informacoes') {
-    emit('open-info')
-  }
-}
 </script>
 
 <template>
@@ -261,32 +252,6 @@ const handleTabClick = (tab: 'avaliacoes' | 'informacoes') => {
                 {{ normalizedReviews.totalReviews }} avaliações
               </span>
             </div>
-          </div>
-
-          <!-- Abas Superiores (Avaliações / Informações) -->
-          <div class="flex border-b border-slate-200">
-            <button
-              @click="handleTabClick('avaliacoes')"
-              class="pb-3 px-4 text-sm font-bold transition-all relative cursor-pointer"
-              :class="activeTab === 'avaliacoes' ? 'text-red-600' : 'text-slate-500 hover:text-slate-800'"
-            >
-              Avaliações
-              <div
-                v-if="activeTab === 'avaliacoes'"
-                class="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600 rounded-full"
-              />
-            </button>
-            <button
-              @click="handleTabClick('informacoes')"
-              class="pb-3 px-4 text-sm font-bold transition-all relative cursor-pointer"
-              :class="activeTab === 'informacoes' ? 'text-red-600' : 'text-slate-500 hover:text-slate-800'"
-            >
-              Informações
-              <div
-                v-if="activeTab === 'informacoes'"
-                class="absolute bottom-0 left-0 right-0 h-0.5 bg-red-600 rounded-full"
-              />
-            </button>
           </div>
 
           <!-- SEÇÃO 1: Qualidade do Serviço -->
