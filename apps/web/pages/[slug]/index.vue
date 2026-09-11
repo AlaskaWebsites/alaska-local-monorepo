@@ -160,13 +160,12 @@ onMounted(() => {
   }
 })
 
-// 2. Objeto Tenant Efetivo e Reativo
+// 2. Objeto Tenant Efetivo e Reativo (PostgreSQL é a Fonte da Verdade)
 const effectiveTenant = computed<Tenant | null>(() => {
   if (!tenant.value) return null
   const ov = localOverrides.value || {}
   const baseHours = tenant.value.openingHours || {}
   const overrideHours = ov.openingHours || {}
-  const prodOverrides = ov.products || {}
   const deletedIds = ov.deletedProductIds || []
   const customProds = (ov.customProducts || []) as Product[]
 
@@ -175,15 +174,13 @@ const effectiveTenant = computed<Tenant | null>(() => {
     const baseProds = (cat.products || []).filter((p: any) => !deletedIds.includes(p.id))
     const matchingCustom = customProds.filter(p => p.categoryId === cat.id && !deletedIds.includes(p.id))
     const mergedProds = [...baseProds, ...matchingCustom].map(p => {
-      const o = prodOverrides[p.id]
-      const resolvedAvailable = o?.isAvailable !== undefined
-        ? Boolean(o.isAvailable)
-        : (p.isAvailable !== undefined ? Boolean(p.isAvailable) : (p.available !== undefined ? Boolean(p.available) : true))
+      // PostgreSQL é a autoridade máxima para isAvailable e price
+      const isAvailable = p.isAvailable !== undefined ? Boolean(p.isAvailable) : (p.available !== undefined ? Boolean(p.available) : true)
       return {
         ...p,
-        isAvailable: resolvedAvailable,
-        available: resolvedAvailable,
-        price: o?.price !== undefined ? o.price : p.price
+        isAvailable,
+        available: isAvailable,
+        price: p.price
       }
     })
 
@@ -206,7 +203,7 @@ const effectiveTenant = computed<Tenant | null>(() => {
   }
 
   // Mescla contatos e WhatsApp
-  const effectivePhone = ov.contact?.whatsapp || tenant.value.phoneWhatsApp
+  const effectivePhone = ov.contact?.whatsapp || tenant.value.phoneWhatsApp || (tenant.value as any).whatsapp
 
   return {
     ...tenant.value,

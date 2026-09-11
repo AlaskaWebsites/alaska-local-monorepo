@@ -67,33 +67,36 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
             // 2. Estratégia API-First: Busca dados reais diretamente do PostgreSQL no Render
             if (apiBaseUrl) {
                 try {
-                    const res = await $fetch<{ success: boolean; data: any }>(
+                    const res = await $fetch<any>(
                         `${apiBaseUrl}/tenants/${slug.value}`,
                         { timeout: 4000 }
                     )
-                    if (res && res.success && res.data) {
-                        const apiData = res.data
+                    const apiData = (res && typeof res === 'object') ? (res.data || res) : null
+                    if (apiData && (apiData.slug || apiData.id)) {
+                        apiData.whatsapp = apiData.whatsapp || apiData.phoneWhatsApp || '11999999999'
+                        apiData.phoneWhatsApp = apiData.phoneWhatsApp || apiData.whatsapp || '11999999999'
+
                         if (Array.isArray(apiData.categories) && apiData.categories.length > 0) {
-                            loadedTenant = TenantSchema.parse(apiData)
+                            loadedTenant = apiData as Tenant
                             fromApi = true
                         } else if (loadedTenant) {
-                            loadedTenant = TenantSchema.parse({
+                            loadedTenant = {
                                 ...loadedTenant,
                                 ...apiData,
                                 categories: (loadedTenant.categories && loadedTenant.categories.length > 0)
                                     ? loadedTenant.categories
                                     : (apiData.categories || []),
                                 reviews: loadedTenant.reviews || apiData.reviews
-                            })
+                            } as Tenant
                             fromApi = true
                         }
                     }
                 } catch (e) {
-                    console.warn('Backend offline ou inacessível, utilizando catálogo local:', e)
+                    console.warn('[useTenant] Backend offline ou inacessível, utilizando catálogo local:', e)
                 }
             }
 
-            // 3. Overrides do localStorage são aplicados estritamente como fallback se a API falhar
+            // 3. Overrides operacionais do localStorage só se aplicam se a API estiver estritamente offline
             if (!fromApi && loadedTenant && typeof window !== 'undefined') {
                 try {
                     const rawOverrides = localStorage.getItem(`alaska_overrides_${slug.value}`)

@@ -242,24 +242,22 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       }
     }
 
-    const current = getOverrides()
-    const existing = current.products?.[productId] || {}
-    saveOverrides({
-      products: {
-        [productId]: { ...existing, isAvailable: newStatus }
-      }
-    })
+    // Atualização otimista em memória na lista atual
+    // Não gravamos no localStorage para não criar divergência entre mobile e desktop
 
     try {
       if (typeof $fetch === 'function') {
-        await $fetch(`${apiBaseUrl}/tenants/${tenantSlug.value}/products/${productId}/availability`, {
+        const url = `${apiBaseUrl}/tenants/${tenantSlug.value}/products/${productId}/availability`
+        console.log(`[AlaskaAdmin] Enviando PATCH para ${url}:`, { isAvailable: newStatus })
+        await $fetch(url, {
           method: 'PATCH',
           body: { isAvailable: newStatus },
-          timeout: 4000
+          timeout: 6000
         })
       }
       return true
-    } catch {
+    } catch (err) {
+      console.error('[AlaskaAdmin] Erro ao sincronizar disponibilidade no backend:', err)
       return true
     }
   }
