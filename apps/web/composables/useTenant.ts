@@ -1,5 +1,5 @@
 // composables/useTenant.ts
-import { ref, computed, type Ref } from 'vue'
+import { ref, computed, onMounted, type Ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { TenantSchema, type Tenant } from '~/types/tenant'
 
@@ -74,6 +74,9 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
                             headers: {
                                 'Cache-Control': 'no-cache',
                                 'Pragma': 'no-cache'
+                            },
+                            query: {
+                                _t: Date.now()
                             }
                         }
                     )
@@ -138,6 +141,27 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
             watch: [slug]
         }
     )
+
+    // Auto-refresh inteligente com debounce quando o usuário volta para a aba no celular ou desktop
+    if (typeof window !== 'undefined') {
+        onMounted(() => {
+            let lastRefreshTime = 0
+            const debouncedRefresh = () => {
+                const now = Date.now()
+                // Limite de 2 segundos entre revalidações automáticas em foco
+                if (now - lastRefreshTime > 2000) {
+                    lastRefreshTime = now
+                    refresh()
+                }
+            }
+            window.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    debouncedRefresh()
+                }
+            })
+            window.addEventListener('focus', debouncedRefresh)
+        })
+    }
 
     return {
         tenant,
