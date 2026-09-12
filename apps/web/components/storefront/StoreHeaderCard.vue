@@ -1,5 +1,6 @@
 <!-- components/storefront/StoreHeaderCard.vue -->
 <script setup lang="ts">
+import { computed } from 'vue'
 import { Star, Clock, Calendar, MapPin, Truck, Phone } from 'lucide-vue-next'
 import { handleImageError } from '~/utils/images'
 import type { Tenant } from '~/types'
@@ -18,6 +19,18 @@ const emit = defineEmits<{
   (e: 'open-info'): void
   (e: 'open-booking'): void
 }>()
+
+const reviewsScore = computed(() => {
+  const r = (props.tenant?.reviews || {}) as any
+  const val = r.score ?? r.rating ?? r.average ?? 5.0
+  return Number(val).toFixed(1)
+})
+
+const reviewsCount = computed(() => {
+  const r = (props.tenant?.reviews || {}) as any
+  const val = r.totalReviews ?? r.count ?? r.total ?? 0
+  return Number(val)
+})
 </script>
 
 <template>
@@ -64,8 +77,8 @@ const emit = defineEmits<{
           aria-label="Abrir avaliações da loja"
         >
           <Star class="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-          <span class="font-bold">{{ (tenant.reviews?.score || 5).toFixed(1) }}</span>
-          <span class="text-slate-500">({{ tenant.reviews?.totalReviews || 0 }})</span>
+          <span class="font-bold">{{ reviewsScore }}</span>
+          <span class="text-slate-500">({{ reviewsCount }})</span>
         </button>
 
         <!-- Status Aberto/Fechado -->
