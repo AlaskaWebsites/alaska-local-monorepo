@@ -53,6 +53,7 @@
           v-else-if="activeTab === 'agenda' && isServiceStore"
           :is-health-store="isHealthStore"
           :professionals-list="professionalsList"
+          :store-close-hour="storeCloseHour"
           v-model:selected-agenda-date="selectedAgendaDate"
           :sample-slots="sampleSlots"
           :is-slot-blocked="isSlotBlocked"
@@ -351,6 +352,11 @@ const isHealthStore = computed(() => {
 
 const isEmergencyClosed = computed(() => {
   return Boolean(localOverrides.value?.emergency?.isClosed)
+})
+
+const storeCloseHour = computed(() => {
+  const h = tenant.value?.openingHours
+  return h?.close || '19:00'
 })
 
 const professionalsList = computed(() => {
