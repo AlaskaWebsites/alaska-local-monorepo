@@ -54,9 +54,11 @@
           :is-health-store="isHealthStore"
           :professionals-list="professionalsList"
           :store-close-hour="storeCloseHour"
-          v-model:selected-agenda-date="selectedAgendaDate"
+          :selected-agenda-date="selectedAgendaDate"
           :sample-slots="sampleSlots"
           :is-slot-blocked="isSlotBlocked"
+          @update:selected-agenda-date="selectedAgendaDate = $event"
+          @update:selectedAgendaDate="selectedAgendaDate = $event"
           @create-prof="openCreateProfModal"
           @toggle-prof-avail="handleProfAvailabilityToggle"
           @toggle-prof-day="handleProfDayToggle"
@@ -407,9 +409,11 @@ const professionalsList = computed(() => {
 const selectedAgendaDate = ref(new Date().toISOString().split('T')[0])
 const sampleSlots = ref(['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '17:00'])
 
-function isSlotBlocked(slot: string): boolean {
+function isSlotBlocked(dateOrSlot: string, maybeTime?: string): boolean {
+  const date = maybeTime ? dateOrSlot : selectedAgendaDate.value
+  const time = maybeTime || dateOrSlot
   const blocked = localOverrides.value?.blockedSlots || []
-  return blocked.some((b: any) => b.date === selectedAgendaDate.value && b.time === slot)
+  return blocked.some((b: any) => b.date === date && b.time === time)
 }
 
 function handleProfAvailabilityToggle(profId: string, currentAvailable: boolean, name: string) {
@@ -459,10 +463,12 @@ function handleDeleteProf(profId: string, profName: string) {
 }
 
 // 7. Bloqueio de Horários na Agenda
-function handleSlotToggle(date: string, time: string) {
+function handleSlotToggle(dateOrSlot: string, maybeTime?: string) {
+  const date = maybeTime ? dateOrSlot : selectedAgendaDate.value
+  const time = maybeTime || dateOrSlot
   const isBlocked = toggleBlockSlot(date, time)
   refreshLocalOverrides()
-  showToast(isBlocked ? `Horário ${time} bloqueado!` : `Horário ${time} liberado!`)
+  showToast(isBlocked ? `Horário ${time} bloqueado na data!` : `Horário ${time} liberado na data!`)
 }
 
 // 8. Configurações Pix & Contato
