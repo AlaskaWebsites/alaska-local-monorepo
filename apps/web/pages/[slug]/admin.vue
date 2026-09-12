@@ -38,16 +38,17 @@
         <AdminCatalogTab
           v-if="activeTab === 'catalog'"
           :categories="categories"
+          :is-service-store="isServiceStore"
           :is-product-available="isProductAvailable"
           :get-product-price="getProductPrice"
-          @create-product="openCreateProductModal"
+          @open-price-modal="openPriceModal"
           @toggle-product="toggleProduct"
-          @edit-price="openPriceModal"
-          @manage-options="openOptionsModal"
           @delete-product="handleDeleteProduct"
+          @open-options="openOptionsModal"
+          @open-create-product="isCreateProductOpen = true"
         />
 
-        <!-- ABA 2: Equipe & Agenda (Exclusivo Hub & Pro) -->
+        <!-- ABA 2: Especialistas e Agenda (Hub & Pro) -->
         <AdminAgendaTab
           v-else-if="activeTab === 'agenda' && isServiceStore"
           :is-health-store="isHealthStore"
@@ -139,6 +140,13 @@
           @toggle-option="toggleOptionStatus"
         />
       </div>
+
+      <!-- Fallback SSR / Loading -->
+      <template #fallback>
+        <div class="min-h-screen flex items-center justify-center p-4">
+          <div class="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </template>
     </ClientOnly>
   </div>
 </template>
@@ -162,10 +170,10 @@ import AdminPriceModal from '~/components/admin/modals/AdminPriceModal.vue'
 import AdminCreateProductModal from '~/components/admin/modals/AdminCreateProductModal.vue'
 import AdminCreateProfModal from '~/components/admin/modals/AdminCreateProfModal.vue'
 import AdminOptionsModal from '~/components/admin/modals/AdminOptionsModal.vue'
-import type { Product, Category } from '@alaska/contracts'
+import type { Product, Category } from '~/types'
 
 const route = useRoute()
-const slug = computed(() => String(route.params.slug || ''))
+const slug = computed(() => String(route.params.slug || 'hamburgueria-x').toLowerCase())
 
 const { tenant, refresh } = useTenant(slug)
 const {
@@ -211,15 +219,16 @@ function refreshLocalOverrides() {
 }
 
 onMounted(async () => {
-  if (slug.value && typeof refresh === 'function') {
-    await refresh()
-  }
   refreshLocalOverrides()
-  loadScheduleFromOverrides()
-  loadPixAndContactFromOverrides()
   if (typeof window !== 'undefined') {
     window.addEventListener('storage', refreshLocalOverrides)
     window.addEventListener('alaska_overrides_updated', refreshLocalOverrides)
+  }
+  loadScheduleFromOverrides()
+  loadPixAndContactFromOverrides()
+  if (tenant.value) {
+    loadScheduleFromOverrides()
+    loadPixAndContactFromOverrides()
   }
 })
 
@@ -286,19 +295,16 @@ async function confirmPriceEdit(newPrice: number) {
 // 3. Criação e Exclusão de Produtos
 const isCreateProductOpen = ref(false)
 
-function openCreateProductModal() {
-  isCreateProductOpen.value = true
-}
-
 function handleCreateProductSubmit(form: { name: string; price: number; categoryId: string; description: string }) {
-  if (!form.name || !form.price || !form.categoryId) {
-    showToast('⚠️ Preencha nome, preço e categoria!')
-    return
-  }
-  createProduct(form)
+  createProduct({
+    name: form.name,
+    price: form.price,
+    categoryId: form.categoryId,
+    description: form.description
+  })
   refreshLocalOverrides()
   isCreateProductOpen.value = false
-  showToast(`✅ ${form.name} cadastrado com sucesso!`)
+  showToast(`✅ ${form.name} adicionado ao cardápio!`)
 }
 
 function handleDeleteProduct(productId: string, productName: string) {
@@ -348,7 +354,48 @@ const isEmergencyClosed = computed(() => {
 })
 
 const professionalsList = computed(() => {
-  return (tenant.value?.professionals || []) as any[]
+  const baseProfs = (tenant.value?.professionals || []) as any[]
+  const overrides = localOverrides.value || {}
+  const profOverrides = overrides.professionals || {}
+  const deletedProfIds = overrides.deletedProfessionalIds || []
+  const customProfs = overrides.customProfessionals || []
+
+  const filteredBase = baseProfs.filter((p: any) => !deletedProfIds.includes(p.id))
+  const allProfs = [...filteredBase, ...customProfs.filter((p: any) => !deletedProfIds.includes(p.id))]
+
+  return allProfs.map((p: any) => {
+    const ov = profOverrides[p.id] || {}
+    const isAvail = ov.isAvailable !== undefined
+      ? Boolean(ov.isAvailable)
+      : (p.isAvailable !== undefined ? Boolean(p.isAvailable) : true)
+
+    const days = ov.availableDays
+      ? [...ov.availableDays]
+      : (p.availableDays ? [...p.availableDays] : [1, 2, 3, 4, 5, 6])
+
+    const startHour = ov.workHours?.start || p.workHours?.start || '08:00'
+    const endHour = ov.workHours?.end || p.workHours?.end || '18:00'
+    const lunchStart = ov.lunchBreak?.start || p.lunchBreak?.start || '12:00'
+    const lunchEnd = ov.lunchBreak?.end || p.lunchBreak?.end || '13:00'
+    const lunchEnabled = ov.lunchBreak?.enabled !== undefined
+      ? Boolean(ov.lunchBreak.enabled)
+      : (p.lunchBreak?.enabled !== undefined ? Boolean(p.lunchBreak.enabled) : true)
+
+    return {
+      ...p,
+      isAvailable: isAvail,
+      availableDays: days,
+      workHours: {
+        start: startHour,
+        end: endHour
+      },
+      lunchBreak: {
+        start: lunchStart,
+        end: lunchEnd,
+        enabled: lunchEnabled
+      }
+    }
+  })
 })
 
 const selectedAgendaDate = ref(new Date().toISOString().split('T')[0])
@@ -356,56 +403,45 @@ const sampleSlots = ref(['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '
 
 function isSlotBlocked(slot: string): boolean {
   const blocked = localOverrides.value?.blockedSlots || []
-  return blocked.some(b => b.date === selectedAgendaDate.value && b.time === slot)
+  return blocked.some((b: any) => b.date === selectedAgendaDate.value && b.time === slot)
 }
 
 function handleProfAvailabilityToggle(profId: string, currentAvailable: boolean, name: string) {
-  toggleProfessionalAvailability(profId, !currentAvailable)
+  const newStatus = !currentAvailable
+  toggleProfessionalAvailability(profId, newStatus)
   refreshLocalOverrides()
-  showToast(`Status de ${name} atualizado!`)
+  showToast(newStatus ? `Status de ${name}: Atendendo!` : `Status de ${name}: De Folga Hoje!`)
 }
 
 function handleProfDayToggle(profId: string, dayIndex: number, name: string) {
-  const currentDays = localOverrides.value?.professionals?.[profId]?.availableDays || [1, 2, 3, 4, 5]
-  const updatedDays = currentDays.includes(dayIndex)
-    ? currentDays.filter(d => d !== dayIndex)
-    : [...currentDays, dayIndex]
-  updateProfessionalDays(profId, updatedDays)
-  refreshLocalOverrides()
-}
-
-function handleProfWorkHoursChange(profId: string, workHours: { start: string; end: string }, name: string) {
-  updateProfessionalHours(profId, workHours)
-  refreshLocalOverrides()
-}
-
-function handleProfLunchChange(profId: string, lunchBreak: { start: string; end: string; enabled: boolean }, name: string) {
-  updateProfessionalLunch(profId, lunchBreak)
-  refreshLocalOverrides()
-}
-
-// 6. Criação e Exclusão de Especialistas
-const isCreateProfOpen = ref(false)
-
-function openCreateProfModal() {
-  isCreateProfOpen.value = true
-}
-
-function handleCreateProfSubmit(form: { name: string; role: string }) {
-  if (!form.name || !form.role) {
-    showToast('⚠️ Preencha nome e especialidade!')
-    return
+  const prof = professionalsList.value.find((p) => p.id === profId)
+  if (!prof) return
+  let days = [...(prof.availableDays || [])]
+  if (days.includes(dayIndex)) {
+    days = days.filter((d) => d !== dayIndex)
+  } else {
+    days.push(dayIndex)
   }
-  createProfessional({
-    name: form.name,
-    role: form.role,
-    availableDays: [1, 2, 3, 4, 5],
-    workHours: { start: '08:00', end: '18:00' },
-    lunchBreak: { start: '12:00', end: '13:00', enabled: true }
-  })
+  updateProfessionalDays(profId, days.sort())
   refreshLocalOverrides()
-  isCreateProfOpen.value = false
-  showToast(`✅ ${form.name} cadastrado na equipe!`)
+  showToast(`Escala semanal de ${name} atualizada!`)
+}
+
+function handleProfWorkHoursChange(profId: string, workHours: any, name: string) {
+  const start = typeof workHours === 'object' && workHours ? workHours.start : workHours
+  const end = typeof workHours === 'object' && workHours ? workHours.end : ''
+  updateProfessionalHours(profId, start, end)
+  refreshLocalOverrides()
+  showToast(`Horário de ${name} salvo: ${start} às ${end}!`)
+}
+
+function handleProfLunchChange(profId: string, lunchBreak: any, name: string) {
+  const start = typeof lunchBreak === 'object' && lunchBreak ? lunchBreak.start : lunchBreak
+  const end = typeof lunchBreak === 'object' && lunchBreak ? lunchBreak.end : ''
+  const enabled = typeof lunchBreak === 'object' && lunchBreak ? Boolean(lunchBreak.enabled) : true
+  updateProfessionalLunch(profId, start, end, enabled)
+  refreshLocalOverrides()
+  showToast(`Almoço de ${name} atualizado!`)
 }
 
 function handleDeleteProf(profId: string, profName: string) {
@@ -464,7 +500,7 @@ function saveContactConfig() {
   showToast('Contatos salvos com sucesso!')
 }
 
-// 9. Horários & Escala Semanal
+// 9. Horários & Pausa Geral
 const weeklyDaysConfig = ref<Array<{ key: string; label: string; closed: boolean; open: string; close: string }>>([])
 const scheduleSuccessMsg = ref('')
 
@@ -552,7 +588,8 @@ function saveAnnouncementConfig() {
 const pinSuccessMsg = ref('')
 
 function saveNewPin(newPin: string) {
-  if (changePin(newPin)) {
+  const success = changePin(newPin)
+  if (success) {
     pinSuccessMsg.value = 'PIN de acesso atualizado com sucesso!'
     refreshLocalOverrides()
     showToast('PIN atualizado com sucesso!')
@@ -560,5 +597,22 @@ function saveNewPin(newPin: string) {
       pinSuccessMsg.value = ''
     }, 3000)
   }
+}
+
+function openCreateProfModal() {
+  isCreateProfOpen.value = true
+}
+
+function handleCreateProfSubmit(form: { name: string; role: string }) {
+  createProfessional({
+    name: form.name,
+    role: form.role,
+    availableDays: [1, 2, 3, 4, 5],
+    workHours: { start: '08:00', end: '18:00' },
+    lunchBreak: { start: '12:00', end: '13:00', enabled: true }
+  })
+  refreshLocalOverrides()
+  isCreateProfOpen.value = false
+  showToast(`✅ Especialista ${form.name} cadastrado!`)
 }
 </script>
