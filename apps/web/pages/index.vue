@@ -118,7 +118,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { TenantSchema } from '~/types/tenant'
-import type { Tenant, BusinessCategory } from '~/types/tenant'
+import type { Tenant, BusinessCategory, StoreReviews } from '~/types/tenant'
 import { handleImageError } from '~/utils/images'
 import { Sparkles, Star, ChevronRight } from 'lucide-vue-next'
 
@@ -128,6 +128,43 @@ const activeCategory = ref<FilterCategory>('all')
 
 const config = useRuntimeConfig()
 const apiBaseUrl = config.public?.apiBaseUrl || 'http://localhost:3333/api/v1'
+
+function resolveReviews(localReviews?: StoreReviews, apiReviews?: any): StoreReviews | undefined {
+  if (!localReviews && !apiReviews) return undefined
+  if (!localReviews) return apiReviews
+  if (!apiReviews) return localReviews
+
+  const hasLocalComments = Array.isArray(localReviews.comments) && localReviews.comments.length > 0
+  const hasApiComments = Array.isArray(apiReviews.comments) && apiReviews.comments.length > 0
+
+  const isApiGenericMock =
+    (apiReviews.count === 42 || apiReviews.totalReviews === 42) &&
+    (!hasApiComments || apiReviews.comments.length === 0)
+
+  if (isApiGenericMock && localReviews.totalReviews && localReviews.totalReviews !== 42) {
+    return {
+      ...localReviews,
+      score: localReviews.score ?? localReviews.rating ?? 4.9,
+      rating: localReviews.rating ?? localReviews.score ?? 4.9,
+      totalReviews: localReviews.totalReviews,
+      count: localReviews.count ?? localReviews.totalReviews,
+    }
+  }
+
+  return {
+    ...localReviews,
+    ...apiReviews,
+    score: apiReviews.score ?? apiReviews.rating ?? localReviews.score ?? 5.0,
+    rating: apiReviews.rating ?? apiReviews.score ?? localReviews.rating ?? 5.0,
+    totalReviews: apiReviews.totalReviews ?? apiReviews.count ?? localReviews.totalReviews ?? 0,
+    count: apiReviews.count ?? apiReviews.totalReviews ?? localReviews.count ?? 0,
+    distribution: (apiReviews.distribution && Object.keys(apiReviews.distribution).length > 0)
+      ? apiReviews.distribution
+      : localReviews.distribution,
+    comments: hasApiComments ? apiReviews.comments : (localReviews.comments || []),
+    serviceQuality: apiReviews.serviceQuality || localReviews.serviceQuality,
+  }
+}
 
 // 1. Carregamento resiliente dos arquivos JSON locais como baseline
 function loadLocalTenants(): Tenant[] {
@@ -155,7 +192,7 @@ const { data: remoteTenants } = await useAsyncData<Tenant[]>('showcase-tenants-l
         for (const item of data) {
           const local = localList.find((l) => l.slug?.toLowerCase() === item.slug?.toLowerCase() || l.id === item.id)
           const mergedData = local
-            ? { ...local, ...item, reviews: item.reviews || local.reviews }
+            ? { ...local, ...item, reviews: resolveReviews(local.reviews, item.reviews) }
             : item
           const parsed = TenantSchema.safeParse(mergedData)
           if (parsed.success) {
