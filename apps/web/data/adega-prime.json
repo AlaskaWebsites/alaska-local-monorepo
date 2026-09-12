@@ -2,15 +2,24 @@
   "slug": "adega-prime",
   "name": "Adega & Distribuidora Prime",
   "description": "Cervejas trincando, combos de destilados, gelos de sabor, carvão e conveniência com entrega rápida.",
-  "logo": "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=150&auto=format&fit=crop&q=80",
-  "banner": "https://images.unsplash.com/photo-1527061011665-3652c757a4d4?w=1200&auto=format&fit=crop&q=80",
+  "logo": "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=200&h=200&fit=crop&q=80",
+  "banner": "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200&h=400&fit=crop&q=80",
   "phoneWhatsApp": "11988887777",
   "address": "Av. Brasil, 850 - Centro",
-  "businessCategory": "menu",
-  "theme": "amber",
   "currency": "BRL",
   "deliveryFee": 7,
   "minOrderValue": 30,
+  "theme": "amber",
+  "businessCategory": "menu",
+  "category": "Bebidas & Distribuidora 24h",
+  "distance": "0,7 km",
+  "priceRange": "$$",
+  "paymentMethods": [
+    "Pix",
+    "Cartão de Crédito",
+    "Cartão de Débito",
+    "Dinheiro"
+  ],
   "openingHours": {
     "open": "00:00",
     "close": "23:59"
@@ -22,9 +31,239 @@
     "city": "SAO PAULO",
     "allowTestCent": true
   },
+  "categories": [
+    {
+      "id": "combos-kits",
+      "name": "🔥 Combos & Kits de Destilados",
+      "icon": "sparkles",
+      "products": [
+        {
+          "id": "combo-gin-tanqueray",
+          "name": "Kit Gin Tanqueray 750ml + 4 Tônicas + Gelo de Sabor",
+          "description": "1 Garrafa Gin Tanqueray London Dry 750ml, 4 Tônicas Schweppes Lata e 2 Gelos de Sabor (escolha o sabor).",
+          "price": 149.9,
+          "image": "https://images.unsplash.com/photo-1527061011665-3652c757a4d4?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "sabor-gelo-gin",
+              "title": "Escolha os 2 Gelos de Sabor",
+              "required": true,
+              "min": 1,
+              "max": 2,
+              "options": [
+                {
+                  "id": "gelo-maracuja",
+                  "name": "Gelo de Maracujá",
+                  "price": 0,
+                  "maxQuantity": 2
+                },
+                {
+                  "id": "gelo-morango",
+                  "name": "Gelo de Morango",
+                  "price": 0,
+                  "maxQuantity": 2
+                },
+                {
+                  "id": "gelo-coco",
+                  "name": "Gelo de Coco Tradicional",
+                  "price": 0,
+                  "maxQuantity": 2
+                },
+                {
+                  "id": "gelo-maca-verde",
+                  "name": "Gelo de Maçã Verde",
+                  "price": 0,
+                  "maxQuantity": 2
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "combo-whisky-redlabel",
+          "name": "Kit Whisky Red Label 1L + 4 Energéticos Red Bull",
+          "description": "1 Garrafa Johnnie Walker Red Label 1 Litro + 4 Latas de Energético Red Bull 250ml e copo descartável de 700ml.",
+          "price": 139.9,
+          "image": "https://images.unsplash.com/photo-1527281400683-1aae777175f8?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "sabor-energetico-redbull",
+              "title": "Sabor do Red Bull",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "rb-tradicional",
+                  "name": "4x Red Bull Tradicional",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "rb-tropical",
+                  "name": "4x Red Bull Tropical Edition",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "rb-melancia",
+                  "name": "4x Red Bull Melancia",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            },
+            {
+              "id": "add-gelo-coco-whisky",
+              "title": "Adicionar Gelos de Coco?",
+              "required": false,
+              "min": 0,
+              "max": 3,
+              "options": [
+                {
+                  "id": "gelo-coco-extra",
+                  "name": "Gelo de Coco Coco Leve (Unidade)",
+                  "price": 4.5,
+                  "maxQuantity": 3
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "combo-vodka-smirnoff",
+          "name": "Kit Vodka Smirnoff 998ml + 1 Energético Baly 2L",
+          "description": "1 Vodka Smirnoff 998ml + 1 Energético Baly 2 Litros (Sabor à escolha) + 2 Gelos de Coco.",
+          "price": 69.9,
+          "image": "https://images.unsplash.com/photo-1560512823-829485b8bf24?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cervejas-geladas",
+      "name": "🍺 Cervejas & Packs (Trincando)",
+      "icon": "beer",
+      "products": [
+        {
+          "id": "pack-heineken-lata",
+          "name": "Pack Cerveja Heineken 350ml (12 Latas Geladas)",
+          "description": "Pack com 12 unidades de Heineken Lager 350ml lata super geladas.",
+          "price": 68.9,
+          "image": "https://images.unsplash.com/photo-1607622750671-6cd9a99eabd1?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": [
+            {
+              "id": "temperatura-heineken",
+              "title": "Temperatura da Cerveja",
+              "required": true,
+              "min": 1,
+              "max": 1,
+              "options": [
+                {
+                  "id": "gelada",
+                  "name": "Super Gelada (Pronta para Beber)",
+                  "price": 0,
+                  "maxQuantity": 1
+                },
+                {
+                  "id": "ambiente",
+                  "name": "Temperatura Ambiente (Fechada)",
+                  "price": 0,
+                  "maxQuantity": 1
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "pack-spaten-lata",
+          "name": "Pack Cerveja Spaten Munich Helles 350ml (12 Latas)",
+          "description": "Pack com 12 unidades de Spaten Puro Malte 350ml geladas.",
+          "price": 54.9,
+          "image": "https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "corona-long-neck",
+          "name": "Cerveja Corona Extra 330ml Long Neck (Unidade Gelada)",
+          "description": "Cerveja mexicana Premium refrescante. Acompanha fatia de limão taiti.",
+          "price": 8.5,
+          "image": "https://images.unsplash.com/photo-1584225065152-4a1454aa3d4e?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "gelo-carvao-conveniencia",
+      "name": "🧊 Gelo, Carvão & Conveniência",
+      "icon": "snowflake",
+      "products": [
+        {
+          "id": "saco-gelo-cubo-5kg",
+          "name": "Saco de Gelo em Cubo 5kg Filtrado",
+          "description": "Gelo potável de alta pureza e longa duração.",
+          "price": 14.0,
+          "image": "https://images.unsplash.com/photo-1518199266791-5375a83190b7?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "gelo-sabor-coco-pote",
+          "name": "Gelo de Sabor Coco Leve 200ml (Unidade)",
+          "description": "Gelo de água de coco integral para turbinar seu whisky ou gin.",
+          "price": 4.5,
+          "image": "https://images.unsplash.com/photo-1544787219-7f47ccb76574?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "carvao-vegetal-3kg",
+          "name": "Carvão Vegetal Eucalipto 3kg",
+          "description": "Carvão de acendimento rápido, brasas duradouras para churrasco.",
+          "price": 18.0,
+          "image": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "nao-alcoolicos",
+      "name": "🥤 Energéticos & Refrigerantes",
+      "icon": "drink",
+      "products": [
+        {
+          "id": "energetico-monster-473ml",
+          "name": "Energético Monster Energy 473ml Lata Gelado",
+          "description": "Energético clássico gelado.",
+          "price": 11.9,
+          "image": "https://images.unsplash.com/photo-1622543925917-763c34d1a86e?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        },
+        {
+          "id": "coca-cola-2l",
+          "name": "Refrigerante Coca-Cola 2 Litros PET Gelada",
+          "description": "Garrafa 2 Litros gelada.",
+          "price": 12.0,
+          "image": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500&h=350&fit=crop&q=80",
+          "available": true,
+          "optionGroups": []
+        }
+      ]
+    }
+  ],
   "reviews": {
-    "rating": 5.0,
-    "count": 274,
+    "score": 4.9,
+    "rating": 4.9,
+    "totalReviews": 42,
+    "count": 42,
     "serviceQuality": {
       "level": 3,
       "experienceLabel": "Entrega rápida noturna",
@@ -32,10 +271,10 @@
       "description": "A loja receberá um nível de 1 a 5 para indicar a qualidade do serviço aos seus clientes"
     },
     "distribution": {
-      "5": 258,
-      "4": 12,
-      "3": 3,
-      "2": 1,
+      "5": 38,
+      "4": 3,
+      "3": 1,
+      "2": 0,
       "1": 0
     },
     "comments": [
@@ -76,170 +315,5 @@
         }
       }
     ]
-  },
-  "categories": [
-    {
-      "id": "cat-combos",
-      "name": "Combos & Kits de Destilados",
-      "icon": "🔥",
-      "products": [
-        {
-          "id": "prod-combo-gin",
-          "name": "Kit Gin Tanqueray 750ml + 4 Tônicas + Gelo de Sabor",
-          "description": "1 Garrafa Gin Tanqueray London Dry 750ml, 4 Latas de Tônica Schweppes Lata e 2 Gelos de Sabor Coco com Maracujá 200ml.",
-          "price": 149.9,
-          "image": "https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=500&auto=format&fit=crop&q=80",
-          "isAvailable": true,
-          "optionGroups": [
-            {
-              "id": "opt-sabores-gelo-gin",
-              "title": "Escolha o sabor do Gelo",
-              "name": "Escolha o sabor do Gelo",
-              "min": 1,
-              "max": 1,
-              "options": [
-                {
-                  "id": "gelo-maracuja",
-                  "name": "Maracujá Tropical",
-                  "price": 0
-                },
-                {
-                  "id": "gelo-coco",
-                  "name": "Água de Coco",
-                  "price": 0
-                },
-                {
-                  "id": "gelo-morango",
-                  "name": "Morango Silvestre",
-                  "price": 0
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "prod-combo-whisky",
-          "name": "Kit Whisky Red Label 1L + 4 Energéticos Red Bull",
-          "description": "1 Garrafa Johnnie Walker Red Label 1L + 4 Latas de Energético Red Bull 250ml e copo personalizado da casa.",
-          "price": 139.9,
-          "image": "https://images.unsplash.com/photo-1527061011665-3652c757a4d4?w=500&auto=format&fit=crop&q=80",
-          "isAvailable": true,
-          "optionGroups": [
-            {
-              "id": "opt-copo-whisky",
-              "title": "Acompanhamento Extra",
-              "name": "Acompanhamento Extra",
-              "min": 0,
-              "max": 1,
-              "options": [
-                {
-                  "id": "copo-acrilico-balde",
-                  "name": "Balde de Gelo Acrílico com Pegador",
-                  "price": 18
-                },
-                {
-                  "id": "pacote-bala-halls",
-                  "name": "2x Trident Menta",
-                  "price": 6
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "prod-combo-vodka",
-          "name": "Kit Vodka Smirnoff 998ml + 1 Energético Baly 2L",
-          "description": "1 Vodka Smirnoff 998ml + 1 Energético Baly 2 Litros (Sabor à escolha) + 2 Gelos de Coco.",
-          "price": 69.9,
-          "image": "https://images.unsplash.com/photo-1560512823-829485b8bf24?w=500&auto=format&fit=crop&q=80",
-          "isAvailable": true
-        }
-      ]
-    },
-    {
-      "id": "cat-cervejas",
-      "name": "Cervejas & Packs (Trincando)",
-      "icon": "🍺",
-      "products": [
-        {
-          "id": "prod-heineken-pack",
-          "name": "Pack Cerveja Heineken 350ml (12 Latas Geladas)",
-          "description": "Fardo fechado com 12 latas de 350ml. Entregue em temperatura abaixo de zero, pronta para consumo.",
-          "price": 68.9,
-          "image": "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=500&auto=format&fit=crop&q=80",
-          "isAvailable": true
-        },
-        {
-          "id": "prod-spaten-pack",
-          "name": "Pack Cerveja Spaten Munich Helles 350ml (12 Latas)",
-          "description": "Puro malte munich tradicional alemã. Pack com 12 unidades estupidamente geladas.",
-          "price": 54.9,
-          "image": "https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=500&auto=format&fit=crop&q=80",
-          "isAvailable": true
-        },
-        {
-          "id": "prod-corona-unidade",
-          "name": "Cerveja Corona Extra 330ml Long Neck (Unidade Gelada)",
-          "description": "Garrafa individual 330ml servida no ponto. Acompanha fatia de limão taiti em embalagem lacrada.",
-          "price": 8.5,
-          "image": "https://images.unsplash.com/photo-1584225064785-c62a8b43d148?w=500&auto=format&fit=crop&q=80",
-          "isAvailable": true
-        }
-      ]
-    },
-    {
-      "id": "cat-gelo-carvao",
-      "name": "Gelo, Carvão & Conveniência",
-      "icon": "🧊",
-      "products": [
-        {
-          "id": "prod-gelo-cubo",
-          "name": "Saco de Gelo em Cubo 5kg Filtrado",
-          "description": "Gelo em cubo de água filtrada, cristalino e ideal para drinks e champanheiras.",
-          "price": 14,
-          "image": "https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=500&auto=format&fit=crop&q=80",
-          "isAvailable": true
-        },
-        {
-          "id": "prod-gelo-sabor-coco",
-          "name": "Gelo de Sabor Coco Leve 200ml (Unidade)",
-          "description": "Gelo saborizado de água de coco pura para harmonizar com whisky e gin.",
-          "price": 4.5,
-          "image": "https://images.unsplash.com/photo-1544145945-f90425340c7e?w=500&auto=format&fit=crop&q=80",
-          "isAvailable": true
-        },
-        {
-          "id": "prod-carvao-3kg",
-          "name": "Saco de Carvão Vegetal Especial 3kg",
-          "description": "Carvão selecionado 100% eucalipto reflorestado, brasa duradoura e sem faíscas.",
-          "price": 19.9,
-          "image": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80",
-          "isAvailable": true
-        }
-      ]
-    },
-    {
-      "id": "cat-petiscos",
-      "name": "Salgadinhos & Petiscos Rápidos",
-      "icon": "🥜",
-      "products": [
-        {
-          "id": "prod-amendoim-japones",
-          "name": "Amendoim Japonês Crocante Dori 150g",
-          "description": "Petisco clássico com casca super crocante de shoyu e especiarias.",
-          "price": 7.5,
-          "image": "https://images.unsplash.com/photo-1599599810769-bcde5a160d32?w=500&auto=format&fit=crop&q=80",
-          "isAvailable": true
-        },
-        {
-          "id": "prod-doritos-nacho",
-          "name": "Salgadinho Doritos Queijo Nacho 140g",
-          "description": "Tortilhas crocantes de milho sabor queijo nacho.",
-          "price": 13.9,
-          "image": "https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=500&auto=format&fit=crop&q=80",
-          "isAvailable": true
-        }
-      ]
-    }
-  ]
+  }
 }
