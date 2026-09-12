@@ -19,8 +19,17 @@ const emit = defineEmits<{
   (e: 'change-prof-lunch', profId: string, lunchBreak: { start: string; end: string; enabled: boolean }, name: string): void
   (e: 'delete-prof', profId: string, profName: string): void
   (e: 'update:selectedAgendaDate', val: string): void
+  (e: 'update:selected-agenda-date', val: string): void
   (e: 'toggle-slot', date: string, time: string): void
 }>()
+
+function handleDateChange(e: Event) {
+  const target = e.target as HTMLInputElement
+  if (target && target.value) {
+    emit('update:selectedAgendaDate', target.value)
+    emit('update:selected-agenda-date', target.value)
+  }
+}
 </script>
 
 <template>
@@ -193,7 +202,7 @@ const emit = defineEmits<{
         <span>📅 Grade de Horários & Bloqueio Rápido</span>
       </h2>
       <p class="text-xs text-slate-400">
-        Selecione uma data e clique no horário para bloquear ou liberar na agenda dos clientes.
+        Selecione uma data e clique no horário para alternar entre livre e bloqueado na agenda dos clientes.
       </p>
 
       <div class="flex items-center gap-3">
@@ -202,24 +211,32 @@ const emit = defineEmits<{
           <input
             type="date"
             :value="selectedAgendaDate"
-            @input="emit('update:selectedAgendaDate', ($event.target as HTMLInputElement).value)"
+            @change="handleDateChange"
+            @input="handleDateChange"
             class="bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-2 text-xs text-white outline-none focus:border-emerald-500 cursor-pointer"
           />
         </div>
       </div>
 
-      <div class="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-2">
+      <div class="grid grid-cols-3 sm:grid-cols-4 gap-2.5 pt-2">
         <button
           v-for="time in sampleSlots"
           :key="time"
           type="button"
           @click="emit('toggle-slot', selectedAgendaDate, time)"
-          class="py-2.5 px-2 rounded-xl text-xs font-bold transition-all border cursor-pointer flex flex-col items-center justify-center gap-0.5 active:scale-95 select-none"
-          :class="isSlotBlocked(selectedAgendaDate, time) ? 'bg-rose-500/20 border-rose-500/60 text-rose-300 shadow-xs' : 'bg-slate-950 border-slate-800 text-slate-200 hover:border-emerald-500'"
+          class="py-3 px-2 rounded-xl text-xs font-bold transition-all border cursor-pointer flex flex-col items-center justify-center gap-1 active:scale-95 select-none"
+          :class="isSlotBlocked(selectedAgendaDate, time)
+            ? 'bg-rose-500/20 border-rose-500 text-rose-200 shadow-sm ring-1 ring-rose-500/40'
+            : 'bg-slate-950 border-slate-800 text-slate-100 hover:border-emerald-500'"
         >
-          <span class="font-mono text-xs">{{ time }}</span>
-          <span class="text-[9px] uppercase tracking-wider font-extrabold" :class="isSlotBlocked(selectedAgendaDate, time) ? 'text-rose-400' : 'text-emerald-400'">
-            {{ isSlotBlocked(selectedAgendaDate, time) ? 'Bloqueado' : 'Livre' }}
+          <span class="font-mono text-xs font-bold text-white">{{ time }}</span>
+          <span
+            class="text-[10px] uppercase tracking-wider font-extrabold px-1.5 py-0.5 rounded transition-colors"
+            :class="isSlotBlocked(selectedAgendaDate, time)
+              ? 'bg-rose-500/40 text-rose-300'
+              : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'"
+          >
+            {{ isSlotBlocked(selectedAgendaDate, time) ? '🔴 Bloqueado' : '🟢 Livre' }}
           </span>
         </button>
       </div>
