@@ -1,3 +1,4 @@
+// types/tenant.ts
 import { z } from 'zod'
 
 // 1. Schemas de Opcionais e Variações
@@ -62,16 +63,31 @@ export const ReviewCommentSchema = z.object({
   author: z.string(),
   rating: z.number().min(1).max(5),
   date: z.string(),
-  comment: z.string(),
+  comment: z.string().optional(),
+  text: z.string().optional(),
+  likes: z.number().optional().default(0),
+  storeReply: z.any().optional(),
   itemsOrdered: z.array(z.string()).optional().default([])
 })
 
 export const StoreReviewsSchema = z.object({
-  score: z.number().min(0).max(5).default(5),
-  totalReviews: z.number().default(0),
+  score: z.number().min(0).max(5).optional(),
+  rating: z.number().min(0).max(5).optional(),
+  totalReviews: z.number().optional(),
+  count: z.number().optional(),
   serviceQuality: ServiceQualitySchema.optional(),
   distribution: z.record(z.string(), z.number()).optional().default({}),
   comments: z.array(ReviewCommentSchema).optional().default([])
+}).transform((val) => {
+  const score = typeof val.score === 'number' ? val.score : (typeof val.rating === 'number' ? val.rating : 5.0)
+  const totalReviews = typeof val.totalReviews === 'number' ? val.totalReviews : (typeof val.count === 'number' ? val.count : 0)
+  return {
+    ...val,
+    score,
+    rating: score,
+    totalReviews,
+    count: totalReviews,
+  }
 })
 
 // 6. Schema de Configuração de Pix Direto (Estágio 1)
@@ -111,7 +127,8 @@ export const TenantSchema = z.object({
   description: z.string().optional().default(''),
   logo: z.string().optional().default(''),
   banner: z.string().optional().default(''),
-  phoneWhatsApp: z.string(),
+  phoneWhatsApp: z.string().optional(),
+  whatsapp: z.string().optional(),
   address: z.string().optional().default(''),
   currency: z.string().default('R$'),
   deliveryFee: z.number().default(0),
