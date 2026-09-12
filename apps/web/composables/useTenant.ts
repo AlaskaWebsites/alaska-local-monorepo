@@ -1,7 +1,12 @@
 // composables/useTenant.ts
 import { computed, isRef, type Ref } from 'vue'
-import { useRoute, useAsyncData, useRuntimeConfig } from '#app'
+import { useRoute, useAsyncData, useRuntimeConfig, useState } from '#app'
 import { TenantSchema, type Tenant, type StoreReviews } from '~/types/tenant'
+
+/**
+ * Mapa em memória de promessas em voo (in-flight) para evitar requisições concorrentes idênticas.
+ */
+const inFlightRequests = new Map<string, Promise<Tenant | null>>()
 
 /**
  * Helper para resolução e mesclagem de avaliações:
@@ -47,8 +52,8 @@ function resolveReviews(localReviews?: StoreReviews, apiReviews?: any): StoreRev
 
 /**
  * Composable reativo e SSR-safe para resolução de Tenant pelo slug da rota ou customizado.
- * Estratégia API-First: consome os dados reais do backend NestJS / PostgreSQL,
- * mantendo fallback e mesclagem defensiva com os catálogos locais em ~/data/*.json.
+ * Estratégia API-First com Caching Reativo via useState e Deduplicação em Voo (ADR 013).
+ * Elimina disparos redundantes de requisições concorrentes entre componentes da rota admin e storefront.
  */
 export function useTenant(customSlug?: string | Ref<string | null | undefined>) {
     const route = useRoute()
@@ -63,47 +68,62 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
         return String(route.params.slug || 'hamburgueria-x').toLowerCase()
     })
 
-    const { data: tenant, pending, error, refresh } = useAsyncData<Tenant | null>(
-        `tenant-${slug.value}`,
-        async () => {
-            // Helper defensivo para carregar o catálogo JSON local
-            const loadLocalJson = (): Tenant | null => {
-                try {
-                    const files = import.meta.glob('~/data/*.json', { eager: true }) as Record<
-                        string,
-                        { default?: Tenant; [key: string]: unknown }
-                    >
+    // Cache reativo global do Nuxt compartilhado por slug
+    const tenantState = useState<Tenant | null>(`tenant_cache_${slug.value}`, () => null)
 
-                    for (const path in files) {
-                        const fileContent = files[path]
-                        const rawData = (fileContent?.default || fileContent) as Partial<Tenant>
-                        if (rawData && rawData.slug && rawData.slug.toLowerCase() === slug.value) {
-                            return TenantSchema.parse(rawData)
-                        }
-                    }
+    // Helper defensivo para carregar o catálogo JSON local
+    function loadLocalJson(): Tenant | null {
+        try {
+            const files = import.meta.glob('~/data/*.json', { eager: true }) as Record<
+                string,
+                { default?: Tenant; [key: string]: unknown }
+            >
 
-                    for (const path in files) {
-                        const fileName = path.split('/').pop()?.replace('.json', '').toLowerCase()
-                        if (fileName === slug.value) {
-                            const fileContent = files[path]
-                            const rawData = (fileContent?.default || fileContent) as Partial<Tenant>
-                            return TenantSchema.parse(rawData)
-                        }
-                    }
-                } catch (e) {
-                    console.warn('Erro ao carregar catálogo local JSON:', e)
+            for (const path in files) {
+                const fileContent = files[path]
+                const rawData = (fileContent?.default || fileContent) as Partial<Tenant>
+                if (rawData && rawData.slug && rawData.slug.toLowerCase() === slug.value) {
+                    return TenantSchema.parse(rawData)
                 }
-                return null
             }
 
+            for (const path in files) {
+                const fileName = path.split('/').pop()?.replace('.json', '').toLowerCase()
+                if (fileName === slug.value) {
+                    const fileContent = files[path]
+                    const rawData = (fileContent?.default || fileContent) as Partial<Tenant>
+                    return TenantSchema.parse(rawData)
+                }
+            }
+        } catch (e) {
+            console.warn('Erro ao carregar catálogo local JSON:', e)
+        }
+        return null
+    }
+
+    const fetchTenantData = async (forceRefresh = false): Promise<Tenant | null> => {
+        const currentSlug = slug.value
+        if (!currentSlug) return null
+
+        // 1. Se já está no cache reativo e não é refresh forçado, retorna imediatamente sem fazer request
+        if (!forceRefresh && tenantState.value && tenantState.value.slug?.toLowerCase() === currentSlug) {
+            return tenantState.value
+        }
+
+        // 2. Se já existe uma requisição em voo para este slug, reutiliza a mesma Promise (deduplicação)
+        if (inFlightRequests.has(currentSlug)) {
+            return inFlightRequests.get(currentSlug)!
+        }
+
+        const requestPromise = (async (): Promise<Tenant | null> => {
             let loadedTenant = loadLocalJson()
             let fromApi = false
 
-            // 1. Estratégia API-First: Busca dados reais diretamente do backend NestJS / Postgres
+            // Busca dados reais diretamente do backend NestJS / Postgres
             if (apiBaseUrl) {
                 try {
                     const res = await $fetch<any>(
-                        `${apiBaseUrl}/tenants/${slug.value}`,
+                        `${apiBaseUrl}/tenants/${currentSlug}`,
                         { timeout: 4000 }
                     )
                     const apiData = (res && typeof res === 'object') ? (res.data || res) : null
@@ -131,10 +151,10 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
                 }
             }
 
-            // 2. Overrides operacionais do localStorage só se aplicam se a API estiver estritamente offline
+            // Overrides operacionais do localStorage só se aplicam se a API estiver estritamente offline
             if (!fromApi && loadedTenant && typeof window !== 'undefined') {
                 try {
-                    const rawOverrides = localStorage.getItem(`alaska_overrides_${slug.value}`)
+                    const rawOverrides = localStorage.getItem(`alaska_overrides_${currentSlug}`)
                     if (rawOverrides) {
                         const overrides = JSON.parse(rawOverrides)
                         if (loadedTenant.categories && Array.isArray(loadedTenant.categories)) {
@@ -160,18 +180,39 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
                 }
             }
 
+            if (loadedTenant) {
+                tenantState.value = loadedTenant
+            }
             return loadedTenant
-        },
+        })().finally(() => {
+            inFlightRequests.delete(currentSlug)
+        })
+
+        inFlightRequests.set(currentSlug, requestPromise)
+        return requestPromise
+    }
+
+    const { data: tenant, pending, error, refresh } = useAsyncData<Tenant | null>(
+        `tenant-${slug.value}`,
+        () => fetchTenantData(false),
         {
-            watch: [slug]
+            watch: [slug],
+            dedupe: 'defer',
+            default: () => tenantState.value || loadLocalJson()
         }
     )
+
+    const forcedRefresh = async () => {
+        tenantState.value = null
+        inFlightRequests.delete(slug.value)
+        return refresh()
+    }
 
     return {
         tenant,
         slug,
         pending,
         error,
-        refresh
+        refresh: forcedRefresh
     }
 }
