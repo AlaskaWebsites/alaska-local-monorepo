@@ -51,7 +51,7 @@
           v-for="store in filteredTenants"
           :key="store.slug"
           :to="`/${store.slug}`"
-          :aria-label="`Acessar demonstração de ${store.name}. ${getStoreCategoryLabel(resolveCategory(store))}${store.reviews ? `. Avaliação ${store.reviews.score.toFixed(1)} de 5 estrelas` : ''}`"
+          :aria-label="`Acessar demonstração de ${store.name}. ${getStoreCategoryLabel(resolveCategory(store))}${hasStoreReviews(store) ? `. Avaliação ${getStoreScore(store)} de 5 estrelas com ${getStoreReviewCount(store)} avaliações` : ''}`"
           class="group bg-white rounded-2xl border border-slate-200 hover:shadow-md shadow-sm transition-all duration-200 overflow-hidden flex flex-col justify-between cursor-pointer active:scale-[0.99]"
           :class="getStoreBorderHover(store.theme)"
         >
@@ -88,9 +88,13 @@
                   :class="getStoreTitleHover(store.theme)">
                   {{ store.name }}
                 </h2>
-                <div v-if="store.reviews" class="flex items-center gap-1 text-xs font-bold text-amber-500 shrink-0">
+                <!-- Avaliações Dinâmicas Reais (Score + Contagem de Avaliações) -->
+                <div v-if="hasStoreReviews(store)" class="flex items-center gap-1 text-xs font-bold text-amber-500 shrink-0">
                   <Star class="w-3.5 h-3.5 fill-amber-400 text-amber-400" aria-hidden="true" />
-                  <span>{{ store.reviews.score.toFixed(1) }}</span>
+                  <span>{{ getStoreScore(store) }}</span>
+                  <span v-if="getStoreReviewCount(store)" class="text-[11px] font-medium text-slate-400">
+                    ({{ getStoreReviewCount(store) }})
+                  </span>
                 </div>
               </div>
               <p class="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">
@@ -122,10 +126,12 @@ type FilterCategory = 'all' | BusinessCategory
 
 const activeCategory = ref<FilterCategory>('all')
 
-// 1. Carregamento de Todos os Arquivos JSON de Tenants
-const files = import.meta.glob('~/data/*.json', { eager: true }) as Record<string, { default: any }>
+const config = useRuntimeConfig()
+const apiBaseUrl = config.public?.apiBaseUrl || 'http://localhost:3333/api/v1'
 
-const tenantsList = computed<Tenant[]>(() => {
+// 1. Carregamento resiliente dos arquivos JSON locais como baseline
+function loadLocalTenants(): Tenant[] {
+  const files = import.meta.glob('~/data/*.json', { eager: true }) as Record<string, { default: any }>
   const list: Tenant[] = []
   for (const path in files) {
     const raw = files[path].default || files[path]
@@ -135,6 +141,43 @@ const tenantsList = computed<Tenant[]>(() => {
     }
   }
   return list
+}
+
+// 2. Estratégia API-First: Busca tenants e avaliações reais do banco de dados (NestJS API)
+const { data: remoteTenants } = await useAsyncData<Tenant[]>('showcase-tenants-list', async () => {
+  const localList = loadLocalTenants()
+  if (apiBaseUrl) {
+    try {
+      const res = await $fetch<any>(`${apiBaseUrl}/tenants`, { timeout: 4000 })
+      const data = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : null)
+      if (Array.isArray(data) && data.length > 0) {
+        const merged: Tenant[] = []
+        for (const item of data) {
+          const local = localList.find((l) => l.slug?.toLowerCase() === item.slug?.toLowerCase() || l.id === item.id)
+          const mergedData = local
+            ? { ...local, ...item, reviews: item.reviews || local.reviews }
+            : item
+          const parsed = TenantSchema.safeParse(mergedData)
+          if (parsed.success) {
+            merged.push(parsed.data)
+          }
+        }
+        if (merged.length > 0) {
+          const missingLocals = localList.filter((l) => !merged.some((m) => m.slug?.toLowerCase() === l.slug?.toLowerCase()))
+          return [...merged, ...missingLocals]
+        }
+      }
+    } catch {
+      // Fallback gracioso para os JSONs locais caso a API esteja offline
+    }
+  }
+  return localList
+}, { default: () => loadLocalTenants() })
+
+const tenantsList = computed<Tenant[]>(() => {
+  return (remoteTenants.value && remoteTenants.value.length > 0)
+    ? remoteTenants.value
+    : loadLocalTenants()
 })
 
 function resolveCategory(tenant: Tenant): BusinessCategory {
@@ -147,7 +190,23 @@ function resolveCategory(tenant: Tenant): BusinessCategory {
   return 'menu'
 }
 
-// 2. Abas Dinâmicas de Filtro com Contagens Reais
+// Helpers de avaliações reais com resolução defensiva de score/rating e count/totalReviews
+function getStoreScore(store: Tenant): string {
+  const r = (store.reviews || {}) as any
+  const val = r.score ?? r.rating ?? r.average ?? 5.0
+  return Number(val).toFixed(1)
+}
+
+function getStoreReviewCount(store: Tenant): number {
+  const r = (store.reviews || {}) as any
+  return Number(r.totalReviews ?? r.count ?? r.total ?? 0)
+}
+
+function hasStoreReviews(store: Tenant): boolean {
+  return !!store.reviews
+}
+
+// 3. Abas Dinâmicas de Filtro com Contagens Reais
 const filterTabs = computed(() => [
   { id: 'all' as const, label: 'Todas as Lojas', emoji: '🌟', count: tenantsList.value.length },
   { id: 'menu' as const, label: 'Food & Delivery', emoji: '🍔', count: tenantsList.value.filter((t) => resolveCategory(t) === 'menu').length },
@@ -156,7 +215,7 @@ const filterTabs = computed(() => [
   { id: 'pro' as const, label: 'Clínicas & Profissionais', emoji: '🦷', count: tenantsList.value.filter((t) => resolveCategory(t) === 'pro').length },
 ])
 
-// 3. Estabelecimentos Filtrados pela Categoria Selecionada
+// 4. Estabelecimentos Filtrados pela Categoria Selecionada
 const filteredTenants = computed(() => {
   if (activeCategory.value === 'all') {
     return tenantsList.value
@@ -164,7 +223,7 @@ const filteredTenants = computed(() => {
   return tenantsList.value.filter((tenant) => resolveCategory(tenant) === activeCategory.value)
 })
 
-// 4. Helpers de Estilização por Tema e Categoria
+// 5. Helpers de Estilização por Tema e Categoria
 function getStoreTextColor(theme?: string): string {
   switch (theme) {
     case 'barber':
