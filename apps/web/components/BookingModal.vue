@@ -124,7 +124,6 @@ const availableServices = computed<BookingService[]>(() => {
 
   const services: BookingService[] = []
 
-  // 1. Extrai serviços diretamente das categorias do tenant ativo
   if (props.tenant?.categories && Array.isArray(props.tenant.categories)) {
     props.tenant.categories.forEach((cat: any) => {
       const isRetailCategory =
@@ -277,7 +276,7 @@ const daysContainerRef = ref<HTMLElement | null>(null)
 
 function scrollDays(direction: 'left' | 'right') {
   if (!daysContainerRef.value) return
-  const offset = direction === 'left' ? -220 : 220
+  const offset = direction === 'left' ? -240 : 240
   daysContainerRef.value.scrollBy({ left: offset, behavior: 'smooth' })
 }
 
@@ -485,6 +484,15 @@ async function generatePixDeposit() {
   }
 }
 
+function copyPixKey() {
+  if (!pixConfig.value?.key) return
+  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    navigator.clipboard.writeText(pixConfig.value.key)
+    isPixKeyCopied.value = true
+    setTimeout(() => { isPixKeyCopied.value = false }, 2500)
+  }
+}
+
 function copyPixCode() {
   if (!pixPayload.value) return
   if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -525,6 +533,7 @@ function confirmAndDispatchWhatsApp() {
   emit('close')
 }
 
+// Inicializações e Watchers
 watch(
   () => props.isOpen,
   (open) => {
@@ -735,7 +744,7 @@ const depositAmount = computed(() => {
             <div class="flex items-center justify-between">
               <div>
                 <h3 class="text-sm font-bold text-slate-900">Selecione o dia e o horário:</h3>
-                <p class="text-xs text-slate-500 mt-0.5">Próximos 30 dias disponíveis para agendamento.</p>
+                <p class="text-xs text-slate-500">Próximos 30 dias disponíveis para agendamento.</p>
               </div>
 
               <!-- Botões de Navegação Desktop (Setas ← e →) -->
