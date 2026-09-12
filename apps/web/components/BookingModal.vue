@@ -1,52 +1,51 @@
 <!-- components/BookingModal.vue -->
 <script setup lang="ts">
-import { ref, computed, toRef, onMounted, onUnmounted, watch, nextTick } from 'vue'
+import { ref, computed, toRef, watch, onMounted, onUnmounted, nextTick } from 'vue'
 import { useBodyScrollLock } from '~/composables/useBodyScrollLock'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 import { useHaptic } from '~/composables/useHaptic'
-import { useMerchantAdmin } from '~/composables/useMerchantAdmin'
 import { formatCurrency } from '~/utils/formatters'
-import { generatePixPayload, generatePixQrCodeDataUrl } from '~/utils/pix'
+import { generatePixPayload, getTenantPixConfig, generatePixQrCodeDataUrl } from '~/utils/pix'
 import {
-  Calendar,
-  Clock,
-  User,
-  Scissors,
-  Check,
   X,
-  ChevronRight,
+  Calendar,
   ChevronLeft,
-  QrCode,
+  ChevronRight,
+  Check,
+  Send,
   Copy,
-  AlertCircle,
-  Sparkles,
-  Send
+  QrCode,
+  Loader2
 } from 'lucide-vue-next'
-import type { BookingService, BookingProfessional, Tenant } from '~/types'
+import type { Tenant, BookingService } from '~/types'
 
-// Verificação de ambiente para evitar acessos ao DOM durante SSR
-const isClient = import.meta.client
+defineOptions({
+  inheritAttrs: false
+})
 
-const props = defineProps<{
-  isOpen: boolean
-  tenant: Tenant
-  initialService?: BookingService | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    tenant: Tenant
+    isOpen: boolean
+    initialService?: BookingService | null
+  }>(),
+  {
+    initialService: null
+  }
+)
 
 const emit = defineEmits<{
   (e: 'close'): void
+  (e: 'confirmed', payload: unknown): void
 }>()
 
 const { triggerHaptic } = useHaptic()
-const { getOverrides } = useMerchantAdmin(props.tenant?.slug || 'default')
 
-// 1. Tema Dinâmico
+// 1. Tema Dinâmico & Trava de Scroll
 const { themeClasses } = useTenantTheme(toRef(props, 'tenant'))
-
-// 2. Trava de Rolagem de Fundo (Body Scroll Lock)
 useBodyScrollLock(toRef(props, 'isOpen'))
 
-// 3. Fechamento com Tecla ESC
+// 2. Fechamento com Tecla ESC
 const handleKeyDown = (e: KeyboardEvent) => {
   if (e.key === 'Escape') {
     emit('close')
@@ -65,7 +64,7 @@ onUnmounted(() => {
   }
 })
 
-// 4. Estados Principais do Fluxo de Agendamento
+// 3. Estados Principais do Fluxo de Agendamento
 const currentStep = ref<1 | 2 | 3 | 4>(1)
 const selectedServices = ref<BookingService[]>([])
 const selectedProfessional = ref<any | null>(null)
@@ -95,16 +94,16 @@ const tenantSlug = computed(() => props.tenant?.slug || 'clinica-sorriso')
 const defaultServicesBySlug: Record<string, BookingService[]> = {
   'clinica-sorriso': [
     { id: 'srv-1', name: 'Avaliação Inicial & Planejamento 3D', description: 'Consulta completa com diagnóstico digital e plano de tratamento.', price: 120.0, durationMinutes: 45, professionalIds: [] },
-    { id: 'srv-2', name: 'Profilaxia & Limpeza Dental Profunda', description: 'Remoção de tártaro, jato de bicarbonato e aplicação de flúor.', price: 180.0, durationMinutes: 45, professionalIds: [] },
-    { id: 'srv-3', name: 'Clareamento Dental a Laser', description: 'Sessão clínica com gel fotoativado de alta potência.', price: 450.0, durationMinutes: 60, professionalIds: [] },
-    { id: 'srv-4', name: 'Manutenção de Aparelho Ortodôntico', description: 'Troca de arcos, elásticos e alinhamento mensal.', price: 150.0, durationMinutes: 30, professionalIds: [] },
-    { id: 'srv-5', name: 'Harmonização / Aplicação de Toxina', description: 'Procedimento estético facial por região.', price: 850.0, durationMinutes: 45, professionalIds: [] }
+    { id: 'srv-2', name: 'Profilaxia Completa & Limpeza Profunda', description: 'Remoção de tártaro com ultrassom, jato de bicarbonato e aplicação de flúor.', price: 180.0, durationMinutes: 45, professionalIds: [] },
+    { id: 'srv-3', name: 'Clareamento Dental a Laser em Consultório', description: 'Sessão com gel protetor fotoativado para resultados imediatos.', price: 450.0, durationMinutes: 60, professionalIds: [] },
+    { id: 'srv-4', name: 'Harmonização Orofacial / Aplicação de Toxina', description: 'Procedimento preventivo e corretivo por região com anestesia local.', price: 850.0, durationMinutes: 45, professionalIds: [] },
+    { id: 'srv-5', name: 'Manutenção Mensal de Aparelho Ortodôntico', description: 'Troca de arcos estéticos, elásticos e ativação do alinhamento dental.', price: 150.0, durationMinutes: 30, professionalIds: [] }
   ],
   'barbearia-style': [
-    { id: 'srv-1', name: 'Corte Degradê / Fade Navalhado', description: 'Acabamento na lâmina, lavagem e finalização premium.', price: 45.0, durationMinutes: 35, professionalIds: [] },
-    { id: 'srv-2', name: 'Barboterapia Completa com Toalha Quente', description: 'Vapor de ozônio, óleos essenciais e massagem facial.', price: 40.0, durationMinutes: 30, professionalIds: [] },
-    { id: 'srv-3', name: 'Combo Cabelo & Barba Style', description: 'O serviço completo mais pedido com direito a cerveja gelada.', price: 75.0, durationMinutes: 55, professionalIds: [] },
-    { id: 'srv-4', name: 'Camuflagem de Fios Brancos', description: 'Pigmentação natural para barba ou cabelo.', price: 35.0, durationMinutes: 25, professionalIds: [] }
+    { id: 'srv-fade', name: 'Corte Degradê / Fade Navalhado', description: 'Acabamento na lâmina, lavagem e finalização premium.', price: 45.0, durationMinutes: 35, professionalIds: [] },
+    { id: 'srv-social', name: 'Corte Social Tradicional na Tesoura', description: 'Estilo clássico e elegante com alinhamento na tesoura.', price: 40.0, durationMinutes: 30, professionalIds: [] },
+    { id: 'srv-barba', name: 'Barba Terapia com Toalha Quente', description: 'Vapor de ozônio, óleos essenciais, hidratação e massagem relaxante.', price: 40.0, durationMinutes: 30, professionalIds: [] },
+    { id: 'srv-combo', name: 'Combo Completo: Cabelo + Barboterapia', description: 'O serviço mais pedido com finalização completa e bebida gelada inclusa.', price: 75.0, durationMinutes: 55, professionalIds: [] }
   ]
 }
 
@@ -119,9 +118,9 @@ const rawOverrides = computed(() => {
 })
 
 const availableServices = computed<BookingService[]>(() => {
-  const overrides = rawOverrides.value.products || {}
-  const deletedIds = rawOverrides.value.deletedProductIds || []
-  const customProducts = rawOverrides.value.customProducts || []
+  const overrides = rawOverrides.value?.products || {}
+  const deletedIds = rawOverrides.value?.deletedProductIds || []
+  const customProducts = rawOverrides.value?.customProducts || []
 
   const services: BookingService[] = []
 
@@ -133,7 +132,6 @@ const availableServices = computed<BookingService[]>(() => {
         cat.name?.toLowerCase().includes('venda')
 
       cat.products?.forEach((prod: any) => {
-        // Ignora produtos físicos sem tempo de atendimento na grade de agendamento
         if (isRetailCategory && (!prod.durationMinutes || prod.durationMinutes === 0)) {
           return
         }
@@ -157,7 +155,7 @@ const availableServices = computed<BookingService[]>(() => {
     })
   }
 
-  // 2. Inclui serviços customizados criados pelo lojista via painel admin
+  // 2. Inclui serviços customizados criados pelo lojista
   if (customProducts.length > 0) {
     customProducts.forEach((prod: any) => {
       if (!deletedIds.includes(prod.id)) {
@@ -173,17 +171,14 @@ const availableServices = computed<BookingService[]>(() => {
     })
   }
 
-  // Se encontrou serviços reais no tenant, retorna-os
   if (services.length > 0) {
     return services
   }
 
-  // Fallback de segurança apenas para slugs com catálogo legado
   const fallback = defaultServicesBySlug[tenantSlug.value]
   return fallback || []
 })
 
-// Profissionais com Suporte a Custom e Delete
 const defaultProfessionalsBySlug: Record<string, Array<any>> = {
   'clinica-sorriso': [
     { id: 'prof-1', name: 'Dra. Camila Rocha', role: 'Cirurgiã Dentista & Implantes', isAvailable: true, availableDays: [1, 2, 3, 4, 5], workHours: { start: '08:00', end: '17:00' }, lunchBreak: { start: '12:00', end: '13:00', enabled: true } },
@@ -202,11 +197,10 @@ const defaultProfessionalsBySlug: Record<string, Array<any>> = {
 }
 
 const availableProfessionals = computed(() => {
-  const overrides = rawOverrides.value.professionals || {}
-  const deletedIds = rawOverrides.value.deletedProfessionalIds || []
-  const customProfs = rawOverrides.value.customProfessionals || []
+  const overrides = rawOverrides.value?.professionals || {}
+  const deletedIds = rawOverrides.value?.deletedProfessionalIds || []
+  const customProfs = rawOverrides.value?.customProfessionals || []
 
-  // Prioriza profissionais cadastrados no próprio tenant (JSON ou backend), com fallback legado
   const tenantProfs = (props.tenant as any)?.professionals
   const base = (tenantProfs && Array.isArray(tenantProfs) && tenantProfs.length > 0)
     ? tenantProfs
@@ -215,7 +209,7 @@ const availableProfessionals = computed(() => {
   const allProfs = [...base.filter((p: any) => !deletedIds.includes(p.id)), ...customProfs.filter((p: any) => !deletedIds.includes(p.id))]
 
   return allProfs.map(p => {
-    const ov = overrides[p.id]
+    const ov = overrides[p.id] || {}
     const isAvail = ov?.isAvailable !== undefined
       ? Boolean(ov.isAvailable)
       : (p.isAvailable !== undefined ? Boolean(p.isAvailable) : true)
@@ -227,7 +221,7 @@ const availableProfessionals = computed(() => {
       isAvailable: isAvail,
       availableDays: days,
       workHours: {
-        start: ov?.workHours?.start || p.workHours?.start || '09:00',
+        start: ov?.workHours?.start || p.workHours?.start || '08:00',
         end: ov?.workHours?.end || p.workHours?.end || '19:00'
       },
       lunchBreak: {
@@ -241,31 +235,35 @@ const availableProfessionals = computed(() => {
 
 function parseTimeToMin(t: string): number {
   if (!t) return 0
-  const [h, m] = t.split(':')
-  return (parseInt(h || '0', 10) * 60) + parseInt(m || '0', 10)
+  const [h = '0', m = '0'] = t.split(':')
+  return (parseInt(h, 10) * 60) + parseInt(m, 10)
 }
 
 function isDateBlocked(d: { date: string; dayIndex?: number } | any): boolean {
-  if (rawOverrides.value.emergency?.isClosed || (props.tenant as any)?.isEmergencyClosed) {
+  if (rawOverrides.value?.emergency?.isClosed || (props.tenant as any)?.isEmergencyClosed) {
     return true
   }
 
-  const dayIndex = d.dayIndex !== undefined ? d.dayIndex : new Date(d.date + 'T12:00:00').getDay()
+  const dayOfWeek = d.dayIndex !== undefined ? d.dayIndex : new Date(d.date + 'T12:00:00').getDay()
+  const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+  const dayKey = dayKeys[dayOfWeek]
 
-  // 1. Se um profissional específico foi selecionado
-  if (selectedProfessional.value) {
-    const prof = availableProfessionals.value.find(p => p.id === selectedProfessional.value?.id) || selectedProfessional.value
-    if (!prof || !prof.isAvailable) return true
-    const days = prof.availableDays || []
-    return !days.includes(dayIndex)
+  const hours = (props.tenant?.openingHours || {}) as any
+  if (hours && dayKey && hours[dayKey]) {
+    if (hours[dayKey].closed) {
+      return true
+    }
   }
 
-  // 2. Se escolheu "Qualquer Profissional" (checa se há pelo menos 1 ativo atendendo neste dia da semana)
-  const hasWorkingProf = availableProfessionals.value.some(p => {
-    return p.isAvailable && (p.availableDays || []).includes(dayIndex)
-  })
+  if (selectedProfessional.value) {
+    const prof = availableProfessionals.value.find(p => p.id === selectedProfessional.value?.id) || selectedProfessional.value
+    if (prof) {
+      if (!prof.isAvailable) return true
+      if (prof.availableDays && !prof.availableDays.includes(dayOfWeek)) return true
+    }
+  }
 
-  return !hasWorkingProf
+  return false
 }
 
 const isProfOffOnDate = computed(() => {
@@ -273,42 +271,6 @@ const isProfOffOnDate = computed(() => {
   const dayOfWeek = new Date(selectedDate.value + 'T12:00:00').getDay()
   return !(selectedProfessional.value.availableDays || []).includes(dayOfWeek) || !selectedProfessional.value.isAvailable
 })
-
-const canAdvance = computed(() => {
-  if (currentStep.value === 1) {
-    return selectedServices.value.length > 0
-  }
-  if (currentStep.value === 2) {
-    return selectedProfessional.value === null || Boolean(selectedProfessional.value.isAvailable)
-  }
-  if (currentStep.value === 3) {
-    if (!selectedDate.value || isDateBlocked({ date: selectedDate.value }) || isProfOffOnDate.value) {
-      return false
-    }
-    if (availableSlots.value.length === 0) {
-      return false
-    }
-    return Boolean(selectedTime.value) && availableSlots.value.some((s: any) => s.time === selectedTime.value)
-  }
-  if (currentStep.value === 4) {
-    return Boolean(customerName.value.trim()) && Boolean(customerPhone.value.trim())
-  }
-  return true
-})
-
-watch(
-  [selectedDate, selectedProfessional, availableSlots],
-  () => {
-    if (availableSlots.value.length > 0) {
-      if (!availableSlots.value.some((s: any) => s.time === selectedTime.value)) {
-        selectedTime.value = ''
-      }
-    } else {
-      selectedTime.value = ''
-    }
-  },
-  { immediate: true }
-)
 
 // Controle de Rolagem Horizontal do Calendário de Datas
 const daysContainerRef = ref<HTMLElement | null>(null)
@@ -319,33 +281,22 @@ function scrollDays(direction: 'left' | 'right') {
   daysContainerRef.value.scrollBy({ left: offset, behavior: 'smooth' })
 }
 
-function handleDaysWheel(e: WheelEvent) {
-  if (!daysContainerRef.value) return
-  if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
-    daysContainerRef.value.scrollLeft += e.deltaY
-  }
-}
-
-// Auto-seleciona a primeira data disponível e centraliza a rolagem
 function autoSelectFirstAvailableDate() {
-  const currentDay = bookingDays.value.find(d => d.date === selectedDate.value)
-  if (!currentDay || isDateBlocked(currentDay)) {
-    const firstAvailable = bookingDays.value.find(d => !isDateBlocked(d))
-    if (firstAvailable) {
-      selectedDate.value = firstAvailable.date
-      nextTick(() => {
-        if (isClient) {
-          const el = document.getElementById(`date-btn-${firstAvailable.date}`)
-          if (el && daysContainerRef.value) {
-            el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
-          }
+  const firstAvailable = bookingDays.value.find(d => !isDateBlocked(d))
+  if (firstAvailable) {
+    selectedDate.value = firstAvailable.date
+    nextTick(() => {
+      if (typeof document !== 'undefined') {
+        const el = document.getElementById(`date-btn-${firstAvailable.date}`)
+        if (el && daysContainerRef.value) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' })
         }
-      })
-    }
+      }
+    })
   }
 }
 
-// 5. Calendário e Dias de Atendimento (Próximos 30 dias)
+// 4. Calendário e Dias de Atendimento (Próximos 30 dias)
 const bookingDays = computed(() => {
   const days = []
   const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez']
@@ -373,16 +324,22 @@ const bookingDays = computed(() => {
 const allCandidateSlots = [
   '08:00', '08:45', '09:30', '10:15', '11:00',
   '11:45', '12:30', '13:15', '14:00', '14:45',
-  '15:30', '16:15', '17:00', '17:45', '18:30'
+  '15:30', '16:15', '17:00', '17:45', '18:30',
+  '19:15', '20:00', '20:45', '21:30'
 ]
 
 const availableSlots = computed(() => {
-  const blocked = rawOverrides.value.blockedSlots || []
-  const dayOfWeek = new Date(selectedDate.value + 'T12:00:00').getDay()
-
-  if (isDateBlocked({ date: selectedDate.value, dayIndex: dayOfWeek })) {
+  if (!selectedDate.value || isDateBlocked({ date: selectedDate.value }) || isProfOffOnDate.value) {
     return []
   }
+
+  const dayOfWeek = new Date(selectedDate.value + 'T12:00:00').getDay()
+  const blocked = rawOverrides.value?.blockedSlots || []
+
+  // Horário de funcionamento geral da loja
+  const storeHours = props.tenant?.openingHours || {}
+  const storeOpenMin = parseTimeToMin(storeHours.open || '08:00')
+  const storeCloseMin = parseTimeToMin(storeHours.close || '19:00')
 
   // Se um profissional específico foi selecionado
   if (selectedProfessional.value) {
@@ -391,44 +348,49 @@ const availableSlots = computed(() => {
       return []
     }
 
-    const startMin = parseTimeToMin(prof.workHours?.start || '08:00')
-    const endMin = parseTimeToMin(prof.workHours?.end || '18:00')
+    const startMin = Math.max(parseTimeToMin(prof.workHours?.start || '08:00'), storeOpenMin)
+    const endMin = Math.min(parseTimeToMin(prof.workHours?.end || '18:00'), storeCloseMin)
     const lunchStart = parseTimeToMin(prof.lunchBreak?.start || '12:00')
     const lunchEnd = parseTimeToMin(prof.lunchBreak?.end || '13:00')
     const hasLunch = Boolean(prof.lunchBreak?.enabled)
 
+    if (endMin <= startMin) {
+      return []
+    }
+
     return allCandidateSlots
       .filter(time => {
         const timeMin = parseTimeToMin(time)
-        // Dentro do expediente do profissional
         if (timeMin < startMin || timeMin >= endMin) return false
-        // Fora do intervalo de almoço
         if (hasLunch && timeMin >= lunchStart && timeMin < lunchEnd) return false
-        // Não está bloqueado na data
         if (blocked.some((b: any) => b.date === selectedDate.value && b.time === time)) return false
         return true
       })
       .map(time => ({ time }))
   }
 
-  // Se escolheu "Qualquer Profissional": mostra horários onde pelo menos 1 profissional ativo atende
-  const workingProfs = availableProfessionals.value.filter(p => {
-    return p.isAvailable && (p.availableDays || []).includes(dayOfWeek)
-  })
+  // Se selecionou "Qualquer Profissional", junta os horários livres de quem estiver atendendo
+  const workingProfs = availableProfessionals.value.filter(
+    p => p.isAvailable && (p.availableDays || []).includes(dayOfWeek)
+  )
+
+  if (workingProfs.length === 0) {
+    return []
+  }
 
   return allCandidateSlots
     .filter(time => {
       const timeMin = parseTimeToMin(time)
       if (blocked.some((b: any) => b.date === selectedDate.value && b.time === time)) return false
 
-      // Verifica se há pelo menos um profissional atendendo neste horário
       const hasAnyProf = workingProfs.some(prof => {
-        const startMin = parseTimeToMin(prof.workHours?.start || '08:00')
-        const endMin = parseTimeToMin(prof.workHours?.end || '18:00')
+        const startMin = Math.max(parseTimeToMin(prof.workHours?.start || '08:00'), storeOpenMin)
+        const endMin = Math.min(parseTimeToMin(prof.workHours?.end || '18:00'), storeCloseMin)
         const lunchStart = parseTimeToMin(prof.lunchBreak?.start || '12:00')
         const lunchEnd = parseTimeToMin(prof.lunchBreak?.end || '13:00')
         const hasLunch = Boolean(prof.lunchBreak?.enabled)
 
+        if (endMin <= startMin) return false
         if (timeMin < startMin || timeMin >= endMin) return false
         if (hasLunch && timeMin >= lunchStart && timeMin < lunchEnd) return false
         return true
@@ -439,7 +401,44 @@ const availableSlots = computed(() => {
     .map(time => ({ time }))
 })
 
-// 6. Manipuladores de Seleção
+// Validação Estrita de Avanço de Passos (Anti-Beco Sem Saída)
+const canAdvance = computed(() => {
+  if (currentStep.value === 1) {
+    return selectedServices.value.length > 0
+  }
+  if (currentStep.value === 2) {
+    return selectedProfessional.value === null || Boolean(selectedProfessional.value.isAvailable)
+  }
+  if (currentStep.value === 3) {
+    if (!selectedDate.value || isDateBlocked({ date: selectedDate.value }) || isProfOffOnDate.value) {
+      return false
+    }
+    if (availableSlots.value.length === 0) {
+      return false
+    }
+    return Boolean(selectedTime.value) && availableSlots.value.some((s: any) => s.time === selectedTime.value)
+  }
+  if (currentStep.value === 4) {
+    return Boolean(customerName.value.trim()) && Boolean(customerPhone.value.trim())
+  }
+  return true
+})
+
+watch(
+  [selectedDate, selectedProfessional, availableSlots],
+  () => {
+    if (availableSlots.value.length > 0) {
+      if (!availableSlots.value.some((s: any) => s.time === selectedTime.value)) {
+        selectedTime.value = availableSlots.value[0]?.time || ''
+      }
+    } else {
+      selectedTime.value = ''
+    }
+  },
+  { immediate: true }
+)
+
+// 5. Manipuladores de Seleção
 function isServiceSelected(serviceId: string): boolean {
   return selectedServices.value.some(s => s.id === serviceId)
 }
@@ -464,21 +463,19 @@ function selectTime(timeStr: string) {
   selectedTime.value = timeStr
 }
 
-// 7. Geração de Pix para Sinal de Reserva
-async function generatePixDeposit() {
-  const pix = rawOverrides.value.pix || (props.tenant as any).pixConfig || (props.tenant as any).pix || {}
-  const key = pix.pixKey || pix.key || props.tenant.phoneWhatsApp.replace(/\D/g, '')
+const pixConfig = computed(() => getTenantPixConfig(props.tenant))
 
+async function generatePixDeposit() {
+  if (!pixConfig.value?.key || isGeneratingPix.value) return
   isGeneratingPix.value = true
   try {
     const payload = generatePixPayload({
-      key,
-      name: (pix.merchantName || pix.beneficiary || props.tenant.name).slice(0, 25),
-      city: (pix.city || 'SAO PAULO').slice(0, 15),
-      amount: depositAmount.value,
+      key: pixConfig.value.key,
+      name: (pixConfig.value.beneficiary || props.tenant.name).slice(0, 25),
+      city: (pixConfig.value.city || 'SAO PAULO').slice(0, 15),
+      amount: isTestCentMode.value ? 0.01 : depositAmount.value,
       txId: 'AGENDAMENTO'
     })
-
     pixPayload.value = payload
     qrCodeDataUrl.value = await generatePixQrCodeDataUrl(payload)
   } catch (err) {
@@ -500,10 +497,9 @@ function copyPixCode() {
   }
 }
 
-// 8. Despacho Final via WhatsApp
 function confirmAndDispatchWhatsApp() {
   triggerHaptic(50)
-  const phone = props.tenant.phoneWhatsApp.replace(/\D/g, '')
+  const phone = (props.tenant?.phoneWhatsApp || (props.tenant as any)?.whatsapp || '').replace(/\D/g, '')
   const servicesText = selectedServices.value.map(s => `• ${s.name} (${s.durationMinutes}min - ${formatCurrency(s.price)})`).join('\n')
   const profName = selectedProfessional.value ? selectedProfessional.value.name : 'Qualquer especialista disponível'
   const payText = paymentMode.value === 'pix_deposit' ? `Sinal de ${formatCurrency(depositAmount.value)} pago via Pix (30%)` : 'Pagamento presencial no local'
@@ -529,7 +525,6 @@ function confirmAndDispatchWhatsApp() {
   emit('close')
 }
 
-// Inicializações e Watchers
 watch(
   () => props.isOpen,
   (open) => {
@@ -688,7 +683,7 @@ const depositAmount = computed(() => {
                     ⚡
                   </div>
                   <div>
-                    <h4 class="text-xs font-bold text-slate-900">Qualquer Especialista Disponível</h4>
+                    <span class="text-xs font-bold text-slate-900 block">Qualquer Especialista Disponível</span>
                     <span class="text-[11px] text-slate-500">Primeiro horário livre na grade</span>
                   </div>
                 </div>
@@ -745,13 +740,29 @@ const depositAmount = computed(() => {
 
               <!-- Botões de Navegação Desktop (Setas ← e →) -->
               <div class="flex items-center gap-1.5">
-                <button type="button" @click="scrollDays('left')"\n                  class="p-1.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 shadow-2xs cursor-pointer transition-all active:scale-95 flex items-center justify-center"\n                  aria-label="Dias anteriores" title="Dias anteriores">\n                  <ChevronLeft class="w-4 h-4" />\n                </button>
-                <button type="button" @click="scrollDays('right')"\n                  class="p-1.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 shadow-2xs cursor-pointer transition-all active:scale-95 flex items-center justify-center"\n                  aria-label="Próximos dias" title="Próximos dias">\n                  <ChevronRight class="w-4 h-4" />\n                </button>
+                <button
+                  type="button"
+                  @click="scrollDays('left')"
+                  class="p-1.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 shadow-2xs cursor-pointer transition-all active:scale-95 flex items-center justify-center"
+                  aria-label="Dias anteriores"
+                  title="Dias anteriores"
+                >
+                  <ChevronLeft class="w-4 h-4" />
+                </button>
+                <button
+                  type="button"
+                  @click="scrollDays('right')"
+                  class="p-1.5 rounded-full border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 shadow-2xs cursor-pointer transition-all active:scale-95 flex items-center justify-center"
+                  aria-label="Próximos dias"
+                  title="Próximos dias"
+                >
+                  <ChevronRight class="w-4 h-4" />
+                </button>
               </div>
             </div>
 
             <!-- Carrossel Horizontal de Dias com Bloqueio de Folga e Indisponibilidade -->
-            <div ref="daysContainerRef" @wheel.passive="handleDaysWheel"
+            <div ref="daysContainerRef" @wheel.passive="scrollDays('right')"
               class="flex gap-2 overflow-x-auto pb-2 pt-1 no-scrollbar scroll-smooth snap-x select-none">
               <button v-for="d in bookingDays" :key="d.date" :id="`date-btn-${d.date}`" type="button"
                 :disabled="isDateBlocked(d)" @click="!isDateBlocked(d) && selectDate(d.date)"
@@ -885,7 +896,7 @@ const depositAmount = computed(() => {
 
               <!-- Bloco Pix Copia e Cola / QR Code para Sinal -->
               <div v-if="paymentMode === 'pix_deposit'"
-                class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-2.5 animate-in fade-in duration-150">
+                class="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl space-y-2.5 animate-in fade-in duration-150 text-xs">
                 <div class="flex items-center justify-between text-xs font-bold text-emerald-900">
                   <span>Pagar Sinal de Reserva ({{ formatCurrency(depositAmount) }})</span>
                 </div>
