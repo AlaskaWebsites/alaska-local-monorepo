@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Product } from '../../../../src/core/domain/entities/product.entity';
-import { ValidationError } from '../../../../src/core/domain/errors/domain.error';
+import { Product } from '@core/domain/entities/product.entity';
+import { ValidationError } from '@core/domain/errors/domain.error';
 
 describe('Product Entity', () => {
   it('deve instanciar um produto com valores válidos', () => {
