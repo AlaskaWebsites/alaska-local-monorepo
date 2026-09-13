@@ -37,15 +37,21 @@ export class ToggleOptionAvailabilityUseCase {
     }
 
     const optionGroups = JSON.parse(JSON.stringify(targetProduct.optionGroups || []));
+    let optionFound = false;
     for (const group of optionGroups) {
       if (Array.isArray(group.options)) {
         for (const opt of group.options) {
           if (opt.id === input.optionId) {
             opt.isAvailable = input.isAvailable;
             opt.available = input.isAvailable;
+            optionFound = true;
           }
         }
       }
+    }
+
+    if (!optionFound) {
+      throw new EntityNotFoundError('ProductOption', input.optionId);
     }
 
     return this.productRepository.update(targetProduct.id, {
