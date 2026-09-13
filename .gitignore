@@ -1,11 +1,44 @@
+# Dependencies
 node_modules
+.pnpm-store
+
+# Production & Build outputs
+dist
 .output
 .nuxt
-dist
-.env
-.env.local
-.DS_Store
-*.log
 .turbo
+
+# Environment variables (Global & Workspaces)
+.env
+.env.*
+.env.local
+.env.*.local
+*.env
+*.env.*
+apps/*/.env
+apps/*/.env.*
+packages/*/.env
+packages/*/.env.*
+
+# Explicitly keep example environment templates
+!.env.example
+!**/.env.example
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# OS and Editor files
+.DS_Store
+Thumbs.db
 .vscode/mcp.json
 .vscode/*.local.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
