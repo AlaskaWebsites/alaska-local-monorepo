@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { SimplePasswordHasher } from '../../../../src/infrastructure/security/simple-hasher';
+import { SimplePasswordHasher } from '@infra/security/simple-hasher';
 
 describe('SimplePasswordHasher', () => {
   const hasher = new SimplePasswordHasher();
