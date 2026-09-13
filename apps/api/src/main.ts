@@ -22,21 +22,21 @@ async function bootstrap() {
     .setDescription(
       'Documentação OpenAPI dos endpoints da API REST do ecossistema Alaska Local (Alaska Menu, Alaska Shop, Alaska Hub, Alaska Pro).\n\n' +
       '### Módulos e Recursos Disponíveis:\n' +
-      '* **🏢 Tenants & Multi-Tenancy**: Resolução de estabelecimentos por slug (`/tenants/:slug`), domínio próprio (`/tenants/resolve/domain`) e autenticação PIN do lojista.\n' +
-      '* **⚡ Produtos & Cardápio**: Pausa e ativação rápida em tempo real (< 3s), atualização de preços e controle de estoque de opcionais/adicionais.\n' +
+      '* **🏢 Tenants & Multi-Tenancy**: Resolução de estabelecimentos por slug (`/api/v1/tenants/:slug`), domínio próprio (`/api/v1/tenants/resolve/domain`), listagem geral e autenticação PIN do lojista.\n' +
+      '* **⚡ Produtos & Cardápio**: Pausa e ativação rápida em tempo real (< 3s), atualização de preços e controle de estoque de opcionais/adicionais via PUT e PATCH.\n' +
       '* **💠 Pagamentos Pix D+0**: Geração de BR Code EMV (BACEN), CRC-16 CCITT, QR Code em Base64 Data URL e teste de 1 centavo (R$ 0,01).\n' +
-      '* **🛍️ Pedidos (Orders)**: Criação de pedidos para delivery e retirada, cálculo financeiro em centavos (`Money` VO) e geração de código Pix.\n' +
-      '* **📅 Agendamentos (Bookings)**: Gestão de agenda para serviços (barbearias, clínicas), cálculo de tempo estimado e sinal via Pix.\n' +
+      '* **🛍️ Pedidos (Orders)**: Criação de pedidos para delivery e retirada, listagem por tenant, cálculo financeiro em centavos (`Money` VO) e geração de código Pix.\n' +
+      '* **📅 Agendamentos (Bookings)**: Gestão de agenda para serviços (barbearias, clínicas), consulta por ID e tenant, cálculo de tempo estimado e sinal via Pix.\n' +
       '* **🩺 Health & Integridade**: Monitoramento de uptime e status da aplicação.'
     )
-    .setVersion('1.2.0')
+    .setVersion('1.3.0')
     .addBearerAuth(
       {
         type: 'http',
         scheme: 'bearer',
         bearerFormat: 'JWT',
         name: 'Authorization',
-        description: 'Insira o token de sessão do lojista retornado em /api/v1/tenants/:slug/admin/login',
+        description: 'Insira o token de sessão do lojista retornado em POST /api/v1/tenants/:slug/admin/login',
         in: 'header'
       },
       'merchant-token'
@@ -45,7 +45,7 @@ async function bootstrap() {
     .addTag('tenants', 'Resolução de estabelecimentos, domínios próprios, horários e autenticação PIN do lojista')
     .addTag('products', 'Gestão de cardápio, produtos, preços e disponibilidade de adicionais/opcionais')
     .addTag('pix', 'Geração de BR Code EMV oficial, Copia e Cola, QR Code e testes de R$ 0,01')
-    .addTag('orders', 'Gestão e criação de pedidos de delivery / retirada')
+    .addTag('orders', 'Gestão e criação de pedidos de delivery / retirada e consulta por estabelecimento')
     .addTag('bookings', 'Agendamento de horários para prestadores de serviços (Alaska Hub & Pro)')
     .build()
 
