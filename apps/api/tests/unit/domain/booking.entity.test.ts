@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Booking } from '../../../../src/core/domain/entities/booking.entity';
-import { ValidationError } from '../../../../src/core/domain/errors/domain.error';
+import { Booking } from '@core/domain/entities/booking.entity';
+import { ValidationError } from '@core/domain/errors/domain.error';
 
 describe('Booking Entity', () => {
   it('deve instanciar um agendamento com serviços e dados válidos', () => {
