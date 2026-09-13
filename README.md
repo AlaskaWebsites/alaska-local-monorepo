@@ -1,4 +1,4 @@
-# 🏔️ Alaska Local — Monorepo Unificado
+# 🏔️ Alaska Local Monorepo
 
 > Monorepo unificado do ecossistema **Alaska Local** gerenciado por **Turborepo** e **pnpm Workspaces**, integrando frontend em **Nuxt 3**, backend em **NestJS 11** e pacote de domínio compartilhado **`@alaska/contracts`**.
 
@@ -17,8 +17,8 @@
 ```
 alaska-local-monorepo/
 ├── apps/
-│   ├── web/                          # Frontend Nuxt 3 (One Codebase, Infinite Domains, 11 Temas)
-│   └── api/                          # Backend NestJS 11 (Clean Architecture, RLS & Pix D+0)
+│   ├── web/                          # Frontend Nuxt 3 (One Codebase, Infinite Domains, 11 Temas Claro Suave)
+│   └── api/                          # Backend NestJS 11 (Clean Architecture, PostgreSQL 16 & Pix D+0)
 │
 ├── packages/
 │   ├── contracts/                    # @alaska/contracts (Single Source of Truth com Zod 3.24)
@@ -28,16 +28,18 @@ alaska-local-monorepo/
 │   │   │   ├── order/                # CreateOrderSchema, OrderItem, Status, Delivery
 │   │   │   ├── booking/              # CreateBookingSchema, Services, Professionals, Slots
 │   │   │   ├── pix/                  # PixQrCodeRequest, PixQrCodeResponse, PixKey
-│   │   │   └── common/               # AddressSchema, CepSchema, MoneyCentsSchema
-│   │   └── tsup.config.ts            # Build híbrido ESM/CJS com .d.ts
+│   │   │   └── common/               # AddressSchema, CepSchema, MoneyCents
+│   │   └── package.json
 │   │
 │   └── tsconfig/                     # Configurações TypeScript base compartilhadas
 │
 ├── docs/                             # Base Documental Completa (Frontend, Backend, ADRs, Deploy)
-│   ├── frontend/                     # ADRs 001 a 014 e Guias de Frontend
-│   ├── backend/                      # ADRs 001 a 006 e Guias de Backend
+│   ├── frontend/                     # ADRs 001 a 017 e Guias de Frontend
+│   ├── backend/                      # ADRs 001 a 007 e Guias de Backend
 │   └── operations/                   # Guias de Deploy e Operação
 │
+├── render.yaml                       # Blueprint de Deploy do Backend API no Render
+├── Dockerfile                        # Dockerfile multi-stage de produção para NestJS API
 ├── .husky/pre-commit                 # Hook pre-commit rodando pnpm turbo test
 ├── .github/workflows/ci.yml          # Pipeline de Integração Contínua (CI/CD)
 ├── package.json                      # Scripts raiz ergonômicos
@@ -67,10 +69,8 @@ pnpm build:contracts
 ```bash
 # Iniciar o container PostgreSQL
 pnpm db:up
-
-# Executar o seed dos 9 estabelecimentos canônicos
-pnpm db:seed
 ```
+> **Nota de Auto-Bootstrap:** O backend NestJS executa automaticamente a verificação de schema (`initSchema`) e o auto-seed dos 10 estabelecimentos canônicos (`seedAllStores`) se o banco estiver vazio. O comando manual `pnpm db:seed` é opcional.
 
 ### 4. Executar em Desenvolvimento
 ```bash
@@ -84,21 +84,21 @@ pnpm dev:api    # Apenas Backend NestJS na porta 3333
 
 ---
 
-## 🧪 Suíte de Testes Automatizados (214 Testes)
+## 🧪 Suíte de Testes Automatizados (214+ Testes)
 
 ```bash
 # Executa todos os testes do monorepo (Contracts + Backend + Web)
 pnpm test
 
 # Testes por workspace:
-pnpm test:contracts   # 16 testes de schemas Zod
-pnpm test:api         # 30 testes de casos de uso e domínio
-pnpm test:web         # 168 testes de composables, acessibilidade e modais
+pnpm test:contracts   # Testes de schemas Zod
+pnpm test:api         # Testes de casos de uso e domínio
+pnpm test:web         # Testes de composables, acessibilidade e modais
 ```
 
 ---
 
-## 📱 Vitrines de Demonstração & Painel do Lojista
+## 📱 Vitrines de Demonstração & Painel do Lojista (10 Estabelecimentos Canônicos)
 
 | Estabelecimento | Vertical | Vitrine Pública | Painel do Lojista (PIN: 1234) |
 | :--- | :--- | :--- | :--- |
@@ -106,9 +106,11 @@ pnpm test:web         # 168 testes de composables, acessibilidade e modais
 | **Adega Prime** | *Alaska Menu* | [http://localhost:3000/adega-prime](http://localhost:3000/adega-prime) | [http://localhost:3000/adega-prime/admin](http://localhost:3000/adega-prime/admin) |
 | **Espetaria Brasa** | *Alaska Menu* | [http://localhost:3000/espetaria-brasa](http://localhost:3000/espetaria-brasa) | [http://localhost:3000/espetaria-brasa/admin](http://localhost:3000/espetaria-brasa/admin) |
 | **Café Central** | *Alaska Menu* | [http://localhost:3000/cafe-central](http://localhost:3000/cafe-central) | [http://localhost:3000/cafe-central/admin](http://localhost:3000/cafe-central/admin) |
+| **Restaurante Bella Italia** | *Alaska Menu* | [http://localhost:3000/restaurante-bella-italia](http://localhost:3000/restaurante-bella-italia) | [http://localhost:3000/restaurante-bella-italia/admin](http://localhost:3000/restaurante-bella-italia/admin) |
 | **Bella Donna** | *Alaska Shop* | [http://localhost:3000/bella-donna](http://localhost:3000/bella-donna) | [http://localhost:3000/bella-donna/admin](http://localhost:3000/bella-donna/admin) |
 | **Karine Finardi** | *Alaska Shop* | [http://localhost:3000/karine-finardi](http://localhost:3000/karine-finardi) | [http://localhost:3000/karine-finardi/admin](http://localhost:3000/karine-finardi/admin) |
 | **Barbearia Style** | *Alaska Hub* | [http://localhost:3000/barbearia-style](http://localhost:3000/barbearia-style) | [http://localhost:3000/barbearia-style/admin](http://localhost:3000/barbearia-style/admin) |
+| **Studio Nail Design** | *Alaska Hub* | [http://localhost:3000/studio-nail-design](http://localhost:3000/studio-nail-design) | [http://localhost:3000/studio-nail-design/admin](http://localhost:3000/studio-nail-design/admin) |
 | **Clínica Sorriso** | *Alaska Pro* | [http://localhost:3000/clinica-sorriso](http://localhost:3000/clinica-sorriso) | [http://localhost:3000/clinica-sorriso/admin](http://localhost:3000/clinica-sorriso/admin) |
 
 ---
