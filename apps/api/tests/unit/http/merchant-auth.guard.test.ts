@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { UnauthorizedException, ExecutionContext } from '@nestjs/common';
-import { MerchantAuthGuard } from '../../../../src/infrastructure/http/guards/merchant-auth.guard';
+import { MerchantAuthGuard } from '@infra/http/guards/merchant-auth.guard';
 
 describe('MerchantAuthGuard', () => {
   const guard = new MerchantAuthGuard();
