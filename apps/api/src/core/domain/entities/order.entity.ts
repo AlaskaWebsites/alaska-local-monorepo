@@ -86,7 +86,7 @@ export class Order {
   }
 
   get deliveryFeeCents(): number {
-    return this.deliveryFee.cents;
+    return this.deliveryFee.inCents;
   }
 
   calculateSubtotal(): Money {
