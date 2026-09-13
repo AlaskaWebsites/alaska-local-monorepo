@@ -19,7 +19,7 @@ Bem-vindo à base documental unificada do ecossistema **Alaska Local**. Este rep
 * [ADR 010: Busca Client-Side Zero Latência](./frontend/adrs/010-busca-client-side-zero-latencia-e-normalizacao-unicode.md) — Normalização Unicode NFD e busca instantânea.
 * [ADR 011: Persistência de Carrinho Namespaced](./frontend/adrs/011-persistencia-carrinho-namespaced-localstorage.md) — Isolamento de sacola por loja (`alaska_cart_<slug>`).
 * [ADR 012: Arquitetura de Pagamentos Pix](./frontend/adrs/012-arquitetura-pagamentos-pix-estagio-1.md) — BR Code EMV, CRC-16 e QR Code Base64.
-* [ADR 013: Painel do Lojista e Gestão Operacional em Tempo Real](./frontend/adrs/013-painel-do-lojista-e-gestao-operacional-em-tempo-real.md) — 5 Abas operacionais, pausa rápida <3s, edição de preços e bloqueio de horários.
+* [ADR 013: Painel do Lojista e Gestão Operacional em Tempo Real](./frontend/adrs/013-painel-do-lojista-e-gestao-operacional-em-tempo-real.md) — 7 Abas operacionais, 4 modais, pausa rápida <3s e alerta de expediente.
 * [ADR 014: Monorepo Unificado com Turborepo e @alaska/contracts](./frontend/adrs/014-monorepo-turborepo-e-pacote-contracts.md) — Workspaces pnpm, pacote de domínio compartilhado e CI/CD.
 * [ADR 015: Desacoplamento Atômico de Componentes](./frontend/adrs/015-desacoplamento-atomico-componentes-storefront-e-admin.md) — Separação atômica de Storefront e Painel Admin.
 * [ADR 016: Pipeline CI/CD na Vercel com Turborepo e PNPM](./frontend/adrs/016-pipeline-ci-cd-vercel-turborepo-pnpm.md) — Pipeline de deploy automatizado do Frontend na Vercel.
@@ -40,7 +40,8 @@ Bem-vindo à base documental unificada do ecossistema **Alaska Local**. Este rep
 
 ### 🌐 Frontend
 * **[Design System & 11 Temas Cromáticos](./frontend/architecture/design-system-e-temas.md)** — Base Clara Suave (`bg-slate-50`), micro-animações táteis e 11 paletas temáticas.
-* **[Módulo de Agendamentos & Serviços](./frontend/architecture/modulo-agendamento-e-servicos.md)** — Slot picker dinâmico, grade de especialistas e sinal Pix.
+* **[Módulo de Agendamentos & Serviços](./frontend/architecture/modulo-agendamento-e-servicos.md)** — Extração dinâmica, validação estrita no Passo 3, prevenção de horário fantasma e sinal Pix.
+* **[Performance, Resiliência & Integração SSR](./frontend/architecture/performance-e-resiliencia-frontend.md)** — Cache reativo com `useState`, deduplicação em voo, `useShare` e middleware Nitro.
 * **[Padrões de Acessibilidade W3C / WCAG](./frontend/architecture/padroes-de-acessibilidade-e-ux.md)** — Modais com `role="dialog"`, `aria-modal="true"`, focus trap e `useBodyScrollLock`.
 * **[Categorias Canônicas de Negócio](./frontend/architecture/categorias-de-negocio.md)** — As 4 verticais: Menu, Shop, Hub e Pro.
 * **[Guia de Criação de Novos Tenants](./frontend/operations/guia-criacao-novos-tenants.md)** — Checklist e validação via `pnpm validate:tenants`.
@@ -54,6 +55,13 @@ Bem-vindo à base documental unificada do ecossistema **Alaska Local**. Este rep
 
 ---
 
+## 💼 Inteligência Comercial & Go-to-Market
+* **[Plano de Negócio](./frontend/commercial/PLANO_DE_NEGOCIO.md)** — Precificação aceleradora de caixa (Plano Anual Pix D+0 com Setup e Domínio inclusos vs Mensal no Asaas).
+* **[Pitch e Scripts de Vendas](./frontend/commercial/PITCH_E_SCRIPTS.md)** — Abordagem consultiva Done-for-You (DFY) e superação de objeções para o comércio local.
+
+---
+
 ## 🚀 Esteira de Deploy & Operações
-* **Frontend Nuxt 3:** Hospedado na **Vercel** via monorepo Turborepo. Consulte o [Guia de Deploy na Vercel](./frontend/operations/deploy-guide.md).
-* **Backend API NestJS 11:** Hospedado no **Render** via Dockerfile multi-stage e blueprint `render.yaml` conectado a PostgreSQL gerenciado com auto-SSL.
+* **Frontend Nuxt 3:** Hospedado na **Vercel** via monorepo Turborepo. Consulte o [Guia Definitivo de Deploy na Vercel](./operations/deploy-vercel-turborepo-monorepo.md).
+* **Backend API NestJS 11:** Hospedado no **Render** via Dockerfile multi-stage e blueprint `render.yaml` conectado a PostgreSQL gerenciado com auto-SSL. Consulte o [Guia de Operações e Deploy](./operations/deploy-guide.md).
+* **Provisionamento de Novas Demos:** Consulte o [Guia de Criação de Demos CLI](./operations/new-demo-guide.md) (`node apps/web/scripts/new-demo.js`).
