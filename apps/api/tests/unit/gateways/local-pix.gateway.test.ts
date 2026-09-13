@@ -68,8 +68,8 @@ describe('LocalPixGateway & generatePixEmv (BACEN BR Code EMV)', () => {
       txid: 'TEST1',
     });
 
-    expect(result.emv).toBeDefined();
-    expect(result.emv.startsWith('000201')).toBe(true);
+    expect(result.copiaECola).toBeDefined();
+    expect(result.copiaECola.startsWith('000201')).toBe(true);
     expect(result.qrCodeDataUrl).toBeDefined();
     expect(result.qrCodeDataUrl.startsWith('data:image/png;base64,')).toBe(true);
   });
