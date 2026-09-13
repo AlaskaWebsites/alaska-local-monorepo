@@ -109,14 +109,14 @@ A entidade `Booking` gerencia a marcação de horários com profissionais nas ve
 
 ## 3. Endpoints REST de Gestão de Ciclo de Vida
 
-### Pedidos (`/api/orders`)
-* `POST /api/orders` — Criação do pedido com validação de itens, cálculo de frete e geração de payload Pix EMV quando aplicável.
-* `GET /api/orders/:id` — Consulta detalhes e status do pedido.
-* `GET /api/orders/tenant/:tenantId` — Listagem de pedidos de um estabelecimento específico.
-* `PATCH /api/orders/:id/status` — Atualiza o status do pedido (`body: { status: OrderStatus }`).
+### Pedidos (`/api/v1/orders`)
+* `POST /api/v1/orders` — Criação do pedido com validação de itens, cálculo de frete e geração de payload Pix EMV quando aplicável.
+* `GET /api/v1/orders/:id` — Consulta detalhes e status do pedido.
+* `GET /api/v1/orders/tenant/:tenantId` — Listagem de pedidos de um estabelecimento específico.
+* `PATCH /api/v1/orders/:id/status` — Atualiza o status do pedido (`body: { status: OrderStatus }`).
 
-### Agendamentos (`/api/bookings`)
-* `POST /api/bookings` — Registro de agendamento de serviços com profissional, data, horário e cálculo de sinal.
-* `GET /api/bookings/:id` — Consulta dados e status do agendamento.
-* `GET /api/bookings/tenant/:tenantId?date=YYYY-MM-DD` — Lista agendamentos filtrados por data e loja.
-* `PATCH /api/bookings/:id/status` — Atualiza o status do agendamento (`body: { status: BookingStatus }`).
+### Agendamentos (`/api/v1/bookings`)
+* `POST /api/v1/bookings` — Registro de agendamento de serviços com profissional, data, horário e cálculo de sinal.
+* `GET /api/v1/bookings/:id` — Consulta dados e status do agendamento.
+* `GET /api/v1/bookings/tenant/:tenantId?date=YYYY-MM-DD` — Lista agendamentos filtrados por data e loja.
+* `PATCH /api/v1/bookings/:id/status` — Atualiza o status do agendamento (`body: { status: BookingStatus }`).
