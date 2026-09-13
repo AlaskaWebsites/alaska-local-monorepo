@@ -28,9 +28,10 @@ export class PixController {
   constructor(private readonly calculatePixPayloadUseCase: CalculatePixPayloadUseCase) {}
 
   @Post('brcode')
+  @Post('qrcode')
   @ApiOperation({
     summary: 'Gera o payload BR Code EMV oficial (Copia e Cola) com CRC-16 CCITT e imagem QR Code em Base64 Data URL',
-    description: 'Calcula o payload do Banco Central do Brasil para a chave Pix do estabelecimento e gera o QR Code PNG pronto para exibição no front-end.'
+    description: 'Calcula o payload do Banco Central do Brasil para a chave Pix do estabelecimento e gera o QR Code PNG pronto para exibição no front-end. Suporta as rotas POST /pix/brcode e POST /pix/qrcode.'
   })
   @ApiBody({
     schema: {
@@ -62,8 +63,32 @@ export class PixController {
       }
     }
   })
-  @ApiResponse({ status: 400, description: 'Dados de entrada inválidos' })
-  @ApiResponse({ status: 404, description: 'Estabelecimento não encontrado' })
+  @ApiResponse({
+    status: 400,
+    description: 'Dados de entrada inválidos (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/VALIDATION_ERROR',
+        title: 'Erro de Validação',
+        status: 400,
+        detail: 'O valor do Pix deve ser maior que zero.',
+        instance: '/api/v1/pix/qrcode'
+      }
+    }
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Estabelecimento não encontrado (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/ENTITY_NOT_FOUND',
+        title: 'Recurso Não Encontrado',
+        status: 404,
+        detail: "Tenant com identificador 'adega-prime' não foi encontrado.",
+        instance: '/api/v1/pix/qrcode'
+      }
+    }
+  })
   @UsePipes(new ZodValidationPipe(GeneratePixDtoSchema))
   async generateBrCode(@Body() dto: GeneratePixDto) {
     const result = await this.calculatePixPayloadUseCase.execute(dto)
@@ -100,8 +125,32 @@ export class PixController {
       }
     }
   })
-  @ApiResponse({ status: 400, description: 'Parâmetros inválidos' })
-  @ApiResponse({ status: 404, description: 'Estabelecimento não encontrado' })
+  @ApiResponse({
+    status: 400,
+    description: 'Parâmetros inválidos (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/VALIDATION_ERROR',
+        title: 'Erro de Validação',
+        status: 400,
+        detail: 'Valor deve ser no mínimo R$ 0,01.',
+        instance: '/api/v1/pix/qrcode'
+      }
+    }
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Estabelecimento não encontrado (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/ENTITY_NOT_FOUND',
+        title: 'Recurso Não Encontrado',
+        status: 404,
+        detail: "Tenant com identificador 'karine-finardi' não foi encontrado.",
+        instance: '/api/v1/pix/qrcode'
+      }
+    }
+  })
   @UsePipes(new ZodValidationPipe(QueryPixQrCodeSchema))
   async getQrCode(@Query() query: QueryPixQrCodeDto) {
     const result = await this.calculatePixPayloadUseCase.execute({
