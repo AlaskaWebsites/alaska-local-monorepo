@@ -1,10 +1,10 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CreateOrderUseCase, CreateOrderInput } from '../../../../src/core/application/use-cases/create-order.use-case';
-import { InMemoryTenantRepository } from '../../../../src/infrastructure/persistence/in-memory/in-memory-tenant.repository';
-import { InMemoryOrderRepository } from '../../../../src/infrastructure/persistence/in-memory/in-memory-order.repository';
-import { LocalPixGateway } from '../../../../src/infrastructure/gateways/local-pix.gateway';
-import { Tenant } from '../../../../src/core/domain/entities/tenant.entity';
-import { EntityNotFoundError, ValidationError } from '../../../../src/core/domain/errors/domain.error';
+import { CreateOrderUseCase, CreateOrderInput } from '@core/application/use-cases/create-order.use-case';
+import { InMemoryTenantRepository } from '@infra/persistence/in-memory/in-memory-tenant.repository';
+import { InMemoryOrderRepository } from '@infra/persistence/in-memory/in-memory-order.repository';
+import { LocalPixGateway } from '@infra/gateways/local-pix.gateway';
+import { Tenant } from '@core/domain/entities/tenant.entity';
+import { EntityNotFoundError, ValidationError } from '@core/domain/errors/domain.error';
 
 describe('CreateOrderUseCase', () => {
   let tenantRepository: InMemoryTenantRepository;
