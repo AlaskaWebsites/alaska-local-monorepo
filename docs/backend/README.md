@@ -89,18 +89,23 @@ apps/api/src/
 | `PATCH` | `/api/tenants/:slug/products/options/:optionId/availability` | Alterna disponibilidade de opcional diretamente pelo slug |
 | `PATCH` | `/api/tenants/:slug/products/:productId` | Atualiza preço e dados do produto |
 | `POST` | `/api/orders` | Cria novo pedido de delivery / balcão |
+| `GET` | `/api/orders/:id` | Consulta detalhes e status do pedido |
+| `GET` | `/api/orders/tenant/:tenantId` | Lista pedidos de um estabelecimento |
+| `PATCH` | `/api/orders/:id/status` | Altera status do pedido (`confirmed`, `preparing`, `completed`...) |
 | `POST` | `/api/bookings` | Registra novo agendamento com especialista e sinal Pix |
+| `GET` | `/api/bookings/:id` | Consulta detalhes e status do agendamento |
+| `GET` | `/api/bookings/tenant/:tenantId` | Lista agendamentos filtrados por data |
+| `PATCH` | `/api/bookings/:id/status` | Altera status do agendamento (`confirmed`, `completed`, `no_show`...) |
 | `POST` | `/api/pix/qrcode` | Gera QR Code e Copia e Cola Pix EMV |
 | `GET` | `/api/health` | Healthcheck (Liveness / Readiness) |
 
 ---
 
-## 🚀 5. Deploy de Produção & Infraestrutura
+## 📚 5. Guias Especializados de Arquitetura
 
-* **Deploy Oficial no Render (`render.yaml`)**:
-  * Orquestrado pelo blueprint `render.yaml` na raiz do repositório.
-  * Executado via `Dockerfile` multi-stage com Alpine Linux e Node.js 22.
-  * Porta de produção: `10000`.
-  * Banco de dados gerenciado: PostgreSQL 16 com auto-detecção de SSL no `PostgresService`.
-* **Auto-Migration e Auto-Seed**:
-  * Ao iniciar o container, `PostgresService.onModuleInit()` verifica o schema, aplica migrações e popula as 10 lojas canônicas automaticamente caso o banco esteja vazio.
+Para detalhes aprofundados sobre a implementação, consulte:
+* **[Ciclo de Vida de Pedidos e Agendamentos](./architecture/ciclo-pedidos-e-agendamentos.md)** — Máquinas de estados, transições e regras de negócio.
+* **[Protocolo Pix BACEN EMV](./architecture/protocolo-pix-emv.md)** — Montagem TLV, CRC-16 CCITT e QR Code assíncrono.
+* **[Tratamento de Erros & RFC 7807](./architecture/tratamento-erros-e-rfc7807.md)** — Exceções puras de domínio e padronização HTTP Problem Details.
+* **[Guia de Persistência PostgreSQL & Docker](./architecture/postgresql-persistence-guide.md)** — Auto-migration, auto-seed e pooling.
+* **[Mapa Completo de Arquitetura](./architecture/mapa-arquitetura-backend.md)** — Árvore de arquivos e injeção de dependência.
