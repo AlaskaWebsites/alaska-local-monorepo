@@ -43,9 +43,9 @@ export class BookingController {
     schema: {
       type: 'object',
       properties: {
-        tenantId: { type: 'string', example: 'ten-barbearia-style' },
-        customerName: { type: 'string', example: 'André Silva' },
-        customerPhone: { type: 'string', example: '11977778888' },
+        tenantId: { type: 'string', example: 'ten-barbearia-style', description: 'ID do estabelecimento' },
+        customerName: { type: 'string', example: 'André Silva', description: 'Nome do cliente' },
+        customerPhone: { type: 'string', example: '11977778888', description: 'WhatsApp de contato com DDD' },
         services: {
           type: 'array',
           items: {
@@ -53,17 +53,17 @@ export class BookingController {
             properties: {
               id: { type: 'string', example: 'prod-corte-degrade' },
               name: { type: 'string', example: 'Corte Degradê / Fade Navalhado' },
-              priceCents: { type: 'integer', example: 4500 },
-              durationMinutes: { type: 'integer', example: 35 }
+              priceCents: { type: 'integer', example: 4500, description: 'Preço do serviço em centavos inteiros (4500 = R$ 45,00)' },
+              durationMinutes: { type: 'integer', example: 35, description: 'Duração estimada em minutos' }
             }
           }
         },
-        professionalId: { type: 'string', example: 'prof-lucas' },
-        professionalName: { type: 'string', example: 'Lucas Silva (Master Barber)' },
-        date: { type: 'string', example: '2026-08-30' },
-        time: { type: 'string', example: '14:30' },
+        professionalId: { type: 'string', example: 'prof-lucas', description: 'ID do profissional escolhido' },
+        professionalName: { type: 'string', example: 'Lucas Silva (Master Barber)', description: 'Nome do profissional' },
+        date: { type: 'string', example: '2026-08-30', description: 'Data do agendamento (YYYY-MM-DD)' },
+        time: { type: 'string', example: '14:30', description: 'Horário de início (HH:mm)' },
         notes: { type: 'string', example: 'Primeira vez no estabelecimento' },
-        paymentMode: { type: 'string', enum: ['on_service', 'pix_deposit', 'pix_full'], example: 'pix_deposit' }
+        paymentMode: { type: 'string', enum: ['on_service', 'pix_deposit', 'pix_full'], example: 'pix_deposit', description: 'Modalidade de pagamento' }
       },
       required: ['tenantId', 'customerName', 'customerPhone', 'services', 'date', 'time']
     }
@@ -88,7 +88,19 @@ export class BookingController {
       }
     }
   })
-  @ApiResponse({ status: 400, description: 'Dados de agendamento inválidos' })
+  @ApiResponse({
+    status: 400,
+    description: 'Dados de agendamento inválidos (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/VALIDATION_ERROR',
+        title: 'Erro de Validação',
+        status: 400,
+        detail: 'Ao menos um serviço deve ser selecionado.',
+        instance: '/api/v1/bookings'
+      }
+    }
+  })
   @UsePipes(new ZodValidationPipe(CreateBookingDtoSchema))
   async create(@Body() dto: CreateBookingDto) {
     const booking = new Booking({
@@ -114,6 +126,67 @@ export class BookingController {
         tenantId: booking.tenantId,
         customerName: booking.customerName,
         customerPhone: booking.customerPhone,
+        date: booking.date,
+        time: booking.time,
+        totalPrice: booking.calculateTotalPrice().amount,
+        totalDurationMinutes: booking.calculateTotalDurationMinutes(),
+        status: booking.status
+      }
+    }
+  }
+
+  @Get(':id')
+  @ApiOperation({
+    summary: 'Busca os detalhes de um agendamento por ID',
+    description: 'Retorna os dados cadastrais da reserva, profissional alocado, serviços e horário.'
+  })
+  @ApiParam({ name: 'id', description: 'ID do agendamento', example: 'bk-1724935200000' })
+  @ApiResponse({
+    status: 200,
+    description: 'Agendamento encontrado com sucesso',
+    schema: {
+      example: {
+        success: true,
+        data: {
+          id: 'bk-1724935200000',
+          tenantId: 'ten-barbearia-style',
+          customerName: 'André Silva',
+          customerPhone: '11977778888',
+          date: '2026-08-30',
+          time: '14:30',
+          totalPrice: 45.00,
+          totalDurationMinutes: 35,
+          status: 'scheduled'
+        }
+      }
+    }
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Agendamento não encontrado (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/ENTITY_NOT_FOUND',
+        title: 'Recurso Não Encontrado',
+        status: 404,
+        detail: "Agendamento com identificador 'bk-1724935200000' não foi encontrado.",
+        instance: '/api/v1/bookings/bk-1724935200000'
+      }
+    }
+  })
+  async getById(@Param('id') id: string) {
+    const booking = await this.bookingRepository.findById(id)
+    if (!booking) {
+      return { success: false, message: 'Agendamento não encontrado.' }
+    }
+    return {
+      success: true,
+      data: {
+        id: booking.id,
+        tenantId: booking.tenantId,
+        customerName: booking.customerName,
+        customerPhone: booking.customerPhone,
+        professionalName: booking.professionalName,
         date: booking.date,
         time: booking.time,
         totalPrice: booking.calculateTotalPrice().amount,
