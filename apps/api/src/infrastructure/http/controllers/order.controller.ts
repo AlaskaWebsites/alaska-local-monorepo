@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, UsePipes } from '@nestjs/common'
+import { Controller, Post, Body, Get, Patch, Param, UsePipes } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiBody } from '@nestjs/swagger'
 import { CreateOrderUseCase } from '@core/application/use-cases/create-order.use-case'
 import { z } from 'zod'
@@ -281,6 +281,45 @@ export class OrderController {
         pixCode: order.pixCode,
         createdAt: order.createdAt
       }))
+    }
+  }
+
+  @Patch(':id/status')
+  @ApiOperation({
+    summary: 'Atualiza o status operacional do pedido (confirmed, preparing, dispatched, completed, cancelled)',
+    description: 'Permite alterar o status do pedido na esteira de preparação e entrega da loja.'
+  })
+  @ApiParam({ name: 'id', description: 'ID do pedido', example: 'ord-1724935200000' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        status: {
+          type: 'string',
+          enum: ['created', 'pending_payment', 'confirmed', 'preparing', 'dispatched', 'completed', 'cancelled'],
+          example: 'confirmed',
+          description: 'Novo status do pedido'
+        }
+      },
+      required: ['status']
+    }
+  })
+  @ApiResponse({ status: 200, description: 'Status do pedido atualizado com sucesso' })
+  @ApiResponse({ status: 404, description: 'Pedido não encontrado (RFC 7807)' })
+  async updateStatus(@Param('id') id: string, @Body('status') status: any) {
+    const order = await this.orderRepository.findById(id)
+    if (!order) {
+      return { success: false, message: 'Pedido não encontrado.' }
+    }
+    (order as any).props.status = status
+    (order as any).props.updatedAt = new Date()
+    await this.orderRepository.save(order)
+    return {
+      success: true,
+      data: {
+        id: order.id,
+        status: order.status
+      }
     }
   }
 }
