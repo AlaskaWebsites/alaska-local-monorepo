@@ -58,9 +58,9 @@ export class OrderController {
     schema: {
       type: 'object',
       properties: {
-        tenantSlug: { type: 'string', example: 'hamburgueria-x' },
-        customerName: { type: 'string', example: 'Danilo Gozzi' },
-        customerPhone: { type: 'string', example: '11999998888' },
+        tenantSlug: { type: 'string', example: 'hamburgueria-x', description: 'Slug do estabelecimento' },
+        customerName: { type: 'string', example: 'Danilo Gozzi', description: 'Nome do cliente' },
+        customerPhone: { type: 'string', example: '11999998888', description: 'WhatsApp com DDD' },
         deliveryType: { type: 'string', enum: ['delivery', 'pickup'], example: 'delivery' },
         address: {
           type: 'object',
@@ -80,7 +80,7 @@ export class OrderController {
               productId: { type: 'string', example: 'prod-x-burger' },
               productName: { type: 'string', example: 'X-Burger Clássico Monster' },
               quantity: { type: 'integer', example: 2 },
-              unitPriceCents: { type: 'integer', example: 2890 },
+              unitPriceCents: { type: 'integer', example: 2890, description: 'Preço unitário em centavos inteiros (2890 = R$ 28,90)' },
               options: {
                 type: 'array',
                 items: {
@@ -88,7 +88,7 @@ export class OrderController {
                   properties: {
                     id: { type: 'string', example: 'add-bacon' },
                     name: { type: 'string', example: 'Bacon Crocante Extra' },
-                    priceCents: { type: 'integer', example: 500 }
+                    priceCents: { type: 'integer', example: 500, description: 'Preço do opcional em centavos inteiros (500 = R$ 5,00)' }
                   }
                 }
               },
@@ -97,7 +97,7 @@ export class OrderController {
           }
         },
         paymentMethod: { type: 'string', enum: ['Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro'], example: 'Pix' },
-        isTestCent: { type: 'boolean', example: false }
+        isTestCent: { type: 'boolean', example: false, description: 'Modo teste R$ 0,01' }
       },
       required: ['tenantSlug', 'customerName', 'customerPhone', 'deliveryType', 'items', 'paymentMethod']
     }
@@ -124,8 +124,32 @@ export class OrderController {
       }
     }
   })
-  @ApiResponse({ status: 400, description: 'Dados de validação incorretos' })
-  @ApiResponse({ status: 404, description: 'Estabelecimento não encontrado' })
+  @ApiResponse({
+    status: 400,
+    description: 'Dados de validação incorretos (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/VALIDATION_ERROR',
+        title: 'Erro de Validação',
+        status: 400,
+        detail: 'Endereço é obrigatório para entregas.',
+        instance: '/api/v1/orders'
+      }
+    }
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Estabelecimento não encontrado (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/ENTITY_NOT_FOUND',
+        title: 'Recurso Não Encontrado',
+        status: 404,
+        detail: "Tenant com identificador 'hamburgueria-x' não foi encontrado.",
+        instance: '/api/v1/orders'
+      }
+    }
+  })
   @UsePipes(new ZodValidationPipe(CreateOrderDtoSchema))
   async create(@Body() dto: CreateOrderDto) {
     const order = await this.createOrderUseCase.execute(dto)
@@ -175,7 +199,19 @@ export class OrderController {
       }
     }
   })
-  @ApiResponse({ status: 404, description: 'Pedido não encontrado' })
+  @ApiResponse({
+    status: 404,
+    description: 'Pedido não encontrado (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/ENTITY_NOT_FOUND',
+        title: 'Recurso Não Encontrado',
+        status: 404,
+        detail: "Pedido com identificador 'ord-1724935200000' não foi encontrado.",
+        instance: '/api/v1/orders/ord-1724935200000'
+      }
+    }
+  })
   async getById(@Param('id') id: string) {
     const order = await this.orderRepository.findById(id)
     if (!order) {
@@ -196,6 +232,55 @@ export class OrderController {
         pixCode: order.pixCode,
         createdAt: order.createdAt
       }
+    }
+  }
+
+  @Get('tenant/:tenantId')
+  @ApiOperation({
+    summary: 'Lista pedidos de um estabelecimento específico',
+    description: 'Retorna todos os pedidos registrados para o tenant informado para acompanhamento operacional do lojista.'
+  })
+  @ApiParam({ name: 'tenantId', description: 'ID do estabelecimento', example: 'ten-hamburgueria-x' })
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de pedidos retornada com sucesso',
+    schema: {
+      example: {
+        success: true,
+        data: [
+          {
+            id: 'ord-1724935200000',
+            tenantId: 'ten-hamburgueria-x',
+            customerName: 'Danilo Gozzi',
+            customerPhone: '11999998888',
+            deliveryType: 'delivery',
+            paymentMethod: 'Pix',
+            subtotal: 67.80,
+            total: 72.80,
+            status: 'created',
+            createdAt: '2026-08-29T14:45:00.000Z'
+          }
+        ]
+      }
+    }
+  })
+  async listByTenant(@Param('tenantId') tenantId: string) {
+    const orders = await this.orderRepository.listByTenant(tenantId)
+    return {
+      success: true,
+      data: orders.map(order => ({
+        id: order.id,
+        tenantId: order.tenantId,
+        customerName: order.customerName,
+        customerPhone: order.customerPhone,
+        deliveryType: order.deliveryType,
+        paymentMethod: order.paymentMethod,
+        subtotal: order.calculateSubtotal().amount,
+        total: order.calculateTotal().amount,
+        status: order.status,
+        pixCode: order.pixCode,
+        createdAt: order.createdAt
+      }))
     }
   }
 }
