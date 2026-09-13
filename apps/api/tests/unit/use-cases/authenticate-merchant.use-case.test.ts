@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { AuthenticateMerchantUseCase } from '../../../../src/core/application/use-cases/authenticate-merchant.use-case';
-import { InMemoryTenantRepository } from '../../../../src/infrastructure/persistence/in-memory/in-memory-tenant.repository';
-import { SimplePasswordHasher } from '../../../../src/infrastructure/security/simple-hasher';
-import { Tenant } from '../../../../src/core/domain/entities/tenant.entity';
-import { EntityNotFoundError } from '../../../../src/core/domain/errors/domain.error';
+import { AuthenticateMerchantUseCase } from '@core/application/use-cases/authenticate-merchant.use-case';
+import { InMemoryTenantRepository } from '@infra/persistence/in-memory/in-memory-tenant.repository';
+import { SimplePasswordHasher } from '@infra/security/simple-hasher';
+import { Tenant } from '@core/domain/entities/tenant.entity';
+import { EntityNotFoundError } from '@core/domain/errors/domain.error';
 
 describe('AuthenticateMerchantUseCase', () => {
   let tenantRepository: InMemoryTenantRepository;
