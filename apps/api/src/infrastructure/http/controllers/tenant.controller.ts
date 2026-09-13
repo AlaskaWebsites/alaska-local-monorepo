@@ -1,10 +1,10 @@
-import { Controller, Get, Post, Body, Param, Query, Inject, UsePipes, HttpCode, HttpStatus, Header } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, Query, Inject, UsePipes, HttpCode, HttpStatus, Header } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiParam, ApiQuery, ApiBody, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TOKENS } from '../../../core/application/tokens';
 import { GetTenantBySlugUseCase } from '../../../core/application/use-cases/get-tenant-by-slug.use-case';
 import { ResolveTenantByDomainUseCase } from '../../../core/application/use-cases/resolve-tenant-by-domain.use-case';
-import { UpdateTenantHoursUseCase } from '../../../core/application/use-cases/update-tenant-hours.use-case';
 import { AuthenticateMerchantUseCase } from '../../../core/application/use-cases/authenticate-merchant.use-case';
+import { UpdateTenantHoursUseCase } from '../../../core/application/use-cases/update-tenant-hours.use-case';
 import { ZodValidationPipe } from '../pipes/zod-validation.pipe';
 import { MerchantLoginSchema, MerchantLoginInput } from '@alaska/contracts/tenant';
 import { ITenantRepository } from '../../../core/application/ports/tenant.repository.port';
@@ -14,17 +14,20 @@ import { IPasswordHasher } from '../../../core/application/ports/password-hasher
 @Controller('tenants')
 export class TenantController {
   private authenticateMerchantUseCase: AuthenticateMerchantUseCase;
+  private updateTenantHoursUseCase: UpdateTenantHoursUseCase;
 
   constructor(
     private readonly getTenantBySlugUseCase: GetTenantBySlugUseCase,
     private readonly resolveTenantByDomainUseCase: ResolveTenantByDomainUseCase,
-    private readonly updateTenantHoursUseCase: UpdateTenantHoursUseCase,
     @Inject(TOKENS.TENANT_REPOSITORY) private readonly tenantRepository: ITenantRepository,
     @Inject(TOKENS.PASSWORD_HASHER) private readonly passwordHasher: IPasswordHasher,
   ) {
     this.authenticateMerchantUseCase = new AuthenticateMerchantUseCase(
       this.tenantRepository,
-      this.passwordHasher,
+      this.passwordHasher
+    );
+    this.updateTenantHoursUseCase = new UpdateTenantHoursUseCase(
+      this.tenantRepository
     );
   }
 
@@ -55,10 +58,11 @@ export class TenantController {
   }
 
   @Get('resolve/domain')
+  @Get('resolve')
   @Header('Cache-Control', 'no-store, no-cache, must-revalidate')
   @ApiOperation({
     summary: 'Resolve o estabelecimento a partir do domínio próprio ou subdomínio (header Host)',
-    description: 'Permite que domínios customizados (ex: www.cliente.com.br) ou subdomínios (adega-prime.alaska.app) identifiquem o tenant correspondente.'
+    description: 'Permite que domínios customizados (ex: www.cliente.com.br) ou subdomínios (adega-prime.alaska.app) identifiquem o tenant correspondente. Suporta as rotas GET /tenants/resolve/domain e GET /tenants/resolve.'
   })
   @ApiQuery({
     name: 'host',
@@ -186,18 +190,16 @@ export class TenantController {
     @Param('slug') slug: string,
     @Body() body: MerchantLoginInput,
   ) {
-    return this.authenticateMerchantUseCase.execute({
-      slug,
-      pin: body.pin,
-    });
+    return this.authenticateMerchantUseCase.execute(slug, body.pin);
   }
 
   @Post(':slug/hours')
+  @Patch(':slug/hours')
   @HttpCode(HttpStatus.OK)
   @ApiBearerAuth('merchant-token')
   @ApiOperation({
     summary: 'Atualiza grade de horários de funcionamento e status de atendimento da loja',
-    description: 'Permite alterar horários de abertura/fechamento diários e acionar a pausa emergencial da loja.'
+    description: 'Permite alterar horários de abertura/fechamento diários e acionar a pausa emergencial da loja. Suporta os métodos HTTP POST e PATCH, aceitando { hours } ou { openingHours }.'
   })
   @ApiParam({
     name: 'slug',
@@ -223,9 +225,12 @@ export class TenantController {
             saturday: { open: '18:00', close: '01:00', closed: false },
             sunday: { open: '18:00', close: '23:00', closed: false }
           }
+        },
+        openingHours: {
+          type: 'object',
+          description: 'Alias compatível com @alaska/contracts (UpdateTenantHoursSchema)'
         }
-      },
-      required: ['hours']
+      }
     }
   })
   @ApiResponse({ status: 200, description: 'Horários atualizados com sucesso' })
@@ -244,8 +249,9 @@ export class TenantController {
   })
   async updateHours(
     @Param('slug') slug: string,
-    @Body('hours') hours: Record<string, { open: string; close: string; closed?: boolean }>,
+    @Body() body: any,
   ) {
+    const hours = body?.hours || body?.openingHours || body;
     return this.updateTenantHoursUseCase.execute({ slug, hours });
   }
 }
