@@ -55,7 +55,7 @@ apps/api/src/
 │   └── modules/                      # Módulos NestJS de injeção e orquestração
 │
 ├── config/                           # Validação de Variáveis de Ambiente (env.schema.ts)
-└── main.ts                           # Ponto de Entrada da Aplicação NestJS
+└── main.ts                           # Ponto de Entrada da Aplicação NestJS (Swagger OpenAPI v1.4.0)
 ```
 
 ---
@@ -76,28 +76,32 @@ apps/api/src/
 
 ---
 
-## 🌐 4. Endpoints da API REST
+## 🌐 4. Endpoints da API REST (OpenAPI / Swagger v1.4.0)
+
+Documentação interativa disponível em `http://localhost:3333/docs` com schemas RFC 7807 e autenticação `merchant-token`:
 
 | Método | Rota | Descrição |
 | :--- | :--- | :--- |
-| `GET` | `/api/tenants/:slug` | Retorna catálogo e configurações do tenant |
-| `GET` | `/api/tenants/resolve/domain?host=...` | Resolve tenant por domínio próprio |
-| `POST` | `/api/tenants/:slug/admin/login` | Login do lojista via PIN com retorno de token de sessão |
-| `POST` | `/api/tenants/:slug/hours` | Atualiza grade de horários de funcionamento da loja |
-| `PATCH` | `/api/tenants/:slug/products/:productId/availability` | Alterna disponibilidade do produto (pausa rápida < 3s) |
-| `PATCH` | `/api/tenants/:slug/products/:productId/options/:optionId/availability` | Alterna disponibilidade de opcional/adicional por produto |
-| `PATCH` | `/api/tenants/:slug/products/options/:optionId/availability` | Alterna disponibilidade de opcional diretamente pelo slug |
-| `PATCH` | `/api/tenants/:slug/products/:productId` | Atualiza preço e dados do produto |
-| `POST` | `/api/orders` | Cria novo pedido de delivery / balcão |
-| `GET` | `/api/orders/:id` | Consulta detalhes e status do pedido |
-| `GET` | `/api/orders/tenant/:tenantId` | Lista pedidos de um estabelecimento |
-| `PATCH` | `/api/orders/:id/status` | Altera status do pedido (`confirmed`, `preparing`, `completed`...) |
-| `POST` | `/api/bookings` | Registra novo agendamento com especialista e sinal Pix |
-| `GET` | `/api/bookings/:id` | Consulta detalhes e status do agendamento |
-| `GET` | `/api/bookings/tenant/:tenantId` | Lista agendamentos filtrados por data |
-| `PATCH` | `/api/bookings/:id/status` | Altera status do agendamento (`confirmed`, `completed`, `no_show`...) |
-| `POST` | `/api/pix/qrcode` | Gera QR Code e Copia e Cola Pix EMV |
-| `GET` | `/api/health` | Healthcheck (Liveness / Readiness) |
+| `GET` | `/api/v1/tenants` | Lista todos os estabelecimentos cadastrados e ativos |
+| `GET` | `/api/v1/tenants/:slug` | Retorna dados completos do tenant, horários e catálogo |
+| `GET` | `/api/v1/tenants/resolve/domain?host=...` | Resolve estabelecimento por domínio próprio ou subdomínio |
+| `POST` | `/api/v1/tenants/:slug/admin/login` | Autenticação do lojista via PIN com retorno de token de sessão |
+| `POST` | `/api/v1/tenants/:slug/hours` | Atualiza grade de funcionamento da loja (`merchant-token`) |
+| `PATCH` | `/api/v1/tenants/:slug/products/:productId/availability` | Alterna disponibilidade do produto (pausa rápida < 3s) |
+| `PATCH` | `/api/v1/tenants/:slug/products/:productId/options/:optionId/availability` | Alterna disponibilidade de opcional/adicional por produto |
+| `PATCH` | `/api/v1/tenants/:slug/products/options/:optionId/availability` | Alterna disponibilidade de opcional diretamente pelo slug |
+| `PUT` / `PATCH` | `/api/v1/tenants/:slug/products/:productId` | Atualiza preço, dados e disponibilidade do produto |
+| `POST` | `/api/v1/orders` | Cria novo pedido com validação Zod e cálculo financeiro |
+| `GET` | `/api/v1/orders/:id` | Consulta detalhes, itens e status do pedido |
+| `GET` | `/api/v1/orders/tenant/:tenantId` | Lista pedidos de um estabelecimento para o lojista |
+| `PATCH` | `/api/v1/orders/:id/status` | Atualiza status operacional (`confirmed`, `preparing`, `dispatched`, `completed`, `cancelled`) |
+| `POST` | `/api/v1/bookings` | Registra agendamento com especialista, serviços e sinal Pix |
+| `GET` | `/api/v1/bookings/:id` | Consulta dados, profissional e status do agendamento |
+| `GET` | `/api/v1/bookings/tenant/:tenantId` | Lista agendamentos filtrados por data e loja |
+| `PATCH` | `/api/v1/bookings/:id/status` | Atualiza status do agendamento (`scheduled`, `confirmed`, `completed`, `cancelled`, `no_show`) |
+| `POST` | `/api/v1/pix/brcode` / `/api/v1/pix/qrcode` | Gera BR Code EMV oficial (BACEN) e QR Code em Base64 Data URL |
+| `GET` | `/api/v1/pix/qrcode` | Consulta dados e imagem do QR Code Pix via query params |
+| `GET` | `/api/v1/health` | Healthcheck de integridade, status operacional e uptime |
 
 ---
 
