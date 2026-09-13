@@ -1,5 +1,5 @@
 import { Controller, Get, Post, Body, Param, Query, Inject, UsePipes, HttpCode, HttpStatus, Header } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiParam, ApiQuery, ApiBody, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiParam, ApiQuery, ApiBody, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
 import { TOKENS } from '../../../core/application/tokens';
 import { GetTenantBySlugUseCase } from '../../../core/application/use-cases/get-tenant-by-slug.use-case';
 import { ResolveTenantByDomainUseCase } from '../../../core/application/use-cases/resolve-tenant-by-domain.use-case';
@@ -28,26 +28,30 @@ export class TenantController {
     );
   }
 
-  @Get(':slug')
-  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
-  @Header('Pragma', 'no-cache')
-  @Header('Expires', '0')
+  @Get()
   @ApiOperation({
-    summary: 'Busca dados operacionais, tema, configuração Pix e catálogo de um estabelecimento por slug',
-    description: 'Retorna metadados do tenant, horários de atendimento, cálculo se a loja está aberta, prova social e catálogo de categorias/produtos.'
+    summary: 'Lista todos os estabelecimentos ativos',
+    description: 'Retorna a lista de todos os tenants cadastrados e ativos no ecossistema.'
   })
-  @ApiParam({
-    name: 'slug',
-    description: 'Slug único do estabelecimento (ex: hamburgueria-x, adega-prime, barbearia-style)',
-    example: 'hamburgueria-x',
-    required: true
+  @ApiResponse({
+    status: 200,
+    description: 'Lista de estabelecimentos retornada com sucesso',
+    schema: {
+      example: [
+        {
+          id: 'ten-hamburgueria-x',
+          slug: 'hamburgueria-x',
+          name: 'Hamburgueria X',
+          businessCategory: 'menu',
+          theme: 'food',
+          isActive: true
+        }
+      ]
+    }
   })
-  @ApiResponse({ status: 200, description: 'Dados do tenant retornados com sucesso' })
-  @ApiResponse({ status: 404, description: 'Estabelecimento não encontrado ou inativo' })
-  async getBySlug(@Param('slug') slug: string) {
-    const tenant = await this.getTenantBySlugUseCase.execute(slug);
-    if (!tenant) return null;
-    return tenant.toJSON();
+  async listAll() {
+    const tenants = await this.tenantRepository.listAllActive();
+    return tenants.map((t) => t.toJSON());
   }
 
   @Get('resolve/domain')
@@ -63,10 +67,56 @@ export class TenantController {
     required: true
   })
   @ApiResponse({ status: 200, description: 'Estabelecimento resolvido com sucesso' })
-  @ApiResponse({ status: 404, description: 'Estabelecimento não encontrado para o domínio informado' })
+  @ApiResponse({
+    status: 404,
+    description: 'Estabelecimento não encontrado para o domínio informado (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/ENTITY_NOT_FOUND',
+        title: 'Recurso Não Encontrado',
+        status: 404,
+        detail: "Tenant com identificador 'desconhecido.com.br' não foi encontrado.",
+        instance: '/api/v1/tenants/resolve/domain'
+      }
+    }
+  })
   async resolveByDomain(@Query('host') host: string) {
     const tenant = await this.resolveTenantByDomainUseCase.execute(host);
     return tenant ? tenant.toJSON() : null;
+  }
+
+  @Get(':slug')
+  @Header('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+  @Header('Pragma', 'no-cache')
+  @Header('Expires', '0')
+  @ApiOperation({
+    summary: 'Busca dados operacionais, tema, configuração Pix e catálogo de um estabelecimento por slug',
+    description: 'Retorna metadados do tenant, horários de atendimento, cálculo se a loja está aberta, prova social e catálogo de categorias/produtos.'
+  })
+  @ApiParam({
+    name: 'slug',
+    description: 'Slug único do estabelecimento (ex: hamburgueria-x, adega-prime, barbearia-style)',
+    example: 'hamburgueria-x',
+    required: true
+  })
+  @ApiResponse({ status: 200, description: 'Dados do tenant retornados com sucesso' })
+  @ApiResponse({
+    status: 404,
+    description: 'Estabelecimento não encontrado ou inativo (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/ENTITY_NOT_FOUND',
+        title: 'Recurso Não Encontrado',
+        status: 404,
+        detail: "Tenant com identificador 'hamburgueria-x' não foi encontrado.",
+        instance: '/api/v1/tenants/hamburgueria-x'
+      }
+    }
+  })
+  async getBySlug(@Param('slug') slug: string) {
+    const tenant = await this.getTenantBySlugUseCase.execute(slug);
+    if (!tenant) return null;
+    return tenant.toJSON();
   }
 
   @Post(':slug/admin/login')
@@ -105,8 +155,32 @@ export class TenantController {
       }
     }
   })
-  @ApiResponse({ status: 400, description: 'PIN incorreto ou inválido' })
-  @ApiResponse({ status: 404, description: 'Estabelecimento não encontrado' })
+  @ApiResponse({
+    status: 400,
+    description: 'PIN incorreto ou inválido (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/VALIDATION_ERROR',
+        title: 'Erro de Validação',
+        status: 400,
+        detail: 'PIN do lojista incorreto.',
+        instance: '/api/v1/tenants/hamburgueria-x/admin/login'
+      }
+    }
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Estabelecimento não encontrado (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/ENTITY_NOT_FOUND',
+        title: 'Recurso Não Encontrado',
+        status: 404,
+        detail: "Tenant com identificador 'hamburgueria-x' não foi encontrado.",
+        instance: '/api/v1/tenants/hamburgueria-x/admin/login'
+      }
+    }
+  })
   @UsePipes(new ZodValidationPipe(MerchantLoginSchema))
   async login(
     @Param('slug') slug: string,
@@ -120,6 +194,7 @@ export class TenantController {
 
   @Post(':slug/hours')
   @HttpCode(HttpStatus.OK)
+  @ApiBearerAuth('merchant-token')
   @ApiOperation({
     summary: 'Atualiza grade de horários de funcionamento e status de atendimento da loja',
     description: 'Permite alterar horários de abertura/fechamento diários e acionar a pausa emergencial da loja.'
@@ -154,7 +229,19 @@ export class TenantController {
     }
   })
   @ApiResponse({ status: 200, description: 'Horários atualizados com sucesso' })
-  @ApiResponse({ status: 404, description: 'Estabelecimento não encontrado' })
+  @ApiResponse({
+    status: 404,
+    description: 'Estabelecimento não encontrado (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/ENTITY_NOT_FOUND',
+        title: 'Recurso Não Encontrado',
+        status: 404,
+        detail: "Tenant com identificador 'hamburgueria-x' não foi encontrado.",
+        instance: '/api/v1/tenants/hamburgueria-x/hours'
+      }
+    }
+  })
   async updateHours(
     @Param('slug') slug: string,
     @Body('hours') hours: Record<string, { open: string; close: string; closed?: boolean }>,
