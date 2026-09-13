@@ -1,6 +1,6 @@
 # ⚙️ Alaska Local — Back-end Architecture Documentation (`@alaska/api`)
 
-Documentação técnica oficial do backend NestJS 11 do ecossistema **Alaska Local**, construído sob os princípios estritos de **Clean Architecture (Arquitetura Hexagonal / Ports & Adapters)**, validação Fail-Fast com Zod via `@alaska/contracts` e tratamento monetário imutável via Value Object `Money`.
+Documentação técnica oficial do backend NestJS 11 do ecossistema **Alaska Local**, construído sob os princípios estritos de **Clean Architecture (Arquitetura Hexagonal / Ports & Adapters)**, validação Fail-Fast com Zod via `@alaska/contracts`, persistência nativa em PostgreSQL 16 com auto-migration/auto-seed e tratamento monetário imutável via Value Object `Money`.
 
 ---
 
@@ -15,9 +15,10 @@ Documentação técnica oficial do backend NestJS 11 do ecossistema **Alaska Loc
 3. **Injeção de Dependências Desacoplada via Tokens**:
    - Casos de uso dependem exclusivamente de interfaces abstratas de portas (`ports/`) e tokens definidos em `src/core/application/tokens.ts`.
 4. **Validação Fail-Fast com Zod (`@alaska/contracts` — ADR 014)**:
-   - DTOs são validados no primeiro contato com a API via `ZodValidationPipe`, impedindo dados corrompidos de atingirem a aplicação.
-5. **Multi-Tenancy & Row-Level Security (RLS)**:
-   - Isolamento lógico e de banco por `tenant_id`, com suporte a múltiplos estabelecimentos e resolução instantânea por domínio ou slug.
+   - DTOs são validados na borda da API via `ZodValidationPipe`, impedindo dados corrompidos de atingirem a aplicação.
+5. **Persistência Nativa PostgreSQL 16 com Auto-Bootstrap**:
+   - Conexão em pool (`pg.Pool`) com auto-migração de schema e auto-seed inicial no `onModuleInit()` de `PostgresService`.
+   - Suporte transparente a SSL em instâncias gerenciadas do Render.
 
 ---
 
@@ -32,79 +33,74 @@ apps/api/src/
 │   │   └── errors/                   # DomainError, EntityNotFoundError, ValidationError
 │   │
 │   └── application/                  # 2. Camada de Aplicação (Use Cases & Portas)
-│       ├── ports/                    # ITenantRepository, IProductRepository, IOrderRepository, IBookingRepository, IPixGateway
+│       ├── ports/                    # ITenantRepository, IProductRepository, IOrderRepository, IBookingRepository, IPixGateway, IPasswordHasher
 │       ├── tokens.ts                 # Injection Tokens para desacoplamento
-│       └── use-cases/                # GetTenantBySlug, ResolveTenantByDomain, CreateOrder, CalculatePixPayload, etc.
+│       └── use-cases/                # GetTenantBySlug, ResolveTenantByDomain, CreateOrder, ToggleProductAvailability, ToggleOptionAvailability, AuthenticateMerchant, etc.
 │
 ├── infrastructure/                   # 3. Camada de Infraestrutura & Adaptadores
 │   ├── http/
 │   │   ├── controllers/              # TenantController, ProductController, OrderController, BookingController, PixController, HealthController
+│   │   ├── guards/                   # MerchantAuthGuard (validação de token de lojista)
 │   │   ├── pipes/                    # ZodValidationPipe (Fail-Fast)
 │   │   └── filters/                  # DomainExceptionFilter (RFC 7807)
 │   ├── gateways/                     # LocalPixGateway (EMV BACEN & QR Code)
+│   ├── security/                     # SimplePasswordHasher (SHA-256 com salt)
 │   ├── persistence/
-│   │   ├── in-memory/                # Repositórios em memória para testes e demos rápidas
-│   │   └── postgres/                 # Repositórios PostgreSQL (Pool pg + RLS + Mappers)
+│   │   ├── in-memory/                # Repositórios em memória para testes ultrarrápidos no Vitest
+│   │   └── postgres/                 # Repositórios PostgreSQL (Pool pg + RLS + Mappers + Seed)
+│   │       ├── mappers/              # TenantMapper, etc.
+│   │       ├── migrations/           # Migrações SQL adicionais (002_add_pin_hash_to_tenants.sql)
+│   │       ├── seed-catalog.ts       # Catálogo dos 10 estabelecimentos canônicos
+│   │       └── postgres.service.ts   # Pool pg com auto-migration e auto-seed
 │   └── modules/                      # Módulos NestJS de injeção e orquestração
 │
-├── config/                           # Configurações de Ambiente (EnvConfig)
+├── config/                           # Validação de Variáveis de Ambiente (env.schema.ts)
 └── main.ts                           # Ponto de Entrada da Aplicação NestJS
 ```
 
 ---
 
-## 🧩 3. Entidades & Value Objects do Domínio
-
-| Entidade / VO | Responsabilidade | Invariantes / Métodos |
-| :--- | :--- | :--- |
-| **`Money` VO** | Representação monetária imutável em centavos inteiros. | `fromCents(cents)`, `fromDecimal(val)`, `add()`, `subtract()`, `multiply()`, `percentage()`, `toDecimal()`, `formatBrl()` |
-| **`Tenant` Entity** | Raiz de agregação do estabelecimento. | Validação de slug, categoria (`menu`, `shop`, `hub`, `pro`), 11 temas, horários, Pix e status de emergência |
-| **`Product` Entity** | Procedimento ou produto do catálogo. | Preço via `Money` VO, grupos de adicionais/opcionais e controle de disponibilidade |
-| **`Order` Entity** | Pedido de compras / delivery. | Subtotal, taxa de entrega, total em centavos e máquina de estados (`received` $\rightarrow$ `completed`) |
-| **`Booking` Entity** | Agendamento de horário com especialista. | Data, horário, cliente, especialista, duração e sinal Pix de garantia (30%) |
-| **`Address` VO** | Endereço formatado do cliente. | CEP sanitizado de 8 dígitos, logradouro, número e bairro |
-| **`PixKey` VO** | Chave Pix do lojista. | Validação estrita de tipo (`cpf`, `cnpj`, `phone`, `email`, `random`) |
-
----
-
-## ⚙️ 4. Casos de Uso (Application Layer)
+## ⚙️ 3. Casos de Uso (Application Layer)
 
 | Caso de Uso | Finalidade | Portas Utilizadas |
 | :--- | :--- | :--- |
 | **`GetTenantBySlugUseCase`** | Busca dados cadastrais e catálogo do estabelecimento pelo slug da vitrine. | `ITenantRepository` |
 | **`ResolveTenantByDomainUseCase`** | Resolve o tenant a partir do domínio próprio (header `Host`). | `ITenantRepository` |
+| **`AuthenticateMerchantUseCase`** | Autentica o lojista via PIN (ADR 007) gerando token de sessão. | `ITenantRepository`, `IPasswordHasher` |
+| **`UpdateTenantHoursUseCase`** | Atualiza a grade semanal de funcionamento da loja. | `ITenantRepository` |
+| **`ToggleProductAvailabilityUseCase`** | Pausa ou despausa itens do catálogo em tempo real (ADR 013). | `IProductRepository` |
+| **`ToggleOptionAvailabilityUseCase`** | Pausa ou despausa opcionais/adicionais (ex: bacon esgotado). | `IProductRepository` |
+| **`UpdateProductUseCase`** | Atualiza preço e informações de produto do catálogo. | `IProductRepository` |
 | **`CreateOrderUseCase`** | Valida produtos, calcula totais via `Money` VO e cria novo pedido. | `IOrderRepository`, `IProductRepository`, `ITenantRepository` |
 | **`CalculatePixPayloadUseCase`** | Gera o payload EMV padrão BACEN (Tags 00–63) e QR Code Base64. | `IPixGateway`, `ITenantRepository` |
-| **`ToggleProductAvailabilityUseCase`** | Pausa ou despausa itens em menos de 3 segundos (ADR 013). | `IProductRepository` |
-| **`UpdateProductUseCase`** | Atualiza preço e informações de produto do catálogo. | `IProductRepository` |
-| **`UpdateTenantHoursUseCase`** | Atualiza a grade semanal de funcionamento da loja. | `ITenantRepository` |
 
 ---
 
-## 🌐 5. Endpoints da API REST (`/api`)
+## 🌐 4. Endpoints da API REST
 
-| Método | Rota | Descrição | Schema Zod de Entrada |
-| :--- | :--- | :--- | :--- |
-| `GET` | `/api/tenants/:slug` | Retorna dados completos do tenant e catálogo | — |
-| `GET` | `/api/tenants/resolve-domain` | Resolve tenant por domínio próprio | `Query: domain` |
-| `PATCH` | `/api/tenants/:slug/hours` | Atualiza horários de funcionamento | `UpdateTenantHoursSchema` |
-| `GET` | `/api/products/tenant/:tenantId` | Lista produtos por categoria | — |
-| `PATCH` | `/api/products/:id/availability` | Alterna disponibilidade (pausa rápida) | `ToggleProductAvailabilitySchema` |
-| `PATCH` | `/api/products/:id` | Atualiza preço e dados do produto | `UpdateProductSchema` |
-| `POST` | `/api/orders` | Cria novo pedido | `CreateOrderSchema` |
-| `POST` | `/api/bookings` | Registra novo agendamento | `CreateBookingSchema` |
-| `POST` | `/api/pix/qrcode` | Gera QR Code e Copia e Cola Pix | `PixQrCodeRequestSchema` |
-| `GET` | `/api/health` | Healthcheck (Liveness / Readiness) | — |
+| Método | Rota | Descrição |
+| :--- | :--- | :--- |
+| `GET` | `/api/tenants/:slug` | Retorna catálogo e configurações do tenant |
+| `GET` | `/api/tenants/resolve/domain?host=...` | Resolve tenant por domínio próprio |
+| `POST` | `/api/tenants/:slug/admin/login` | Login do lojista via PIN com retorno de token de sessão |
+| `POST` | `/api/tenants/:slug/hours` | Atualiza grade de horários de funcionamento da loja |
+| `PATCH` | `/api/tenants/:slug/products/:productId/availability` | Alterna disponibilidade do produto (pausa rápida < 3s) |
+| `PATCH` | `/api/tenants/:slug/products/:productId/options/:optionId/availability` | Alterna disponibilidade de opcional/adicional por produto |
+| `PATCH` | `/api/tenants/:slug/products/options/:optionId/availability` | Alterna disponibilidade de opcional diretamente pelo slug |
+| `PATCH` | `/api/tenants/:slug/products/:productId` | Atualiza preço e dados do produto |
+| `POST` | `/api/orders` | Cria novo pedido de delivery / balcão |
+| `POST` | `/api/bookings` | Registra novo agendamento com especialista e sinal Pix |
+| `POST` | `/api/pix/qrcode` | Gera QR Code e Copia e Cola Pix EMV |
+| `GET` | `/api/health` | Healthcheck (Liveness / Readiness) |
 
 ---
 
-## 🧪 6. Suíte de Testes Unitários (`apps/api/tests/unit/`)
+## 🚀 5. Deploy de Produção & Infraestrutura
 
-A suíte de testes unitários do backend utiliza **Vitest** com repositórios em memória (`InMemoryRepository`), garantindo execução determinística e ultrarrápida (< 150ms):
-
-- `domain/money.vo.spec.ts`: Operações monetárias, arredondamento e invariantes de centavos inteiros.
-- `domain/tenant.entity.spec.ts` & `product.entity.spec.ts`: Validações de domínio.
-- `use-cases/create-order.spec.ts`: Criação e cálculo de pedidos.
-- `use-cases/calculate-pix-payload.spec.ts`: Geração de payload Pix e CRC-16.
-- `use-cases/toggle-product-availability.spec.ts`: Pausa e reativação de produtos.
-- `persistence/in-memory-repositories.spec.ts`: Comportamento das portas e repositórios.
+* **Deploy Oficial no Render (`render.yaml`)**:
+  * Orquestrado pelo blueprint `render.yaml` na raiz do repositório.
+  * Executado via `Dockerfile` multi-stage com Alpine Linux e Node.js 22.
+  * Porta de produção: `10000`.
+  * Banco de dados gerenciado: PostgreSQL 16 com auto-detecção de SSL no `PostgresService`.
+* **Auto-Migration e Auto-Seed**:
+  * Ao iniciar o container, `PostgresService.onModuleInit()` verifica o schema, aplica migrações e popula as 10 lojas canônicas automaticamente caso o banco esteja vazio.

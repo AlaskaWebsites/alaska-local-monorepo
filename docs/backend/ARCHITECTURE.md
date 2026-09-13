@@ -7,29 +7,34 @@ Este documento detalha o design arquitetural da API NestJS (`@alaska/api`), impl
 ## 1. Diagrama de Dependências da Arquitetura Hexagonal
 
 ```
-               ┌────────────────────────────────────────┐
-               │         Infrastructure Layer           │
-               │  Controllers (NestJS), PostgreSQL,     │
-               │  Pix Gateways, Pipes, Filters          │
-               └───────────────────┬────────────────────┘
-                                   │ (Depends on)
-                                   ▼
-               ┌────────────────────────────────────────┐
-               │          Application Layer             │
-               │  Use Cases, Repository Ports,          │
-               │  Gateway Ports, Injection Tokens       │
-               └───────────────────┬────────────────────┘
-                                   │ (Depends on)
-                                   ▼
-               ┌────────────────────────────────────────┐
-               │             Domain Layer               │
-               │  Entities (Tenant, Product, Order),    │
-               │  Value Objects (Money, Address, Pix),  │
-               │  Domain Errors (Pure TypeScript)       │
-               └────────────────────────────────────────┘
+               ┌────────────────────────────────────────────────────────┐
+               │                  Infrastructure Layer                  │
+               │  • Controllers (Tenant, Product, Order, Booking, Pix) │
+               │  • PostgresService (Pool pg com Auto-Migration & Seed) │
+               │  • SimplePasswordHasher, MerchantAuthGuard             │
+               │  • LocalPixGateway (BR Code EMV & QR Code)             │
+               │  • ZodValidationPipe, DomainExceptionFilter           │
+               └───────────────────────────┬────────────────────────────┘
+                                           │ (Depends on)
+                                           ▼
+               ┌────────────────────────────────────────────────────────┐
+               │                   Application Layer                    │
+               │  • Use Cases (GetTenant, UpdateHours, ToggleOption...) │
+               │  • Repository Ports (ITenantRepository, etc.)          │
+               │  • Gateway & Security Ports (IPixGateway, Hasher)      │
+               │  • Injection Tokens (TOKENS.*)                         │
+               └───────────────────────────┬────────────────────────────┘
+                                           │ (Depends on)
+                                           ▼
+               ┌────────────────────────────────────────────────────────┐
+               │                      Domain Layer                      │
+               │  • Entities (Tenant, Product, Order, Booking)          │
+               │  • Value Objects (Money em centavos, Address, PixKey)  │
+               │  • Domain Errors (DomainError, EntityNotFoundError...) │
+               └────────────────────────────────────────────────────────┘
 ```
 
-> **Regra de Dependência**: O fluxo de dependências aponta estritamente para dentro. A camada de domínio não tem conhecimento da camada de aplicação, e a aplicação não tem conhecimento de controllers, banco de dados ou frameworks.
+> **Regra de Dependência**: O fluxo de dependências aponta estritamente para dentro. A camada de domínio não tem conhecimento da aplicação, e a aplicação não tem conhecimento de frameworks, controladores ou PostgreSQL.
 
 ---
 
@@ -76,9 +81,9 @@ export class Money {
 
 ---
 
-## 3. Validação Fail-Fast com ZodValidationPipe
+## 3. Validação Fail-Fast com Zod
 
-Todas as requisições HTTP passam pelo `ZodValidationPipe`, que utiliza os schemas centralizados em `@alaska/contracts`:
+Todas as requisições HTTP passam por validação Zod baseada nos contratos compartilhados em `@alaska/contracts`:
 
 ```ts
 @Injectable()
@@ -100,8 +105,26 @@ export class ZodValidationPipe implements PipeTransform {
 
 ---
 
-## 4. Persistência Desacoplada e Testes
+## 4. Persistência PostgreSQL com Auto-Migration e Auto-Seed
 
-A infraestrutura implementa as portas de aplicação através de duas estratégias:
-1. **`InMemoryRepository`**: Utilizado em suítes de testes unitários e de integração leve, permitindo rodar todos os testes em milissegundos sem depender de Docker ou banco de dados externo.
-2. **`PostgresRepository`**: Utilizado em produção com conexão em pool (`pg`), mapeamento bidirecional via `Mapper` e Row-Level Security (RLS) por `tenant_id`.
+A persistência opera de forma resiliente e automatizada através do `PostgresService`:
+
+1. **Auto-Migration (`initSchema()`)**:
+   - Executada automaticamente no bootstrap do NestJS (`onModuleInit`).
+   - Garante a criação de extensões (`uuid-ossp`), tabelas (`tenants`, `categories`, `products`, `orders`, `bookings`) e colunas (`pin_hash`, `professionals`, `reviews`).
+2. **Auto-Seed dos 10 Estabelecimentos (`seedAllStores()`)**:
+   - Detecta automaticamente se a tabela `categories` está vazia.
+   - Em caso de banco recém-criado (como no primeiro deploy do Render), popula instantaneamente os 10 estabelecimentos canônicos com catálogo, fotos, preços em centavos e horários.
+3. **Auto-Detecção de SSL no Render**:
+   - Conexões contendo `render.com`, `dpg-`, `oregon-postgres`, `sslmode=require` ou `ssl=true` ativam automaticamente `ssl: { rejectUnauthorized: false }`.
+4. **Isolamento em Testes com `InMemoryRepository`**:
+   - O Vitest utiliza repositórios em memória para executar toda a suíte de testes unitários do backend em menos de 150ms sem depender de container PostgreSQL.
+
+---
+
+## 5. Deploy de Produção no Render (`render.yaml`)
+
+O deploy da API em produção é orquestrado via blueprint do **Render**:
+- **Blueprint:** `render.yaml` na raiz do monorepo.
+- **Container:** Dockerfile multi-stage (`node:22-alpine`, pnpm 10.5.2, compilação via Turborepo).
+- **Porta:** 10000 em produção (3333 localmente).

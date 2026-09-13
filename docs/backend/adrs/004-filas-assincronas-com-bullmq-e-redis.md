@@ -1,27 +1,33 @@
-# ADR 004: Filas Assíncronas com BullMQ e Redis
+# ADR 004: Filas Assíncronas com BullMQ e Redis (Roadmap)
 
-- **Status:** Aceito / Implementado
-- **Data:** 2026-08-28
-- **Contexto:** Módulo de Processamento em Background, Webhooks Asaas, Notificações WhatsApp, OCR de Cardápios
+- **Status:** Proposta / Backlog (Roadmap Futuro)
+- **Data:** 2026-08-28 (Atualizado em 2026-09-13)
+- **Contexto:** Especificação arquitetural para processamento em background assíncrono (Webhooks pesados, jobs batch e disparo de mensagens em lote)
 
 ---
 
 ## 1. Contexto & Problema
 
 Operações do backend variam amplamente em tempo de execução:
-1. **Requisições Síncronas (Rápidas - < 50ms):** Consulta de cardápio, resolução de domínios e cálculo de status aberto/fechado.
-2. **Tarefas Assíncronas (Pesadas - 500ms a 10s+):** Processamento de webhooks financeiros do Asaas, OCR de fotos de cardápios com IA, envio de notificações no WhatsApp e geração de relatórios.
+1. **Requisições Síncronas (Rápidas - < 50ms):** Consulta de cardápio, resolução de domínios, autenticação via PIN, mutações otimistas de produtos e cálculo de status aberto/fechado.
+2. **Tarefas Assíncronas Futuras (Pesadas - 500ms a 10s+):** Processamento em lote de webhooks financeiros do Asaas, pipelines pesados de OCR e disparos em massa no WhatsApp.
 
-Executar tarefas pesadas no ciclo síncrono da requisição HTTP causaria timeouts, travamento do Event Loop e perda de eventos em caso de picos de tráfego.
+## 2. Decisão Arquitetural & Estado Atual
 
-## 2. Decisão Arquitetural
+### Estado Atual no Runtime (`apps/api`):
+* No estágio atual, a API NestJS opera de forma **stateless, síncrona e ultrarrápida** conectada diretamente ao PostgreSQL com pool de conexões (`pg.Pool`).
+* Não há acoplamento de `bullmq` ou `ioredis` nas dependências de produção do `apps/api/package.json`, mantendo o container de produção leve (consumindo < 80MB de RAM) e eliminando a necessidade de manter uma instância de Redis no deploy do Render (`render.yaml`).
 
-Adotamos **BullMQ + Redis** para gerenciamento de filas assíncronas com garantia de entrega:
+### Especificação para Ativação Futura:
+Quando o volume de transações e webhooks exigir desacoplamento de workers:
+1. **Adicionar dependências:** `pnpm --filter @alaska/api add bullmq ioredis`.
+2. **Provisionar Redis:** Adicionar container Redis ao `render.yaml` e `docker-compose.yml`.
+3. **Módulo de Fila:** Implementar `QueueModule` em `src/infrastructure/modules/queue.module.ts` consumindo a porta `IPaymentWebhookQueue` e `INotificationQueue`.
 
 ```
 ┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
 │ Webhook / Event │ ───►  │ BullMQ Queue    │ ───►  │ Worker          │
-│ (Asaas / Upload)│       │ (Redis AOF)     │       │ (Job Processor) │
+│ (Asaas / Batch) │       │ (Redis AOF)     │       │ (Job Processor) │
 └─────────────────┘       └─────────────────┘       └─────────────────┘
                                    │
                                    ▼
@@ -31,16 +37,7 @@ Adotamos **BullMQ + Redis** para gerenciamento de filas assíncronas com garanti
                           └─────────────────┘
 ```
 
-### A. Filas Canônicas do Sistema
-1. `queue:webhooks-asaas`: Processamento idempotente de notificações de pagamento Pix D+0.
-2. `queue:ai-ocr-extraction`: Fila de processamento de imagens e extração de produtos com LLMs.
-3. `queue:notifications`: Fila de disparo de mensagens transacionais no WhatsApp.
+## 3. Consequências
 
-### B. Políticas de Resiliência
-- **Retries com Backoff Exponencial:** 3 a 5 tentativas automáticas em caso de instabilidade na API externa.
-- **Dead Letter Queue (DLQ):** Mensagens que falharem após todas as tentativas são isoladas para inspeção.
-
-## 3. Consequências & Benefícios
-
-- **Zero Perda de Webhooks:** O endpoint do Asaas responde HTTP 200 em < 20ms e enfileira o processamento.
-- **Escalabilidade Horizontal:** Workers de IA podem ser escalados independentemente dos servidores de API.
+- **Fase Atual:** Menor consumo de recursos, menor custo de infraestrutura no Render e deploy simplificado de container único com PostgreSQL.
+- **Fase Futura:** Caminho arquitetural documentado para escalar workers independentes sem alterar as entidades de domínio.

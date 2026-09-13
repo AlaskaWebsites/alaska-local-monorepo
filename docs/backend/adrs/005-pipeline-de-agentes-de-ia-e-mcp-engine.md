@@ -1,23 +1,24 @@
 # ADR 005: Pipeline de Agentes de IA e Integração via Model Context Protocol (MCP)
 
-- **Status:** Aceito / Implementado
-- **Data:** 2026-08-28
-- **Contexto:** Módulo `src/infrastructure/ai/`, Agentes Autônomos de Cardápio, Co-piloto WhatsApp e Prospecção
+- **Status:** Proposta / Especificação de Roadmap (AI Engine)
+- **Data:** 2026-08-28 (Atualizado em 2026-09-13)
+- **Contexto:** Especificação para agentes autônomos de cardápio, extração visual OCR e co-piloto conversacional
 
 ---
 
 ## 1. Contexto & Problema
 
-O modelo de negócio **Done-for-You (DFY)** do Alaska Local depende de velocidade extrema de onboarding:
-- Criar a demonstração completa de uma loja em menos de 10 minutos a partir de fotos de cardápios impressos ou feeds do Instagram.
-- Atender clientes no WhatsApp tirando dúvidas sobre produtos, estoque e agendamentos.
+O modelo de negócio **Done-for-You (DFY)** do Alaska Local prevê extrema agilidade no onboarding de novos lojistas:
+- Gerar vitrines e cardápios completos a partir de imagens de panfletos, cardápios impressos ou prints do Instagram.
+- Fornecer co-piloto conversacional para responder dúvidas de clientes sobre cardápio e agendamento.
 
-Processamento manual é lento e caro. Por outro lado, conectar LLMs diretamente sem blindagem gera alucinações de preços, formatos inválidos e quebra de contratos.
+## 2. Decisão Arquitetural & Estado Atual
 
-## 2. Decisão Arquitetural
+### Estado Atual no Monorepo:
+* As ferramentas de geração de demos e suporte a lojistas operam como **ferramental externo, scripts CLI e skills de agentes** (ex: scripts em `apps/web/scripts/` e agentes MCP auxiliares).
+* O runtime da API (`apps/api`) **não possui dependências pesadas de LLMs ou bibliotecas de visão computacional** (`@google/genai`, OpenAI, LangChain ou Tesseract), mantendo o build e o boot do NestJS enxutos e determinísticos.
 
-Implementamos um pipeline de **Agentes Autônomos de IA com Structured Outputs Zod e Model Context Protocol (MCP)**:
-
+### Especificação do Pipeline Conceitual:
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                 PIPELINE DE AGENTES DE IA                   │
@@ -31,19 +32,11 @@ Implementamos um pipeline de **Agentes Autônomos de IA com Structured Outputs Z
 └──────────────────┘  └──────────────────┘  └──────────────────┘
 ```
 
-### A. Agente 1: Extração Visual de Cardápios & Catálogos (OCR Vision)
-1. Recebe imagem (foto de cardápio físico, panfleto ou print do Instagram).
-2. Processa via modelo multimodal (Gemini / Anthropic) solicitando schema estruturado `TenantSchema` em JSON.
-3. Valida a saída estritamente com `TenantSchema.parse()`. Se inválido, executa auto-correção imediata.
+1. **Agente OCR Vision:** Extração multimodal de cardápios para o schema canônico `@alaska/contracts/catalog`.
+2. **Co-piloto WhatsApp (MCP Tools):** Exposição de endpoints de leitura (`consultar_cardapio`, `verificar_horario`) para consumo por agentes de chat.
+3. **Showcase Engine:** Script CLI de geração automatizada de vitrines demo.
 
-### B. Agente 2: Co-piloto de Atendimento WhatsApp (MCP Tools)
-- Expõe ferramentas no protocolo MCP: `consultar_cardapio`, `verificar_horario`, `calcular_frete`, `gerar_pix_payload`, `buscar_slots_agendamento`.
-- O agente atua como recepcionista inteligente do lojista no WhatsApp, respondendo com precisão matemática.
+## 3. Consequências
 
-### C. Agente 3: Prospecção e Geração de Demos (Showcase Engine)
-- Coleta dados públicos de estabelecimentos locais e gera os JSONs para abordagem consultiva comercial.
-
-## 3. Consequências & Benefícios
-
-- **Zero Alucinação de Formatos:** O schema Zod garante que a IA nunca gere um JSON que quebre o front-end.
-- **Onboarding de 3 Minutos:** Cardápios impressos complexos viram lojas digitais prontas em segundos.
+- **Fase Atual:** Zero sobrecarga no runtime do backend, sem custos de API de LLMs embutidos no servidor web principal.
+- **Fase Futura:** Integração com MCP Server como serviço desacoplado da API central.
