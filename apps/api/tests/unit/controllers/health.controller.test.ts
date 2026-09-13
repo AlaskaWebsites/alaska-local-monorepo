@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { HealthController } from '../../../../src/infrastructure/http/controllers/health.controller';
+import { HealthController } from '@infra/http/controllers/health.controller';
 
 describe('HealthController', () => {
   const controller = new HealthController();
