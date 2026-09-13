@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { Address } from '../../../../src/core/domain/value-objects/address.vo';
-import { ValidationError } from '../../../../src/core/domain/errors/domain.error';
+import { Address } from '@core/domain/value-objects/address.vo';
+import { ValidationError } from '@core/domain/errors/domain.error';
 
 describe('Address Value Object', () => {
   it('deve instanciar um endereço válido e formatar texto completo', () => {
