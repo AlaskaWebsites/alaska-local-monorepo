@@ -1,10 +1,11 @@
 import { Controller, Patch, Put, Body, Param, HttpCode, HttpStatus } from '@nestjs/common'
-import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger'
+import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
 import { ToggleProductAvailabilityUseCase } from '@core/application/use-cases/toggle-product-availability.use-case'
 import { UpdateProductUseCase } from '@core/application/use-cases/update-product.use-case'
 import { ToggleOptionAvailabilityUseCase } from '@core/application/use-cases/toggle-option-availability.use-case'
 
 @ApiTags('products')
+@ApiBearerAuth('merchant-token')
 @Controller('tenants/:slug/products')
 export class ProductController {
   constructor(
@@ -44,7 +45,19 @@ export class ProductController {
       }
     }
   })
-  @ApiResponse({ status: 404, description: 'Produto não encontrado' })
+  @ApiResponse({
+    status: 404,
+    description: 'Produto não encontrado (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/ENTITY_NOT_FOUND',
+        title: 'Recurso Não Encontrado',
+        status: 404,
+        detail: "Produto com identificador 'prod-smash-bacon' não foi encontrado.",
+        instance: '/api/v1/tenants/hamburgueria-x/products/prod-smash-bacon/availability'
+      }
+    }
+  })
   async toggleAvailability(
     @Param('slug') slug: string,
     @Param('productId') productId: string,
@@ -66,10 +79,11 @@ export class ProductController {
   }
 
   @Put(':productId')
+  @Patch(':productId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Atualizar informações de produto (preço, opcionais, descrição)',
-    description: 'Permite editar preço (em centavos ou reais), nome, descrição e disponibilidade do produto.'
+    description: 'Permite editar preço (em centavos ou reais), nome, descrição e disponibilidade do produto. Suporta os métodos HTTP PUT e PATCH.'
   })
   @ApiParam({ name: 'slug', description: 'Slug único do estabelecimento', example: 'hamburgueria-x' })
   @ApiParam({ name: 'productId', description: 'ID do produto', example: 'prod-smash-bacon' })
@@ -100,7 +114,19 @@ export class ProductController {
       }
     }
   })
-  @ApiResponse({ status: 404, description: 'Produto não encontrado' })
+  @ApiResponse({
+    status: 404,
+    description: 'Produto não encontrado (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/ENTITY_NOT_FOUND',
+        title: 'Recurso Não Encontrado',
+        status: 404,
+        detail: "Produto com identificador 'prod-smash-bacon' não foi encontrado.",
+        instance: '/api/v1/tenants/hamburgueria-x/products/prod-smash-bacon'
+      }
+    }
+  })
   async updateProduct(
     @Param('slug') slug: string,
     @Param('productId') productId: string,
@@ -143,7 +169,19 @@ export class ProductController {
     }
   })
   @ApiResponse({ status: 200, description: 'Disponibilidade do opcional alterada com sucesso' })
-  @ApiResponse({ status: 404, description: 'Produto ou opção não encontrado' })
+  @ApiResponse({
+    status: 404,
+    description: 'Produto ou opção não encontrado (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/ENTITY_NOT_FOUND',
+        title: 'Recurso Não Encontrado',
+        status: 404,
+        detail: "Opção com identificador 'opt-bacon-extra' não foi encontrada.",
+        instance: '/api/v1/tenants/hamburgueria-x/products/prod-smash-bacon/options/opt-bacon-extra/availability'
+      }
+    }
+  })
   async toggleOptionAvailability(
     @Param('slug') slug: string,
     @Param('productId') productId: string,
@@ -186,7 +224,19 @@ export class ProductController {
     }
   })
   @ApiResponse({ status: 200, description: 'Disponibilidade do opcional alterada com sucesso' })
-  @ApiResponse({ status: 404, description: 'Opção não encontrada' })
+  @ApiResponse({
+    status: 404,
+    description: 'Opção não encontrada (RFC 7807)',
+    schema: {
+      example: {
+        type: 'https://alaska.app/errors/ENTITY_NOT_FOUND',
+        title: 'Recurso Não Encontrado',
+        status: 404,
+        detail: "Opção com identificador 'opt-bacon-extra' não foi encontrada.",
+        instance: '/api/v1/tenants/hamburgueria-x/products/options/opt-bacon-extra/availability'
+      }
+    }
+  })
   async toggleOptionDirect(
     @Param('slug') slug: string,
     @Param('optionId') optionId: string,
