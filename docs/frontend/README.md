@@ -15,10 +15,10 @@ O `@alaska/web` é o frontend do ecossistema **Alaska Local**, projetado sob o p
    Resolução multi-tenant por slug (`/pages/[slug]/index.vue`), subdomínios wildcard e domínios próprios (`server/middleware/tenant.ts`).
 2. **Single Source of Truth (`@alaska/contracts` — ADR 014):**  
    Tipagens e schemas Zod centralizados no pacote compartilhado do monorepo, garantindo segurança ponta a ponta.
-3. **Páginas como Orquestradoras (ADR 015):**  
+3. **Integração Client-Server Resiliente:**  
+   Estratégia API-First conectada ao NestJS no Render, com fallback offline gracioso para `~/data/*.json` e mutações otimistas em < 50ms no Painel do Lojista.
+4. **Páginas como Orquestradoras (ADR 015):**  
    As páginas `pages/[slug]/index.vue` e `pages/[slug]/admin.vue` apenas orquestram estado reativo, delegando a apresentação para componentes desacoplados em `components/storefront/` e `components/admin/`.
-4. **Resiliência e Zero Downtime:**  
-   Fallback automático para catálogos locais em `~/data/*.json` caso a API esteja offline, e placeholders SVG temáticos dinâmicos para imagens quebradas.
 5. **Acessibilidade Semântica W3C / WCAG 2.1 AA:**  
    Todos os modais possuem `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, foco inicial automático, atalho `Escape` e trava de rolagem com `useBodyScrollLock`.
 6. **Pipeline de Deploy Determinístico (ADR 016):**  
@@ -50,7 +50,16 @@ O `@alaska/web` é o frontend do ecossistema **Alaska Local**, projetado sob o p
 
 ---
 
-## 📚 Documentação Operacional & Deploy
+## 📚 Guias Especializados & Arquitetura
+
+- **[Guia Mestre de Integração Client-Server](./architecture/integracao-client-server.md)** — Topologia Vercel ↔ Render, mutações otimistas, `useApiClient` e resiliência.
+- **[Performance, Resiliência e Integração SSR](./architecture/performance-e-resiliencia-frontend.md)** — Cache reativo, deduplicação em voo e Web Share API.
+- **[Design System & 11 Temas Cromáticos](./architecture/design-system-e-temas.md)** — Paleta Claro Suave e tokens dinâmicos.
+- **[Módulo de Agendamentos & Serviços](./architecture/modulo-agendamento-e-servicos.md)** — Prevenção de horário fantasma e cálculo de slots.
+
+---
+
+## 🚀 Documentação Operacional & Deploy
 
 - [Guia Definitivo de Deploy na Vercel (Monorepo Turborepo)](../operations/deploy-vercel-turborepo-monorepo.md)
 - [Guia de Criação e Manutenção de Novos Tenants](./operations/guia-criacao-novos-tenants.md)

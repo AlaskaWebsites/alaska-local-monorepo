@@ -38,6 +38,9 @@ Bem-vindo à base documental unificada do ecossistema **Alaska Local**. Este rep
 
 ## 📐 Guias Especializados de Arquitetura
 
+### 🌐 Integração Client-Server (Ponta a Ponta)
+* **[Guia Mestre de Integração Client-Server](./frontend/architecture/integracao-client-server.md)** — Topologia Vercel ↔ Render, mutações otimistas em 3 camadas, `useApiClient`, fallback de zero downtime e contratos `@alaska/contracts`.
+
 ### 🌐 Frontend
 * **[Design System & 11 Temas Cromáticos](./frontend/architecture/design-system-e-temas.md)** — Base Clara Suave (`bg-slate-50`), micro-animações táteis e 11 paletas temáticas.
 * **[Módulo de Agendamentos & Serviços](./frontend/architecture/modulo-agendamento-e-servicos.md)** — Extração dinâmica, validação estrita no Passo 3, prevenção de horário fantasma e sinal Pix.

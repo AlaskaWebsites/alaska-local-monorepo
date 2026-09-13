@@ -104,6 +104,7 @@ apps/api/src/
 ## 📚 5. Guias Especializados de Arquitetura
 
 Para detalhes aprofundados sobre a implementação, consulte:
+* **[Guia Mestre de Integração Client-Server](../frontend/architecture/integracao-client-server.md)** — Comunicação ponta a ponta Vercel ↔ Render, mutações otimistas e resiliência.
 * **[Ciclo de Vida de Pedidos e Agendamentos](./architecture/ciclo-pedidos-e-agendamentos.md)** — Máquinas de estados, transições e regras de negócio.
 * **[Protocolo Pix BACEN EMV](./architecture/protocolo-pix-emv.md)** — Montagem TLV, CRC-16 CCITT e QR Code assíncrono.
 * **[Tratamento de Erros & RFC 7807](./architecture/tratamento-erros-e-rfc7807.md)** — Exceções puras de domínio e padronização HTTP Problem Details.
