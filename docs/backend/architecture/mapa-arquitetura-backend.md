@@ -51,11 +51,11 @@ apps/api/
 │   │   ├── http/
 │   │   │   ├── controllers/
 │   │   │   │   ├── tenant.controller.ts              # Endpoints de tenant, login admin e horários
-│   │   │   │   ├── product.controller.ts             # Endpoints de produtos e opcionais
-│   │   │   │   ├── order.controller.ts               # Endpoints de pedidos
-│   │   │   │   ├── booking.controller.ts             # Endpoints de agendamentos
-│   │   │   │   ├── pix.controller.ts                 # Endpoints Pix
-│   │   │   │   └── health.controller.ts              # Healthcheck
+│   │   │   │   ├── product.controller.ts             # Endpoints de produtos, opcionais e disponibilidade
+│   │   │   │   ├── order.controller.ts               # Endpoints de pedidos (criação, consulta e PATCH status)
+│   │   │   │   ├── booking.controller.ts             # Endpoints de agendamentos (criação, consulta e PATCH status)
+│   │   │   │   ├── pix.controller.ts                 # Endpoints Pix (BR Code EMV, QR Code e validação)
+│   │   │   │   └── health.controller.ts              # Healthcheck (liveness, readiness e uptime)
 │   │   │   ├── guards/
 │   │   │   │   └── merchant-auth.guard.ts            # Guard de validação de token do lojista
 │   │   │   ├── pipes/
@@ -93,7 +93,7 @@ apps/api/
 │   │       ├── booking.module.ts
 │   │       └── pix.module.ts
 │   │
-│   └── main.ts                                       # Bootstrap com Swagger OpenAPI
+│   └── main.ts                                       # Bootstrap com Swagger OpenAPI v1.4.0
 │
 └── tests/unit/                                       # Suíte de Testes Unitários no Vitest
 ```
