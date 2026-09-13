@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { LocalPixGateway, generatePixEmv } from '../../../../src/infrastructure/gateways/local-pix.gateway';
+import { LocalPixGateway, generatePixEmv } from '@infra/gateways/local-pix.gateway';
 
 describe('LocalPixGateway & generatePixEmv (BACEN BR Code EMV)', () => {
   let gateway: LocalPixGateway;
