@@ -20,17 +20,20 @@ export class AuthenticateMerchantUseCase {
     private readonly passwordHasher: IPasswordHasher,
   ) {}
 
-  async execute(input: AuthenticateMerchantInput): Promise<AuthenticateMerchantOutput> {
-    const tenant = await this.tenantRepository.findBySlug(input.slug);
+  async execute(input: AuthenticateMerchantInput | string, pinArg?: string): Promise<AuthenticateMerchantOutput> {
+    const slug = typeof input === 'string' ? input : input.slug;
+    const pin = typeof input === 'string' ? pinArg! : input.pin;
+
+    const tenant = await this.tenantRepository.findBySlug(slug);
     if (!tenant) {
-      throw new EntityNotFoundError('Tenant', input.slug);
+      throw new EntityNotFoundError('Tenant', slug);
     }
 
-    const isValid = await tenant.verifyPin(input.pin, this.passwordHasher);
+    const isValid = await tenant.verifyPin(pin, this.passwordHasher);
     if (!isValid) {
       return {
         authenticated: false,
-        tenantSlug: input.slug,
+        tenantSlug: slug,
         message: 'PIN incorreto. Tente novamente.',
       };
     }
