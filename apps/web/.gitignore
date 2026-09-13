@@ -1,0 +1,18 @@
+# Dependencies
+node_modules
+
+# Nuxt & Build outputs
+.nuxt
+.output
+dist
+
+# Environment variables
+.env
+.env.*
+.env.local
+.env.*.local
+!.env.example
+
+# Logs & temp
+*.log
+.turbo
