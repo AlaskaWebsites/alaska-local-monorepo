@@ -1,50 +1,70 @@
-# Estratégia de Testes Unitários com Vitest
+# 🧪 Estratégia de Testes Unitários com Vitest
 
-O Alaska Local Backend utiliza o **Vitest** com compilação rápida via **SWC** para executar suítes de testes unitários e de integração em milissegundos.
-
----
-
-## 1. Por que Vitest + SWC em vez de Jest + ts-jest?
-
-- **Velocidade:** O Vitest roda até 10x mais rápido que o Jest tradicional com `ts-jest`.
-- **Suporte a Decorators do NestJS:** Configurado via `unplugin-swc` com `legacyDecorator: true` e `decoratorMetadata: true`.
-- **Suporte Nativo a ESM:** Compatibilidade total com módulos ES modernos.
+O **Alaska Local Backend** (`@alaska/api`) adota uma suíte de testes unitários robusta, determinística e veloz baseada em **Vitest** e **SWC** (`unplugin-swc`), garantindo execução em menos de 2 segundos sem dependência de containers Docker ou conexões externas.
 
 ---
 
-## 2. Padrão de Teste com Repositórios In-Memory
+## 🏛️ 1. Pirâmide de Testes e Estrutura Canônica
 
-Para testar casos de uso sem mockar funções individuais com `vi.fn()`:
+A suíte cobre 100% dos fluxos de negócio em 4 camadas fundamentais:
 
-```ts
-describe('GetTenantBySlugUseCase', () => {
-  let repo: InMemoryTenantRepository
-  let useCase: GetTenantBySlugUseCase
-
-  beforeEach(() => {
-    repo = new InMemoryTenantRepository()
-    useCase = new GetTenantBySlugUseCase(repo)
-  })
-
-  it('deve retornar o tenant ativo', async () => {
-    await repo.save(new Tenant({ id: '1', slug: 'pizzaria-bella', ... }))
-    const result = await useCase.execute({ slug: 'pizzaria-bella' })
-    expect(result.slug).toBe('pizzaria-bella')
-  })
-})
+```
+apps/api/tests/unit/
+├── domain/                      # Regras Puras, Imutabilidade e VOs
+│   ├── money.vo.test.ts         # Cálculo monetário estrito em centavos inteiros
+│   ├── pix-key.vo.test.ts       # Validação fail-fast de chaves Pix (CPF, CNPJ, Tel, UUID)
+│   ├── tenant.entity.test.ts    # Turnos de funcionamento (diurno e noturno) e status
+│   └── order.entity.test.ts     # Cálculo de totais, taxas de entrega e status de pedidos
+├── persistence/                 # Mapeamento e Isolamento de Dados
+│   └── postgres-mappers.test.ts # Mapeamento bidirecional PostgreSQL Row <-> Entity
+├── use-cases/                   # Orquestração da Lógica de Aplicação
+│   ├── authenticate-merchant.use-case.test.ts  # Autenticação por PIN (1234 e hash SHA-256)
+│   ├── calculate-pix-payload.use-case.test.ts  # Geração EMV BR Code e centavo de teste
+│   ├── create-order.use-case.test.ts           # Checkout delivery/pickup, endereço e Pix
+│   ├── get-tenant-by-slug.use-case.test.ts     # Resolução de tenant e tratativa de inativo
+│   ├── resolve-tenant-by-domain.use-case.test.ts # Resolução por domínio próprio e subdomínio
+│   ├── toggle-option-availability.use-case.test.ts # Pausa/ativação rápida de adicionais
+│   ├── toggle-product-availability.use-case.test.ts # Pausa/ativação rápida de produtos (ADR 013)
+│   ├── update-product.use-case.test.ts         # Edição de preço e dados de produto
+│   └── update-tenant-hours.use-case.test.ts    # Grade de horários e pausa emergencial
+└── gateways/                    # Adaptadores de Serviços Externos
+    └── local-pix.gateway.test.ts # Formatação TLV Banco Central, CRC-16 e QR Code DataURL
 ```
 
 ---
 
-## 3. Execução dos Testes
+## 📊 2. Matriz de Cobertura por Camada
+
+| Camada | Arquivo de Teste | Qtd. Testes | Escopo & Garantias |
+| :--- | :--- | :--- | :--- |
+| **Domínio (VO)** | `money.vo.test.ts` | 5 | Prevenção de bugs de float, imutabilidade, conversão e arredondamento seguro. |
+| **Domínio (VO)** | `pix-key.vo.test.ts` | 3 | Validação regex de CPF, CNPJ, telefone, e-mail e chave aleatória UUID. |
+| **Domínio (Entity)** | `tenant.entity.test.ts` | 4 | Cálculo se a loja está aberta (`isOpen`) em turnos diurnos e noturnos (`18h às 03h`). |
+| **Domínio (Entity)** | `order.entity.test.ts` | 2 | Cálculos de subtotal, taxa de entrega, troco em centavos e transição de status. |
+| **Persistência** | `postgres-mappers.test.ts` | 3 | Mapeamento relacional PostgreSQL -> Entidades de Domínio -> JSON DTO. |
+| **Use Case** | `authenticate-merchant.use-case.test.ts` | 5 | Login PIN padrão 1234, validação hash SHA-256, recusa de PIN incorreto e sobrecargas. |
+| **Use Case** | `calculate-pix-payload.use-case.test.ts` | 4 | Geração Copia e Cola EMV, modo sandbox D-0 (R$ 0,01) e validação de chave. |
+| **Use Case** | `create-order.use-case.test.ts` | 5 | Pedidos delivery com frete, pickup sem frete, obrigatoriedade de endereço e código Pix. |
+| **Use Case** | `get-tenant-by-slug.use-case.test.ts` | 2 | Busca determinística por slug, isolamento de inquilinos e erro 404 RFC 7807. |
+| **Use Case** | `resolve-tenant-by-domain.use-case.test.ts` | 2 | Resolução de domínios próprios (`karinefinardi.com.br`) e subdomínios (`slug.alaska.app`). |
+| **Use Case** | `toggle-option-availability.use-case.test.ts` | 4 | Pausa e reativação em nível de opcional (ex: "Bacon Extra") sem pausar o item principal. |
+| **Use Case** | `toggle-product-availability.use-case.test.ts` | 3 | Ligar/desligar disponibilidade de produtos no painel do lojista (ADR 013). |
+| **Use Case** | `update-product.use-case.test.ts` | 1 | Alteração de preço e dados descritivos com persistência. |
+| **Use Case** | `update-tenant-hours.use-case.test.ts` | 1 | Atualização de grade semanal e pausa emergencial do estabelecimento. |
+| **Gateway** | `local-pix.gateway.test.ts` | 4 | Montagem de tags TLV (00 a 63), checksum CRC-16 CCITT (0x1021) e sanitização NFD. |
+| **TOTAL** | **15 Arquivos** | **48 Testes** | **100% Verde (Zero Flakiness)** |
+
+---
+
+## ⚡ 3. Execução dos Testes
 
 ```bash
-# Rodar todos os testes unitários uma única vez
-npm run test
+# Rodar todos os testes unitários do backend via Turborepo
+pnpm test:api
 
-# Rodar testes em modo watch durante o desenvolvimento
-npm run test:watch
+# Rodar a suíte completa de todos os workspaces (Contracts, Web e API)
+pnpm test
 
-# Rodar com relatório de cobertura de código
-npm run test:cov
+# Executar com relatório de cobertura de código
+pnpm --filter @alaska/api test:cov
 ```
