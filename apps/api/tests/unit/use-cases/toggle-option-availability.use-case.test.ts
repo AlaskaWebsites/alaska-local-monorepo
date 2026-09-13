@@ -1,8 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { ToggleOptionAvailabilityUseCase } from '../../../../src/core/application/use-cases/toggle-option-availability.use-case';
-import { InMemoryProductRepository } from '../../../../src/infrastructure/persistence/in-memory/in-memory-product.repository';
-import { Product } from '../../../../src/core/domain/entities/product.entity';
-import { EntityNotFoundError } from '../../../../src/core/domain/errors/domain.error';
+import { ToggleOptionAvailabilityUseCase } from '@core/application/use-cases/toggle-option-availability.use-case';
+import { InMemoryProductRepository } from '@infra/persistence/in-memory/in-memory-product.repository';
+import { Product } from '@core/domain/entities/product.entity';
+import { EntityNotFoundError } from '@core/domain/errors/domain.error';
 
 describe('ToggleOptionAvailabilityUseCase', () => {
   let productRepository: InMemoryProductRepository;
