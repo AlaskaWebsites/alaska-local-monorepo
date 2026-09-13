@@ -17,11 +17,13 @@ O `@alaska/web` é o frontend do ecossistema **Alaska Local**, projetado sob o p
    Tipagens e schemas Zod centralizados no pacote compartilhado do monorepo, garantindo segurança ponta a ponta.
 3. **Integração Client-Server Resiliente:**  
    Estratégia API-First conectada ao NestJS no Render, com fallback offline gracioso para `~/data/*.json` e mutações otimistas em < 50ms no Painel do Lojista.
-4. **Páginas como Orquestradoras (ADR 015):**  
-   As páginas `pages/[slug]/index.vue` e `pages/[slug]/admin.vue` apenas orquestram estado reativo, delegando a apresentação para componentes desacoplados em `components/storefront/` e `components/admin/`.
-5. **Acessibilidade Semântica W3C / WCAG 2.1 AA:**  
+4. **Despacho Direto via WhatsApp:**  
+   Fechamento comercial determinístico sem intermediadores nem taxas por transação.
+5. **Resiliência Visual Anti-404:**  
+   Placeholders SVG em Data URIs temáticas dinâmicas com eliminação total de Layout Shift (CLS).
+6. **Acessibilidade Semântica W3C / WCAG 2.1 AA:**  
    Todos os modais possuem `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, foco inicial automático, atalho `Escape` e trava de rolagem com `useBodyScrollLock`.
-6. **Pipeline de Deploy Determinístico (ADR 016):**  
+7. **Pipeline de Deploy Determinístico (ADR 016):**  
    Deploy serverless na Vercel orquestrado via Turborepo e PNPM v10 com Build Output API v3.
 
 ---
@@ -52,7 +54,10 @@ O `@alaska/web` é o frontend do ecossistema **Alaska Local**, projetado sob o p
 
 ## 📚 Guias Especializados & Arquitetura
 
+- **[Protocolo de Despacho WhatsApp](./architecture/protocolo-despacho-whatsapp.md)** — Motor comercial de fechamento de vendas, formatação e templates.
+- **[Resiliência Visual e Placeholders SVG](./architecture/resiliencia-visual-e-imagens.md)** — Eliminação de erros 404, CLS zero e Data URIs temáticas.
 - **[Guia Mestre de Integração Client-Server](./architecture/integracao-client-server.md)** — Topologia Vercel ↔ Render, mutações otimistas, `useApiClient` e resiliência.
+- **[Segurança e Isolamento Multi-Tenant](../architecture/seguranca-e-isolamento-multitenant.md)** — Namespacing por slug no navegador e políticas RLS no PostgreSQL.
 - **[Performance, Resiliência e Integração SSR](./architecture/performance-e-resiliencia-frontend.md)** — Cache reativo, deduplicação em voo e Web Share API.
 - **[Design System & 11 Temas Cromáticos](./architecture/design-system-e-temas.md)** — Paleta Claro Suave e tokens dinâmicos.
 - **[Módulo de Agendamentos & Serviços](./architecture/modulo-agendamento-e-servicos.md)** — Prevenção de horário fantasma e cálculo de slots.
