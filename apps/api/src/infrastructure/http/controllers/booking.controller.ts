@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Query, UsePipes } from '@nestjs/common'
+import { Controller, Post, Body, Get, Patch, Param, Query, UsePipes } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiParam, ApiQuery, ApiBody } from '@nestjs/swagger'
 import { z } from 'zod'
 import { ZodValidationPipe } from '../pipes/zod-validation.pipe'
@@ -243,6 +243,45 @@ export class BookingController {
         totalDurationMinutes: b.calculateTotalDurationMinutes(),
         status: b.status
       }))
+    }
+  }
+
+  @Patch(':id/status')
+  @ApiOperation({
+    summary: 'Atualiza o status do agendamento (confirmed, completed, cancelled, no_show)',
+    description: 'Permite que o estabelecimento confirme presença, conclua atendimento ou registre cancelamento/no-show.'
+  })
+  @ApiParam({ name: 'id', description: 'ID do agendamento', example: 'bk-1724935200000' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        status: {
+          type: 'string',
+          enum: ['scheduled', 'confirmed', 'completed', 'cancelled', 'no_show'],
+          example: 'confirmed',
+          description: 'Novo status do agendamento'
+        }
+      },
+      required: ['status']
+    }
+  })
+  @ApiResponse({ status: 200, description: 'Status do agendamento atualizado com sucesso' })
+  @ApiResponse({ status: 404, description: 'Agendamento não encontrado (RFC 7807)' })
+  async updateStatus(@Param('id') id: string, @Body('status') status: any) {
+    const booking = await this.bookingRepository.findById(id)
+    if (!booking) {
+      return { success: false, message: 'Agendamento não encontrado.' }
+    }
+    (booking as any).props.status = status
+    (booking as any).props.updatedAt = new Date()
+    await this.bookingRepository.save(booking)
+    return {
+      success: true,
+      data: {
+        id: booking.id,
+        status: booking.status
+      }
     }
   }
 }
