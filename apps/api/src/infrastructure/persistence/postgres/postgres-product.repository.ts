@@ -35,11 +35,15 @@ export class PostgresProductRepository implements IProductRepository {
       )
     }
     if (res.rows.length === 0) {
-      const tokens = id.replace(/^prod-/, '').split('-').filter(t => t.length >= 3)
+      const tokens = id.toLowerCase().replace(/^prod-/, '').split('-').filter(t => t.length >= 3)
       if (tokens.length > 0) {
-        const conditions = tokens.map((_, i) => `LOWER(name) LIKE '%' || $${i + 1} || '%'`).join(' AND ')
+        const clauses = tokens.map((_, i) => `(CASE WHEN LOWER(name) LIKE '%' || $${i + 1} || '%' OR LOWER(id) LIKE '%' || $${i + 1} || '%' THEN 1 ELSE 0 END)`).join(' + ')
+        const conds = tokens.map((_, i) => `(LOWER(name) LIKE '%' || $${i + 1} || '%' OR LOWER(id) LIKE '%' || $${i + 1} || '%')`).join(' OR ')
         res = await this.db.query(
-          `SELECT * FROM products WHERE ${conditions} LIMIT 1`,
+          `SELECT * FROM products
+           WHERE ${conds}
+           ORDER BY (${clauses}) DESC
+           LIMIT 1`,
           tokens
         )
       }
@@ -75,14 +79,16 @@ export class PostgresProductRepository implements IProductRepository {
       )
     }
     if (res.rows.length === 0) {
-      const tokens = productId.replace(/^prod-/, '').split('-').filter(t => t.length >= 3)
+      const tokens = productId.toLowerCase().replace(/^prod-/, '').split('-').filter(t => t.length >= 3)
       if (tokens.length > 0) {
-        const conditions = tokens.map((_, i) => `LOWER(name) LIKE '%' || $${i + 2} || '%'`).join(' AND ')
+        const clauses = tokens.map((_, i) => `(CASE WHEN LOWER(name) LIKE '%' || $${i + 2} || '%' OR LOWER(id) LIKE '%' || $${i + 2} || '%' THEN 1 ELSE 0 END)`).join(' + ')
+        const conds = tokens.map((_, i) => `(LOWER(name) LIKE '%' || $${i + 2} || '%' OR LOWER(id) LIKE '%' || $${i + 2} || '%')`).join(' OR ')
         res = await this.db.query(
           `UPDATE products SET available = $1
            WHERE id IN (
              SELECT id FROM products
-             WHERE ${conditions}
+             WHERE ${conds}
+             ORDER BY (${clauses}) DESC
              LIMIT 1
            )
            RETURNING *`,
