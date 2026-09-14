@@ -182,7 +182,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       }
       setStorageItem(overridesKey.value, JSON.stringify(merged))
     } catch (e) {
-      console.warn('Erro ao salvar overrides:', e)
+      // Silencioso
     }
   }
 
@@ -191,7 +191,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       setStorageItem(overridesKey.value, JSON.stringify({}))
       triggerHaptic(50)
     } catch (e) {
-      console.warn('Erro ao resetar overrides:', e)
+      // Silencioso
     }
   }
 
@@ -233,14 +233,15 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     productId: string,
     currentStatus: boolean
   ): Promise<boolean> {
-    triggerHaptic(30)
+    triggerHaptic(20)
     const newStatus = !currentStatus
 
-    const product = products.find(p => p.id === productId)
-    if (product) {
-      product.isAvailable = newStatus
-      if ('available' in product) {
-        ;(product as any).available = newStatus
+    // Atualização otimista em memória na lista atual
+    if (products && Array.isArray(products)) {
+      const prod = products.find(p => p.id === productId)
+      if (prod) {
+        prod.isAvailable = newStatus
+        ;(prod as any).available = newStatus
       }
     }
 
@@ -256,16 +257,14 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     try {
       if (typeof $fetch === 'function') {
         const url = `${apiBaseUrl}/tenants/${tenantSlug.value}/products/${productId}/availability`
-        console.log(`[AlaskaAdmin] Enviando PATCH para ${url}:`, { isAvailable: newStatus })
         await $fetch(url, {
           method: 'PATCH',
           body: { isAvailable: newStatus },
-          timeout: 6000
+          timeout: 4000
         })
       }
       return true
-    } catch (err) {
-      console.warn('[AlaskaAdmin] Aviso ao sincronizar disponibilidade no backend (mantido override local):', err)
+    } catch {
       return true
     }
   }
@@ -275,11 +274,13 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     productId: string,
     newPrice: number
   ): Promise<boolean> {
-    triggerHaptic(30)
+    triggerHaptic(20)
 
-    const product = products.find(p => p.id === productId)
-    if (product) {
-      product.price = newPrice
+    if (products && Array.isArray(products)) {
+      const prod = products.find(p => p.id === productId)
+      if (prod) {
+        prod.price = newPrice
+      }
     }
 
     const current = getOverrides()
@@ -365,18 +366,15 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
 
     try {
       if (typeof $fetch === 'function') {
-        const url = productId
-          ? `${apiBaseUrl}/tenants/${tenantSlug.value}/products/${productId}/options/${optionId}/availability`
-          : `${apiBaseUrl}/tenants/${tenantSlug.value}/products/options/${optionId}/availability`
-        await $fetch(url, {
+        const prodPath = productId ? `/products/${productId}` : ''
+        await $fetch(`${apiBaseUrl}/tenants/${tenantSlug.value}${prodPath}/options/${optionId}/availability`, {
           method: 'PATCH',
           body: { isAvailable },
           timeout: 4000
         })
       }
       return true
-    } catch (e) {
-      console.warn('Falha ao sincronizar opcional no backend:', e)
+    } catch {
       return true
     }
   }

@@ -67,20 +67,17 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
 
     const slug = computed<string>(() => {
         if (isRef(customSlug)) {
-            const rawVal = customSlug.value ? String(customSlug.value).trim().toLowerCase() : ''
-            if (rawVal && rawVal !== 'default') {
-                return rawVal
+            const val = customSlug.value
+            if (val && String(val).toLowerCase() !== 'default') {
+                return String(val).toLowerCase()
             }
         }
-        if (typeof customSlug === 'string') {
-            const rawVal = customSlug.trim().toLowerCase()
-            if (rawVal && rawVal !== 'default') {
-                return rawVal
-            }
+        if (typeof customSlug === 'string' && customSlug.toLowerCase() !== 'default') {
+            return customSlug.toLowerCase()
         }
-        const routeVal = route.params.slug ? String(route.params.slug).trim().toLowerCase() : ''
-        if (routeVal && routeVal !== 'default') {
-            return routeVal
+        const routeSlug = route.params.slug as string
+        if (routeSlug && routeSlug.toLowerCase() !== 'default') {
+            return routeSlug.toLowerCase()
         }
         return 'hamburgueria-x'
     })
@@ -113,14 +110,14 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
                 }
             }
         } catch (e) {
-            console.warn('Erro ao carregar catálogo local JSON:', e)
+            // Silencioso
         }
         return null
     }
 
     const fetchTenantData = async (forceRefresh = false): Promise<Tenant | null> => {
         const currentSlug = slug.value
-        if (!currentSlug || currentSlug === 'default') return null
+        if (!currentSlug) return null
 
         // 1. Se já está no cache reativo e não é refresh forçado, retorna imediatamente sem fazer request
         if (!forceRefresh && tenantState.value && tenantState.value.slug?.toLowerCase() === currentSlug) {
@@ -145,17 +142,24 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
                     )
                     const apiData = (res && typeof res === 'object') ? (res.data || res) : null
                     if (apiData && typeof apiData === 'object' && apiData.slug) {
-                        const parsedApiTenant = TenantSchema.parse({
-                            ...loadedTenant,
-                            ...apiData,
-                            reviews: resolveReviews(loadedTenant?.reviews, apiData.reviews)
-                        })
-                        loadedTenant = parsedApiTenant
+                        try {
+                            const parsedApiTenant = TenantSchema.parse({
+                                ...loadedTenant,
+                                ...apiData,
+                                reviews: resolveReviews(loadedTenant?.reviews, apiData.reviews)
+                            })
+                            loadedTenant = parsedApiTenant
+                        } catch {
+                            loadedTenant = {
+                                ...(loadedTenant || {}),
+                                ...apiData,
+                                reviews: resolveReviews(loadedTenant?.reviews, apiData.reviews)
+                            } as Tenant
+                        }
                         fromApi = true
                     }
                 } catch {
-                    // Fallback silencioso para o catálogo local em ~/data/*.json caso a API esteja fria/offline
-                    console.warn(`[useTenant] Backend em inicialização ou offline. Utilizando catálogo local para '${currentSlug}'`)
+                    // Fallback silencioso para o catálogo local em ~/data/*.json caso a API esteja offline
                 }
             }
 
@@ -184,7 +188,7 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
                         }
                     }
                 } catch (e) {
-                    console.warn('Erro ao mesclar overrides locais:', e)
+                    // Silencioso
                 }
             }
 
