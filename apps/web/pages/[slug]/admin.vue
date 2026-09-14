@@ -146,8 +146,8 @@
 
       <!-- Fallback SSR / Loading -->
       <template #fallback>
-        <div class="min-h-screen flex items-center justify-center p-4">
-          <div class="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin"></div>
+        <div class="min-h-screen bg-slate-950 flex items-center justify-center p-4">
+          <div class="w-8 h-8 rounded-full border-2 border-emerald-500 border-t-transparent animate-spin" />
         </div>
       </template>
     </ClientOnly>
@@ -186,6 +186,7 @@ const {
   logout,
   changePin,
   getOverrides,
+  saveOverrides,
   toggleProductAvailability,
   updateProductPrice,
   createProduct,
@@ -297,6 +298,7 @@ async function confirmPriceEdit(newPrice: number) {
 
 // 3. Criação e Exclusão de Produtos
 const isCreateProductOpen = ref(false)
+const isCreateProfOpen = ref(false)
 
 function handleCreateProductSubmit(form: { name: string; price: number; categoryId: string; description: string }) {
   createProduct({
@@ -512,7 +514,7 @@ function saveContactConfig() {
   showToast('Contatos salvos com sucesso!')
 }
 
-// 9. Horários & Pausa Geral
+// 9. Horários & Escala Semanal
 const weeklyDaysConfig = ref<Array<{ key: string; label: string; closed: boolean; open: string; close: string }>>([])
 const scheduleSuccessMsg = ref('')
 
@@ -611,6 +613,7 @@ function saveNewPin(newPin: string) {
   }
 }
 
+// 13. Modais Operacionais de Profissionais
 function openCreateProfModal() {
   isCreateProfOpen.value = true
 }
