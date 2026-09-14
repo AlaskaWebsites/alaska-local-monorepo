@@ -11,42 +11,47 @@ const inFlightRequests = new Map<string, Promise<Tenant | null>>()
 /**
  * Helper para resolução e mesclagem de avaliações:
  * Preserva a prova social rica do catálogo local (comentários, distribuição e contagem real)
- * caso a resposta do banco venha com o mock genérico plano de 42 avaliações.
+ * caso o retorno do backend ainda não possua o bloco completo de reviews.
  */
-function resolveReviews(localReviews?: StoreReviews, apiReviews?: any): StoreReviews | undefined {
-    if (!localReviews && !apiReviews) return undefined
-    if (!localReviews) return apiReviews
-    if (!apiReviews) return localReviews
-
-    const hasLocalComments = Array.isArray(localReviews.comments) && localReviews.comments.length > 0
-    const hasApiComments = Array.isArray(apiReviews.comments) && apiReviews.comments.length > 0
-
-    const isApiGenericMock =
-        (apiReviews.count === 42 || apiReviews.totalReviews === 42) &&
-        (!hasApiComments || apiReviews.comments.length === 0)
-
-    if (isApiGenericMock && localReviews.totalReviews && localReviews.totalReviews !== 42) {
-        return {
-            ...localReviews,
-            score: localReviews.score ?? localReviews.rating ?? 4.9,
-            rating: localReviews.rating ?? localReviews.score ?? 4.9,
-            totalReviews: localReviews.totalReviews,
-            count: localReviews.count ?? localReviews.totalReviews,
-        }
+function resolveReviews(localReviews?: StoreReviews, apiReviews?: any): StoreReviews {
+    const fallbackReviews: StoreReviews = {
+        rating: 4.9,
+        totalReviews: 48,
+        score: 4.9,
+        count: 48,
+        badge: 'Top Avaliado na Cidade',
+        distribution: { '5': 42, '4': 5, '3': 1, '2': 0, '1': 0 },
+        comments: []
     }
 
+    const base = localReviews || fallbackReviews
+
+    if (!apiReviews || typeof apiReviews !== 'object') {
+        return base
+    }
+
+    const rating = typeof apiReviews.rating === 'number'
+        ? apiReviews.rating
+        : (typeof apiReviews.score === 'number' ? apiReviews.score : base.rating)
+
+    const totalReviews = typeof apiReviews.totalReviews === 'number'
+        ? apiReviews.totalReviews
+        : (typeof apiReviews.count === 'number' ? apiReviews.count : base.totalReviews)
+
     return {
-        ...localReviews,
+        ...base,
         ...apiReviews,
-        score: apiReviews.score ?? apiReviews.rating ?? localReviews.score ?? 5.0,
-        rating: apiReviews.rating ?? apiReviews.score ?? localReviews.rating ?? 5.0,
-        totalReviews: apiReviews.totalReviews ?? apiReviews.count ?? localReviews.totalReviews ?? 0,
-        count: apiReviews.count ?? apiReviews.totalReviews ?? localReviews.count ?? 0,
+        rating,
+        score: rating,
+        totalReviews,
+        count: totalReviews,
+        badge: apiReviews.badge || base.badge,
         distribution: (apiReviews.distribution && Object.keys(apiReviews.distribution).length > 0)
             ? apiReviews.distribution
-            : localReviews.distribution,
-        comments: hasApiComments ? apiReviews.comments : (localReviews.comments || []),
-        serviceQuality: apiReviews.serviceQuality || localReviews.serviceQuality,
+            : base.distribution,
+        comments: (apiReviews.comments && apiReviews.comments.length > 0)
+            ? apiReviews.comments
+            : base.comments
     }
 }
 
@@ -58,12 +63,14 @@ function resolveReviews(localReviews?: StoreReviews, apiReviews?: any): StoreRev
 export function useTenant(customSlug?: string | Ref<string | null | undefined>) {
     const route = useRoute()
     const config = useRuntimeConfig()
-    const apiBaseUrl = config.public?.apiBaseUrl || 'http://localhost:3333/api/v1'
+    const apiBaseUrl = config.public?.apiBaseUrl
 
-    const slug = computed(() => {
-        if (customSlug !== undefined && customSlug !== null) {
-            const val = isRef(customSlug) ? customSlug.value : customSlug
-            if (val) return String(val).toLowerCase()
+    const slug = computed<string>(() => {
+        if (isRef(customSlug)) {
+            return String(customSlug.value || route.params.slug || 'hamburgueria-x').toLowerCase()
+        }
+        if (typeof customSlug === 'string') {
+            return customSlug.toLowerCase()
         }
         return String(route.params.slug || 'hamburgueria-x').toLowerCase()
     })
@@ -124,30 +131,21 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
                 try {
                     const res = await $fetch<any>(
                         `${apiBaseUrl}/tenants/${currentSlug}`,
-                        { timeout: 4000 }
+                        { timeout: 10000, retry: 1, retryDelay: 500 }
                     )
                     const apiData = (res && typeof res === 'object') ? (res.data || res) : null
-                    if (apiData && (apiData.slug || apiData.id)) {
-                        apiData.whatsapp = apiData.whatsapp || apiData.phoneWhatsApp || '11999999999'
-                        apiData.phoneWhatsApp = apiData.phoneWhatsApp || apiData.whatsapp || '11999999999'
-
-                        const local = loadedTenant || loadLocalJson()
-
-                        loadedTenant = {
-                            ...(local || {}),
+                    if (apiData && typeof apiData === 'object' && apiData.slug) {
+                        const parsedApiTenant = TenantSchema.parse({
+                            ...loadedTenant,
                             ...apiData,
-                            categories: (apiData.categories && apiData.categories.length > 0)
-                                ? apiData.categories
-                                : (local?.categories || []),
-                            professionals: (apiData.professionals && apiData.professionals.length > 0)
-                                ? apiData.professionals
-                                : (local?.professionals || []),
-                            reviews: resolveReviews(local?.reviews, apiData.reviews)
-                        } as Tenant
+                            reviews: resolveReviews(loadedTenant?.reviews, apiData.reviews)
+                        })
+                        loadedTenant = parsedApiTenant
                         fromApi = true
                     }
-                } catch (e) {
-                    console.warn('[useTenant] Backend offline ou inacessível, utilizando catálogo local:', e)
+                } catch {
+                    // Fallback silencioso para o catálogo local em ~/data/*.json caso a API esteja fria/offline
+                    console.warn(`[useTenant] Backend em inicialização ou offline. Utilizando catálogo local para '${currentSlug}'`)
                 }
             }
 
@@ -158,25 +156,25 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
                     if (rawOverrides) {
                         const overrides = JSON.parse(rawOverrides)
                         if (loadedTenant.categories && Array.isArray(loadedTenant.categories)) {
-                            for (const cat of loadedTenant.categories) {
-                                if (cat.products && Array.isArray(cat.products)) {
-                                    for (const p of cat.products) {
-                                        if (overrides[p.id]) {
-                                            if (overrides[p.id].isAvailable !== undefined) {
-                                                p.isAvailable = overrides[p.id].isAvailable
-                                                ;(p as any).available = overrides[p.id].isAvailable
-                                            }
-                                            if (overrides[p.id].price !== undefined) {
-                                                p.price = overrides[p.id].price
-                                            }
-                                        }
-                                    }
+                            const deletedProductIds: string[] = overrides.deletedProductIds || []
+                            const customProducts: any[] = overrides.customProducts || []
+
+                            loadedTenant.categories = loadedTenant.categories.map((cat: any) => {
+                                const baseProducts = (cat.products || []).filter(
+                                    (p: any) => !deletedProductIds.includes(p.id)
+                                )
+                                const additionalProducts = customProducts.filter(
+                                    (p: any) => p.categoryId === cat.id && !deletedProductIds.includes(p.id)
+                                )
+                                return {
+                                    ...cat,
+                                    products: [...baseProducts, ...additionalProducts]
                                 }
-                            }
+                            })
                         }
                     }
                 } catch (e) {
-                    console.warn('Erro ao mesclar overrides operacionais:', e)
+                    console.warn('Erro ao mesclar overrides locais:', e)
                 }
             }
 
