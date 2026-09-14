@@ -57,6 +57,27 @@ const toggleLike = (commentId: string) => {
   likedComments.value[commentId] = !likedComments.value[commentId]
 }
 
+// Helper defensivo para extrair o texto da resposta da loja
+function getStoreReplyText(reply: any): string {
+  if (!reply) return ''
+  if (typeof reply === 'object') {
+    return reply.text || reply.message || reply.comment || reply.reply || ''
+  }
+  if (typeof reply === 'string') {
+    const trimmed = reply.trim()
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      try {
+        const parsed = JSON.parse(trimmed)
+        return parsed.text || parsed.message || parsed.comment || parsed.reply || trimmed
+      } catch {
+        return trimmed
+      }
+    }
+    return trimmed
+  }
+  return String(reply)
+}
+
 // Normalização defensiva: 100% à prova de TypeError e idêntica ao iFood
 const normalizedReviews = computed(() => {
   const r = (props.reviews || {}) as any
@@ -350,12 +371,12 @@ const displayedComments = computed(() => {
 
               <!-- Texto do Cliente -->
               <p class="text-sm text-slate-700 leading-relaxed font-normal">
-                {{ item.comment }}
+                {{ item.comment || item.text }}
               </p>
 
               <!-- Resposta Oficial da Loja -->
               <div
-                v-if="item.storeReply"
+                v-if="getStoreReplyText(item.storeReply)"
                 class="mt-2.5 rounded-2xl bg-[#f7f7f7] p-3.5 border border-slate-100 space-y-1.5"
               >
                 <div class="flex items-center gap-1.5 text-xs font-bold text-slate-900">
@@ -363,7 +384,7 @@ const displayedComments = computed(() => {
                   <span>Resposta da loja</span>
                 </div>
                 <p class="text-xs text-slate-600 leading-relaxed">
-                  {{ item.storeReply }}
+                  {{ getStoreReplyText(item.storeReply) }}
                 </p>
                 <div class="flex items-center gap-0.5 text-amber-400 pt-0.5">
                   <Star v-for="s in 5" :key="s" class="w-2.5 h-2.5 fill-current" />
