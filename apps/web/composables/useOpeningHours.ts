@@ -17,12 +17,13 @@ const DAY_NAMES = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', '
  * Converte qualquer Date para a data/hora correspondente no fuso horário de Brasília (America/Sao_Paulo).
  * Essencial para evitar discrepâncias em SSR onde o servidor Node.js/Vercel roda em UTC.
  */
-export function getSaoPauloDate(date = new Date()): Date {
+export function getSaoPauloDate(date?: Date): Date {
+  const d = date ?? new Date()
   try {
-    const str = date.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })
+    const str = d.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })
     return new Date(str)
   } catch {
-    return date
+    return d
   }
 }
 
@@ -34,11 +35,11 @@ export function parseTimeToMinutes(timeStr?: string | null): number {
   return hours * 60 + minutes
 }
 
-export function isStoreOpenNow(openingHours?: { open?: string; close?: string } | null, now = new Date()): boolean {
+export function isStoreOpenNow(openingHours?: { open?: string; close?: string } | null, now?: Date): boolean {
   if (!openingHours?.open || !openingHours?.close) return true
 
-  const spNow = getSaoPauloDate(now)
-  const currentMinutes = spNow.getHours() * 60 + spNow.getMinutes()
+  const targetDate = now ?? getSaoPauloDate()
+  const currentMinutes = targetDate.getHours() * 60 + targetDate.getMinutes()
   const openMin = parseTimeToMinutes(openingHours.open)
   const closeMin = parseTimeToMinutes(openingHours.close)
 
@@ -53,10 +54,10 @@ export function isStoreOpenNow(openingHours?: { open?: string; close?: string } 
 
 export function getOpeningStatus(
   openingHours?: any,
-  now = new Date(),
+  now?: Date,
   isEmergencyClosed = false
 ): OpeningStatus {
-  const spNow = getSaoPauloDate(now)
+  const targetDate = now ?? getSaoPauloDate()
 
   if (isEmergencyClosed) {
     return {
@@ -78,8 +79,8 @@ export function getOpeningStatus(
     }
   }
 
-  // 1. Verifica configuração do dia da semana atual no fuso de Brasília
-  const dayIndex = spNow.getDay()
+  // 1. Verifica configuração do dia da semana atual
+  const dayIndex = targetDate.getDay()
   const currentDayKey = DAY_KEYS[dayIndex]
   const dayConfig = openingHours[currentDayKey]
 
@@ -119,10 +120,10 @@ export function getOpeningStatus(
     }
   }
 
-  const currentMinutes = spNow.getHours() * 60 + spNow.getMinutes()
+  const currentMinutes = targetDate.getHours() * 60 + targetDate.getMinutes()
   const openMin = parseTimeToMinutes(openTime)
   const closeMin = parseTimeToMinutes(closeTime)
-  const isOpen = isStoreOpenNow({ open: openTime, close: closeTime }, now)
+  const isOpen = isStoreOpenNow({ open: openTime, close: closeTime }, targetDate)
   const formattedHours = `${openTime} às ${closeTime}`
 
   if (isOpen) {
@@ -188,7 +189,7 @@ export function useOpeningHours(
       }
     }
 
-    return getOpeningStatus(hours, new Date(), isEmergencyClosed)
+    return getOpeningStatus(hours, undefined, isEmergencyClosed)
   })
 
   const computedAriaLabel = computed(() => {

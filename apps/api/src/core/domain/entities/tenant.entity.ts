@@ -126,14 +126,18 @@ export class Tenant {
   get createdAt(): Date { return this.props.createdAt || new Date(); }
   get updatedAt(): Date { return this.props.updatedAt || new Date(); }
 
-  isOpen(referenceDate: Date = new Date()): boolean {
+  isOpen(referenceDate?: Date): boolean {
     if (this.props.isClosedEmergency) return false;
     if (!this.props.openingHours) return true;
 
     let refDate = referenceDate;
-    try {
-      refDate = new Date(referenceDate.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
-    } catch {}
+    if (!refDate) {
+      try {
+        refDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+      } catch {
+        refDate = new Date();
+      }
+    }
 
     const openTime = (this.props.openingHours as any).open || '00:00';
     const closeTime = (this.props.openingHours as any).close || '23:59';
