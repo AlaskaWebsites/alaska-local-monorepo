@@ -67,12 +67,22 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
 
     const slug = computed<string>(() => {
         if (isRef(customSlug)) {
-            return String(customSlug.value || route.params.slug || 'hamburgueria-x').toLowerCase()
+            const rawVal = customSlug.value ? String(customSlug.value).trim().toLowerCase() : ''
+            if (rawVal && rawVal !== 'default') {
+                return rawVal
+            }
         }
         if (typeof customSlug === 'string') {
-            return customSlug.toLowerCase()
+            const rawVal = customSlug.trim().toLowerCase()
+            if (rawVal && rawVal !== 'default') {
+                return rawVal
+            }
         }
-        return String(route.params.slug || 'hamburgueria-x').toLowerCase()
+        const routeVal = route.params.slug ? String(route.params.slug).trim().toLowerCase() : ''
+        if (routeVal && routeVal !== 'default') {
+            return routeVal
+        }
+        return 'hamburgueria-x'
     })
 
     // Cache reativo global do Nuxt compartilhado por slug
@@ -110,7 +120,7 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
 
     const fetchTenantData = async (forceRefresh = false): Promise<Tenant | null> => {
         const currentSlug = slug.value
-        if (!currentSlug) return null
+        if (!currentSlug || currentSlug === 'default') return null
 
         // 1. Se já está no cache reativo e não é refresh forçado, retorna imediatamente sem fazer request
         if (!forceRefresh && tenantState.value && tenantState.value.slug?.toLowerCase() === currentSlug) {
