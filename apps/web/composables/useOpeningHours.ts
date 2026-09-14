@@ -13,6 +13,19 @@ export interface OpeningStatus {
 const DAY_KEYS = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'] as const
 const DAY_NAMES = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado']
 
+/**
+ * Converte qualquer Date para a data/hora correspondente no fuso horário de Brasília (America/Sao_Paulo).
+ * Essencial para evitar discrepâncias em SSR onde o servidor Node.js/Vercel roda em UTC.
+ */
+export function getSaoPauloDate(date = new Date()): Date {
+  try {
+    const str = date.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })
+    return new Date(str)
+  } catch {
+    return date
+  }
+}
+
 export function parseTimeToMinutes(timeStr?: string | null): number {
   if (!timeStr) return 0
   const [hStr, mStr] = timeStr.split(':')
@@ -24,7 +37,8 @@ export function parseTimeToMinutes(timeStr?: string | null): number {
 export function isStoreOpenNow(openingHours?: { open?: string; close?: string } | null, now = new Date()): boolean {
   if (!openingHours?.open || !openingHours?.close) return true
 
-  const currentMinutes = now.getHours() * 60 + now.getMinutes()
+  const spNow = getSaoPauloDate(now)
+  const currentMinutes = spNow.getHours() * 60 + spNow.getMinutes()
   const openMin = parseTimeToMinutes(openingHours.open)
   const closeMin = parseTimeToMinutes(openingHours.close)
 
@@ -42,6 +56,8 @@ export function getOpeningStatus(
   now = new Date(),
   isEmergencyClosed = false
 ): OpeningStatus {
+  const spNow = getSaoPauloDate(now)
+
   if (isEmergencyClosed) {
     return {
       isOpen: false,
@@ -62,8 +78,8 @@ export function getOpeningStatus(
     }
   }
 
-  // 1. Verifica configuração do dia da semana atual
-  const dayIndex = now.getDay()
+  // 1. Verifica configuração do dia da semana atual no fuso de Brasília
+  const dayIndex = spNow.getDay()
   const currentDayKey = DAY_KEYS[dayIndex]
   const dayConfig = openingHours[currentDayKey]
 
@@ -103,7 +119,7 @@ export function getOpeningStatus(
     }
   }
 
-  const currentMinutes = now.getHours() * 60 + now.getMinutes()
+  const currentMinutes = spNow.getHours() * 60 + spNow.getMinutes()
   const openMin = parseTimeToMinutes(openTime)
   const closeMin = parseTimeToMinutes(closeTime)
   const isOpen = isStoreOpenNow({ open: openTime, close: closeTime }, now)
@@ -175,17 +191,20 @@ export function useOpeningHours(
     return getOpeningStatus(hours, new Date(), isEmergencyClosed)
   })
 
+  const computedAriaLabel = computed(() => {
+    const s = currentStatus.value
+    return s.isOpen
+      ? `Estabelecimento aberto até às ${s.nextTime || 'horário de encerramento'}`
+      : `Estabelecimento fechado no momento`
+  })
+
   return {
     isOpen: computed(() => currentStatus.value.isOpen),
     statusText: computed(() => currentStatus.value.statusText),
     statusBadgeLabel: computed(() => currentStatus.value.badgeLabel),
     nextTime: computed(() => currentStatus.value.nextTime),
     formattedOpeningHours: computed(() => currentStatus.value.formattedHours),
-    ariaLabel: computed(() => {
-      const s = currentStatus.value
-      return s.isOpen
-        ? `Estabelecimento aberto até às ${s.nextTime || 'horário de encerramento'}`
-        : `Estabelecimento fechado no momento`
-    })
+    ariaLabel: computedAriaLabel,
+    openingAriaLabel: computedAriaLabel
   }
 }

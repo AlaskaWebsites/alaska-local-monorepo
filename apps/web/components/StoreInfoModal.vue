@@ -34,14 +34,17 @@ const daysMap = [
 const scheduleList = computed(() => {
   const hours = props.tenant?.openingHours as any
   if (!hours) return []
+  const defaultOpen = hours.open || '09:00'
+  const defaultClose = hours.close || '19:00'
 
   return daysMap.map(d => {
     const dayConfig = hours[d.key]
-    if (!dayConfig || dayConfig.closed) {
+    const isClosed = dayConfig ? Boolean(dayConfig.closed) : false
+    if (isClosed) {
       return { label: d.label, time: 'Fechado', isClosed: true }
     }
-    const open = dayConfig.open || hours.open || '09:00'
-    const close = dayConfig.close || hours.close || '22:00'
+    const open = dayConfig?.open || defaultOpen
+    const close = dayConfig?.close || defaultClose
     return { label: d.label, time: `${open} às ${close}`, isClosed: false }
   })
 })
@@ -57,7 +60,7 @@ const scheduleList = computed(() => {
       <div
         class="bg-slate-900 border border-slate-800 rounded-t-3xl sm:rounded-2xl max-w-lg w-full max-h-[90vh] sm:max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-6 sm:slide-in-from-bottom-2 duration-200"
       >
-        <!-- Header do Modal -->
+        <!-- Header -->
         <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-900/90 sticky top-0 z-10">
           <div class="flex items-center gap-2.5">
             <div class="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
@@ -143,7 +146,7 @@ const scheduleList = computed(() => {
           </div>
         </div>
 
-        <!-- Footer do Modal -->
+        <!-- Footer -->
         <div class="p-4 border-t border-slate-800 bg-slate-900/90 text-center">
           <button
             @click="emit('close')"

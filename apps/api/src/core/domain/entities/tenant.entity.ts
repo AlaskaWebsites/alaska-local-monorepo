@@ -130,6 +130,11 @@ export class Tenant {
     if (this.props.isClosedEmergency) return false;
     if (!this.props.openingHours) return true;
 
+    let refDate = referenceDate;
+    try {
+      refDate = new Date(referenceDate.toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+    } catch {}
+
     const openTime = (this.props.openingHours as any).open || '00:00';
     const closeTime = (this.props.openingHours as any).close || '23:59';
 
@@ -138,7 +143,7 @@ export class Tenant {
 
     const openMin = openH * 60 + openM;
     const closeMin = closeH * 60 + closeM;
-    const currentMin = referenceDate.getHours() * 60 + referenceDate.getMinutes();
+    const currentMin = refDate.getHours() * 60 + refDate.getMinutes();
 
     // Turno Noturno (ex: 18:00 às 03:00)
     if (openMin > closeMin) {
