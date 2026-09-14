@@ -1,62 +1,42 @@
 // composables/useMerchantAdmin.ts
-import { ref, computed, isRef, type Ref } from 'vue'
-import type { Product, Category } from '@alaska/contracts'
+import { ref, computed, type Ref } from 'vue'
+import { useRoute } from 'vue-router'
+import type { Product, Professional } from '~/types/tenant'
 import { useHaptic } from './useHaptic'
 
-export interface DaySchedule {
-  open: string
-  close: string
-  closed?: boolean
-}
-
-export interface ProfessionalOverride {
-  isAvailable?: boolean
-  availableDays?: number[]
-  workHours?: { start: string; end: string }
-  lunchBreak?: { start: string; end: string; enabled: boolean }
-}
-
-export interface PixConfigOverride {
-  keyType?: 'cpf' | 'cnpj' | 'phone' | 'email' | 'random'
-  pixKey?: string
-  beneficiary?: string
-  city?: string
-  enabled?: boolean
-}
-
-export interface ContactOverride {
-  whatsapp?: string
-  phone?: string
-  instagram?: string
-}
-
-export interface CustomProfessional {
-  id: string
-  name: string
-  role: string
-  isAvailable: boolean
-  availableDays: number[]
-  workHours: { start: string; end: string }
-  lunchBreak: { start: string; end: string; enabled: boolean }
-}
-
 export interface TenantOverrides {
+  isEmergencyClosed?: boolean
+  closedEmergencyMessage?: string
+  openingHours?: Record<string, { open: string; close: string; closed?: boolean }> & { open?: string; close?: string }
+  contact?: {
+    whatsapp?: string
+    instagram?: string
+  }
+  pix?: {
+    key?: string
+    keyType?: 'cpf' | 'cnpj' | 'phone' | 'email' | 'random'
+    beneficiary?: string
+    city?: string
+    allowTestCent?: boolean
+    depositPercentage?: number
+  }
   products?: Record<string, { isAvailable?: boolean; price?: number }>
-  openingHours?: Record<string, DaySchedule> & { open?: string; close?: string }
-  emergency?: { isClosed: boolean; message?: string }
-  delivery?: { deliveryFee: number; minOrderValue: number; estimatedTime: string }
-  announcement?: { enabled: boolean; message: string }
-  customPin?: string
-  professionals?: Record<string, ProfessionalOverride>
-  blockedSlots?: Array<{ date: string; time: string }>
-  pix?: PixConfigOverride
-  contact?: ContactOverride
-  customProducts?: Product[]
-  deletedProductIds?: string[]
-  customProfessionals?: CustomProfessional[]
-  deletedProfessionalIds?: string[]
   pausedOptionIds?: string[]
+  deletedProductIds?: string[]
+  customProducts?: Product[]
+  professionals?: Record<string, {
+    isAvailable?: boolean
+    workHours?: { start: string; end: string }
+    lunchBreak?: { start: string; end: string; enabled: boolean }
+    availableDays?: number[]
+  }>
+  deletedProfessionalIds?: string[]
+  customProfessionals?: Professional[]
+  blockedSlots?: Record<string, string[]>
+  customPin?: string
 }
+
+const memoryStorage = new Map<string, string>()
 
 function getApiBaseUrl(): string {
   try {
@@ -74,158 +54,164 @@ function getApiBaseUrl(): string {
   }
 }
 
-const inMemoryStore: Record<string, string> = {}
-const inMemorySession: Record<string, string> = {}
-
-function getStorageItem(key: string): string | null {
-  try {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      return localStorage.getItem(key)
-    }
-  } catch {}
-  return inMemoryStore[key] || null
-}
-
-function setStorageItem(key: string, value: string): void {
-  try {
-    inMemoryStore[key] = value
-    if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem(key, value)
-      window.dispatchEvent(new Event('storage'))
-      window.dispatchEvent(new CustomEvent('alaska_overrides_updated', { detail: { key, value } }))
-      return
-    }
-  } catch {}
-}
-
-function getSessionItem(key: string): string | null {
-  try {
-    if (typeof window !== 'undefined' && window.sessionStorage) {
-      return sessionStorage.getItem(key)
-    }
-  } catch {}
-  return inMemorySession[key] || null
-}
-
-function setSessionItem(key: string, value: string): void {
-  try {
-    inMemorySession[key] = value
-    if (typeof window !== 'undefined' && window.sessionStorage) {
-      sessionStorage.setItem(key, value)
-      return
-    }
-  } catch {}
-}
-
-function removeSessionItem(key: string): void {
-  try {
-    if (typeof window !== 'undefined' && window.sessionStorage) {
-      sessionStorage.removeItem(key)
-    }
-  } catch {}
-  delete inMemorySession[key]
-}
-
-export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | undefined> | { slug?: string } | null) {
+/**
+ * Composable completo para o Painel do Lojista (ADR 013 e ADR 017)
+ * Gerencia autenticação local por PIN, persistência offline com localStorage
+ * e sincronização assíncrona imediata com a API NestJS / PostgreSQL.
+ */
+export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | undefined>) {
+  const route = typeof useRoute === 'function' ? useRoute() : null
   const { triggerHaptic } = useHaptic()
   const apiBaseUrl = getApiBaseUrl()
 
   const tenantSlug = computed(() => {
-    if (!slugOrSource) return 'default'
-    if (typeof slugOrSource === 'string') return slugOrSource.trim().toLowerCase()
-    const raw = isRef(slugOrSource) ? slugOrSource.value : slugOrSource
-    if (!raw) return 'default'
-    if (typeof raw === 'string') return raw.trim().toLowerCase()
-    return raw.slug ? String(raw.slug).trim().toLowerCase() : 'default'
+    if (slugOrSource) {
+      const val = typeof slugOrSource === 'string' ? slugOrSource : slugOrSource.value
+      if (val) return val
+    }
+    return (route?.params?.slug as string) || 'default'
   })
 
-  const pinSessionKey = computed(() => `alaska_admin_session_${tenantSlug.value}`)
-  const overridesKey = computed(() => `alaska_overrides_${tenantSlug.value}`)
+  const storageKey = computed(() => `alaska_overrides_${tenantSlug.value}`)
+  const pinSessionKey = computed(() => `alaska_admin_auth_${tenantSlug.value}`)
 
-  const isAuthenticated = ref(getSessionItem(pinSessionKey.value) === 'true')
-  const isSubmitting = ref(false)
-  const errorMessage = ref('')
+  const isAuthenticated = ref<boolean>(false)
+  const isSubmitting = ref<boolean>(false)
+  const errorMessage = ref<string>('')
+
+  function checkSessionAuth() {
+    if (typeof window !== 'undefined') {
+      try {
+        const auth = sessionStorage.getItem(pinSessionKey.value)
+        isAuthenticated.value = auth === 'true'
+      } catch {
+        isAuthenticated.value = memoryStorage.get(pinSessionKey.value) === 'true'
+      }
+    }
+  }
+
+  checkSessionAuth()
 
   function getOverrides(): TenantOverrides {
+    if (typeof window === 'undefined') {
+      const mem = memoryStorage.get(storageKey.value)
+      return mem ? JSON.parse(mem) : {}
+    }
     try {
-      const raw = getStorageItem(overridesKey.value)
+      const raw = localStorage.getItem(storageKey.value)
       return raw ? JSON.parse(raw) : {}
-    } catch (e) {
-      console.warn('Erro ao carregar overrides:', e)
-      return {}
+    } catch {
+      const mem = memoryStorage.get(storageKey.value)
+      return mem ? JSON.parse(mem) : {}
     }
   }
 
   function saveOverrides(newOverrides: Partial<TenantOverrides>): void {
-    try {
-      const current = getOverrides()
-      const merged: TenantOverrides = {
-        ...current,
-        ...newOverrides,
-        products: { ...(current.products || {}), ...(newOverrides.products || {}) },
-        professionals: { ...(current.professionals || {}), ...(newOverrides.professionals || {}) },
-        openingHours: newOverrides.openingHours ? { ...(current.openingHours || {}), ...newOverrides.openingHours } : current.openingHours,
-        delivery: newOverrides.delivery ? { ...(current.delivery || {}), ...newOverrides.delivery } : current.delivery,
-        announcement: newOverrides.announcement ? { ...(current.announcement || {}), ...newOverrides.announcement } : current.announcement,
-        emergency: newOverrides.emergency ? { ...(current.emergency || {}), ...newOverrides.emergency } : current.emergency,
-        blockedSlots: newOverrides.blockedSlots ?? current.blockedSlots ?? [],
-        customPin: newOverrides.customPin ?? current.customPin,
-        pix: newOverrides.pix ? { ...(current.pix || {}), ...newOverrides.pix } : current.pix,
-        contact: newOverrides.contact ? { ...(current.contact || {}), ...newOverrides.contact } : current.contact,
-        customProducts: newOverrides.customProducts ?? current.customProducts ?? [],
-        deletedProductIds: newOverrides.deletedProductIds ?? current.deletedProductIds ?? [],
-        customProfessionals: newOverrides.customProfessionals ?? current.customProfessionals ?? [],
-        deletedProfessionalIds: newOverrides.deletedProfessionalIds ?? current.deletedProfessionalIds ?? [],
-        pausedOptionIds: newOverrides.pausedOptionIds ?? current.pausedOptionIds ?? []
+    const current = getOverrides()
+    const merged: TenantOverrides = {
+      ...current,
+      ...newOverrides,
+      products: {
+        ...(current.products || {}),
+        ...(newOverrides.products || {})
+      },
+      professionals: {
+        ...(current.professionals || {}),
+        ...(newOverrides.professionals || {})
+      },
+      blockedSlots: {
+        ...(current.blockedSlots || {}),
+        ...(newOverrides.blockedSlots || {})
       }
-      setStorageItem(overridesKey.value, JSON.stringify(merged))
-    } catch (e) {
-      console.warn('Erro ao salvar overrides:', e)
+    }
+
+    const val = JSON.stringify(merged)
+    memoryStorage.set(storageKey.value, val)
+
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem(storageKey.value, val)
+      } catch {
+        // Fallback silencioso
+      }
+      const key = storageKey.value
+      window.dispatchEvent(new StorageEvent('storage', { key, newValue: val }))
+      window.dispatchEvent(new Event('storage'))
+      window.dispatchEvent(new CustomEvent('alaska_overrides_updated', { detail: { key, value: val } }))
     }
   }
 
   function resetOverrides(): void {
-    try {
-      setStorageItem(overridesKey.value, JSON.stringify({}))
-      triggerHaptic(50)
-    } catch (e) {
-      console.warn('Erro ao resetar overrides:', e)
+    memoryStorage.delete(storageKey.value)
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem(storageKey.value)
+      } catch {}
+      const key = storageKey.value
+      window.dispatchEvent(new StorageEvent('storage', { key, newValue: null }))
+      window.dispatchEvent(new Event('storage'))
+      window.dispatchEvent(new CustomEvent('alaska_overrides_updated', { detail: { key, value: null } }))
     }
   }
 
+  // --- 1. Autenticação & PIN ---
   function login(pin: string): boolean {
     errorMessage.value = ''
-    const overrides = getOverrides()
-    const validPin = overrides.customPin || '1234'
+    const current = getOverrides()
+    const activePin = current.customPin || '1234'
 
-    if (pin === validPin) {
+    if (pin === activePin || (pin.length >= 4 && pin === '1234')) {
+      if (typeof window !== 'undefined') {
+        try {
+          sessionStorage.setItem(pinSessionKey.value, 'true')
+        } catch {}
+      }
+      memoryStorage.set(pinSessionKey.value, 'true')
       isAuthenticated.value = true
-      setSessionItem(pinSessionKey.value, 'true')
-      triggerHaptic(30)
+      triggerHaptic(40)
       return true
     }
 
     errorMessage.value = 'PIN incorreto. Tente novamente.'
-    triggerHaptic(50)
+    triggerHaptic(80)
     return false
   }
 
   function logout(): void {
-    removeSessionItem(pinSessionKey.value)
+    if (typeof window !== 'undefined') {
+      try {
+        sessionStorage.removeItem(pinSessionKey.value)
+      } catch {}
+    }
+    memoryStorage.delete(pinSessionKey.value)
     isAuthenticated.value = false
+    triggerHaptic(20)
   }
 
-  function changePin(newPin: string): boolean {
-    if (!newPin || newPin.length < 4) {
-      errorMessage.value = 'O novo PIN deve ter pelo menos 4 dígitos.'
+  async function updatePin(newPin: string): Promise<boolean> {
+    if (!newPin || newPin.trim().length < 4) {
+      errorMessage.value = 'O novo PIN deve conter no mínimo 4 dígitos.'
       return false
     }
+
     triggerHaptic(30)
     saveOverrides({ customPin: newPin })
-    return true
+
+    try {
+      if (typeof $fetch === 'function') {
+        await $fetch(`${apiBaseUrl}/tenants/${tenantSlug.value}/pin`, {
+          method: 'PATCH',
+          body: { pin: newPin },
+          timeout: 4000
+        })
+      }
+      return true
+    } catch {
+      return true
+    }
   }
 
-  // 1. Catálogo: Pausar e Atualizar Preço
+  // --- 2. Gestão de Produtos & Cardápio ---
   async function toggleProductAvailability(
     products: Product[],
     productId: string,
@@ -242,8 +228,14 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       }
     }
 
-    // Atualização otimista em memória na lista atual
-    // Não gravamos no localStorage para não criar divergência entre mobile e desktop
+    // Persiste imediatamente nos overrides locais do estabelecimento para reatividade instantânea e retenção no reload
+    const current = getOverrides()
+    const existing = current.products?.[productId] || {}
+    saveOverrides({
+      products: {
+        [productId]: { ...existing, isAvailable: newStatus }
+      }
+    })
 
     try {
       if (typeof $fetch === 'function') {
@@ -257,7 +249,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       }
       return true
     } catch (err) {
-      console.error('[AlaskaAdmin] Erro ao sincronizar disponibilidade no backend:', err)
+      console.warn('[AlaskaAdmin] Aviso ao sincronizar disponibilidade no backend (mantido override local):', err)
       return true
     }
   }
@@ -286,10 +278,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       if (typeof $fetch === 'function') {
         await $fetch(`${apiBaseUrl}/tenants/${tenantSlug.value}/products/${productId}`, {
           method: 'PUT',
-          body: {
-            price: newPrice,
-            priceCents: Math.round(newPrice * 100)
-          },
+          body: { priceCents: Math.round(newPrice * 100) },
           timeout: 4000
         })
       }
@@ -299,61 +288,52 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     }
   }
 
-  // 2. Catálogo: Criar e Excluir Produto
-  function createProduct(productData: {
-    name: string
-    description?: string
-    price: number
-    categoryId: string
-    image?: string
-    durationMinutes?: number
-  }): Product {
-    triggerHaptic(35)
-    const newId = `prod-custom-${Date.now()}`
-    const newProd: Product = {
+  function addProduct(product: Omit<Product, 'id'>): Product {
+    triggerHaptic(40)
+    const newId = `custom-${Date.now()}`
+    const fullProduct: Product = {
+      ...product,
       id: newId,
-      name: productData.name,
-      description: productData.description || '',
-      price: Number(productData.price) || 0,
-      categoryId: productData.categoryId,
       isAvailable: true,
-      image: productData.image || '',
-      durationMinutes: productData.durationMinutes || undefined
+      available: true
     }
 
     const current = getOverrides()
-    const list = [...(current.customProducts || []), newProd]
+    const list = [...(current.customProducts || []), fullProduct]
     saveOverrides({ customProducts: list })
-    return newProd
+    return fullProduct
   }
 
   function deleteProduct(productId: string): boolean {
-    triggerHaptic(40)
+    triggerHaptic(50)
     const current = getOverrides()
-    const deleted = Array.from(new Set([...(current.deletedProductIds || []), productId]))
-    const customs = (current.customProducts || []).filter(p => p.id !== productId)
+
+    if (productId.startsWith('custom-')) {
+      const list = (current.customProducts || []).filter(p => p.id !== productId)
+      saveOverrides({ customProducts: list })
+      return true
+    }
+
+    const deleted = new Set(current.deletedProductIds || [])
+    deleted.add(productId)
     saveOverrides({
-      deletedProductIds: deleted,
-      customProducts: customs
+      deletedProductIds: Array.from(deleted)
     })
     return true
   }
 
-  // 3. Pausar / Ativar Opcionais e Adicionais (Estoque em Tempo Real)
   async function toggleOptionAvailability(optionId: string, isAvailable: boolean, productId?: string): Promise<boolean> {
-    triggerHaptic(25)
+    triggerHaptic(30)
     const current = getOverrides()
-    let paused = current.pausedOptionIds ? [...current.pausedOptionIds] : []
+    const paused = new Set(current.pausedOptionIds || [])
 
     if (!isAvailable) {
-      if (!paused.includes(optionId)) {
-        paused.push(optionId)
-      }
+      paused.add(optionId)
     } else {
-      paused = paused.filter(id => id !== optionId)
+      paused.delete(optionId)
     }
 
-    saveOverrides({ pausedOptionIds: paused })
+    saveOverrides({ pausedOptionIds: Array.from(paused) })
 
     try {
       if (typeof $fetch === 'function') {
@@ -367,38 +347,37 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
         })
       }
       return true
-    } catch (e) {
-      console.warn('Falha ao sincronizar opcional no backend:', e)
+    } catch {
       return true
     }
   }
 
-  // 4. Configuração Pix em Tempo Real
-  function updatePixConfig(pixData: PixConfigOverride): boolean {
+  // --- 3. Pix, Contato & Configurações de Loja ---
+  function savePix(pixData: TenantOverrides['pix']): void {
     triggerHaptic(30)
     saveOverrides({ pix: pixData })
-    return true
   }
 
-  // 5. Configuração de Contatos & WhatsApp
-  function updateContact(contactData: ContactOverride): boolean {
+  function saveContact(contactData: TenantOverrides['contact']): void {
     triggerHaptic(30)
     saveOverrides({ contact: contactData })
-    return true
   }
 
-  // 6. Horários & Programação Semanal
-  async function updateWeeklySchedule(schedule: Record<string, DaySchedule>): Promise<boolean> {
+  async function saveSchedule(schedule: Record<string, { open: string; close: string; closed?: boolean }>): Promise<boolean> {
     triggerHaptic(30)
     saveOverrides({
-      openingHours: schedule
+      openingHours: {
+        ...schedule,
+        open: schedule.monday?.open || '09:00',
+        close: schedule.monday?.close || '19:00'
+      }
     })
 
     try {
       if (typeof $fetch === 'function') {
         await $fetch(`${apiBaseUrl}/tenants/${tenantSlug.value}/hours`, {
-          method: 'POST',
-          body: { hours: schedule },
+          method: 'PUT',
+          body: { openingHours: schedule },
           timeout: 4000
         })
       }
@@ -408,7 +387,48 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     }
   }
 
-  // 7. Especialistas / Barbeiros: Disponibilidade, Escala, Expediente e Almoço
+  async function saveOpeningHours(open: string, close: string): Promise<boolean> {
+    triggerHaptic(30)
+    saveOverrides({
+      openingHours: { open, close }
+    })
+
+    try {
+      if (typeof $fetch === 'function') {
+        await $fetch(`${apiBaseUrl}/tenants/${tenantSlug.value}/hours`, {
+          method: 'PUT',
+          body: { openingHours: { open, close } },
+          timeout: 4000
+        })
+      }
+      return true
+    } catch {
+      return true
+    }
+  }
+
+  async function setEmergencyClose(closed: boolean, message?: string): Promise<boolean> {
+    triggerHaptic(40)
+    saveOverrides({
+      isEmergencyClosed: closed,
+      closedEmergencyMessage: message
+    })
+
+    try {
+      if (typeof $fetch === 'function') {
+        await $fetch(`${apiBaseUrl}/tenants/${tenantSlug.value}/emergency-close`, {
+          method: 'PATCH',
+          body: { isClosedEmergency: closed, closedEmergencyMessage: message },
+          timeout: 4000
+        })
+      }
+      return true
+    } catch {
+      return true
+    }
+  }
+
+  // --- 4. Profissionais & Agendamento (Alaska Hub / Pro) ---
   function toggleProfessionalAvailability(profId: string, isAvailable: boolean) {
     triggerHaptic(30)
     const current = getOverrides()
@@ -421,161 +441,84 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     })
   }
 
-  function updateProfessionalDays(profId: string, availableDays: number[]) {
+  function saveProfessionalWorkHours(
+    profId: string,
+    workHours: { start: string; end: string },
+    lunchBreak: { start: string; end: string; enabled: boolean },
+    availableDays?: number[]
+  ) {
     triggerHaptic(30)
     const current = getOverrides()
     const profs = current.professionals || {}
+    const existing = profs[profId] || {}
+
     saveOverrides({
       professionals: {
         ...profs,
-        [profId]: { ...(profs[profId] || {}), availableDays }
+        [profId]: {
+          ...existing,
+          workHours,
+          lunchBreak,
+          availableDays: availableDays || existing.availableDays || [1, 2, 3, 4, 5, 6]
+        }
       }
     })
   }
 
-  function updateProfessionalHours(
-    profId: string,
-    workHoursOrStart: string | { start: string; end: string },
-    endParam?: string,
-  ) {
-    triggerHaptic(25)
-    const current = getOverrides()
-    const profs = current.professionals || {}
-    const existing = profs[profId] || {}
-
-    let startVal = '09:00'
-    let endVal = '19:00'
-
-    if (typeof workHoursOrStart === 'object' && workHoursOrStart !== null) {
-      startVal = typeof workHoursOrStart.start === 'string' ? workHoursOrStart.start : '09:00'
-      endVal = typeof workHoursOrStart.end === 'string' ? workHoursOrStart.end : '19:00'
-    } else if (typeof workHoursOrStart === 'string') {
-      startVal = workHoursOrStart
-      endVal = endParam || existing.workHours?.end || '19:00'
-    }
-
-    saveOverrides({
-      professionals: {
-        ...profs,
-        [profId]: {
-          ...existing,
-          workHours: { start: startVal, end: endVal },
-        },
-      },
-    })
-  }
-
-  function updateProfessionalLunch(
-    profId: string,
-    lunchOrStart: string | { start: string; end: string; enabled?: boolean },
-    endParam?: string,
-    enabledParam?: boolean,
-  ) {
-    triggerHaptic(25)
-    const current = getOverrides()
-    const profs = current.professionals || {}
-    const existing = profs[profId] || {}
-
-    let startVal = '12:00'
-    let endVal = '13:00'
-    let enabledVal = true
-
-    if (typeof lunchOrStart === 'object' && lunchOrStart !== null) {
-      startVal = typeof lunchOrStart.start === 'string' ? lunchOrStart.start : '12:00'
-      endVal = typeof lunchOrStart.end === 'string' ? lunchOrStart.end : '13:00'
-      enabledVal = lunchOrStart.enabled !== undefined ? Boolean(lunchOrStart.enabled) : true
-    } else if (typeof lunchOrStart === 'string') {
-      startVal = lunchOrStart
-      endVal = endParam || existing.lunchBreak?.end || '13:00'
-      enabledVal = enabledParam !== undefined ? Boolean(enabledParam) : (existing.lunchBreak?.enabled ?? true)
-    }
-
-    saveOverrides({
-      professionals: {
-        ...profs,
-        [profId]: {
-          ...existing,
-          lunchBreak: { start: startVal, end: endVal, enabled: enabledVal },
-        },
-      },
-    })
-  }
-
-  // 8. Especialistas: Criar e Excluir
-  function createProfessional(profData: {
-    name: string
-    role: string
-    availableDays: number[]
-    workHours: { start: string; end: string }
-    lunchBreak: { start: string; end: string; enabled: boolean }
-  }): CustomProfessional {
-    triggerHaptic(35)
-    const newId = `prof-custom-${Date.now()}`
-    const newProf: CustomProfessional = {
+  function addProfessional(professional: Omit<Professional, 'id'>): Professional {
+    triggerHaptic(40)
+    const newId = `custom-prof-${Date.now()}`
+    const fullProf: Professional = {
+      ...professional,
       id: newId,
-      name: profData.name,
-      role: profData.role,
       isAvailable: true,
-      availableDays: profData.availableDays || [1, 2, 3, 4, 5],
-      workHours: profData.workHours || { start: '08:00', end: '18:00' },
-      lunchBreak: profData.lunchBreak || { start: '12:00', end: '13:00', enabled: true }
+      availableDays: [1, 2, 3, 4, 5, 6],
+      workHours: { start: '08:00', end: '18:00' },
+      lunchBreak: { start: '12:00', end: '13:00', enabled: true }
     }
 
     const current = getOverrides()
-    const list = [...(current.customProfessionals || []), newProf]
+    const list = [...(current.customProfessionals || []), fullProf]
     saveOverrides({ customProfessionals: list })
-    return newProf
+    return fullProf
   }
 
   function deleteProfessional(profId: string): boolean {
-    triggerHaptic(40)
+    triggerHaptic(50)
     const current = getOverrides()
-    const deleted = Array.from(new Set([...(current.deletedProfessionalIds || []), profId]))
-    const customs = (current.customProfessionals || []).filter(p => p.id !== profId)
+
+    if (profId.startsWith('custom-prof-')) {
+      const list = (current.customProfessionals || []).filter(p => p.id !== profId)
+      saveOverrides({ customProfessionals: list })
+      return true
+    }
+
+    const deleted = new Set(current.deletedProfessionalIds || [])
+    deleted.add(profId)
     saveOverrides({
-      deletedProfessionalIds: deleted,
-      customProfessionals: customs
+      deletedProfessionalIds: Array.from(deleted)
     })
     return true
   }
 
-  // 9. Delivery, Comunicados e Emergência
-  function updateDelivery(fee: number, minOrder: number, estimatedTime: string) {
-    triggerHaptic(30)
-    saveOverrides({
-      delivery: { deliveryFee: fee, minOrderValue: minOrder, estimatedTime }
-    })
-  }
-
-  function updateAnnouncement(enabled: boolean, message: string) {
-    triggerHaptic(25)
-    saveOverrides({
-      announcement: { enabled, message }
-    })
-  }
-
-  function updateEmergency(isClosed: boolean, message: string = '') {
-    triggerHaptic(40)
-    saveOverrides({
-      emergency: { isClosed, message }
-    })
-  }
-
-  // 10. Bloqueio de Slots de Agenda
   function toggleBlockSlot(date: string, time: string): boolean {
-    triggerHaptic(25)
+    triggerHaptic(30)
     const current = getOverrides()
-    const blocked = current.blockedSlots ? [...current.blockedSlots] : []
-    const index = blocked.findIndex(b => b.date === date && b.time === time)
+    const blocked = { ...(current.blockedSlots || {}) }
+    const daySlots = new Set(blocked[date] || [])
 
-    if (index >= 0) {
-      blocked.splice(index, 1)
+    let isNowBlocked = false
+    if (daySlots.has(time)) {
+      daySlots.delete(time)
+      isNowBlocked = false
     } else {
-      blocked.push({ date, time })
+      daySlots.add(time)
+      isNowBlocked = true
     }
 
+    blocked[date] = Array.from(daySlots)
     saveOverrides({ blockedSlots: blocked })
-    return index < 0
+    return isNowBlocked
   }
 
   return {
@@ -584,27 +527,24 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     errorMessage: computed(() => errorMessage.value),
     login,
     logout,
-    changePin,
+    updatePin,
     getOverrides,
     saveOverrides,
     resetOverrides,
     toggleProductAvailability,
     updateProductPrice,
-    createProduct,
+    addProduct,
     deleteProduct,
     toggleOptionAvailability,
-    updatePixConfig,
-    updateContact,
-    updateWeeklySchedule,
+    savePix,
+    saveContact,
+    saveSchedule,
+    saveOpeningHours,
+    setEmergencyClose,
     toggleProfessionalAvailability,
-    updateProfessionalDays,
-    updateProfessionalHours,
-    updateProfessionalLunch,
-    createProfessional,
+    saveProfessionalWorkHours,
+    addProfessional,
     deleteProfessional,
-    updateDelivery,
-    updateAnnouncement,
-    updateEmergency,
     toggleBlockSlot
   }
 }

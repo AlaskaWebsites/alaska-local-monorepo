@@ -24,7 +24,26 @@ export class PostgresProductRepository implements IProductRepository {
   }
 
   async findById(id: string): Promise<Product | null> {
-    const res = await this.db.query('SELECT * FROM products WHERE id = $1', [id])
+    let res = await this.db.query('SELECT * FROM products WHERE id = $1', [id])
+    if (res.rows.length === 0) {
+      res = await this.db.query(
+        `SELECT * FROM products
+         WHERE LOWER(id) = LOWER($1)
+            OR LOWER(id) = LOWER('prod-' || $1)
+            OR LOWER(REPLACE(id, 'prod-', '')) = LOWER($1)`,
+        [id]
+      )
+    }
+    if (res.rows.length === 0) {
+      const tokens = id.replace(/^prod-/, '').split('-').filter(t => t.length >= 3)
+      if (tokens.length > 0) {
+        const conditions = tokens.map((_, i) => `LOWER(name) LIKE '%' || $${i + 1} || '%'`).join(' AND ')
+        res = await this.db.query(
+          `SELECT * FROM products WHERE ${conditions} LIMIT 1`,
+          tokens
+        )
+      }
+    }
     if (res.rows.length === 0) return null
     return this.mapRowToProduct(res.rows[0])
   }
@@ -41,10 +60,36 @@ export class PostgresProductRepository implements IProductRepository {
   }
 
   async toggleAvailability(productId: string, isAvailable: boolean): Promise<Product> {
-    const res = await this.db.query(
+    let res = await this.db.query(
       `UPDATE products SET available = $1 WHERE id = $2 RETURNING *`,
       [isAvailable, productId]
     )
+    if (res.rows.length === 0) {
+      res = await this.db.query(
+        `UPDATE products SET available = $1
+         WHERE LOWER(id) = LOWER($2)
+            OR LOWER(id) = LOWER('prod-' || $2)
+            OR LOWER(REPLACE(id, 'prod-', '')) = LOWER($2)
+         RETURNING *`,
+        [isAvailable, productId]
+      )
+    }
+    if (res.rows.length === 0) {
+      const tokens = productId.replace(/^prod-/, '').split('-').filter(t => t.length >= 3)
+      if (tokens.length > 0) {
+        const conditions = tokens.map((_, i) => `LOWER(name) LIKE '%' || $${i + 2} || '%'`).join(' AND ')
+        res = await this.db.query(
+          `UPDATE products SET available = $1
+           WHERE id IN (
+             SELECT id FROM products
+             WHERE ${conditions}
+             LIMIT 1
+           )
+           RETURNING *`,
+          [isAvailable, ...tokens]
+        )
+      }
+    }
     if (res.rows.length === 0) {
       throw new EntityNotFoundError('Product', productId)
     }

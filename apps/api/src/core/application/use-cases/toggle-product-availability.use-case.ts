@@ -15,6 +15,6 @@ export class ToggleProductAvailabilityUseCase {
     if (!product) {
       throw new EntityNotFoundError('Product', input.productId)
     }
-    return this.productRepository.toggleAvailability(input.productId, input.isAvailable)
+    return this.productRepository.toggleAvailability(product.id, input.isAvailable)
   }
 }
