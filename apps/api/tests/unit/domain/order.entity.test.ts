@@ -59,4 +59,35 @@ describe('Unit: Entidade Order', () => {
 
     expect(order.calculateTotal().amount).toBe(60.00)
   })
+
+  it('deve atualizar o status operacional com updateStatus (ADR 013 / Fase 3)', () => {
+    const order = new Order({
+      id: 'ord-3',
+      tenantId: 'ten-1',
+      customerName: 'Danilo Santos',
+      customerPhone: '11999998888',
+      deliveryType: 'delivery',
+      address: sampleAddress,
+      deliveryFeeCents: 500,
+      paymentMethod: 'Pix',
+      items: [
+        {
+          productId: 'prod-1',
+          productName: 'X-Burger',
+          quantity: 1,
+          unitPriceCents: 2000
+        }
+      ]
+    })
+
+    expect(order.status).toBe('pending_payment')
+    order.updateStatus('confirmed')
+    expect(order.status).toBe('confirmed')
+    order.updateStatus('preparing')
+    expect(order.status).toBe('preparing')
+    order.updateStatus('dispatched')
+    expect(order.status).toBe('dispatched')
+    order.updateStatus('completed')
+    expect(order.status).toBe('completed')
+  })
 })

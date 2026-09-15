@@ -16,9 +16,9 @@ Após auditoria aprofundada nas três camadas de código (`packages/contracts`, 
 | Camada / Dimensão | Maturidade | Status | Principais Destaques / Pontos de Atenção |
 | :--- | :---: | :---: | :--- |
 | **`@alaska/contracts` (SSOT)** | **10.0 / 10** | 🟢 Concluído (Fases 1 e 2) | Schemas Zod 3.24 cobrindo Tenant, Catalog, Order, Booking, Pix e Common. Build duplo ESM/CJS com `.d.ts`. Suporte canônico para status operacionais e mutações tolerantes. |
-| **`apps/api` Core Domain** | **9.5 / 10** | 🟢 Exemplar | Clean Architecture pura, Value Objects imutáveis (`Money` em centavos inteiros), entidades ricas e zero dependência de framework. |
-| **`apps/api` Presentation** | **6.5 / 10** | 🟡 Atenção (Próximo: Fase 3) | Erosão de schemas nos controllers: `ProductController` e `TenantController.updateHours` recorreram a `@Body() body: any` para contornar divergências de payloads do cliente. |
-| **`apps/web` Composables** | **7.5 / 10** | 🟡 Bom | Lógica de negócio robusta e testada (Vitest), mas uso frequente de `$fetch<any>` e ausência de `safeParse` na persistência do `localStorage`. |
+| **`apps/api` Core Domain** | **10.0 / 10** | 🟢 Concluído (Fase 3) | Clean Architecture pura, Value Objects imutáveis (`Money` em centavos inteiros), entidades ricas com encapsulamento de mutação (`updateStatus`) e zero dependência de framework. |
+| **`apps/api` Presentation** | **9.5 / 10** | 🟢 Concluído (Fase 3) | **Blindagem Fail-Fast Reativada**: Todos os controllers (`ProductController`, `OrderController`, `BookingController`, `TenantController`, `PixController`) utilizam `ZodValidationPipe` com schemas canônicos. `@Body() body: any` completamente erradicado e RFC 7807 (404) padronizado. |
+| **`apps/web` Composables** | **7.5 / 10** | 🟡 Bom (Próximo: Fase 4) | Lógica de negócio robusta e testada (Vitest), mas uso frequente de `$fetch<any>` e ausência de `safeParse` na persistência do `localStorage`. |
 | **`apps/web` Types (Shadowing)** | **9.5 / 10** | 🟢 Resolvido (Fase 1) | **Shadowing Eliminado**: `apps/web/types/` unificado sob `@alaska/contracts`, centralizando SSOT e mantendo retrocompatibilidade total. |
 
 ---
@@ -33,12 +33,12 @@ O pacote `@alaska/contracts` centraliza os contratos de dados do ecossistema:
    * `catalog`: `OptionItemSchema`, `OptionGroupSchema`, `ProductSchema`, `CategorySchema`, `ToggleProductAvailabilitySchema`, `ToggleOptionAvailabilitySchema`, `UpdateProductSchema`.
    * `order`: `DeliveryTypeSchema`, `PaymentMethodSchema`, `OrderStatusSchema`, `OrderItemSchema`, `CreateOrderSchema`, `UpdateOrderStatusSchema`.
    * `booking`: `BookingServiceSchema`, `ProfessionalSchema`, `BookingSlotSchema`, `BookingDaySchema`, `BookingAppointmentPayloadSchema`, `CreateBookingSchema`, `BlockBookingSlotSchema`, `BookingStatusSchema`, `UpdateBookingStatusSchema`.
-   * `pix`: `PixQrCodeRequestSchema`, `PixQrCodeResponseSchema`.
+   * `pix`: `PixQrCodeRequestSchema`, `PixQrCodeResponseSchema`, `GeneratePixDtoSchema`, `QueryPixQrCodeSchema`.
    * `common`: `MoneyCentsSchema`, `CepSchema`, `PhoneSchema`, `AddressSchema`.
 
 2. **Gaps & Oportunidades no `@alaska/contracts`**:
    * **Schemas de Atualização de Status [RESOLVIDO NA FASE 2]**:
-     * Criados os schemas canônicos `UpdateOrderStatusSchema` e `UpdateBookingStatusSchema` com tipagem rigorosa de enums (`OrderStatusSchema` e `BookingStatusSchema`), prontos para blindagem via pipe nos controllers NestJS.
+     * Criados os schemas canônicos `UpdateOrderStatusSchema` e `UpdateBookingStatusSchema` com tipagem rigorosa de enums (`OrderStatusSchema` e `BookingStatusSchema`), devidamente integrados com `ZodValidationPipe` no backend.
    * **Preprocessamento e Tolerância de Booleans [RESOLVIDO NA FASE 2]**:
      * Implementado `ToggleProductAvailabilitySchema` e `ToggleOptionAvailabilitySchema` com suporte duplo a `isAvailable` e `available`.
 
@@ -53,16 +53,17 @@ O pacote `@alaska/contracts` centraliza os contratos de dados do ecossistema:
   * Injeção de dependências desacoplada via tokens de símbolo (`TOKENS.TENANT_REPOSITORY`, `TOKENS.PASSWORD_HASHER`, etc.).
   * `DomainExceptionFilter` mapeia exceções de domínio para RFC 7807 Problem Details (400, 404, 500).
 
-#### 2. Fragilidades de Tipagem e Fail-Fast Identificadas:
-* **Relaxamento para `any` no `ProductController`**:
-  * No commit `53e353ef164740b3073518f36a90c9da2a9a9a98`, os pipes de validação Zod foram removidos das rotas de produto para flexibilizar payloads.
-* **Ausência de Validação nas Rotas de Status Operacional**:
-  * Em `OrderController`: `@Patch(':id/status')` aceita `@Body('status') status: any`.
-  * Em `BookingController`: `@Patch(':id/status')` aceita `@Body('status') status: any`.
-* **Contrato Frouxo em `TenantController.updateHours`**:
-  * Aceita `@Body() body: any`, extraindo `const hours = body?.hours || body?.openingHours || body` sem validação do `UpdateTenantHoursSchema`.
-* **Duplicação de Schemas no `PixController`**:
-  * Define internamente `GeneratePixDtoSchema` e `QueryPixQrCodeSchema` em vez de importar `PixQrCodeRequestSchema` de `@alaska/contracts`.
+#### 2. Fragilidades de Tipagem e Fail-Fast Resolvidas na Fase 3:
+* **Blindagem Total no `ProductController` [RESOLVIDO NA FASE 3]**:
+  * Reintroduzido `ZodValidationPipe` em todas as rotas de produto (`toggleAvailability`, `updateProduct`, `toggleOptionAvailability`, `toggleOptionDirect`) utilizando schemas tolerantes (`ToggleProductAvailabilitySchema`, `UpdateProductSchema`, `ToggleOptionAvailabilitySchema`).
+  * `@Body() body: any` completamente eliminado.
+* **Validação Estrita nas Rotas de Status Operacional [RESOLVIDO NA FASE 3]**:
+  * `OrderController.updateStatus`: Integrado com `UpdateOrderStatusSchema` e método canônico `order.updateStatus(dto.status)`. Lança `EntityNotFoundError('Order', id)` quando inexistente (RFC 7807 404).
+  * `BookingController.updateStatus`: Integrado com `UpdateBookingStatusSchema` e método canônico `booking.updateStatus(dto.status)`. Lança `EntityNotFoundError('Booking', id)` quando inexistente (RFC 7807 404).
+* **Contrato Tolerante em `TenantController.updateHours` [RESOLVIDO NA FASE 3]**:
+  * Integrado com `UpdateTenantHoursSchema` via `ZodValidationPipe`, suportando `{ hours }`, `{ openingHours }` ou objeto direto com tipagem fail-fast.
+* **Desduplicação de Schemas em `PixController` [RESOLVIDO NA FASE 3]**:
+  * `GeneratePixDtoSchema` e `QueryPixQrCodeSchema` centralizados no `@alaska/contracts/pix` e consumidos diretamente pelo controller.
 
 ---
 
@@ -77,7 +78,7 @@ O pacote `@alaska/contracts` centraliza os contratos de dados do ecossistema:
 * **Shadowing de Tipos (`apps/web/types/index.ts`) [RESOLVIDO NA FASE 1]**:
   * `apps/web/types/tenant.ts` e `apps/web/types/booking.ts` foram convertidos em re-exportadores estritos de `@alaska/contracts`.
   * Schemas canônicos completos residem agora exclusivamente no `@alaska/contracts`.
-* **Persistência em `localStorage` sem Blindagem Zod**:
+* **Persistência em `localStorage` sem Blindagem Zod (Próximo: Fase 4)**:
   * No composable `useMerchantAdmin.ts`, a função `saveOverrides` grava diretamente o JSON no `localStorage` sem validar via schema Zod (`TenantOverridesSchema`).
   * O mesmo ocorre em `useCart.ts`, onde `useLocalStorage<CartItem[]>` armazena objetos sem passar por um validador de integridade no momento da leitura (hydration).
 * **Consumo de API com `$fetch<any>` e Silenciamento de Erros RFC 7807**:
@@ -101,9 +102,10 @@ O pacote `@alaska/contracts` centraliza os contratos de dados do ecossistema:
 │          UpdateOrderStatusSchema, UpdateBookingStatusSchema,             │
 │          BookingStatusSchema e ToggleProductAvailability tolerante.     │
 │                                                                         │
-│  Fase 3: Blindagem Fail-Fast nos Controllers NestJS                     │
-│          Reintroduzir ZodValidationPipe em ProductController,           │
-│          OrderController e TenantController com schemas canônicos.      │
+│  [CONCLUÍDO] Fase 3: Blindagem Fail-Fast nos Controllers NestJS         │
+│          Reintrodução do ZodValidationPipe em todos os controllers,      │
+│          eliminação de @Body() body: any, uso de EntityNotFoundError    │
+│          e encapsulamento em métodos de entidade de domínio.            │
 │                                                                         │
 │  Fase 4: Validação de Hydration no LocalStorage                         │
 │          Validar dados de overrides e carrinho via Zod safeParse        │
@@ -125,10 +127,11 @@ O pacote `@alaska/contracts` centraliza os contratos de dados do ecossistema:
    * **Mutações de Catálogo Tolerantes**: Enriquecido `ToggleProductAvailabilitySchema` e adicionado `ToggleOptionAvailabilitySchema` com suporte duplo a `isAvailable` e `available`, eliminando o risco de falhas com payloads legados.
    * **Testes Automatizados**: Criada cobertura completa de testes em `order.spec.ts`, `booking.spec.ts` e `catalog.spec.ts`.
 
-3. **Fase 3 — Reativação do `ZodValidationPipe` nos Controllers**:
-   * Substituir `@Body() body: any` em `product.controller.ts`, `order.controller.ts`, `booking.controller.ts` e `tenant.controller.ts` por DTOs tipados com validação de pipe.
-   * Substituir mutações diretas `(order as any).props.status = status` por métodos canônicos de entidade (`order.updateStatus(status)`).
-   * Lançar `EntityNotFoundError` quando o registro não for encontrado em rotas de status.
+3. **Fase 3 — Reativação do `ZodValidationPipe` nos Controllers (CONCLUÍDO)**:
+   * Substituído `@Body() body: any` em `product.controller.ts`, `order.controller.ts`, `booking.controller.ts` e `tenant.controller.ts` por DTOs tipados com validação de pipe (`ZodValidationPipe`).
+   * Centralizados schemas de Pix (`GeneratePixDtoSchema` e `QueryPixQrCodeSchema`) em `@alaska/contracts/pix`.
+   * Substituídas mutações diretas `(order as any).props.status = status` e `(booking as any).props.status = status` por métodos canônicos de entidade (`order.updateStatus(status)` e `booking.updateStatus(status)`).
+   * Lançamento padronizado de `EntityNotFoundError` quando o registro não for encontrado em rotas de status e busca por ID (RFC 7807 404).
 
 4. **Fase 4 — Fail-Fast na Hidratação do LocalStorage**:
    * Adicionar `safeParse` em `getOverrides()` de `useMerchantAdmin.ts` para descartar chaves corrompidas e recuperar o estado são automaticamente.

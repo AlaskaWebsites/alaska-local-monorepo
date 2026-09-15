@@ -147,10 +147,25 @@ export const TenantSchema = z
   })
   .passthrough();
 
-// Schemas de Gestão Operacional e Painel do Lojista (ADR 013)
-export const UpdateTenantHoursSchema = z.object({
-  openingHours: OpeningHoursSchema,
-});
+// Schemas de Gestão Operacional e Painel do Lojista (ADR 013 / Fase 3)
+export const UpdateTenantHoursSchema = z.preprocess(
+  (val: any) => {
+    if (val && typeof val === 'object') {
+      if ('openingHours' in val && val.openingHours) {
+        return { openingHours: val.openingHours, hours: val.openingHours };
+      }
+      if ('hours' in val && val.hours) {
+        return { openingHours: val.hours, hours: val.hours };
+      }
+      return { openingHours: val, hours: val };
+    }
+    return val;
+  },
+  z.object({
+    openingHours: OpeningHoursSchema,
+    hours: OpeningHoursSchema.optional(),
+  })
+);
 
 export const VerifyAdminPinSchema = z.object({
   pin: z

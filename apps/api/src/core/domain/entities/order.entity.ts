@@ -86,7 +86,7 @@ export class Order {
   }
 
   get deliveryFeeCents(): number {
-    return this.deliveryFee.inCents;
+    return this.deliveryFee.cents;
   }
 
   calculateSubtotal(): Money {
@@ -116,6 +116,11 @@ export class Order {
       throw new ValidationError('Não é possível confirmar pagamento de um pedido cancelado.');
     }
     this.props.status = 'confirmed';
+    this.props.updatedAt = new Date();
+  }
+
+  updateStatus(status: OrderStatus): void {
+    this.props.status = status;
     this.props.updatedAt = new Date();
   }
 

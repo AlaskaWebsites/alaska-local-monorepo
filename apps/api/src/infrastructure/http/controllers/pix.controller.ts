@@ -1,26 +1,13 @@
 import { Controller, Post, Get, Body, Query, UsePipes } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiResponse, ApiBody, ApiQuery } from '@nestjs/swagger'
 import { CalculatePixPayloadUseCase } from '@core/application/use-cases/calculate-pix-payload.use-case'
-import { z } from 'zod'
 import { ZodValidationPipe } from '../pipes/zod-validation.pipe'
-
-const GeneratePixDtoSchema = z.object({
-  tenantSlug: z.string().min(1, 'Slug do tenant é obrigatório'),
-  amount: z.number().min(0.01, 'Valor deve ser no mínimo R$ 0,01'),
-  txid: z.string().optional(),
-  isTestCent: z.boolean().optional()
-})
-
-type GeneratePixDto = z.infer<typeof GeneratePixDtoSchema>
-
-const QueryPixQrCodeSchema = z.object({
-  tenantSlug: z.string().min(1, 'Slug do tenant é obrigatório'),
-  amount: z.coerce.number().min(0.01, 'Valor deve ser no mínimo R$ 0,01'),
-  txid: z.string().optional(),
-  isTestCent: z.preprocess((val) => val === 'true' || val === true, z.boolean().optional())
-})
-
-type QueryPixQrCodeDto = z.infer<typeof QueryPixQrCodeSchema>
+import {
+  GeneratePixDtoSchema,
+  QueryPixQrCodeSchema,
+  type GeneratePixDto,
+  type QueryPixQrCodeDto
+} from '@alaska/contracts'
 
 @ApiTags('pix')
 @Controller('pix')

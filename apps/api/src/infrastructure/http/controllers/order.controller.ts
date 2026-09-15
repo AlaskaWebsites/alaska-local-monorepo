@@ -6,6 +6,8 @@ import { ZodValidationPipe } from '../pipes/zod-validation.pipe'
 import { TOKENS } from '@core/application/tokens'
 import { Inject } from '@nestjs/common'
 import { IOrderRepository } from '@core/application/ports/order.repository.port'
+import { EntityNotFoundError } from '@core/domain/errors/domain.error'
+import { UpdateOrderStatusSchema, type UpdateOrderStatusDto } from '@alaska/contracts'
 
 const CreateOrderDtoSchema = z.object({
   tenantSlug: z.string().min(1, 'Slug do tenant é obrigatório'),
@@ -215,7 +217,7 @@ export class OrderController {
   async getById(@Param('id') id: string) {
     const order = await this.orderRepository.findById(id)
     if (!order) {
-      return { success: false, message: 'Pedido não encontrado.' }
+      throw new EntityNotFoundError('Order', id)
     }
     return {
       success: true,
@@ -306,13 +308,15 @@ export class OrderController {
   })
   @ApiResponse({ status: 200, description: 'Status do pedido atualizado com sucesso' })
   @ApiResponse({ status: 404, description: 'Pedido não encontrado (RFC 7807)' })
-  async updateStatus(@Param('id') id: string, @Body('status') status: any) {
+  async updateStatus(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(UpdateOrderStatusSchema)) dto: UpdateOrderStatusDto
+  ) {
     const order = await this.orderRepository.findById(id)
     if (!order) {
-      return { success: false, message: 'Pedido não encontrado.' }
+      throw new EntityNotFoundError('Order', id)
     }
-    (order as any).props.status = status
-    (order as any).props.updatedAt = new Date()
+    order.updateStatus(dto.status)
     await this.orderRepository.save(order)
     return {
       success: true,

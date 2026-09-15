@@ -89,6 +89,11 @@ export class Booking {
     this.props.updatedAt = new Date()
   }
 
+  updateStatus(status: BookingStatus): void {
+    this.props.status = status
+    this.props.updatedAt = new Date()
+  }
+
   setPixCode(code: string): void {
     this.props.pixCode = code
   }

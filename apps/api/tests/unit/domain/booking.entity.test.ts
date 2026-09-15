@@ -90,4 +90,23 @@ describe('Booking Entity', () => {
         }),
     ).toThrow(ValidationError);
   });
+
+  it('deve atualizar o status operacional com updateStatus (ADR 013 / Fase 3)', () => {
+    const booking = new Booking({
+      id: 'book-5',
+      tenantId: 'ten-1',
+      customerName: 'Cliente',
+      customerPhone: '11999998888',
+      date: '2026-08-30',
+      time: '10:00',
+      services: [{ id: 's1', name: 'Serviço', priceCents: 5000, durationMinutes: 30 }],
+    });
+
+    booking.updateStatus('completed');
+    expect(booking.status).toBe('completed');
+    booking.updateStatus('no_show');
+    expect(booking.status).toBe('no_show');
+    booking.updateStatus('cancelled');
+    expect(booking.status).toBe('cancelled');
+  });
 });

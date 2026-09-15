@@ -17,5 +17,22 @@ export const PixQrCodeResponseSchema = z.object({
   txid: z.string(),
 })
 
+// Schemas Canônicos de Geração e Consulta Pix (Fase 3)
+export const GeneratePixDtoSchema = z.object({
+  tenantSlug: z.string().min(1, 'Slug do tenant é obrigatório'),
+  amount: z.number().min(0.01, 'Valor deve ser no mínimo R$ 0,01'),
+  txid: z.string().optional(),
+  isTestCent: z.boolean().optional(),
+})
+
+export const QueryPixQrCodeSchema = z.object({
+  tenantSlug: z.string().min(1, 'Slug do tenant é obrigatório'),
+  amount: z.coerce.number().min(0.01, 'Valor deve ser no mínimo R$ 0,01'),
+  txid: z.string().optional(),
+  isTestCent: z.preprocess((val) => val === 'true' || val === true, z.boolean().optional()),
+})
+
 export type PixQrCodeRequest = z.infer<typeof PixQrCodeRequestSchema>
 export type PixQrCodeResponse = z.infer<typeof PixQrCodeResponseSchema>
+export type GeneratePixDto = z.infer<typeof GeneratePixDtoSchema>
+export type QueryPixQrCodeDto = z.infer<typeof QueryPixQrCodeSchema>

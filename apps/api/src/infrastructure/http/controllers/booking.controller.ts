@@ -6,6 +6,8 @@ import { TOKENS } from '@core/application/tokens'
 import { Inject } from '@nestjs/common'
 import { IBookingRepository } from '@core/application/ports/booking.repository.port'
 import { Booking } from '@core/domain/entities/booking.entity'
+import { EntityNotFoundError } from '@core/domain/errors/domain.error'
+import { UpdateBookingStatusSchema, type UpdateBookingStatusDto } from '@alaska/contracts'
 
 const CreateBookingDtoSchema = z.object({
   tenantId: z.string().min(1, 'ID do tenant é obrigatório'),
@@ -177,7 +179,7 @@ export class BookingController {
   async getById(@Param('id') id: string) {
     const booking = await this.bookingRepository.findById(id)
     if (!booking) {
-      return { success: false, message: 'Agendamento não encontrado.' }
+      throw new EntityNotFoundError('Booking', id)
     }
     return {
       success: true,
@@ -268,13 +270,15 @@ export class BookingController {
   })
   @ApiResponse({ status: 200, description: 'Status do agendamento atualizado com sucesso' })
   @ApiResponse({ status: 404, description: 'Agendamento não encontrado (RFC 7807)' })
-  async updateStatus(@Param('id') id: string, @Body('status') status: any) {
+  async updateStatus(
+    @Param('id') id: string,
+    @Body(new ZodValidationPipe(UpdateBookingStatusSchema)) dto: UpdateBookingStatusDto
+  ) {
     const booking = await this.bookingRepository.findById(id)
     if (!booking) {
-      return { success: false, message: 'Agendamento não encontrado.' }
+      throw new EntityNotFoundError('Booking', id)
     }
-    (booking as any).props.status = status
-    (booking as any).props.updatedAt = new Date()
+    booking.updateStatus(dto.status)
     await this.bookingRepository.save(booking)
     return {
       success: true,

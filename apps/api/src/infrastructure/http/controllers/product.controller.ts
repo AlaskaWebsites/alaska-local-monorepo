@@ -1,5 +1,14 @@
 import { Controller, Patch, Put, Body, Param, HttpCode, HttpStatus } from '@nestjs/common'
 import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
+import {
+  ToggleProductAvailabilitySchema,
+  ToggleOptionAvailabilitySchema,
+  UpdateProductSchema,
+  type ToggleProductAvailabilityDto,
+  type ToggleOptionAvailabilityDto,
+  type UpdateProductDto
+} from '@alaska/contracts'
+import { ZodValidationPipe } from '../pipes/zod-validation.pipe'
 import { ToggleProductAvailabilityUseCase } from '@core/application/use-cases/toggle-product-availability.use-case'
 import { UpdateProductUseCase } from '@core/application/use-cases/update-product.use-case'
 import { ToggleOptionAvailabilityUseCase } from '@core/application/use-cases/toggle-option-availability.use-case'
@@ -18,33 +27,20 @@ export class ProductController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Ligar/desligar disponibilidade de produto em tempo real (< 3s)',
-    description: 'Altera o status de disponibilidade do produto no catálogo. Reflete instantaneamente na vitrine sem necessidade de recarregar.'
+    description: 'Permite ao lojista pausar temporariamente as vendas de um item sem deletá-lo do catálogo.'
   })
-  @ApiParam({ name: 'slug', description: 'Slug único do estabelecimento', example: 'hamburgueria-x' })
+  @ApiParam({ name: 'slug', description: 'Slug do estabelecimento', example: 'hamburgueria-x' })
   @ApiParam({ name: 'productId', description: 'ID do produto', example: 'prod-smash-bacon' })
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        isAvailable: { type: 'boolean', example: false, description: 'Status de disponibilidade do produto' },
-        available: { type: 'boolean', example: false, description: 'Alias aceito para isAvailable' }
+        isAvailable: { type: 'boolean', example: false, description: 'Estado desejado do produto' },
+        available: { type: 'boolean', example: false, description: 'Alias compatível com frontend legado' }
       }
     }
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Disponibilidade do produto alterada com sucesso',
-    schema: {
-      example: {
-        success: true,
-        data: {
-          id: 'prod-smash-bacon',
-          name: 'Smash Bacon Duplo',
-          isAvailable: false
-        }
-      }
-    }
-  })
+  @ApiResponse({ status: 200, description: 'Disponibilidade alterada com sucesso' })
   @ApiResponse({
     status: 404,
     description: 'Produto não encontrado (RFC 7807)',
@@ -61,20 +57,15 @@ export class ProductController {
   async toggleAvailability(
     @Param('slug') slug: string,
     @Param('productId') productId: string,
-    @Body() body: any
+    @Body(new ZodValidationPipe(ToggleProductAvailabilitySchema)) dto: ToggleProductAvailabilityDto
   ) {
-    const isAvailable = body.isAvailable ?? body.available ?? false
     const product = await this.toggleAvailabilityUseCase.execute({
       productId,
-      isAvailable
+      isAvailable: dto.isAvailable
     })
     return {
       success: true,
-      data: {
-        id: product.id,
-        name: product.name,
-        isAvailable: product.isAvailable
-      }
+      data: product
     }
   }
 
@@ -91,29 +82,15 @@ export class ProductController {
     schema: {
       type: 'object',
       properties: {
-        name: { type: 'string', example: 'Smash Bacon Monster Duplo', description: 'Nome atualizado do produto' },
-        description: { type: 'string', example: 'Dois burgers de 90g, cheddar duplo e bacon crocante', description: 'Descrição do produto' },
-        priceCents: { type: 'integer', example: 3800, description: 'Preço em centavos inteiros (ex: 3800 = R$ 38,00)' },
-        price: { type: 'number', example: 38.00, description: 'Preço em reais decimais (convertido automaticamente para centavos)' },
-        isAvailable: { type: 'boolean', example: true, description: 'Status de disponibilidade' }
+        name: { type: 'string', example: 'Smash Burger Bacon Prime' },
+        description: { type: 'string', example: 'Pão brioche, 2x smash 90g e cheddar derretido' },
+        price: { type: 'number', example: 34.90, description: 'Preço em reais (convertido para centavos no backend)' },
+        priceCents: { type: 'integer', example: 3490, description: 'Preço diretamente em centavos' },
+        isAvailable: { type: 'boolean', example: true }
       }
     }
   })
-  @ApiResponse({
-    status: 200,
-    description: 'Produto atualizado com sucesso',
-    schema: {
-      example: {
-        success: true,
-        data: {
-          id: 'prod-smash-bacon',
-          name: 'Smash Bacon Monster Duplo',
-          priceCents: 3800,
-          isAvailable: true
-        }
-      }
-    }
-  })
+  @ApiResponse({ status: 200, description: 'Produto atualizado com sucesso' })
   @ApiResponse({
     status: 404,
     description: 'Produto não encontrado (RFC 7807)',
@@ -130,41 +107,36 @@ export class ProductController {
   async updateProduct(
     @Param('slug') slug: string,
     @Param('productId') productId: string,
-    @Body() body: any
+    @Body(new ZodValidationPipe(UpdateProductSchema)) dto: UpdateProductDto
   ) {
     const product = await this.updateProductUseCase.execute({
       productId,
-      name: body.name,
-      description: body.description,
-      priceCents: body.priceCents ?? (body.price ? Math.round(body.price * 100) : undefined),
-      isAvailable: body.isAvailable ?? body.available
+      name: dto.name,
+      description: dto.description,
+      priceCents: dto.priceCents ?? (dto.price ? Math.round(dto.price * 100) : undefined),
+      isAvailable: dto.isAvailable
     })
     return {
       success: true,
-      data: {
-        id: product.id,
-        name: product.name,
-        priceCents: product.price.inCents,
-        isAvailable: product.isAvailable
-      }
+      data: product
     }
   }
 
   @Patch(':productId/options/:optionId/availability')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Ligar/desligar disponibilidade de opcional/adicional por produto em tempo real',
-    description: 'Permite pausar um opcional específico de um produto (ex: acabou bacon ou catupiry) sem pausar o produto inteiro.'
+    summary: 'Ligar/desligar disponibilidade de opcional específico de um produto',
+    description: 'Pausa ou ativa itens opcionais (ex: bacon extra, borda recheada) de um produto.'
   })
   @ApiParam({ name: 'slug', description: 'Slug do estabelecimento', example: 'hamburgueria-x' })
-  @ApiParam({ name: 'productId', description: 'ID do produto pai', example: 'prod-smash-bacon' })
+  @ApiParam({ name: 'productId', description: 'ID do produto', example: 'prod-smash-bacon' })
   @ApiParam({ name: 'optionId', description: 'ID da opção/adicional', example: 'opt-bacon-extra' })
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        isAvailable: { type: 'boolean', example: false, description: 'Disponibilidade do opcional' },
-        available: { type: 'boolean', example: false, description: 'Alias aceito para isAvailable' }
+        isAvailable: { type: 'boolean', example: false },
+        available: { type: 'boolean', example: false }
       }
     }
   })
@@ -186,30 +158,24 @@ export class ProductController {
     @Param('slug') slug: string,
     @Param('productId') productId: string,
     @Param('optionId') optionId: string,
-    @Body() body: any
+    @Body(new ZodValidationPipe(ToggleOptionAvailabilitySchema)) dto: ToggleOptionAvailabilityDto
   ) {
-    const isAvailable = body.isAvailable ?? body.available ?? true
     const product = await this.toggleOptionUseCase.execute({
       productId,
       optionId,
-      isAvailable,
-      tenantSlug: slug
+      isAvailable: dto.isAvailable
     })
     return {
       success: true,
-      data: {
-        id: product.id,
-        name: product.name,
-        optionGroups: product.optionGroups
-      }
+      data: product
     }
   }
 
   @Patch('options/:optionId/availability')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
-    summary: 'Ligar/desligar disponibilidade de opcional diretamente pelo slug da loja',
-    description: 'Localiza o opcional em qualquer produto do estabelecimento e atualiza sua disponibilidade.'
+    summary: 'Ligar/desligar disponibilidade de opcional diretamente pelo optionId',
+    description: 'Varre o catálogo do tenant para localizar e atualizar a disponibilidade da opção.'
   })
   @ApiParam({ name: 'slug', description: 'Slug do estabelecimento', example: 'hamburgueria-x' })
   @ApiParam({ name: 'optionId', description: 'ID da opção/adicional', example: 'opt-bacon-extra' })
@@ -217,9 +183,9 @@ export class ProductController {
     schema: {
       type: 'object',
       properties: {
-        isAvailable: { type: 'boolean', example: false, description: 'Disponibilidade do opcional' },
-        available: { type: 'boolean', example: false, description: 'Alias aceito para isAvailable' },
-        productId: { type: 'string', example: 'prod-smash-bacon', description: 'ID do produto (opcional para busca direta)' }
+        isAvailable: { type: 'boolean', example: false },
+        available: { type: 'boolean', example: false },
+        productId: { type: 'string', example: 'prod-smash-bacon', description: 'Opcional se fornecido' }
       }
     }
   })
@@ -240,22 +206,16 @@ export class ProductController {
   async toggleOptionDirect(
     @Param('slug') slug: string,
     @Param('optionId') optionId: string,
-    @Body() body: any
+    @Body(new ZodValidationPipe(ToggleOptionAvailabilitySchema)) dto: ToggleOptionAvailabilityDto
   ) {
-    const isAvailable = body.isAvailable ?? body.available ?? true
     const product = await this.toggleOptionUseCase.execute({
-      productId: body.productId,
+      productId: dto.productId,
       optionId,
-      isAvailable,
-      tenantSlug: slug
+      isAvailable: dto.isAvailable
     })
     return {
       success: true,
-      data: {
-        id: product.id,
-        name: product.name,
-        optionGroups: product.optionGroups
-      }
+      data: product
     }
   }
 }
