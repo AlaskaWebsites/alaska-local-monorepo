@@ -146,14 +146,23 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
                 try {
                     const res = await $fetch<any>(
                         `${apiBaseUrl}/tenants/${currentSlug}`,
-                        { timeout: 10000, retry: 1, retryDelay: 500 }
+                        { timeout: 6000 }
                     )
                     const apiData = (res && typeof res === 'object') ? (res.data || res) : null
                     if (apiData && typeof apiData === 'object' && apiData.slug) {
+                        const mergedCategories = (apiData.categories && Array.isArray(apiData.categories) && apiData.categories.length > 0)
+                            ? apiData.categories
+                            : (loadedTenant?.categories || [])
+                        const mergedProfessionals = (apiData.professionals && Array.isArray(apiData.professionals) && apiData.professionals.length > 0)
+                            ? apiData.professionals
+                            : (loadedTenant?.professionals || [])
+
                         try {
                             const parsedApiTenant = TenantSchema.parse({
                                 ...loadedTenant,
                                 ...apiData,
+                                categories: mergedCategories,
+                                professionals: mergedProfessionals,
                                 reviews: resolveReviews(loadedTenant?.reviews, apiData.reviews)
                             })
                             loadedTenant = parsedApiTenant
@@ -161,6 +170,8 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
                             loadedTenant = {
                                 ...(loadedTenant || {}),
                                 ...apiData,
+                                categories: mergedCategories,
+                                professionals: mergedProfessionals,
                                 reviews: resolveReviews(loadedTenant?.reviews, apiData.reviews)
                             } as Tenant
                         }

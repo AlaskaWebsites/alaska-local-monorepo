@@ -4,6 +4,7 @@ import { Tenant } from '../../../core/domain/entities/tenant.entity';
 import { PostgresService } from './postgres.service';
 import { TenantMapper } from './mappers/tenant.mapper';
 import { SEED_TENANTS } from '../in-memory/seed-data';
+import { ALL_10_STORES } from './seed-catalog';
 
 @Injectable()
 export class PostgresTenantRepository implements ITenantRepository {
@@ -19,7 +20,9 @@ export class PostgresTenantRepository implements ITenantRepository {
       );
       if (result.rows.length === 0) return null;
       const categories = await this.fetchCategoriesAndProducts(result.rows[0].id);
-      return TenantMapper.toDomain(result.rows[0], categories);
+      const seedStore = ALL_10_STORES.find((s) => s.slug.toLowerCase() === result.rows[0].slug?.toLowerCase() || `ten-${s.slug.toLowerCase()}` === result.rows[0].id?.toLowerCase());
+      const finalCategories = (categories && (categories as unknown[]).length > 0) ? categories : (seedStore?.categories || []);
+      return TenantMapper.toDomain(result.rows[0], finalCategories);
     } catch (err) {
       this.logger.warn(`Erro ao buscar tenant por ID ${id}: ${(err as Error).message}`);
       return SEED_TENANTS.find((t) => t.id === id) || null;
@@ -49,7 +52,9 @@ export class PostgresTenantRepository implements ITenantRepository {
         return null;
       }
       const categories = await this.fetchCategoriesAndProducts(result.rows[0].id);
-      return TenantMapper.toDomain(result.rows[0], categories);
+      const seedStore = ALL_10_STORES.find((s) => s.slug.toLowerCase() === result.rows[0].slug?.toLowerCase() || `ten-${s.slug.toLowerCase()}` === result.rows[0].id?.toLowerCase());
+      const finalCategories = (categories && (categories as unknown[]).length > 0) ? categories : (seedStore?.categories || []);
+      return TenantMapper.toDomain(result.rows[0], finalCategories);
     } catch (err) {
       this.logger.warn(`Erro em findBySlug(${slug}): ${(err as Error).message}`);
       const seed = SEED_TENANTS.find((t) => t.slug.toLowerCase() === cleanSlug);
@@ -76,7 +81,9 @@ export class PostgresTenantRepository implements ITenantRepository {
         return null;
       }
       const categories = await this.fetchCategoriesAndProducts(result.rows[0].id);
-      return TenantMapper.toDomain(result.rows[0], categories);
+      const seedStore = ALL_10_STORES.find((s) => s.slug.toLowerCase() === result.rows[0].slug?.toLowerCase() || `ten-${s.slug.toLowerCase()}` === result.rows[0].id?.toLowerCase());
+      const finalCategories = (categories && (categories as unknown[]).length > 0) ? categories : (seedStore?.categories || []);
+      return TenantMapper.toDomain(result.rows[0], finalCategories);
     } catch (err) {
       this.logger.warn(`Erro em findByCustomDomain(${domain}): ${(err as Error).message}`);
       const seed = SEED_TENANTS.find((t) => t.customDomain && t.customDomain.toLowerCase() === clean);
@@ -194,19 +201,100 @@ export class PostgresTenantRepository implements ITenantRepository {
 
   private async fetchCategoriesAndProducts(tenantId: string): Promise<unknown[]> {
     try {
-      const catResult = await this.db.query(
+      let catResult = await this.db.query(
         `SELECT * FROM categories
          WHERE tenant_id = $1
          ORDER BY sort_order ASC, created_at ASC;`,
         [tenantId],
       );
 
-      const prodResult = await this.db.query(
+      let prodResult = await this.db.query(
         `SELECT * FROM products
          WHERE tenant_id = $1
          ORDER BY created_at ASC;`,
         [tenantId],
       );
+
+      if (catResult.rows.length === 0) {
+        const cleanSlug = tenantId.replace(/^ten-/, '').toLowerCase();
+        const seedStore = ALL_10_STORES.find(
+          (s) => s.slug.toLowerCase() === cleanSlug || `ten-${s.slug.toLowerCase()}` === tenantId.toLowerCase() || (s.slug === 'adega-do-rei' && (tenantId.includes('rei') || cleanSlug.includes('rei'))),
+        );
+
+        if (seedStore && seedStore.categories && seedStore.categories.length > 0) {
+          this.logger.log(`Auto-seeding categorias e produtos no PostgreSQL para tenant ${tenantId}...`);
+          try {
+            let sortOrder = 0;
+            for (const cat of seedStore.categories) {
+              await this.db.query(
+                `INSERT INTO categories (id, tenant_id, name, icon, sort_order)
+                 VALUES ($1, $2, $3, $4, $5)
+                 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, icon = EXCLUDED.icon, sort_order = EXCLUDED.sort_order;`,
+                [cat.id, tenantId, cat.name, cat.icon || null, sortOrder++],
+              );
+
+              if (cat.products && cat.products.length > 0) {
+                for (const prod of cat.products) {
+                  const priceCents = Math.round(Number(prod.price || 0) * 100);
+                  const optGroups = prod.optionGroups ? JSON.stringify(prod.optionGroups) : JSON.stringify([]);
+                  await this.db.query(
+                    `INSERT INTO products (id, tenant_id, category_id, name, description, price_cents, image, available, duration_minutes, option_groups)
+                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+                     ON CONFLICT (id) DO UPDATE SET
+                       name = EXCLUDED.name,
+                       description = EXCLUDED.description,
+                       price_cents = EXCLUDED.price_cents,
+                       image = EXCLUDED.image,
+                       available = EXCLUDED.available,
+                       duration_minutes = EXCLUDED.duration_minutes,
+                       option_groups = EXCLUDED.option_groups;`,
+                    [
+                      prod.id,
+                      tenantId,
+                      cat.id,
+                      prod.name,
+                      prod.description || null,
+                      priceCents,
+                      prod.image || null,
+                      prod.isAvailable ?? prod.available ?? true,
+                      prod.durationMinutes || 0,
+                      optGroups,
+                    ],
+                  );
+                }
+              }
+            }
+
+            catResult = await this.db.query(
+              `SELECT * FROM categories
+               WHERE tenant_id = $1
+               ORDER BY sort_order ASC, created_at ASC;`,
+              [tenantId],
+            );
+
+            prodResult = await this.db.query(
+              `SELECT * FROM products
+               WHERE tenant_id = $1
+               ORDER BY created_at ASC;`,
+              [tenantId],
+            );
+          } catch (seedErr) {
+            this.logger.warn(`Erro ao auto-popular categorias no banco para ${tenantId}: ${(seedErr as Error).message}`);
+          }
+
+          if (catResult.rows.length === 0) {
+            return seedStore.categories.map((c) => ({
+              ...c,
+              products: (c.products || []).map((p) => ({
+                ...p,
+                price: Number(p.price || 0),
+                isAvailable: p.isAvailable ?? p.available ?? true,
+                optionGroups: p.optionGroups || [],
+              })),
+            }));
+          }
+        }
+      }
 
       return catResult.rows.map((cat: any) => ({
         ...cat,
@@ -224,6 +312,21 @@ export class PostgresTenantRepository implements ITenantRepository {
       }));
     } catch (err) {
       this.logger.error('Erro ao buscar categorias e produtos:', err);
+      const cleanSlug = tenantId.replace(/^ten-/, '').toLowerCase();
+      const seedStore = ALL_10_STORES.find(
+        (s) => s.slug.toLowerCase() === cleanSlug || `ten-${s.slug.toLowerCase()}` === tenantId.toLowerCase() || (s.slug === 'adega-do-rei' && (tenantId.includes('rei') || cleanSlug.includes('rei'))),
+      );
+      if (seedStore && seedStore.categories) {
+        return seedStore.categories.map((c) => ({
+          ...c,
+          products: (c.products || []).map((p) => ({
+            ...p,
+            price: Number(p.price || 0),
+            isAvailable: p.isAvailable ?? p.available ?? true,
+            optionGroups: p.optionGroups || [],
+          })),
+        }));
+      }
       return [];
     }
   }
