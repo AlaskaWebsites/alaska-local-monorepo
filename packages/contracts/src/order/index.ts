@@ -3,7 +3,15 @@ import { AddressSchema } from '../common'
 
 export const DeliveryTypeSchema = z.enum(['delivery', 'pickup'])
 export const PaymentMethodSchema = z.enum(['pix', 'money', 'credit', 'debit'])
-export const OrderStatusSchema = z.enum(['created', 'confirmed', 'dispatched', 'completed', 'cancelled'])
+export const OrderStatusSchema = z.enum([
+  'created',
+  'pending_payment',
+  'confirmed',
+  'preparing',
+  'dispatched',
+  'completed',
+  'cancelled',
+])
 
 export const OrderItemOptionSchema = z.object({
   groupName: z.string(),
@@ -36,9 +44,15 @@ export const CreateOrderSchema = z.object({
   notes: z.string().optional(),
 })
 
+// Schemas Operacionais do Painel do Lojista e Entregas (ADR 013 / Fase 2)
+export const UpdateOrderStatusSchema = z.object({
+  status: OrderStatusSchema,
+})
+
 export type DeliveryType = z.infer<typeof DeliveryTypeSchema>
 export type PaymentMethod = z.infer<typeof PaymentMethodSchema>
 export type OrderStatus = z.infer<typeof OrderStatusSchema>
 export type OrderItem = z.infer<typeof OrderItemSchema>
 export type CustomerInfo = z.infer<typeof CustomerInfoSchema>
 export type CreateOrderDto = z.infer<typeof CreateOrderSchema>
+export type UpdateOrderStatusDto = z.infer<typeof UpdateOrderStatusSchema>

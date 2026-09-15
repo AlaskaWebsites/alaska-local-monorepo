@@ -43,10 +43,32 @@ export const CategorySchema = z.object({
   products: z.array(ProductSchema).optional().default([]),
 })
 
-// Schemas de Mutação para o Painel do Lojista (ADR 013)
-export const ToggleProductAvailabilitySchema = z.object({
-  isAvailable: z.boolean(),
-})
+// Schemas de Mutação para o Painel do Lojista (ADR 013 / Fase 2)
+export const ToggleProductAvailabilitySchema = z
+  .object({
+    isAvailable: z.boolean().optional(),
+    available: z.boolean().optional(),
+  })
+  .refine((data) => data.isAvailable !== undefined || data.available !== undefined, {
+    message: 'isAvailable ou available deve ser informado',
+  })
+  .transform((data) => ({
+    isAvailable: (data.isAvailable ?? data.available) as boolean,
+  }))
+
+export const ToggleOptionAvailabilitySchema = z
+  .object({
+    isAvailable: z.boolean().optional(),
+    available: z.boolean().optional(),
+    productId: z.string().optional(),
+  })
+  .refine((data) => data.isAvailable !== undefined || data.available !== undefined, {
+    message: 'isAvailable ou available deve ser informado',
+  })
+  .transform((data) => ({
+    isAvailable: (data.isAvailable ?? data.available) as boolean,
+    productId: data.productId,
+  }))
 
 export const UpdateProductSchema = z.object({
   name: z.string().min(1).optional(),
@@ -64,4 +86,5 @@ export type OptionGroup = z.infer<typeof OptionGroupSchema>
 export type Product = z.infer<typeof ProductSchema>
 export type Category = z.infer<typeof CategorySchema>
 export type ToggleProductAvailabilityDto = z.infer<typeof ToggleProductAvailabilitySchema>
+export type ToggleOptionAvailabilityDto = z.infer<typeof ToggleOptionAvailabilitySchema>
 export type UpdateProductDto = z.infer<typeof UpdateProductSchema>

@@ -1,5 +1,9 @@
 import { describe, it, expect } from 'vitest'
-import { CreateOrderSchema } from '../src/order'
+import {
+  CreateOrderSchema,
+  OrderStatusSchema,
+  UpdateOrderStatusSchema,
+} from '../src/order'
 
 describe('Order Schemas (@alaska/contracts/order)', () => {
   it('deve validar a criação de um pedido de entrega', () => {
@@ -12,8 +16,8 @@ describe('Order Schemas (@alaska/contracts/order)', () => {
           quantity: 2,
           unitPrice: 32.5,
           selectedOptions: [
-            { groupName: 'Ponto', itemName: 'Ao Ponto', price: 0 }
-          ]
+            { groupName: 'Ponto', itemName: 'Ao Ponto', price: 0 },
+          ],
         },
       ],
       customer: {
@@ -37,5 +41,29 @@ describe('Order Schemas (@alaska/contracts/order)', () => {
       paymentMethod: 'money',
     }
     expect(() => CreateOrderSchema.parse(emptyOrder)).toThrow()
+  })
+
+  describe('UpdateOrderStatusSchema (ADR 013 / Fase 2)', () => {
+    it('deve validar todos os status operacionais da esteira de pedidos', () => {
+      const validStatuses = [
+        'created',
+        'pending_payment',
+        'confirmed',
+        'preparing',
+        'dispatched',
+        'completed',
+        'cancelled',
+      ] as const
+
+      validStatuses.forEach((status) => {
+        expect(OrderStatusSchema.parse(status)).toBe(status)
+        expect(UpdateOrderStatusSchema.parse({ status })).toEqual({ status })
+      })
+    })
+
+    it('deve rejeitar status desconhecido no UpdateOrderStatusSchema', () => {
+      expect(() => UpdateOrderStatusSchema.parse({ status: 'invalid_status' })).toThrow()
+      expect(() => UpdateOrderStatusSchema.parse({})).toThrow()
+    })
   })
 })
