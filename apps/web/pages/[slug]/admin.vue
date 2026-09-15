@@ -568,10 +568,9 @@ function toggleEmergencyPause() {
   showToast(nextVal ? 'Loja pausada temporariamente!' : 'Loja reaberta com sucesso!')
 }
 
-function toggleDayClosed(day: any) {
+async function toggleDayClosed(day: any) {
   if (day) {
-    day.closed = !day.closed
-    refreshLocalOverrides()
+    await saveScheduleConfig()
   }
 }
 

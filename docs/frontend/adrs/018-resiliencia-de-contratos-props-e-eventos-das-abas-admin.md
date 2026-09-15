@@ -133,3 +133,27 @@ O componente `admin.vue` aceita assinaturas flexíveis nos handlers:
    * Tipagem opcional com fallback defensivo nos `computed` e métodos de extração.
    * Emissão dupla de eventos (semântico + genérico).
    * Função de carregamento correspondente no orquestrador `admin.vue`.
+
+---
+
+## 4. Exposição de Instagram, Sincronização Unidirecional de Horários e Blindagem de Pedido Mínimo
+
+Após a correção inicial dos contratos das abas, foram identificados e solucionados três pontos de consistência operacional entre o Painel Admin e o Storefront:
+
+### A. Exposição de Instagram nas Lojas (`StoreHeaderCard.vue` e `StoreInfoModal.vue`)
+* **Problema**: O lojista preenchia o Instagram na aba "Pix & Contato", porém o perfil não aparecia em nenhuma área pública da loja.
+* **Causa**: O componente `StoreHeaderCard.vue` e o modal `StoreInfoModal.vue` possuíam apenas o link para o WhatsApp.
+* **Solução**: Adicionada a computada `instagramUrl` (sanitizando arrobas e prefixando `https://instagram.com/`) e `instagramHandle`, renderizando o canal de Instagram com ícone oficial tanto no grid de metadados do cabeçalho quanto na seção de contatos do modal de informações.
+
+### B. Sincronização de Dias da Semana (Eliminação do Double-Toggle)
+* **Problema**: O switch de desativação de um dia da semana (ex: Segunda-feira ou Domingo) não respondia adequadamente ao toque.
+* **Causa**: O componente filho `AdminHoursTab.vue` invertia `d.closed = !d.closed` e emitia `'toggle-day-closed'`. O componente pai `admin.vue` escutava o evento e executava novamente `day.closed = !day.closed`, anulando o clique anterior (inversão dupla), além de não invocar `saveScheduleConfig()`.
+* **Solução**: `admin.vue` recebe o dia já alternado e despacha diretamente `await saveScheduleConfig()`, salvando instantaneamente no `localStorage` e na API NestJS sem dupla inversão.
+
+### C. Validação de Pedido Mínimo e Exibição de Tempo Estimado de Entrega
+* **Problema**: O cliente conseguia finalizar pedidos com valores abaixo do pedido mínimo configurado no painel, e o tempo estimado de entrega (ex: `30-45 min`) não era visível no storefront.
+* **Causa**: A computada `effectiveTenant` em `pages/[slug]/index.vue` não mesclava os overrides de `delivery` (`deliveryFee`, `minOrderValue`, `estimatedTime`), e o `CartDrawerModal.vue` não incluía a validação `itemsSubtotal >= minOrderValue` em `isFormValid`.
+* **Solução**:
+  1. `effectiveTenant` passa a mesclar reativamente todas as configurações de delivery do lojista.
+  2. `CartDrawerModal.vue` implementa a trava `isBelowMinOrder`: se o subtotal for inferior ao pedido mínimo para entregas, o botão de finalização é desabilitado, seu texto é atualizado informando a quantia faltante, e um card de aviso em destaque informa exatamente quanto falta adicionar à sacola.
+  3. O tempo estimado de entrega é exibido em badge no `StoreHeaderCard.vue`, no modal `StoreInfoModal.vue` e na seleção de entrega da sacola.

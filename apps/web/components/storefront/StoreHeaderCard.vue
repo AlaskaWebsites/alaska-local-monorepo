@@ -20,16 +20,23 @@ const emit = defineEmits<{
   (e: 'open-booking'): void
 }>()
 
-const reviewsScore = computed(() => {
-  const r = (props.tenant?.reviews || {}) as any
-  const val = r.score ?? r.rating ?? r.average ?? 5.0
-  return Number(val).toFixed(1)
+const instagramUrl = computed(() => {
+  const insta = props.tenant?.instagram
+  if (!insta) return ''
+  const clean = String(insta).trim().replace(/^@/, '')
+  if (!clean) return ''
+  return clean.startsWith('http') ? clean : `https://instagram.com/${clean}`
 })
 
-const reviewsCount = computed(() => {
-  const r = (props.tenant?.reviews || {}) as any
-  const val = r.totalReviews ?? r.count ?? r.total ?? 0
-  return Number(val)
+const instagramHandle = computed(() => {
+  const insta = props.tenant?.instagram
+  if (!insta) return ''
+  const clean = String(insta).trim()
+  if (clean.startsWith('http')) {
+    const parts = clean.split('/').filter(Boolean)
+    return `@${parts[parts.length - 1]}`
+  }
+  return clean.startsWith('@') ? clean : `@${clean}`
 })
 </script>
 
@@ -67,7 +74,7 @@ const reviewsCount = computed(() => {
         {{ tenant.description }}
       </p>
 
-      <!-- Badges e Botões de Prova Social e Status -->
+      <!-- Badges e Botões de Prova Social, Status e Tempo de Entrega -->
       <div class="flex items-center gap-2.5 flex-wrap justify-center text-xs font-semibold mb-5">
         <!-- Avaliações iFood-Style -->
         <button
@@ -77,8 +84,8 @@ const reviewsCount = computed(() => {
           aria-label="Abrir avaliações da loja"
         >
           <Star class="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-          <span class="font-bold">{{ reviewsScore }}</span>
-          <span class="text-slate-500">({{ reviewsCount }})</span>
+          <span class="font-bold">{{ (tenant.reviews?.score || 5).toFixed(1) }}</span>
+          <span class="text-slate-500">({{ tenant.reviews?.totalReviews || 0 }})</span>
         </button>
 
         <!-- Status Aberto/Fechado -->
@@ -92,12 +99,21 @@ const reviewsCount = computed(() => {
           <span>{{ statusText }}</span>
         </button>
 
+        <!-- Tempo Estimado de Entrega (Badge) -->
+        <div
+          v-if="tenant.estimatedTime"
+          class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 border border-slate-200/80 shadow-2xs text-xs font-bold"
+        >
+          <Truck class="w-3.5 h-3.5 text-slate-500" />
+          <span>{{ tenant.estimatedTime }}</span>
+        </div>
+
         <!-- Botão Agendar Horário em Destaque (Alaska Hub & Pro) -->
         <button
           v-if="isServiceStore"
           @click="emit('open-booking')"
-          class="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold shadow-md active:scale-95 transition-all cursor-pointer"
-          :class="themeClasses.buttonPrimary"
+          class="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold shadow-md active:scale-95 transition-all cursor-pointer text-white"
+          :class="themeClasses.primaryBg"
           aria-label="Agendar horário de atendimento"
         >
           <Calendar class="w-3.5 h-3.5" />
@@ -111,23 +127,47 @@ const reviewsCount = computed(() => {
           <MapPin class="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <span class="truncate">{{ tenant.address }}</span>
         </div>
-        <div v-if="tenant.deliveryType" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="emit('open-info')">
+
+        <div v-if="tenant.estimatedTime || tenant.deliveryType" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="emit('open-info')">
           <Truck class="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <span class="truncate">{{ tenant.deliveryType }}</span>
+          <span class="truncate">
+            {{ tenant.estimatedTime ? `${tenant.estimatedTime} • ` : '' }}{{ tenant.deliveryType || 'Delivery' }}
+          </span>
         </div>
+
         <div v-if="tenant.openingHours" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="emit('open-info')">
           <Clock class="w-3.5 h-3.5 text-slate-400 shrink-0" />
           <span>{{ tenant.openingHours.open }} às {{ tenant.openingHours.close }}</span>
         </div>
-        <div class="flex items-center justify-center gap-1.5">
+
+        <div class="flex items-center justify-center gap-3">
+          <!-- WhatsApp Link -->
           <a
-            :href="`https://wa.me/55${(tenant.phoneWhatsApp || '').replace(/\\D/g, '')}`"
+            v-if="tenant.phoneWhatsApp || tenant.whatsapp"
+            :href="`https://wa.me/55${(tenant.phoneWhatsApp || tenant.whatsapp || '').replace(/\\D/g, '')}`"
             target="_blank"
             rel="noopener noreferrer"
             class="text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1"
           >
             <Phone class="w-3.5 h-3.5" />
             <span>WhatsApp</span>
+          </a>
+
+          <!-- Instagram Link -->
+          <a
+            v-if="instagramUrl"
+            :href="instagramUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="text-rose-600 hover:text-rose-700 font-semibold flex items-center gap-1"
+            :title="`Instagram ${instagramHandle}`"
+          >
+            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
+              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+              <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+            </svg>
+            <span>Instagram</span>
           </a>
         </div>
       </div>

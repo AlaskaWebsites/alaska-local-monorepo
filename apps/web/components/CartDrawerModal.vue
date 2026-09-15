@@ -142,11 +142,16 @@
                       role="radio"
                       :aria-checked="form.deliveryType === 'delivery'"
                       @click="form.deliveryType = 'delivery'"
-                      class="p-3 rounded-2xl border text-xs font-bold flex items-center justify-center gap-2 transition-all cursor-pointer select-none"
+                      class="p-3 rounded-2xl border text-xs font-bold flex flex-col items-center justify-center gap-1 transition-all cursor-pointer select-none"
                       :class="form.deliveryType === 'delivery' ? [themeClasses.primaryBorder, 'bg-emerald-50/60', themeClasses.primaryText, 'shadow-2xs'] : 'border-slate-200 text-slate-600 hover:bg-slate-50'"
                     >
-                      <Truck class="w-4 h-4" aria-hidden="true" />
-                      <span>Delivery</span>
+                      <div class="flex items-center gap-1.5">
+                        <Truck class="w-4 h-4" aria-hidden="true" />
+                        <span>Delivery</span>
+                      </div>
+                      <span v-if="tenant.estimatedTime" class="text-[10px] font-semibold text-slate-500 font-mono">
+                        {{ tenant.estimatedTime }}
+                      </span>
                     </button>
 
                     <button
@@ -200,7 +205,7 @@
                     <label for="checkout-cep" class="block text-xs font-bold text-slate-900">
                       Endereço de Entrega
                     </label>
-                    <span v-if="isLoadingCep" class="text-[11px] text-emerald-600 font-semibold animate-pulse">
+                    <span v-if="cepLoading" class="text-[11px] text-emerald-600 font-semibold animate-pulse">
                       Buscando CEP...
                     </span>
                   </div>
@@ -351,24 +356,10 @@
                       </button>
                     </div>
 
-                    <span class="text-[10px] text-emerald-800 block italic">
-                      💡 Envie o comprovante na conversa do WhatsApp para liberação imediata.
-                    </span>
+                    <p class="text-[10px] text-emerald-700 text-center font-medium">
+                      O comprovante pode ser enviado na conversa do WhatsApp ao finalizar.
+                    </p>
                   </div>
-                </div>
-
-                <!-- 5. Observações Gerais do Pedido -->
-                <div class="space-y-1">
-                  <label for="checkout-notes" class="block text-xs font-bold text-slate-900">
-                    Observações do Pedido (opcional)
-                  </label>
-                  <textarea
-                    id="checkout-notes"
-                    v-model="form.notes"
-                    rows="2"
-                    placeholder="Ex: Tocar o interfone 204, deixar na portaria..."
-                    class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl p-3 text-xs text-slate-900 outline-none focus:border-emerald-500 transition-all leading-relaxed"
-                  ></textarea>
                 </div>
               </form>
             </div>
@@ -401,6 +392,20 @@
               </div>
             </div>
 
+            <!-- Alerta de Pedido Mínimo Não Atingido -->
+            <div
+              v-if="isBelowMinOrder"
+              class="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2.5 text-xs text-amber-900 animate-in fade-in"
+            >
+              <AlertCircle class="w-4 h-4 text-amber-600 shrink-0" />
+              <div>
+                <p class="font-bold">Pedido mínimo de entrega: {{ formatCurrency(minOrderValue) }}</p>
+                <p class="text-[11px] text-amber-800">
+                  Adicione mais <strong class="font-mono">{{ formatCurrency(remainingForMinOrder) }}</strong> em itens para enviar o pedido.
+                </p>
+              </div>
+            </div>
+
             <!-- Botão de Finalizar Pedido -->
             <button
               type="button"
@@ -410,7 +415,12 @@
               :class="themeClasses.buttonPrimary"
             >
               <Send class="w-4 h-4" aria-hidden="true" />
-              <span>Enviar Pedido para o WhatsApp</span>
+              <span v-if="isBelowMinOrder">
+                Faltam {{ formatCurrency(remainingForMinOrder) }} para o Mínimo
+              </span>
+              <span v-else>
+                Enviar Pedido para o WhatsApp
+              </span>
             </button>
           </div>
         </div>
@@ -420,9 +430,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, toRef, watch, nextTick } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { useLocalStorage } from '@vueuse/core'
-import { useBodyScrollLock } from '~/composables/useBodyScrollLock'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 import { useCep } from '~/composables/useCep'
 import { formatCurrency, formatCep, sanitizeDigits } from '~/utils/formatters'
@@ -432,6 +441,7 @@ import {
   X,
   Trash2,
   ShoppingCart,
+  AlertCircle,
   ShoppingBag,
   Truck,
   Store,
@@ -443,14 +453,14 @@ import {
   QrCode,
   ShieldCheck
 } from 'lucide-vue-next'
-import type { Tenant, CartItem, CheckoutFormData } from '~/types'
+import type { CartItem, Tenant, DeliveryType, PaymentMethod } from '~/types'
 
 const props = withDefaults(
   defineProps<{
+    isOpen: boolean
     tenant: Tenant
     items?: CartItem[]
     cartItems?: CartItem[]
-    isOpen: boolean
   }>(),
   {
     items: () => [],
@@ -458,21 +468,39 @@ const props = withDefaults(
   }
 )
 
-const items = computed(() => (props.items && props.items.length > 0 ? props.items : props.cartItems || []))
-
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'remove-item', index: number): void
   (e: 'clear-cart'): void
 }>()
 
-// 1. Tema Dinâmico
-const { themeClasses } = useTenantTheme(toRef(props, 'tenant'))
+const items = computed(() => {
+  return props.items.length > 0 ? props.items : props.cartItems
+})
 
-// 2. Trava de Scroll Acessível
-useBodyScrollLock(toRef(props, 'isOpen'))
+// 2. Tema Dinâmico do Estabelecimento
+const { themeClasses } = useTenantTheme(computed(() => props.tenant))
 
-// 3. Perfil de Checkout Persistente no LocalStorage
+// 3. Estado do Formulário de Checkout com useLocalStorage
+interface CheckoutFormData {
+  customerName: string
+  customerPhone: string
+  deliveryType: 'delivery' | 'pickup'
+  address: {
+    cep: string
+    street: string
+    number: string
+    neighborhood: string
+    city: string
+    state: string
+    complement?: string
+    reference?: string
+  }
+  paymentMethod: string
+  changeFor?: number
+  notes?: string
+}
+
 const form = useLocalStorage<CheckoutFormData>('alaska_checkout_profile', {
   customerName: '',
   customerPhone: '',
@@ -481,10 +509,10 @@ const form = useLocalStorage<CheckoutFormData>('alaska_checkout_profile', {
     cep: '',
     street: '',
     number: '',
-    complement: '',
     neighborhood: '',
     city: '',
     state: '',
+    complement: '',
     reference: ''
   },
   paymentMethod: 'Pix',
@@ -492,31 +520,24 @@ const form = useLocalStorage<CheckoutFormData>('alaska_checkout_profile', {
   notes: ''
 })
 
-// 4. Integração ViaCEP
-const { isLoadingCep, cepError, lookupCep } = useCep()
-const cepInput = ref(form.value.address?.cep || '')
+// 4. Integração de CEP com useCep
+const cepInput = ref(form.value.address.cep || '')
+const { address: viaCepAddress, isLoading: cepLoading } = useCep(cepInput)
 const numberInputRef = ref<HTMLInputElement | null>(null)
 
-async function handleCepChange(val: string) {
-  const clean = sanitizeDigits(val)
-  if (clean.length === 8) {
-    const res = await lookupCep(clean)
-    if (res) {
-      form.value.address.street = res.street
-      form.value.address.neighborhood = res.neighborhood
-      form.value.address.city = res.city
-      form.value.address.state = res.state
-      form.value.address.cep = res.cep
-      nextTick(() => {
-        numberInputRef.value?.focus()
-      })
-    }
+watch(viaCepAddress, (data) => {
+  if (data) {
+    form.value.address.street = data.logradouro || ''
+    form.value.address.neighborhood = data.bairro || ''
+    form.value.address.city = data.localidade || ''
+    form.value.address.state = data.uf || ''
+    numberInputRef.value?.focus()
   }
-}
+})
 
 watch(cepInput, (newCep) => {
   if (newCep) {
-    handleCepChange(newCep)
+    form.value.address.cep = newCep
   }
 })
 
@@ -548,11 +569,24 @@ const itemsSubtotal = computed(() => {
 })
 
 const deliveryFee = computed(() => {
-  return form.value.deliveryType === 'delivery' ? (props.tenant.deliveryFee ?? 6.0) : 0
+  return form.value.deliveryType === 'delivery' ? Number(props.tenant.deliveryFee ?? 6.0) : 0
 })
 
 const finalTotal = computed(() => {
   return itemsSubtotal.value + deliveryFee.value
+})
+
+const minOrderValue = computed(() => {
+  return Number(props.tenant.minOrderValue || 0)
+})
+
+const isBelowMinOrder = computed(() => {
+  if (form.value.deliveryType === 'pickup') return false
+  return minOrderValue.value > 0 && itemsSubtotal.value < minOrderValue.value
+})
+
+const remainingForMinOrder = computed(() => {
+  return Math.max(0, minOrderValue.value - itemsSubtotal.value)
 })
 
 // 6. Formas de Pagamento & Configuração Pix
@@ -571,10 +605,10 @@ const pixPayload = computed(() => {
   if (!tenantPixConfig.value) return ''
   return generatePixPayload({
     key: tenantPixConfig.value.key,
-    beneficiary: tenantPixConfig.value.beneficiary || props.tenant.name,
+    keyType: tenantPixConfig.value.keyType,
+    name: tenantPixConfig.value.beneficiary || props.tenant.name,
     city: tenantPixConfig.value.city || 'SAO PAULO',
-    amount: finalTotal.value,
-    txid: `PED${Date.now().toString().slice(-6)}`
+    amount: finalTotal.value
   })
 })
 
@@ -600,7 +634,15 @@ function copyPixCode() {
   if (!pixPayload.value) return
   navigator.clipboard.writeText(pixPayload.value)
   isPixCopied.value = true
-  setTimeout(() => { isPixCopied.value = false }, 2500)
+  setTimeout(() => {
+    isPixCopied.value = false
+  }, 2000)
+}
+
+function handleClearCart() {
+  if (confirm('Deseja realmente esvaziar sua sacola de compras?')) {
+    emit('clear-cart')
+  }
 }
 
 // 7. Validação e Envio do Pedido
@@ -615,14 +657,11 @@ const isFormValid = computed(() => {
     }
   }
 
-  return items.value.length > 0
-})
+  if (items.value.length === 0) return false
+  if (isBelowMinOrder.value) return false
 
-function handleClearCart() {
-  if (confirm('Deseja esvaziar sua sacola de compras?')) {
-    emit('clear-cart')
-  }
-}
+  return true
+})
 
 function handleSubmitOrder() {
   if (!isFormValid.value) return

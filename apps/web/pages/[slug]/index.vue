@@ -86,6 +86,9 @@
       v-if="effectiveTenant"
       :is-open="isInfoOpen"
       :tenant="effectiveTenant"
+      :is-open-now="isOpen"
+      :status-text="statusText"
+      :theme="effectiveTenant.theme"
       @close="isInfoOpen = false"
     />
 
@@ -100,7 +103,7 @@
     />
 
     <BookingModal
-      v-if="effectiveTenant"
+      v-if="effectiveTenant && isServiceStore"
       :is-open="isBookingOpen"
       :tenant="effectiveTenant"
       :initial-service="selectedBookingService"
@@ -108,11 +111,10 @@
     />
 
     <StoreReviewsModal
-      v-if="effectiveTenant && effectiveTenant.reviews"
+      v-if="effectiveTenant"
       :is-open="isReviewsOpen"
-      :theme="effectiveTenant.theme"
-      :store-name="effectiveTenant.name"
       :reviews="effectiveTenant.reviews"
+      :store-name="effectiveTenant.name"
       @close="isReviewsOpen = false"
     />
   </div>
@@ -162,11 +164,10 @@ onMounted(() => {
   }
 })
 
-// 2. Objeto Tenant Efetivo e Reativo (PostgreSQL é a Fonte da Verdade)
+// 2. Mesclagem Reativa em Memória: Dados Canônicos + Overrides do Admin
 const effectiveTenant = computed<Tenant | null>(() => {
   if (!tenant.value) return null
   const ov = localOverrides.value || {}
-  const baseHours = tenant.value.openingHours || {}
   const overrideHours = ov.openingHours || {}
   const deletedIds = ov.deletedProductIds || []
   const customProds = (ov.customProducts || []) as Product[]
@@ -234,39 +235,70 @@ const effectiveTenant = computed<Tenant | null>(() => {
   const effectivePhone = ov.contact?.whatsapp || tenant.value.phoneWhatsApp || (tenant.value as any).whatsapp
   const effectivePix = ov.pix || tenant.value.pixConfig
 
+  const ovDelivery = ov.delivery || {}
+  const effectiveDeliveryFee = ovDelivery.deliveryFee !== undefined
+    ? Number(ovDelivery.deliveryFee)
+    : (tenant.value.deliveryFee !== undefined ? Number(tenant.value.deliveryFee) : 6)
+  const effectiveMinOrderValue = ovDelivery.minOrderValue !== undefined
+    ? Number(ovDelivery.minOrderValue)
+    : (tenant.value.minOrderValue !== undefined ? Number(tenant.value.minOrderValue) : 0)
+  const effectiveEstimatedTime = ovDelivery.estimatedTime || tenant.value.estimatedTime || '30-45 min'
+
   return {
     ...tenant.value,
+    isEmergencyClosed: ov.emergency?.isClosed ?? tenant.value.isEmergencyClosed ?? false,
+    closedEmergencyMessage: ov.emergency?.message || tenant.value.closedEmergencyMessage,
     openingHours: {
-      ...baseHours,
-      ...overrideHours,
-      open: overrideHours.open || baseHours.open || '09:00',
-      close: overrideHours.close || baseHours.close || '22:00'
+      ...tenant.value.openingHours,
+      ...overrideHours
     },
-    isEmergencyClosed: ov.emergency?.isClosed ?? false,
-    deliveryFee: ov.delivery?.deliveryFee !== undefined ? ov.delivery.deliveryFee : (tenant.value.deliveryFee ?? (tenant.value.deliveryFeeCents ? tenant.value.deliveryFeeCents / 100 : 0)),
-    minOrderValue: ov.delivery?.minOrderValue !== undefined ? ov.delivery.minOrderValue : (tenant.value.minOrderValue ?? (tenant.value.minOrderValueCents ? tenant.value.minOrderValueCents / 100 : 0)),
     phoneWhatsApp: effectivePhone,
-    instagram: ov.contact?.instagram || (tenant.value as any).instagram,
+    phone: effectivePhone,
+    instagram: ov.contact?.instagram || (tenant.value as any).instagram || '',
     pixConfig: effectivePix,
     pix: effectivePix,
     categories: effectiveCategories,
-    professionals: effectiveProfessionals
+    professionals: effectiveProfessionals,
+    deliveryFee: effectiveDeliveryFee,
+    minOrderValue: effectiveMinOrderValue,
+    estimatedTime: effectiveEstimatedTime,
+    delivery: {
+      deliveryFee: effectiveDeliveryFee,
+      minOrderValue: effectiveMinOrderValue,
+      estimatedTime: effectiveEstimatedTime
+    }
   } as Tenant
 })
 
-const announcementOverride = computed(() => localOverrides.value?.announcement)
+const announcementOverride = computed(() => {
+  const ann = localOverrides.value.announcement
+  if (ann && ann.enabled) {
+    return ann.message
+  }
+  return null
+})
 
-// 3. Tema Dinâmico
+// 3. Tema Visual Dinâmico da Loja
 const { themeClasses } = useTenantTheme(effectiveTenant)
 
-// 4. Status de Funcionamento Aberto/Fechado
-const { isOpen, statusText, ariaLabel: openingAriaLabel } = useOpeningHours(
-  computed(() => effectiveTenant.value?.openingHours)
+// 4. Horários de Funcionamento em Tempo Real
+const {
+  isOpen,
+  statusText,
+  openingAriaLabel
+} = useOpeningHours(
+  computed(() => effectiveTenant.value?.openingHours),
+  computed(() => effectiveTenant.value?.isEmergencyClosed || false)
 )
 
-// 5. Categorias e Motor de Busca Client-Side (0ms)
-const categories = computed(() => effectiveTenant.value?.categories || [])
+const isServiceStore = computed(() => {
+  if (!effectiveTenant.value) return false
+  const cat = effectiveTenant.value.businessCategory
+  return cat === 'hub' || cat === 'pro' || effectiveTenant.value.slug === 'barbearia-style' || effectiveTenant.value.slug === 'clinica-sorriso'
+})
 
+// 5. Busca de Produtos com Normalização Unicode Client-Side
+const categories = computed(() => effectiveTenant.value?.categories || [])
 const {
   searchQuery,
   filteredCategories,
@@ -316,12 +348,6 @@ const selectedProduct = ref<Product | null>(null)
 const isBookingOpen = ref(false)
 const selectedBookingService = ref<BookingService | null>(null)
 
-const isServiceStore = computed(() => {
-  if (!effectiveTenant.value) return false
-  const cat = effectiveTenant.value.businessCategory || effectiveTenant.value.template
-  return cat === 'hub' || cat === 'pro' || effectiveTenant.value.slug === 'barbearia-style' || effectiveTenant.value.slug === 'clinica-sorriso'
-})
-
 function handleProductClick(product: Product) {
   if (isServiceStore.value) {
     selectedBookingService.value = {
@@ -365,3 +391,6 @@ const featuredProducts = computed(() => {
   return all.slice(0, 6)
 })
 </script>
+
+<style scoped>
+</style>
