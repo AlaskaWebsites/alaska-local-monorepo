@@ -12,18 +12,18 @@ O `@alaska/web` é o frontend do ecossistema **Alaska Local**, projetado sob o p
    Tipagens e schemas Zod centralizados no pacote compartilhado do monorepo, garantindo segurança ponta a ponta.
 3. **Integração Client-Server Resiliente:**  
    Estratégia API-First conectada ao NestJS no Render, com fallback offline gracioso para `~/data/*.json` e mutações otimistas em < 50ms no Painel do Lojista.
-4. **Despacho Direto via WhatsApp:**  
-   Fechamento comercial determinístico sem intermediadores nem taxas por transação.
-5. **Resiliência Visual Anti-404:**  
-   Placeholders SVG em Data URIs temáticas dinâmicas com eliminação total de Layout Shift (CLS).
-6. **Acessibilidade Semântica W3C / WCAG 2.1 AA:**  
+4. **Motor Comercial WhatsApp:**  
+   Despacho estruturado de comandas de delivery, retirada e agendamentos de serviços diretamente no WhatsApp oficial do lojista.
+5. **Zero Layout Shift (CLS):**  
+   Imagens com placeholders SVG temáticos codificados em Data URI que garantem renderização instantânea mesmo com conexões instáveis.
+6. **Acessibilidade W3C / WCAG 2.1 AA:**  
    Todos os modais possuem `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, foco inicial automático, atalho `Escape` e trava de rolagem com `useBodyScrollLock`.
 7. **Pipeline de Deploy Determinístico (ADR 016):**  
    Deploy serverless na Vercel orquestrado via Turborepo e PNPM v10 com Build Output API v3.
 8. **Design System Claro Suave (ADR 017):**  
    Padronização visual em `bg-slate-50`, cards `bg-white border-slate-200/90 shadow-2xs` e 11 temas cromáticos dinâmicos.
-9. **Resiliência de Contratos em Abas do Admin (ADR 018):**  
-   Padrão dual-prop, dual-emit e computeds defensivos prevenindo qualquer crash de runtime no Painel do Lojista.
+9. **Resiliência de Contratos em Abas do Admin e Storefront (ADR 018):**  
+   Padrão dual-prop, dual-emit, exibição de canais sociais (Instagram), sincronização unidirecional de horários, trava de pedido mínimo no checkout e layout flexbox balanceado.
 
 ---
 
@@ -35,7 +35,7 @@ O `@alaska/web` é o frontend do ecossistema **Alaska Local**, projetado sob o p
 - **[ADR 004: Categorização de Negócios e Templates](./adrs/004-categorizacao-de-negocios-e-templates.md)** — As 4 verticais: Menu, Shop, Hub e Pro.
 - **[ADR 005: Integração ViaCEP e Autocompletion de Endereço](./adrs/005-integracao-viacep-autocompletion-endereco.md)** — Preenchimento inteligente de checkout.
 - **[ADR 006: Módulo de Agendamento e Venda Híbrida](./adrs/006-modulo-agendamento-servicos-e-venda-hibrida.md)** — Slots de 30 min, escala semanal e produtos de balcão.
-- **[ADR 007: Cálculo de Horário Noturno e Badges Dinâmicos](./adrs/007-calculo-horario-noturno-e-badges-dinamicos.md)** — Indicadores de loja aberta/fechada.
+- **[ADR 007: Cálculo de Horário Noturno e Badges Dinâmicos](./adrs/007-calculo-horario-noturno-e-badges-dinamicos.md)** — Indicadores de loja aberta/fechada e turnos noturnos.
 - **[ADR 008: Resiliência de Imagens e Placeholders SVG Temáticos](./adrs/008-resiliencia-de-imagens-e-placeholders-svg-tematicos.md)** — Data URIs vetoriais anti-404.
 - **[ADR 009: Protocolo de Despacho WhatsApp e Venda Híbrida](./adrs/009-protocolo-despacho-whatsapp-e-venda-hibrida.md)** — Formatação determinística de comandas.
 - **[ADR 010: Busca Client-Side Zero Latência e Normalização Unicode](./adrs/010-busca-client-side-zero-latencia-e-normalizacao-unicode.md)** — Busca NFD insensível a acentos.
@@ -45,17 +45,14 @@ O `@alaska/web` é o frontend do ecossistema **Alaska Local**, projetado sob o p
 - **[ADR 014: Monorepo Turborepo e Pacote @alaska/contracts](./adrs/014-monorepo-turborepo-e-pacote-contracts.md)** — Centralização de contratos Zod.
 - **[ADR 015: Desacoplamento Atômico de Componentes Storefront e Admin](./adrs/015-desacoplamento-atomico-componentes-storefront-e-admin.md)** — Páginas como orquestradoras.
 - **[ADR 016: Pipeline de CI/CD Vercel com Turborepo e PNPM](./adrs/016-pipeline-ci-cd-vercel-turborepo-pnpm.md)** — Build Output API v3 e deploy contínuo.
-- **[ADR 017: Padronização do Design System Claro Suave e Temas Dinâmicos](./adrs/017-padronizacao-design-system-claro-suave-e-temas-dinamicos-admin.md)** — Fundo `bg-slate-50` e temas cromaticos no admin.
-- **[ADR 018: Resiliência de Contratos de Props, Emissão Dual de Eventos e Defesa Anti-Crash](./adrs/018-resiliencia-de-contratos-props-e-eventos-das-abas-admin.md)** — Blindagem das abas operacionais do Admin (Pix, Horários, Delivery e Comunicado).
+- **[ADR 017: Padronização do Design System Claro Suave e Temas Dinâmicos](./adrs/017-padronizacao-design-system-claro-suave-e-temas-dinamicos-admin.md)** — Fundo `bg-slate-50` e temas cromáticos no admin.
+- **[ADR 018: Resiliência de Contratos de Props, Emissão Dual de Eventos e Defesa Anti-Crash](./adrs/018-resiliencia-de-contratos-props-e-eventos-das-abas-admin.md)** — Blindagem das abas operacionais do Admin (Catálogo, Pix, Horários, Delivery e Comunicado), exibição de Instagram, trava de pedido mínimo, eliminação de 404 em disponibilidade e layout flexbox balanceado.
 
 ---
 
-## 📚 Guias Especializados & Arquitetura
+## 📚 Guias de Arquitetura Frontend (`docs/frontend/architecture/`)
 
-- **[Protocolo de Despacho WhatsApp](./architecture/protocolo-despacho-whatsapp.md)** — Motor comercial de fechamento de vendas, formatação e templates.
-- **[Resiliência Visual e Placeholders SVG](./architecture/resiliencia-visual-e-imagens.md)** — Eliminação de erros 404, CLS zero e Data URIs temáticas.
-- **[Guia Mestre de Integração Client-Server](./architecture/integracao-client-server.md)** — Topologia Vercel ↔ Render, mutações otimistas, `useApiClient` e resiliência.
-- **[Segurança e Isolamento Multi-Tenant](../architecture/seguranca-e-isolamento-multitenant.md)** — Namespacing por slug no navegador e políticas RLS no PostgreSQL.
+- **[Integração Client-Server Resiliente](./architecture/integracao-client-server.md)** — Estratégia de hidratação e tolerância a cold-start.
 - **[Performance, Resiliência e Integração SSR](./architecture/performance-e-resiliencia-frontend.md)** — Cache reativo, deduplicação em voo e Web Share API.
 - **[Design System & 11 Temas Cromáticos](./architecture/design-system-e-temas.md)** — Paleta Claro Suave e tokens dinâmicos.
 - **[Módulo de Agendamentos & Serviços](./architecture/modulo-agendamento-e-servicos.md)** — Prevenção de horário fantasma e cálculo de slots.
