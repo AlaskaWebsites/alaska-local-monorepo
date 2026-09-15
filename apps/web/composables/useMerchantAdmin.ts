@@ -135,10 +135,14 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   const apiBaseUrl = getApiBaseUrl()
 
   const currentSlug = computed(() => {
-    if (typeof slugOrSource === 'string') return slugOrSource
-    if (isRef(slugOrSource)) return slugOrSource.value || 'default'
-    if (slugOrSource && typeof slugOrSource === 'object' && slugOrSource.slug) return slugOrSource.slug
-    return (route?.params?.slug as string) || 'default'
+    let raw = 'default'
+    if (typeof slugOrSource === 'string') raw = slugOrSource
+    else if (isRef(slugOrSource)) raw = slugOrSource.value || 'default'
+    else if (slugOrSource && typeof slugOrSource === 'object' && slugOrSource.slug) raw = slugOrSource.slug
+    else raw = (route?.params?.slug as string) || 'default'
+    const clean = raw.trim().toLowerCase()
+    if (clean === 'adega-e-casa-de-racao-do-rei' || clean === 'casa-de-racao-do-rei') return 'adega-do-rei'
+    return clean
   })
 
   const tenantSlug = currentSlug

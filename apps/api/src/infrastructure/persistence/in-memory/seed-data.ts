@@ -2,6 +2,23 @@ import { Tenant } from '@core/domain/entities/tenant.entity'
 
 export const SEED_TENANTS: Tenant[] = [
   new Tenant({
+    id: 'ten-adega-do-rei',
+    slug: 'adega-do-rei',
+    name: 'Adega e Casa de Ração do Rei',
+    description: 'O ponto completo na Av. Afonso Moreno: cervejas trincando, destilados, vinhos selecionados, carvão e nutrição premium para cães e gatos com entrega rápida em Francisco Morato.',
+    phoneWhatsApp: '11973075705',
+    address: 'Av. Afonso Moreno, 1238 - Res. Casa Grande I, Francisco Morato - SP, CEP 07906-000',
+    businessCategory: 'menu',
+    theme: 'amber',
+    openingHours: { open: '07:00', close: '20:00' },
+    pixConfig: {
+      key: '11973075705',
+      keyType: 'phone',
+      beneficiary: 'Adega e Casa de Racao do Rei',
+      city: 'FRANCISCO MORATO'
+    }
+  }),
+  new Tenant({
     id: 'ten-hamburgueria-x',
     slug: 'hamburgueria-x',
     name: 'Hamburgueria X',
@@ -50,135 +67,110 @@ export const SEED_TENANTS: Tenant[] = [
     pixConfig: {
       key: '7e3ed5e6-6097-4b15-88a3-221caba64141',
       keyType: 'random',
-      beneficiary: 'Adega & Distribuidora Prime',
+      beneficiary: 'Adega Prime Distribuidora',
       city: 'SAO PAULO'
-    },
-    customDomain: 'adegaprime.com.br'
+    }
   }),
   new Tenant({
     id: 'ten-barbearia-style',
     slug: 'barbearia-style',
-    name: 'Barbearia Style Club',
-    description: 'Cortes modernos, barba na toalha quente, cerveja artesanal e ambiente climatizado.',
-    phoneWhatsApp: '11977776666',
-    address: 'Rua das Barbearias, 456 - Centro',
+    name: 'Barbearia Vintage Style',
+    description: 'Cortes clássicos e modernos, barba com toalha quente, navalha e cerveja gelada.',
+    phoneWhatsApp: '11977778888',
+    address: 'Rua Augusta, 500 - Consolação',
     businessCategory: 'hub',
     theme: 'barber',
     openingHours: { open: '09:00', close: '20:00' },
     pixConfig: {
       key: '7e3ed5e6-6097-4b15-88a3-221caba64141',
       keyType: 'random',
-      beneficiary: 'Barbearia Style Club',
+      beneficiary: 'Vintage Style Barbearia',
       city: 'SAO PAULO'
-    },
-    customDomain: 'barbeariastyle.com.br'
+    }
   }),
   new Tenant({
     id: 'ten-clinica-sorriso',
     slug: 'clinica-sorriso',
-    name: 'Clínica Sorriso',
-    description: 'Odontologia moderna com foco em estética, implantes e saúde bucal.',
-    phoneWhatsApp: '11966665555',
-    address: 'Rua da Saúde, 321 - Centro',
+    name: 'Clínica Odonto Sorriso',
+    description: 'Tratamentos odontológicos completos, ortodontia, clareamento e implantes com tecnologia de ponta.',
+    phoneWhatsApp: '11966667777',
+    address: 'Alameda Santos, 1000 - Jardins',
     businessCategory: 'pro',
     theme: 'health',
     openingHours: { open: '08:00', close: '19:00' },
     pixConfig: {
       key: '7e3ed5e6-6097-4b15-88a3-221caba64141',
       keyType: 'random',
-      beneficiary: 'Clínica Sorriso Odontologia',
+      beneficiary: 'Clinica Odonto Sorriso LTDA',
       city: 'SAO PAULO'
-    },
-    customDomain: 'clinicasorriso.com.br'
+    }
   }),
   new Tenant({
     id: 'ten-bella-donna',
     slug: 'bella-donna',
-    name: 'Bella Donna Boutique | Moda Feminina',
-    description: 'Moda feminina casual chic, conjuntos de alfaiataria em crepe duna, vestidos fluidos e peças do P ao GG.',
-    phoneWhatsApp: '11977778888',
-    address: 'Rua Gerônimo Caetano Garcia, 280 – Centro, Francisco Morato - SP',
+    name: 'Bella Donna Boutique',
+    description: 'Moda feminina contemporânea, vestidos elegantes, conjuntos e acessórios exclusivos.',
+    phoneWhatsApp: '11955556666',
+    address: 'Rua Oscar Freire, 300 - Cerqueira César',
     businessCategory: 'shop',
     theme: 'drinks',
-    openingHours: { open: '09:00', close: '19:00' },
+    openingHours: { open: '10:00', close: '20:00' },
     pixConfig: {
       key: '7e3ed5e6-6097-4b15-88a3-221caba64141',
       keyType: 'random',
-      beneficiary: 'Bella Donna Boutique',
-      city: 'FRANCISCO MORATO'
-    },
-    customDomain: 'belladonna.com.br'
+      beneficiary: 'Bella Donna Boutique LTDA',
+      city: 'SAO PAULO'
+    }
   }),
   new Tenant({
     id: 'ten-cafe-central',
     slug: 'cafe-central',
-    name: 'Café Central & Bistrô',
-    description: 'O melhor café especial da cidade, ambiente acolhedor, brunch e doces artesanais.',
-    phoneWhatsApp: '11988887777',
-    address: 'Rua do Café, 123 - Centro',
+    name: 'Café & Bistrô Central',
+    description: 'Cafés especiais moídos na hora, brunchs deliciosos, tortas artesanais e pães de fermentação natural.',
+    phoneWhatsApp: '11944445555',
+    address: 'Praça da Sé, 50 - Centro Histórico',
     businessCategory: 'menu',
     theme: 'food',
-    openingHours: { open: '07:00', close: '20:00' },
+    openingHours: { open: '07:30', close: '19:00' },
     pixConfig: {
       key: '7e3ed5e6-6097-4b15-88a3-221caba64141',
       keyType: 'random',
-      beneficiary: 'Café Central',
+      beneficiary: 'Cafe Bistro Central Eireli',
       city: 'SAO PAULO'
-    },
-    customDomain: 'cafecentral.com.br'
+    }
   }),
   new Tenant({
     id: 'ten-espetaria-brasa',
     slug: 'espetaria-brasa',
-    name: 'Espetaria & Jantinha Brasa Nobre',
-    description: 'Espetinhos artesanais na brasa, jantinhas completas, acompanhamentos caseiros e cervejas estupidamente geladas.',
-    phoneWhatsApp: '11999999999',
-    address: 'Av. dos Churrasqueiros, 450 - Centro',
+    name: 'Espetaria & Petiscaria Brasa Viva',
+    description: 'Espetos artesanais na brasa, porções caprichadas, chopp gelado e música ao vivo.',
+    phoneWhatsApp: '11933334444',
+    address: 'Av. das Nações, 250 - Vila Nova',
     businessCategory: 'menu',
     theme: 'food',
-    openingHours: { open: '18:00', close: '23:45' },
+    openingHours: { open: '17:00', close: '01:00' },
     pixConfig: {
       key: '7e3ed5e6-6097-4b15-88a3-221caba64141',
       keyType: 'random',
-      beneficiary: 'Espetaria Brasa Nobre',
+      beneficiary: 'Brasa Viva Espetaria',
       city: 'SAO PAULO'
-    },
-    customDomain: 'espetariabrasa.com.br'
+    }
   }),
   new Tenant({
     id: 'ten-restaurante-bella-italia',
     slug: 'restaurante-bella-italia',
-    name: 'Restaurante Bella Italia',
-    description: 'Massas artesanais frescas, risotos clássicos, vinhos italianos e gastronomia tradicional.',
-    phoneWhatsApp: '11933332222',
-    address: 'Rua das Cantinas, 300 - Bixiga',
+    name: 'Cantina & Restaurante Bella Itália',
+    description: 'Massas artesanais frescas, molhos italianos tradicionais, risotos e cartas de vinhos nobres.',
+    phoneWhatsApp: '11922223333',
+    address: 'Rua Treze de Maio, 800 - Bixiga',
     businessCategory: 'menu',
     theme: 'food',
     openingHours: { open: '11:30', close: '23:00' },
     pixConfig: {
       key: '7e3ed5e6-6097-4b15-88a3-221caba64141',
       keyType: 'random',
-      beneficiary: 'Restaurante Bella Italia',
+      beneficiary: 'Cantina Bella Italia LTDA',
       city: 'SAO PAULO'
-    },
-    customDomain: 'bellaitalia.com.br'
-  }),
-  new Tenant({
-    id: 'ten-studio-nail-design',
-    slug: 'studio-nail-design',
-    name: 'Studio Nail Design',
-    description: 'Especialistas em nail art, manicure, pedicure, alongamentos e esmaltes de alta qualidade. Agendamento fácil e venda de produtos profissionais.',
-    phoneWhatsApp: '11955553333',
-    address: 'Rua das Unhas, 789 - Jardins',
-    businessCategory: 'hub',
-    theme: 'rose',
-    openingHours: { open: '09:00', close: '19:00' },
-    pixConfig: {
-      key: '7e3ed5e6-6097-4b15-88a3-221caba64141',
-      keyType: 'random',
-      beneficiary: 'Studio Nail Design LTDA',
-      city: 'SAO PAULO'
-    },
-    customDomain: 'studionaildesign.com.br'
+    }
   })
 ]

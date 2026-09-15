@@ -1,0 +1,377 @@
+{
+  "slug": "adega-do-rei",
+  "name": "Adega e Casa de Ração do Rei",
+  "description": "O ponto completo na Av. Afonso Moreno: cervejas trincando, destilados, vinhos selecionados, carvão e nutrição premium para cães e gatos com entrega rápida em Francisco Morato.",
+  "logo": "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=200&h=200&fit=crop&q=80",
+  "banner": "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200&h=400&fit=crop&q=80",
+  "phoneWhatsApp": "11973075705",
+  "whatsapp": "11973075705",
+  "address": "Av. Afonso Moreno, 1238 - Res. Casa Grande I, Francisco Morato - SP, CEP 07906-000",
+  "currency": "R$",
+  "deliveryFee": 5.0,
+  "minOrderValue": 20.0,
+  "theme": "amber",
+  "businessCategory": "menu",
+  "category": "Adega & Casa de Ração",
+  "distance": "0,8 km",
+  "priceRange": "$$",
+  "paymentMethods": [
+    "Pix",
+    "Cartão de Crédito",
+    "Cartão de Débito",
+    "Dinheiro"
+  ],
+  "openingHours": {
+    "monday": {
+      "open": "07:00",
+      "close": "20:00",
+      "closed": false
+    },
+    "tuesday": {
+      "open": "07:00",
+      "close": "20:00",
+      "closed": false
+    },
+    "wednesday": {
+      "open": "07:00",
+      "close": "20:00",
+      "closed": false
+    },
+    "thursday": {
+      "open": "07:00",
+      "close": "20:00",
+      "closed": false
+    },
+    "friday": {
+      "open": "07:00",
+      "close": "20:00",
+      "closed": false
+    },
+    "saturday": {
+      "open": "07:00",
+      "close": "20:00",
+      "closed": false
+    },
+    "sunday": {
+      "open": "07:00",
+      "close": "15:00",
+      "closed": false
+    },
+    "open": "07:00",
+    "close": "20:00"
+  },
+  "pixConfig": {
+    "key": "11973075705",
+    "keyType": "phone",
+    "beneficiary": "Adega e Casa de Ração do Rei",
+    "city": "FRANCISCO MORATO",
+    "allowTestCent": true,
+    "depositPercentage": 30
+  },
+  "reviews": {
+    "score": 5.0,
+    "rating": 5.0,
+    "totalReviews": 5,
+    "count": 5,
+    "badge": "Nota Máxima no Google (5.0★)",
+    "distribution": {
+      "5": 5,
+      "4": 0,
+      "3": 0,
+      "2": 0,
+      "1": 0
+    },
+    "comments": [
+      {
+        "id": "rev-1",
+        "author": "Marcos Vinicius",
+        "rating": 5,
+        "date": "há 2 semanas",
+        "comment": "Atendimento nota 10! A cerveja vem sempre trincando e a ração dos meus cachorros chega rapidinho.",
+        "itemsOrdered": [
+          "Ração Special Dog Carne Pequeno Porte 10kg",
+          "Pack Cerveja Heineken 350ml"
+        ]
+      },
+      {
+        "id": "rev-2",
+        "author": "Fernanda Lima",
+        "rating": 5,
+        "date": "há 1 mês",
+        "comment": "Muito prático pedir pelo WhatsApp. Preço muito bom nos sachês e vinhos ótimos para o final de semana.",
+        "itemsOrdered": [
+          "Vinho Pérgola Bordô Tinto Suave 1L",
+          "Sachê GoldeN Gourmet Cães"
+        ]
+      }
+    ]
+  },
+  "categories": [
+    {
+      "id": "cat-racao-caes",
+      "name": "🐶 Rações para Cães",
+      "icon": "paw",
+      "products": [
+        {
+          "id": "prod-racao-magnus-carne-frango-10kg",
+          "name": "Ração Magnus Todo Dia Carne e Frango Pequeno Porte 10kg",
+          "description": "Nutrição completa para cães de pequeno porte. Pelos brilhantes, pele saudável, mais energia e alta digestibilidade.",
+          "price": 78.99,
+          "image": "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-racao-special-dog-carne-10kg",
+          "name": "Ração Special Dog Carne Pequeno Porte 10kg",
+          "description": "Alimento completo com ômegas 3 e 6, extrato de yucca que reduz odor das fezes e 23% de proteína para cães pequenos.",
+          "price": 88.99,
+          "image": "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-racao-premier-grandes-gigantes-15kg",
+          "name": "Ração PremieR Formula Cães Raças Grandes e Gigantes Frango e Mandioca 15kg",
+          "description": "Linha Super Premium com satisfação 110% garantida. Suporte articular com condroitina e glicosamina para raças fortes e musculosas.",
+          "price": 259.99,
+          "image": "https://images.unsplash.com/photo-1568640347023-a616a30bc3bd?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cat-saches-petiscos",
+      "name": "🥩 Sachês & Petiscos",
+      "icon": "sparkles",
+      "products": [
+        {
+          "id": "prod-sache-golden-gourmet-caes-85g",
+          "name": "Sachê GoldeN Gourmet Cães Adultos Frango com Cenoura e Arroz 85g",
+          "description": "Alimento úmido premium especial sabor frango com legumes. Sem corantes nem aromatizantes artificiais.",
+          "price": 3.0,
+          "image": "https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-sache-special-dog-ultralife-100g",
+          "name": "Sachê Special Dog Ultralife Cães Adultos Carne ao Molho 100g",
+          "description": "Pedaços cozidos a vapor em molho suculento, rico em vitaminas para cães adultos.",
+          "price": 3.0,
+          "image": "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-sache-granplus-gourmet-100g",
+          "name": "Sachê GranPlus Gourmet Cães e Gatos Carne ao Molho 100g",
+          "description": "Nutrição de alto desempenho e bem-estar para cães e gatos com ingredientes nobres.",
+          "price": 3.0,
+          "image": "https://images.unsplash.com/photo-1574158622682-e40e69881006?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-sache-origens-85g",
+          "name": "Sachê Origens Cães e Gatos Seleção Natural 85g",
+          "description": "Ingredientes de verdade sem corantes artificiais para uma refeição deliciosa e hidratante.",
+          "price": 3.0,
+          "image": "https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-bifinho-keldog-carne-65g",
+          "name": "Petisco Bifinho Keldog Carne e Frango 65g",
+          "description": "Snack macio e saboroso feito com carnes frescas, ideal para agrado e recompensa diária.",
+          "price": 4.9,
+          "image": "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cat-destilados-whisky",
+      "name": "🥃 Whiskies & Destilados",
+      "icon": "flame",
+      "products": [
+        {
+          "id": "prod-jack-daniels-no7-1l",
+          "name": "Whisky Jack Daniel's Old No. 7 Tennessee Whiskey 1L",
+          "description": "O clássico Tennessee Whiskey filtrado gota a gota em carvão vegetal. Sabor marcante, encorpado e aveludado.",
+          "price": 149.9,
+          "image": "https://images.unsplash.com/photo-1527061011665-3652c757a4d4?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-jack-daniels-apple-1l",
+          "name": "Whisky Jack Daniel's Tennessee Apple 1L",
+          "description": "Mistura do autêntico Old No. 7 com licor crocante de maçã verde. Extremamente refrescante.",
+          "price": 159.9,
+          "image": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-jack-daniels-honey-1l",
+          "name": "Whisky Jack Daniel's Tennessee Honey 1L",
+          "description": "Suavidade incomparável combinando o tradicional whisky Jack Daniel's com licor de mel legítimo.",
+          "price": 159.9,
+          "image": "https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-jack-daniels-blackberry-1l",
+          "name": "Whisky Jack Daniel's Tennessee Blackberry 1L",
+          "description": "Edição aromática e exclusiva com notas sofisticadas de amoras silvestres. Excelente para drinks e degustação pura.",
+          "price": 169.9,
+          "image": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-gelo-sabor-maracuja-coco",
+          "name": "Gelo de Sabor para Drinks Coco com Maracujá 200ml",
+          "description": "Gelo saborizado que potencializa seu drink à medida que derrete. Não aguenta o copo!",
+          "price": 4.5,
+          "image": "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cat-vinhos-selecionados",
+      "name": "🍷 Vinhos Selecionados",
+      "icon": "wine",
+      "products": [
+        {
+          "id": "prod-vinho-valle-chillan-gran-reserva-750ml",
+          "name": "Vinho Chileno Valle Chillán Cabernet Sauvignon Gran Reserva 750ml",
+          "description": "Vinho fino chileno premium de guarda. Notas de frutas negras, baunilha e taninos aveludados.",
+          "price": 120.0,
+          "image": "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-vinho-pergola-bordo-suave-1l",
+          "name": "Vinho Pérgola Bordô Tinto Suave 1L",
+          "description": "O vinho de mesa mais consagrado do Brasil. Frutado, equilibrado e perfeito para relaxar ou almoço em família.",
+          "price": 23.5,
+          "image": "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-vinho-san-martin-bordo-seco-750ml",
+          "name": "Vinho San Martin Bordô Tinto Seco 750ml",
+          "description": "Tradição gaúcha em uvas Bordô. Coloração intensa, aroma marcante e paladar estruturado.",
+          "price": 23.5,
+          "image": "https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-vinho-san-martin-suave-750ml",
+          "name": "Vinho San Martin Tinto Suave 750ml",
+          "description": "Vinho tinto suave clássico, levemente adocicado e ideal para servir geladinho.",
+          "price": 17.5,
+          "image": "https://images.unsplash.com/photo-1474722883778-792e7990302f?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-vinho-dom-bosco-tinto-suave-750ml",
+          "name": "Vinho Dom Bosco Tinto Suave 750ml",
+          "description": "Tradição de gerações. Vinho tinto suave com aroma de frutas vermelhas e sabor harmonioso.",
+          "price": 17.5,
+          "image": "https://images.unsplash.com/photo-1547595628-c61a29f496f0?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-vinho-dom-bosco-bordo-750ml",
+          "name": "Vinho Dom Bosco Bordô 750ml",
+          "description": "Tinto de mesa elaborado com uvas Bordô. Cor rubi viva e sabor agradável com ótimo custo-benefício.",
+          "price": 14.9,
+          "image": "https://images.unsplash.com/photo-1516594915697-87eb3b1c14ea?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cat-cervejas-conveniencia",
+      "name": "🍺 Cervejas & Conveniência",
+      "icon": "shopping-bag",
+      "products": [
+        {
+          "id": "prod-pack-cerveja-heineken-lata-6un",
+          "name": "Pack Cerveja Heineken Puro Malte 350ml (6 Latas)",
+          "description": "A cerveja premium puro malte holandesa mais apreciada do mundo. Entregue trincando de gelada.",
+          "price": 38.9,
+          "image": "https://images.unsplash.com/photo-1608270546103-ac6888db6282?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-carvao-vegetal-churrasco-2-5kg",
+          "name": "Carvão Vegetal Selecionado para Churrasco 2,5kg",
+          "description": "Eucalipto reflorestado com pedaços graúdos de fácil acendimento e brasas duradouras.",
+          "price": 18.9,
+          "image": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&h=350&fit=crop&q=80",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 0,
+          "optionGroups": []
+        }
+      ]
+    }
+  ]
+}

@@ -65,19 +65,27 @@ export function useTenant(customSlug?: string | Ref<string | null | undefined>) 
     const config = useRuntimeConfig()
     const apiBaseUrl = config.public?.apiBaseUrl
 
+    const normalizeSlug = (s: string): string => {
+        const clean = s.trim().toLowerCase()
+        if (clean === 'adega-e-casa-de-racao-do-rei' || clean === 'casa-de-racao-do-rei') {
+            return 'adega-do-rei'
+        }
+        return clean
+    }
+
     const slug = computed<string>(() => {
         if (isRef(customSlug)) {
             const val = customSlug.value
             if (val && String(val).toLowerCase() !== 'default') {
-                return String(val).toLowerCase()
+                return normalizeSlug(String(val))
             }
         }
         if (typeof customSlug === 'string' && customSlug.toLowerCase() !== 'default') {
-            return customSlug.toLowerCase()
+            return normalizeSlug(customSlug)
         }
         const routeSlug = route.params.slug as string
         if (routeSlug && routeSlug.toLowerCase() !== 'default') {
-            return routeSlug.toLowerCase()
+            return normalizeSlug(routeSlug)
         }
         return 'hamburgueria-x'
     })
