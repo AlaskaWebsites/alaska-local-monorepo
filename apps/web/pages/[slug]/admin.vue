@@ -54,11 +54,16 @@
           :categories="categories"
           :is-service-store="isServiceStore"
           :is-product-available="isProductAvailable"
+          :get-product-price="getProductPrice"
           @open-price-modal="openPriceModal"
+          @edit-price="openPriceModal"
           @toggle-avail="handleProductAvailabilityToggle"
+          @toggle-product="handleProductAvailabilityToggle"
           @open-create-modal="isCreateProductOpen = true"
+          @create-product="isCreateProductOpen = true"
           @delete-product="handleDeleteProduct"
           @open-options="openOptionsModal"
+          @manage-options="openOptionsModal"
         />
 
         <!-- ABA 2: Especialistas / Agenda (Hub & Pro) -->
@@ -270,6 +275,11 @@ const categories = computed<Category[]>(() => {
   })
 })
 
+function getProductPrice(product: Product): number {
+  const overridePrice = localOverrides.value?.products?.[product.id]?.price
+  return overridePrice !== undefined ? overridePrice : product.price
+}
+
 function isProductAvailable(product: Product): boolean {
   const prodOverrides = localOverrides.value?.products
   if (prodOverrides?.[product.id]?.isAvailable !== undefined) {
@@ -280,14 +290,21 @@ function isProductAvailable(product: Product): boolean {
   return true
 }
 
-async function handleProductAvailabilityToggle(product: Product) {
-  const currentStatus = isProductAvailable(product)
-  await toggleProductAvailability(product.id, currentStatus)
+async function handleProductAvailabilityToggle(productOrList: any, productId?: string) {
+  let targetProduct: Product | undefined
+  if (typeof productOrList === 'object' && productOrList !== null && 'id' in productOrList && !Array.isArray(productOrList)) {
+    targetProduct = productOrList as Product
+  } else if (Array.isArray(productOrList) && productId) {
+    targetProduct = productOrList.find(p => p.id === productId)
+  }
+  if (!targetProduct) return
+  const currentStatus = isProductAvailable(targetProduct)
+  await toggleProductAvailability(targetProduct.id, currentStatus)
   refreshLocalOverrides()
   if (typeof refresh === 'function') {
     await refresh()
   }
-  showToast(currentStatus ? `⏸️ ${product.name} pausado!` : `✅ ${product.name} ativado!`)
+  showToast(currentStatus ? `⏸️ ${targetProduct.name} pausado!` : `✅ ${targetProduct.name} ativado!`)
 }
 
 const isPriceModalOpen = ref(false)
@@ -295,23 +312,18 @@ const editingProduct = ref<Product | null>(null)
 const editingProductsList = ref<Product[]>([])
 const newPriceInput = ref(0)
 
-function openPriceModal(categoryProducts: Product[], product: Product) {
-  editingProductsList.value = categoryProducts
-  editingProduct.value = product
-  const overridePrice = localOverrides.value?.products?.[product.id]?.price
-  newPriceInput.value = overridePrice !== undefined ? overridePrice : product.price
-  isPriceModalOpen.value = true
-}
-
-async function confirmPriceEdit(newPrice: number) {
+function openPriceModal(categoryProductsOrProduct: any, product?: Product) {
+  if (Array.isArray(categoryProductsOrProduct) && product) {
+    editingProductsList.value = categoryProductsOrProduct
+    editingProduct.value = product
+  } else if (categoryProductsOrProduct && typeof categoryProductsOrProduct === 'object') {
+    editingProduct.value = categoryProductsOrProduct
+    editingProductsList.value = [categoryProductsOrProduct]
+  }
   if (editingProduct.value) {
-    await updateProductPrice(editingProductsList.value, editingProduct.value.id, newPrice)
-    refreshLocalOverrides()
-    if (typeof refresh === 'function') {
-      await refresh()
-    }
-    isPriceModalOpen.value = false
-    showToast(`Preço de ${editingProduct.value.name} atualizado!`)
+    const overridePrice = localOverrides.value?.products?.[editingProduct.value.id]?.price
+    newPriceInput.value = overridePrice !== undefined ? overridePrice : editingProduct.value.price
+    isPriceModalOpen.value = true
   }
 }
 
