@@ -13,9 +13,9 @@ export const OptionGroupSchema = z.object({
   id: z.string(),
   name: z.string().optional(),
   title: z.string().optional(),
-  required: z.boolean().default(false),
-  min: z.number().int().nonnegative().default(0),
-  max: z.number().int().positive().default(1),
+  required: z.boolean().optional().default(false),
+  min: z.number().int().nonnegative().optional().default(0),
+  max: z.number().int().positive().optional().default(1),
   items: z.array(OptionItemSchema).optional().default([]),
   options: z.array(OptionItemSchema).optional().default([]),
 })
@@ -32,7 +32,7 @@ export const ProductSchema = z.object({
   available: z.boolean().default(true),
   options: z.array(OptionGroupSchema).optional(),
   optionGroups: z.array(OptionGroupSchema).optional().default([]),
-  durationMinutes: z.number().int().positive().optional(),
+  durationMinutes: z.number().int().nonnegative().optional(),
 })
 
 export const CategorySchema = z.object({
@@ -56,7 +56,7 @@ export const UpdateProductSchema = z.object({
   originalPrice: z.number().positive().optional(),
   isAvailable: z.boolean().optional(),
   options: z.array(OptionGroupSchema).optional(),
-  durationMinutes: z.number().int().positive().optional(),
+  durationMinutes: z.number().int().nonnegative().optional(),
 })
 
 export type OptionItem = z.infer<typeof OptionItemSchema>

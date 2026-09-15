@@ -16,7 +16,7 @@ export const TenantThemeSchema = z.enum([
   'emerald',
   'slate',
   'default',
-]);
+]).default('food');
 
 export const OpeningHoursDaySchema = z.object({
   open: z.string().regex(/^\d{2}:\d{2}$/).or(z.string()),
