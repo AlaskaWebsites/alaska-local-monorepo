@@ -103,7 +103,7 @@ const activePix = computed(() => {
 
 ### B. Padrão Dual-Emit em Ações de Usuário
 Todos os botões de confirmação e switches emitem simultaneamente o evento semântico de domínio e o evento genérico:
-* **Catálogo**: emite `'create-product'`/`'open-create-modal'`, `'toggle-product'`/`'toggle-avail'`, `'edit-price'`/`'open-price-modal'`, `'manage-options'`/`'open-options'` e `'delete-product'`.
+* **Catálogo**: emite `'create-product'`/`'open-create-modal'`, `'toggle-avail'`, `'edit-price'`/`'open-price-modal'`, `'manage-options'`/`'open-options'` e `'delete-product'`.
 * **Pix**: emite `'save-pix'` e `'save'`.
 * **Contato**: emite `'save-contact'` e `'save'`.
 * **Horários**: emite `'save-schedule'`, `'toggle-emergency'` e `'save-emergency'`.
@@ -157,3 +157,28 @@ Após a correção inicial dos contratos das abas, foram identificados e solucio
   1. `effectiveTenant` passa a mesclar reativamente todas as configurações de delivery do lojista.
   2. `CartDrawerModal.vue` implementa a trava `isBelowMinOrder`: se o subtotal for inferior ao pedido mínimo para entregas, o botão de finalização é desabilitado, seu texto é atualizado informando a quantia faltante, e um card de aviso em destaque informa exatamente quanto falta adicionar à sacola.
   3. O tempo estimado de entrega é exibido em badge no `StoreHeaderCard.vue`, no modal `StoreInfoModal.vue` e na seleção de entrega da sacola.
+
+---
+
+## 5. Resolução de Falha no PATCH de Disponibilidade, Banner de Comunicado e Alinhamento do Grid de Metadados
+
+### A. Correção da Assinatura e Eliminação de IDs Booleanos em `toggleProductAvailability`
+* **Problema**: O lojista tentava desativar um produto no painel admin, mas o produto continuava ativo ou retornava erro 404 no console: `PATCH /api/v1/tenants/bella-donna/products/true/availability 404 (Not Found)`.
+* **Causa Raiz**: O componente `admin.vue` invocava `toggleProductAvailability(targetProduct.id, currentStatus)` passando dois argumentos (`string`, `boolean`). O composable `useMerchantAdmin.ts` declarava `(products: Product[], productId: string, currentStatus: boolean)`. Como resultado, `productId` assumia o valor do segundo argumento (`true`), enviando a requisição HTTP com o identificador `'true'` e gravando o override local sob a chave `products["true"]`.
+* **Solução**: O método `toggleProductAvailability` foi blindado com polimorfismo defensivo: aceita tanto `(id, status)` quanto `(products, id, status)` ou `(productObject, status)`, além de validar explicitamente `if (!productId || productId === 'true' || productId === 'false') return false`.
+* **Eliminação de Emissão Dupla**: `AdminCatalogTab.vue` disparava dois eventos simultâneos (`toggle-product` e `toggle-avail`), acionando o handler duas vezes no mesmo clique. Foi padronizado para emitir exclusivamente `toggle-avail`.
+
+### B. Propagação do Comunicado no Storefront (`StoreHeroBanner.vue`)
+* **Problema**: O comunicado configurado na aba "Comunicado" com o switch ativo não aparecia no topo da vitrine da loja.
+* **Causa Raiz**: O componente `index.vue` passava uma string pura com a mensagem em `:announcement="announcementOverride"`, enquanto o componente `StoreHeroBanner.vue` esperava um objeto e avaliava estritamente `announcement?.enabled && announcement?.message`.
+* **Solução**: `StoreHeroBanner.vue` passou a aceitar tanto string quanto objeto estruturado através de `isAnnouncementActive` e `announcementText`. Em `index.vue`, a computada `effectiveAnnouncement` foi padronizada para ler do override local e dos dados canônicos do tenant.
+
+### C. Normalização dos Horários Semanais no Cabeçalho (`StoreHeaderCard.vue`)
+* **Problema**: O botão de horários no storefront exibia apenas o texto `" às "`, sem os horários de início e fim.
+* **Causa Raiz**: Em lojas configuradas com grade detalhada por dia da semana (como Segunda a Domingo em `openingHours.monday`), as chaves de topo `openingHours.open` e `openingHours.close` não existiam, resultando na interpolação de `undefined às undefined`.
+* **Solução**: Implementada a computada `displayHours`, que verifica a escala do dia atual da semana (ex: Domingo/Segunda), exibe `"Fechado hoje"` se for o dia de folga da loja, ou busca o horário padrão configurado nos dias úteis.
+
+### D. Flexbox Balanceado no Cabeçalho da Vitrine
+* **Problema**: No desktop, os botões de localização, prazo de entrega, horário, WhatsApp e Instagram sofriam quebra de espaçamento: WhatsApp e Instagram ficavam espremidos na quarta coluna de um grid rígido, enquanto o horário ficava com espaço excessivo.
+* **Causa Raiz**: Uso de `grid grid-cols-1 sm:grid-cols-4` onde 5 elementos eram distribuídos de forma desproporcional.
+* **Solução**: Substituição por layout flexível fluido `flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5`, garantindo espaçamento simétrico (`gap-x-6`), sem esmagamento dos botões de redes sociais e com auto-alinhamento responsivo em todas as resoluções.

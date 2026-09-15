@@ -58,7 +58,6 @@
           @open-price-modal="openPriceModal"
           @edit-price="openPriceModal"
           @toggle-avail="handleProductAvailabilityToggle"
-          @toggle-product="handleProductAvailabilityToggle"
           @open-create-modal="isCreateProductOpen = true"
           @create-product="isCreateProductOpen = true"
           @delete-product="handleDeleteProduct"

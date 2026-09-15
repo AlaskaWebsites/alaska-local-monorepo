@@ -54,8 +54,7 @@ function handleCreate() {
 }
 
 function handleToggle(categoryProducts: Product[], product: Product) {
-  const status = checkAvailable(product)
-  emit('toggle-product', categoryProducts, product.id, status)
+  // Dispara apenas um evento com o produto completo para evitar duplos cliques acidentais
   emit('toggle-avail', product)
 }
 
@@ -160,7 +159,7 @@ function handleDelete(product: Product) {
             </div>
           </div>
 
-          <!-- Switch Acessível W3C / WCAG -->
+          <!-- Switch Deslizante com Feedback Imediato -->
           <button
             type="button"
             role="switch"

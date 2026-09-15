@@ -7,7 +7,7 @@
       :store-name="effectiveTenant.name"
       :theme="effectiveTenant.theme"
       :is-emergency-closed="effectiveTenant.isEmergencyClosed"
-      :announcement="announcementOverride"
+      :announcement="effectiveAnnouncement"
       @share="shareStore"
     />
 
@@ -270,12 +270,30 @@ const effectiveTenant = computed<Tenant | null>(() => {
   } as Tenant
 })
 
-const announcementOverride = computed(() => {
-  const ann = localOverrides.value.announcement
-  if (ann && ann.enabled) {
-    return ann.message
+const effectiveAnnouncement = computed(() => {
+  const ov = localOverrides.value?.announcement
+  if (ov && typeof ov === 'object') {
+    return {
+      enabled: Boolean(ov.enabled),
+      message: ov.message || ''
+    }
   }
-  return null
+  const tAnnounce = (tenant.value as any)?.announcement
+  if (tAnnounce && typeof tAnnounce === 'object') {
+    return {
+      enabled: Boolean(tAnnounce.enabled),
+      message: tAnnounce.message || ''
+    }
+  }
+  const tMsg = (tenant.value as any)?.announcementMessage
+  const tEnabled = (tenant.value as any)?.announcementEnabled
+  if (tMsg) {
+    return {
+      enabled: Boolean(tEnabled),
+      message: tMsg
+    }
+  }
+  return { enabled: false, message: '' }
 })
 
 // 3. Tema Visual Dinâmico da Loja

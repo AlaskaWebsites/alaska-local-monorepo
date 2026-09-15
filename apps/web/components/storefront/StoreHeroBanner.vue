@@ -1,5 +1,6 @@
 <!-- components/storefront/StoreHeroBanner.vue -->
 <script setup lang="ts">
+import { computed } from 'vue'
 import { ChevronLeft, Share2 } from 'lucide-vue-next'
 import { handleImageError } from '~/utils/images'
 
@@ -8,12 +9,24 @@ const props = defineProps<{
   storeName: string
   theme?: string
   isEmergencyClosed?: boolean
-  announcement?: { enabled?: boolean; message?: string }
+  announcement?: { enabled?: boolean; message?: string } | string | null
 }>()
 
 const emit = defineEmits<{
   (e: 'share'): void
 }>()
+
+const isAnnouncementActive = computed(() => {
+  if (!props.announcement) return false
+  if (typeof props.announcement === 'string') return props.announcement.trim().length > 0
+  return Boolean(props.announcement.enabled && props.announcement.message)
+})
+
+const announcementText = computed(() => {
+  if (!props.announcement) return ''
+  if (typeof props.announcement === 'string') return props.announcement
+  return props.announcement.message || ''
+})
 </script>
 
 <template>
@@ -30,12 +43,12 @@ const emit = defineEmits<{
 
     <!-- Banner de Comunicado Oficial da Loja -->
     <div
-      v-else-if="announcement?.enabled && announcement?.message"
+      v-else-if="isAnnouncementActive"
       class="bg-amber-500 text-slate-950 text-xs font-bold p-2.5 px-4 text-center sticky top-0 z-40 shadow-sm flex items-center justify-center gap-2"
       role="status"
     >
       <span>📢</span>
-      <span>{{ announcement.message }}</span>
+      <span>{{ announcementText }}</span>
     </div>
 
     <!-- Hero Banner Principal com Gradiente Escuro Suave -->

@@ -23,6 +23,8 @@ export interface PixConfigOverride {
   beneficiary?: string
   city?: string
   enabled?: boolean
+  allowTestCent?: boolean
+  depositPercentage?: number
 }
 
 export interface ContactOverride {
@@ -64,17 +66,22 @@ export interface TenantOverrides {
 function getApiBaseUrl(): string {
   try {
     const config = typeof useRuntimeConfig === 'function' ? useRuntimeConfig() : null
-    const url = (config?.public?.apiBaseUrl as string)
-    if (url && !url.includes('localhost')) return url
-    if (typeof window !== 'undefined') {
-      if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        return 'https://alaska-local-api.onrender.com/api/v1'
+    const publicUrl = config?.public?.apiBaseUrl
+    if (publicUrl && typeof publicUrl === 'string' && publicUrl.trim()) {
+      return publicUrl.replace(/\/$/, '')
+    }
+  } catch {}
+
+  try {
+    if (typeof window !== 'undefined' && window.location) {
+      const hostname = window.location.hostname
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        return 'http://localhost:3333/api/v1'
       }
     }
-    return url || 'https://alaska-local-api.onrender.com/api/v1'
-  } catch {
-    return 'https://alaska-local-api.onrender.com/api/v1'
-  }
+  } catch {}
+
+  return 'https://alaska-local-api.onrender.com/api/v1'
 }
 
 const inMemoryStore: Record<string, string> = {}
@@ -135,14 +142,10 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   const apiBaseUrl = getApiBaseUrl()
 
   const currentSlug = computed(() => {
-    let raw = 'default'
-    if (typeof slugOrSource === 'string') raw = slugOrSource
-    else if (isRef(slugOrSource)) raw = slugOrSource.value || 'default'
-    else if (slugOrSource && typeof slugOrSource === 'object' && slugOrSource.slug) raw = slugOrSource.slug
-    else raw = (route?.params?.slug as string) || 'default'
-    const clean = raw.trim().toLowerCase()
-    if (clean === 'adega-e-casa-de-racao-do-rei' || clean === 'casa-de-racao-do-rei') return 'adega-do-rei'
-    return clean
+    if (typeof slugOrSource === 'string') return slugOrSource.trim().toLowerCase()
+    if (isRef(slugOrSource)) return String(slugOrSource.value || 'default').trim().toLowerCase()
+    if (slugOrSource && typeof slugOrSource === 'object' && slugOrSource.slug) return String(slugOrSource.slug).trim().toLowerCase()
+    return String((route?.params?.slug as string) || 'default').trim().toLowerCase()
   })
 
   const tenantSlug = currentSlug
@@ -233,23 +236,44 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
 
   // 1. Catálogo: Pausar e Atualizar Preço
   async function toggleProductAvailability(
-    products: Product[],
-    productId: string,
-    currentStatus: boolean
+    productsOrId: any,
+    productIdOrStatus?: any,
+    statusParam?: any
   ): Promise<boolean> {
     triggerHaptic(20)
+    let productId = ''
+    let currentStatus = true
+    let productsList: Product[] | null = null
+
+    if (typeof productsOrId === 'string') {
+      productId = productsOrId
+      currentStatus = typeof productIdOrStatus === 'boolean' ? productIdOrStatus : true
+    } else if (Array.isArray(productsOrId)) {
+      productsList = productsOrId
+      productId = typeof productIdOrStatus === 'string' ? productIdOrStatus : ''
+      currentStatus = typeof statusParam === 'boolean' ? statusParam : true
+    } else if (productsOrId && typeof productsOrId === 'object' && 'id' in productsOrId) {
+      productId = productsOrId.id
+      currentStatus = typeof productIdOrStatus === 'boolean' ? productIdOrStatus : true
+    }
+
+    if (!productId || productId === 'true' || productId === 'false') {
+      console.warn('[AlaskaAdmin] ID de produto inválido em toggleProductAvailability:', productId)
+      return false
+    }
+
     const newStatus = !currentStatus
 
-    // Atualização otimista em memória na lista atual
-    if (products && Array.isArray(products)) {
-      const prod = products.find(p => p.id === productId)
+    // Atualização otimista em memória na lista se fornecida
+    if (productsList && Array.isArray(productsList)) {
+      const prod = productsList.find(p => p.id === productId)
       if (prod) {
         prod.isAvailable = newStatus
         ;(prod as any).available = newStatus
       }
     }
 
-    // Persiste imediatamente nos overrides locais do estabelecimento para reatividade instantânea e retenção no reload
+    // Persiste imediatamente nos overrides locais do estabelecimento
     const current = getOverrides()
     const existing = current.products?.[productId] || {}
     saveOverrides({
@@ -274,14 +298,31 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   }
 
   async function updateProductPrice(
-    products: Product[],
-    productId: string,
-    newPrice: number
+    productsOrId: any,
+    productIdOrPrice: any,
+    priceParam?: any
   ): Promise<boolean> {
     triggerHaptic(20)
+    let productId = ''
+    let newPrice = 0
+    let productsList: Product[] | null = null
 
-    if (products && Array.isArray(products)) {
-      const prod = products.find(p => p.id === productId)
+    if (typeof productsOrId === 'string') {
+      productId = productsOrId
+      newPrice = Number(productIdOrPrice) || 0
+    } else if (Array.isArray(productsOrId)) {
+      productsList = productsOrId
+      productId = typeof productIdOrPrice === 'string' ? productIdOrPrice : ''
+      newPrice = Number(priceParam) || 0
+    } else if (productsOrId && typeof productsOrId === 'object' && 'id' in productsOrId) {
+      productId = productsOrId.id
+      newPrice = Number(productIdOrPrice) || 0
+    }
+
+    if (!productId) return false
+
+    if (productsList && Array.isArray(productsList)) {
+      const prod = productsList.find(p => p.id === productId)
       if (prod) {
         prod.price = newPrice
       }

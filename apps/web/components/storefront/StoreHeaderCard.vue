@@ -38,6 +38,36 @@ const instagramHandle = computed(() => {
   }
   return clean.startsWith('@') ? clean : `@${clean}`
 })
+
+const displayHours = computed(() => {
+  const hours = props.tenant?.openingHours as any
+  if (!hours) return null
+
+  // 1. Tenta horário de hoje (segunda, terça, etc.)
+  const dayKeys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+  const todayKey = dayKeys[new Date().getDay()]
+  const todayConfig = hours[todayKey]
+  if (todayConfig) {
+    if (todayConfig.closed) return 'Fechado hoje'
+    if (todayConfig.open && todayConfig.close) {
+      return `${todayConfig.open} às ${todayConfig.close}`
+    }
+  }
+
+  // 2. Tenta primeiro dia útil configurado
+  for (const k of ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday']) {
+    if (hours[k]?.open && hours[k]?.close && !hours[k]?.closed) {
+      return `${hours[k].open} às ${hours[k].close}`
+    }
+  }
+
+  // 3. Fallback de nível superior
+  if (hours.open && hours.close) {
+    return `${hours.open} às ${hours.close}`
+  }
+
+  return '09:00 às 19:00'
+})
 </script>
 
 <template>
@@ -121,55 +151,68 @@ const instagramHandle = computed(() => {
         </button>
       </div>
 
-      <!-- Meta Informações Rápidas -->
-      <div class="w-full pt-4 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs text-slate-600">
-        <div v-if="tenant.address" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="emit('open-info')">
+      <!-- Meta Informações Rápidas (Layout Flex Balanceado sem Quebras) -->
+      <div class="w-full pt-4 border-t border-slate-100 flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 text-xs text-slate-600">
+        <!-- 1. Endereço -->
+        <div
+          v-if="tenant.address"
+          class="inline-flex items-center gap-1.5 cursor-pointer hover:text-slate-900 transition-colors"
+          @click="emit('open-info')"
+        >
           <MapPin class="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <span class="truncate">{{ tenant.address }}</span>
+          <span class="truncate max-w-[220px] sm:max-w-[280px]">{{ tenant.address }}</span>
         </div>
 
-        <div v-if="tenant.estimatedTime || tenant.deliveryType" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="emit('open-info')">
+        <!-- 2. Prazo & Modalidade de Entrega -->
+        <div
+          v-if="tenant.estimatedTime || tenant.deliveryType"
+          class="inline-flex items-center gap-1.5 cursor-pointer hover:text-slate-900 transition-colors"
+          @click="emit('open-info')"
+        >
           <Truck class="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <span class="truncate">
+          <span>
             {{ tenant.estimatedTime ? `${tenant.estimatedTime} • ` : '' }}{{ tenant.deliveryType || 'Delivery' }}
           </span>
         </div>
 
-        <div v-if="tenant.openingHours" class="flex items-center justify-center gap-1.5 cursor-pointer hover:text-slate-900" @click="emit('open-info')">
+        <!-- 3. Horários de Funcionamento -->
+        <div
+          v-if="displayHours"
+          class="inline-flex items-center gap-1.5 cursor-pointer hover:text-slate-900 transition-colors"
+          @click="emit('open-info')"
+        >
           <Clock class="w-3.5 h-3.5 text-slate-400 shrink-0" />
-          <span>{{ tenant.openingHours.open }} às {{ tenant.openingHours.close }}</span>
+          <span>{{ displayHours }}</span>
         </div>
 
-        <div class="flex items-center justify-center gap-3">
-          <!-- WhatsApp Link -->
-          <a
-            v-if="tenant.phoneWhatsApp || tenant.whatsapp"
-            :href="`https://wa.me/55${(tenant.phoneWhatsApp || tenant.whatsapp || '').replace(/\\D/g, '')}`"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1"
-          >
-            <Phone class="w-3.5 h-3.5" />
-            <span>WhatsApp</span>
-          </a>
+        <!-- 4. WhatsApp Link -->
+        <a
+          v-if="tenant.phoneWhatsApp || tenant.whatsapp"
+          :href="`https://wa.me/55${(tenant.phoneWhatsApp || tenant.whatsapp || '').replace(/\\D/g, '')}`"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1.5 text-emerald-600 hover:text-emerald-700 font-semibold transition-colors"
+        >
+          <Phone class="w-3.5 h-3.5 shrink-0" />
+          <span>WhatsApp</span>
+        </a>
 
-          <!-- Instagram Link -->
-          <a
-            v-if="instagramUrl"
-            :href="instagramUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-            class="text-rose-600 hover:text-rose-700 font-semibold flex items-center gap-1"
-            :title="`Instagram ${instagramHandle}`"
-          >
-            <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
-              <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
-              <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
-            </svg>
-            <span>Instagram</span>
-          </a>
-        </div>
+        <!-- 5. Instagram Link -->
+        <a
+          v-if="instagramUrl"
+          :href="instagramUrl"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="inline-flex items-center gap-1.5 text-rose-600 hover:text-rose-700 font-semibold transition-colors"
+          :title="`Instagram ${instagramHandle}`"
+        >
+          <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/>
+            <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/>
+            <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+          </svg>
+          <span>Instagram</span>
+        </a>
       </div>
     </div>
   </header>
