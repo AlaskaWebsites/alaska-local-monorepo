@@ -15,7 +15,8 @@ Bem-vindo à base documental unificada do ecossistema **Alaska Local**. Este rep
 docs/
 ├── README.md                              # Índice mestre unificado
 ├── architecture/                          # Arquitetura transacional e cross-cutting
-│   └── seguranca-e-isolamento-multitenant.md # Isolamento multi-tenant (Browser & PostgreSQL RLS)
+│   ├── seguranca-e-isolamento-multitenant.md # Isolamento multi-tenant (Browser & PostgreSQL RLS)
+│   └── diagnostico-tipagem-contratos-e-fail-fast.md # Auditoria de tipagem, contratos e fail-fast
 │
 ├── frontend/                              # Documentação do Front-end (Nuxt 3)
 │   ├── README.md                          # Visão geral do Nuxt 3 e ecossistema web
@@ -39,6 +40,7 @@ docs/
 
 ### 🛡️ Governança & Segurança Monorepo
 * **[Segurança e Isolamento Multi-Tenant](./architecture/seguranca-e-isolamento-multitenant.md)** — Namespacing por slug no navegador, Row Level Security (RLS) no PostgreSQL e autenticação por PIN.
+* **[Diagnóstico de Tipagem, Contratos e Fail-Fast](./architecture/diagnostico-tipagem-contratos-e-fail-fast.md)** — Auditoria de TypeScript, Single Source of Truth no `@alaska/contracts`, ZodValidationPipe e plano de blindagem.
 
 ### 🌐 Frontend & Experiência do Usuário
 * **[ADR 018: Resiliência de Contratos de Props, Emissão Dual e Defesa Anti-Crash](./frontend/adrs/018-resiliencia-de-contratos-props-e-eventos-das-abas-admin.md)** — Padrão dual-prop, dual-emit, canais sociais (Instagram), pedido mínimo no checkout e flexbox balanceado.
