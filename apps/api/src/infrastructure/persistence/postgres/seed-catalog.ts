@@ -58,6 +58,336 @@ export interface StoreSeedData {
 
 export const ALL_10_STORES: StoreSeedData[] = [
   {
+    "slug": "adega-do-rei",
+    "name": "Adega e Casa de Ração do Rei",
+    "description": "O ponto completo na Av. Afonso Moreno: cervejas trincando, destilados, vinhos selecionados, carvão e nutrição premium para cães e gatos com entrega rápida em Francisco Morato.",
+    "logo": "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=200&h=200&fit=crop&q=80",
+    "banner": "https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=1200&h=400&fit=crop&q=80",
+    "phoneWhatsApp": "11973075705",
+    "whatsapp": "11973075705",
+    "address": "Av. Afonso Moreno, 1238 - Res. Casa Grande I, Francisco Morato - SP, CEP 07906-000",
+    "currency": "R$",
+    "deliveryFee": 5.0,
+    "minOrderValue": 20.0,
+    "theme": "amber",
+    "businessCategory": "menu",
+    "openingHours": {
+      "monday": {
+        "open": "07:00",
+        "close": "20:00",
+        "closed": false
+      },
+      "tuesday": {
+        "open": "07:00",
+        "close": "20:00",
+        "closed": false
+      },
+      "wednesday": {
+        "open": "07:00",
+        "close": "20:00",
+        "closed": false
+      },
+      "thursday": {
+        "open": "07:00",
+        "close": "20:00",
+        "closed": false
+      },
+      "friday": {
+        "open": "07:00",
+        "close": "20:00",
+        "closed": false
+      },
+      "saturday": {
+        "open": "07:00",
+        "close": "20:00",
+        "closed": false
+      },
+      "sunday": {
+        "open": "07:00",
+        "close": "15:00",
+        "closed": false
+      },
+      "open": "07:00",
+      "close": "20:00"
+    },
+    "pixConfig": {
+      "key": "11973075705",
+      "keyType": "phone",
+      "beneficiary": "Adega e Casa de Ração do Rei",
+      "city": "FRANCISCO MORATO",
+      "allowTestCent": true,
+      "depositPercentage": 30
+    },
+    "categories": [
+      {
+        "id": "cat-racao-caes",
+        "name": "🐶 Rações para Cães",
+        "icon": "paw",
+        "products": [
+          {
+            "id": "prod-racao-magnus-carne-frango-10kg",
+            "name": "Ração Magnus Todo Dia Carne e Frango Pequeno Porte 10kg",
+            "description": "Nutrição completa para cães de pequeno porte. Pelos brilhantes, pele saudável, mais energia e alta digestibilidade.",
+            "price": 78.99,
+            "image": "https://images.unsplash.com/photo-1589924691995-400dc9ecc119?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          },
+          {
+            "id": "prod-racao-special-dog-carne-10kg",
+            "name": "Ração Special Dog Carne Pequeno Porte 10kg",
+            "description": "Alimento completo com ômegas 3 e 6, extrato de yucca que reduz odor das fezes e 23% de proteína para cães pequenos.",
+            "price": 88.99,
+            "image": "https://images.unsplash.com/photo-1583511655857-d19b40a7a54e?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          },
+          {
+            "id": "prod-racao-premier-grandes-gigantes-15kg",
+            "name": "Ração PremieR Formula Cães Raças Grandes e Gigantes Frango e Mandioca 15kg",
+            "description": "Linha Super Premium com satisfação 110% garantida. Suporte articular com condroitina e glicosamina para raças fortes e musculosas.",
+            "price": 259.99,
+            "image": "https://images.unsplash.com/photo-1568640347023-a616a30bc3bd?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          }
+        ]
+      },
+      {
+        "id": "cat-saches-petiscos",
+        "name": "🥩 Sachês & Petiscos",
+        "icon": "sparkles",
+        "products": [
+          {
+            "id": "prod-sache-golden-gourmet-caes-85g",
+            "name": "Sachê GoldeN Gourmet Cães Adultos Frango com Cenoura e Arroz 85g",
+            "description": "Alimento úmido premium especial sabor frango com legumes. Sem corantes nem aromatizantes artificiais.",
+            "price": 3.0,
+            "image": "https://images.unsplash.com/photo-1548767797-d8c844163c4c?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          },
+          {
+            "id": "prod-sache-special-dog-ultralife-100g",
+            "name": "Sachê Special Dog Ultralife Cães Adultos Carne ao Molho 100g",
+            "description": "Pedaços cozidos a vapor em molho suculento, rico em vitaminas para cães adultos.",
+            "price": 3.0,
+            "image": "https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          },
+          {
+            "id": "prod-sache-granplus-gourmet-100g",
+            "name": "Sachê GranPlus Gourmet Cães e Gatos Carne ao Molho 100g",
+            "description": "Nutrição de alto desempenho e bem-estar para cães e gatos com ingredientes nobres.",
+            "price": 3.0,
+            "image": "https://images.unsplash.com/photo-1574158622682-e40e69881006?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          },
+          {
+            "id": "prod-sache-origens-85g",
+            "name": "Sachê Origens Cães e Gatos Seleção Natural 85g",
+            "description": "Ingredientes de verdade sem corantes artificiais para uma refeição deliciosa e hidratante.",
+            "price": 3.0,
+            "image": "https://images.unsplash.com/photo-1537151608828-ea2b11777ee8?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          },
+          {
+            "id": "prod-bifinho-keldog-carne-65g",
+            "name": "Petisco Bifinho Keldog Carne e Frango 65g",
+            "description": "Snack macio e saboroso feito com carnes frescas, ideal para agrado e recompensa diária.",
+            "price": 4.9,
+            "image": "https://images.unsplash.com/photo-1543466835-00a7907e9de1?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          }
+        ]
+      },
+      {
+        "id": "cat-destilados-whisky",
+        "name": "🥃 Whiskies & Destilados",
+        "icon": "flame",
+        "products": [
+          {
+            "id": "prod-jack-daniels-no7-1l",
+            "name": "Whisky Jack Daniel's Old No. 7 Tennessee Whiskey 1L",
+            "description": "O clássico Tennessee Whiskey filtrado gota a gota em carvão vegetal. Sabor marcante, encorpado e aveludado.",
+            "price": 149.9,
+            "image": "https://images.unsplash.com/photo-1527061011665-3652c757a4d4?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          },
+          {
+            "id": "prod-jack-daniels-apple-1l",
+            "name": "Whisky Jack Daniel's Tennessee Apple 1L",
+            "description": "Mistura do autêntico Old No. 7 com licor crocante de maçã verde. Extremamente refrescante.",
+            "price": 159.9,
+            "image": "https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          },
+          {
+            "id": "prod-jack-daniels-honey-1l",
+            "name": "Whisky Jack Daniel's Tennessee Honey 1L",
+            "description": "Suavidade incomparável combinando o tradicional whisky Jack Daniel's com licor de mel legítimo.",
+            "price": 159.9,
+            "image": "https://images.unsplash.com/photo-1527661591475-527312dd65f5?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          },
+          {
+            "id": "prod-jack-daniels-blackberry-1l",
+            "name": "Whisky Jack Daniel's Tennessee Blackberry 1L",
+            "description": "Edição aromática e exclusiva com notas sofisticadas de amoras silvestres. Excelente para drinks e degustação pura.",
+            "price": 169.9,
+            "image": "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          },
+          {
+            "id": "prod-gelo-sabor-maracuja-coco",
+            "name": "Gelo de Sabor para Drinks Coco com Maracujá 200ml",
+            "description": "Gelo saborizado que potencializa seu drink à medida que derrete. Não aguenta o copo!",
+            "price": 4.5,
+            "image": "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          }
+        ]
+      },
+      {
+        "id": "cat-vinhos-selecionados",
+        "name": "🍷 Vinhos Selecionados",
+        "icon": "wine",
+        "products": [
+          {
+            "id": "prod-vinho-valle-chillan-gran-reserva-750ml",
+            "name": "Vinho Chileno Valle Chillán Cabernet Sauvignon Gran Reserva 750ml",
+            "description": "Vinho fino chileno premium de guarda. Notas de frutas negras, baunilha e taninos aveludados.",
+            "price": 120.0,
+            "image": "https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          },
+          {
+            "id": "prod-vinho-pergola-bordo-suave-1l",
+            "name": "Vinho Pérgola Bordô Tinto Suave 1L",
+            "description": "O vinho de mesa mais consagrado do Brasil. Frutado, equilibrado e perfeito para relaxar ou almoço em família.",
+            "price": 23.5,
+            "image": "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          },
+          {
+            "id": "prod-vinho-san-martin-bordo-seco-750ml",
+            "name": "Vinho San Martin Bordô Tinto Seco 750ml",
+            "description": "Tradição gaúcha em uvas Bordô. Coloração intensa, aroma marcante e paladar estruturado.",
+            "price": 23.5,
+            "image": "https://images.unsplash.com/photo-1553361371-9b22f78e8b1d?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          },
+          {
+            "id": "prod-vinho-san-martin-suave-750ml",
+            "name": "Vinho San Martin Tinto Suave 750ml",
+            "description": "Vinho tinto suave clássico, levemente adocicado e ideal para servir geladinho.",
+            "price": 17.5,
+            "image": "https://images.unsplash.com/photo-1474722883778-792e7990302f?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          },
+          {
+            "id": "prod-vinho-dom-bosco-tinto-suave-750ml",
+            "name": "Vinho Dom Bosco Tinto Suave 750ml",
+            "description": "Tradição de gerações. Vinho tinto suave com aroma de frutas vermelhas e sabor harmonioso.",
+            "price": 17.5,
+            "image": "https://images.unsplash.com/photo-1547595628-c61a29f496f0?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          },
+          {
+            "id": "prod-vinho-dom-bosco-bordo-750ml",
+            "name": "Vinho Dom Bosco Bordô 750ml",
+            "description": "Tinto de mesa elaborado com uvas Bordô. Cor rubi viva e sabor agradável com ótimo custo-benefício.",
+            "price": 14.9,
+            "image": "https://images.unsplash.com/photo-1516594915697-87eb3b1c14ea?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          }
+        ]
+      },
+      {
+        "id": "cat-cervejas-conveniencia",
+        "name": "🍺 Cervejas & Conveniência",
+        "icon": "shopping-bag",
+        "products": [
+          {
+            "id": "prod-pack-cerveja-heineken-lata-6un",
+            "name": "Pack Cerveja Heineken Puro Malte 350ml (6 Latas)",
+            "description": "A cerveja premium puro malte holandesa mais apreciada do mundo. Entregue trincando de gelada.",
+            "price": 38.9,
+            "image": "https://images.unsplash.com/photo-1608270546103-ac6888db6282?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          },
+          {
+            "id": "prod-carvao-vegetal-churrasco-2-5kg",
+            "name": "Carvão Vegetal Selecionado para Churrasco 2,5kg",
+            "description": "Eucalipto reflorestado com pedaços graúdos de fácil acendimento e brasas duradouras.",
+            "price": 18.9,
+            "image": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&h=350&fit=crop&q=80",
+            "isAvailable": true,
+            "available": true,
+            "durationMinutes": 0,
+            "optionGroups": []
+          }
+        ]
+      }
+    ]
+  },
+  {
     "slug": "adega-prime",
     "name": "Adega & Distribuidora Prime",
     "description": "Cervejas trincando, combos de destilados, gelos de sabor, carvão e conveniência com entrega rápida.",
@@ -101,144 +431,81 @@ export const ALL_10_STORES: StoreSeedData[] = [
                 "min": 1,
                 "max": 1,
                 "options": [
-                  {
-                    "id": "gelo-maracuja",
-                    "name": "Maracujá Tropical",
-                    "price": 0
-                  },
-                  {
-                    "id": "gelo-coco",
-                    "name": "Água de Coco",
-                    "price": 0
-                  },
-                  {
-                    "id": "gelo-morango",
-                    "name": "Morango Silvestre",
-                    "price": 0
-                  }
+                  { "id": "opt-gelo-coco-maracuja", "name": "Coco com Maracujá", "price": 0 },
+                  { "id": "opt-gelo-morango", "name": "Morango Silvestre", "price": 0 },
+                  { "id": "opt-gelo-maca-verde", "name": "Maçã Verde", "price": 0 }
                 ]
               }
             ]
           },
           {
-            "id": "prod-combo-whisky",
-            "name": "Kit Whisky Red Label 1L + 4 Energéticos Red Bull",
-            "description": "1 Garrafa Johnnie Walker Red Label 1L + 4 Latas de Energético Red Bull 250ml e copo personalizado da casa.",
+            "id": "prod-combo-whisky-red",
+            "name": "Combo Red Label 1L + 4 Energéticos + Gelo de Coco",
+            "description": "1 Garrafa Whisky Johnnie Walker Red Label 1L, 4 Latas de Red Bull Energy Drink 250ml e 2 Gelos de Coco 200ml.",
             "price": 139.9,
             "image": "https://images.unsplash.com/photo-1527061011665-3652c757a4d4?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true,
-            "optionGroups": [
-              {
-                "id": "opt-copo-whisky",
-                "name": "Acompanhamento Extra",
-                "min": 0,
-                "max": 1,
-                "options": [
-                  {
-                    "id": "copo-acrilico-balde",
-                    "name": "Balde de Gelo Acrílico com Pegador",
-                    "price": 18
-                  },
-                  {
-                    "id": "pacote-bala-halls",
-                    "name": "2x Trident Menta",
-                    "price": 6
-                  }
-                ]
-              }
-            ]
+            "isAvailable": true
           },
           {
-            "id": "prod-combo-vodka",
-            "name": "Kit Vodka Smirnoff 998ml + 1 Energético Baly 2L",
-            "description": "1 Vodka Smirnoff 998ml + 1 Energético Baly 2 Litros (Sabor à escolha) + 2 Gelos de Coco.",
-            "price": 69.9,
-            "image": "https://images.unsplash.com/photo-1560512823-829485b8bf24?w=500&auto=format&fit=crop&q=80",
+            "id": "prod-combo-vodka-absolut",
+            "name": "Combo Vodka Absolut 750ml + 4 Red Bull Tropical",
+            "description": "1 Garrafa Vodka Absolut Regular 750ml e 4 Latas de Red Bull Tropical Edition 250ml trincando de geladas.",
+            "price": 129.9,
+            "image": "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=500&auto=format&fit=crop&q=80",
             "isAvailable": true
           }
         ]
       },
       {
-        "id": "cat-cervejas",
-        "name": "Cervejas & Packs (Trincando)",
+        "id": "cat-cervejas-geladas",
+        "name": "Cervejas Trincando (Lata & Long Neck)",
         "icon": "🍺",
         "products": [
           {
-            "id": "prod-heineken-pack",
-            "name": "Pack Cerveja Heineken 350ml (12 Latas Geladas)",
-            "description": "Fardo fechado com 12 latas de 350ml. Entregue em temperatura abaixo de zero, pronta para consumo.",
-            "price": 68.9,
-            "image": "https://images.unsplash.com/photo-1608270586620-248524c67de9?w=500&auto=format&fit=crop&q=80",
+            "id": "prod-heineken-long-neck",
+            "name": "Heineken Long Neck 330ml (Pack com 6 Unidades)",
+            "description": "Pack com 6 garrafas Long Neck 330ml da verdinha mais pedida do Brasil. Entregue estupidamente gelada.",
+            "price": 42.0,
+            "image": "https://images.unsplash.com/photo-1608270546103-ac6888db6282?w=500&auto=format&fit=crop&q=80",
             "isAvailable": true
           },
           {
-            "id": "prod-spaten-pack",
-            "name": "Pack Cerveja Spaten Munich Helles 350ml (12 Latas)",
-            "description": "Puro malte munich tradicional alemã. Pack com 12 unidades estupidamente geladas.",
-            "price": 54.9,
-            "image": "https://images.unsplash.com/photo-1535958636474-b021ee887b13?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          },
-          {
-            "id": "prod-corona-unidade",
-            "name": "Cerveja Corona Extra 330ml Long Neck (Unidade Gelada)",
-            "description": "Garrafa individual 330ml servida no ponto. Acompanha fatia de limão taiti em embalagem lacrada.",
-            "price": 8.5,
+            "id": "prod-corona-long-neck",
+            "name": "Corona Extra Long Neck 330ml (Pack com 6 Unidades)",
+            "description": "Pack com 6 garrafas 330ml com fatia de limão cortesia. Leve, refrescante e ultra gelada.",
+            "price": 45.0,
             "image": "https://images.unsplash.com/photo-1584225064785-c62a8b43d148?w=500&auto=format&fit=crop&q=80",
+            "isAvailable": true
+          },
+          {
+            "id": "prod-amstel-lata-pack",
+            "name": "Amstel Puro Malte Lata 350ml (Pack com 12 Latas)",
+            "description": "Fardo fechado com 12 latas de 350ml puro malte trincando de geladas.",
+            "price": 48.0,
+            "image": "https://images.unsplash.com/photo-1618886614638-80e3c103d31a?w=500&auto=format&fit=crop&q=80",
             "isAvailable": true
           }
         ]
       },
       {
-        "id": "cat-gelo-carvao",
-        "name": "Gelo, Carvão & Conveniência",
+        "id": "cat-gelo-conveniencia",
+        "name": "Gelo, Carvão & Tabacaria",
         "icon": "🧊",
         "products": [
           {
-            "id": "prod-gelo-cubo",
-            "name": "Saco de Gelo em Cubo 5kg Filtrado",
-            "description": "Gelo em cubo de água filtrada, cristalino e ideal para drinks e champanheiras.",
-            "price": 14,
-            "image": "https://images.unsplash.com/photo-1518895949257-7621c3c786d7?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          },
-          {
             "id": "prod-gelo-sabor-coco",
-            "name": "Gelo de Sabor Coco Leve 200ml (Unidade)",
-            "description": "Gelo saborizado de água de coco pura para harmonizar com whisky e gin.",
+            "name": "Gelo de Coco para Drinks 200ml (Unidade)",
+            "description": "Água de coco natural congelada com embalagem lacrada higiênica. Derrete enriquecendo seu drink.",
             "price": 4.5,
-            "image": "https://images.unsplash.com/photo-1544145945-f90425340c7e?w=500&auto=format&fit=crop&q=80",
+            "image": "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=500&auto=format&fit=crop&q=80",
             "isAvailable": true
           },
           {
-            "id": "prod-carvao-3kg",
+            "id": "prod-carvao-churrasco-3kg",
             "name": "Saco de Carvão Vegetal Especial 3kg",
-            "description": "Carvão selecionado 100% eucalipto reflorestado, brasa duradoura e sem faíscas.",
+            "description": "Carvão vegetal selecionado de eucalipto 100% reflorestado, brasas duradouras e sem faíscas.",
             "price": 19.9,
-            "image": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          }
-        ]
-      },
-      {
-        "id": "cat-petiscos",
-        "name": "Salgadinhos & Petiscos Rápidos",
-        "icon": "🥜",
-        "products": [
-          {
-            "id": "prod-amendoim-japones",
-            "name": "Amendoim Japonês Crocante Dori 150g",
-            "description": "Petisco clássico com casca super crocante de shoyu e especiarias.",
-            "price": 7.5,
-            "image": "https://images.unsplash.com/photo-1599599810769-bcde5a160d32?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          },
-          {
-            "id": "prod-doritos-nacho",
-            "name": "Salgadinho Doritos Queijo Nacho 140g",
-            "description": "Tortilhas crocantes de milho sabor queijo nacho.",
-            "price": 13.9,
-            "image": "https://images.unsplash.com/photo-1566478989037-eec170784d0b?w=500&auto=format&fit=crop&q=80",
+            "image": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=80",
             "isAvailable": true
           }
         ]
@@ -246,105 +513,127 @@ export const ALL_10_STORES: StoreSeedData[] = [
     ]
   },
   {
-    "slug": "barbearia-style",
-    "name": "Barbearia Style",
-    "description": "Cortes modernos, barba com toalha quente, pigmentação e estética masculina.",
-    "logo": "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=150&auto=format&fit=crop&q=80",
-    "banner": "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1200&auto=format&fit=crop&q=80",
-    "phoneWhatsApp": "11977776666",
-    "address": "Rua Augusta, 1200 - Consolação, São Paulo - SP",
-    "businessCategory": "hub",
-    "theme": "barber",
+    "slug": "hamburgueria-x",
+    "name": "Hamburgueria X",
+    "description": "Burgers artesanais grelhados no fogo forte, smashs crocantes, bacon caramelizado e batatas rústicas.",
+    "logo": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=150&auto=format&fit=crop&q=80",
+    "banner": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=1200&auto=format&fit=crop&q=80",
+    "phoneWhatsApp": "11999990000",
+    "address": "Rua das Hamburguerias, 123 - Centro",
+    "businessCategory": "menu",
+    "theme": "food",
     "currency": "BRL",
-    "deliveryFee": 0,
-    "minOrderValue": 0,
+    "deliveryFee": 5,
+    "minOrderValue": 25,
     "openingHours": {
-      "open": "09:00",
-      "close": "20:00"
+      "open": "18:00",
+      "close": "23:30"
     },
     "pixConfig": {
-      "key": "11977776666",
+      "key": "11999990000",
       "keyType": "phone",
-      "beneficiary": "Barbearia Style LTDA",
+      "beneficiary": "Hamburgueria X Artesanal LTDA",
       "city": "SAO PAULO",
-      "allowTestCent": true,
-      "depositPercentage": 30
+      "allowTestCent": true
     },
-    "professionals": [
-      {
-        "id": "prof-1",
-        "name": "Carlos Santos",
-        "role": "Barbeiro Master",
-        "isAvailable": true,
-        "availableDays": [1, 2, 3, 4, 5, 6],
-        "workHours": { "start": "09:00", "end": "20:00" },
-        "lunchBreak": { "start": "12:00", "end": "13:00", "enabled": true }
-      },
-      {
-        "id": "prof-2",
-        "name": "Lucas Oliveira",
-        "role": "Visagista & Barbeiro",
-        "isAvailable": true,
-        "availableDays": [2, 3, 4, 5, 6],
-        "workHours": { "start": "10:00", "end": "20:00" },
-        "lunchBreak": { "start": "14:00", "end": "15:00", "enabled": true }
-      },
-      {
-        "id": "prof-3",
-        "name": "Mateus Silva",
-        "role": "Especialista em Cortes Clássicos",
-        "isAvailable": true,
-        "availableDays": [1, 3, 4, 5, 6],
-        "workHours": { "start": "09:00", "end": "18:00" },
-        "lunchBreak": { "start": "12:00", "end": "13:00", "enabled": false }
-      }
-    ],
     "categories": [
       {
-        "id": "cat-cabelo",
-        "name": "Cabelo & Barba",
-        "icon": "💈",
+        "id": "cat-artesanais",
+        "name": "Burgers Artesanais no Fogo",
+        "icon": "🍔",
         "products": [
           {
-            "id": "serv-corte-degrade",
-            "name": "Corte Masculino Premium + Lavagem",
-            "description": "Degradê navalhado, fade ou clássico na tesoura. Inclui lavagem com shampoo refrescante e finalização com pomada matte.",
-            "price": 45,
-            "durationMinutes": 40,
-            "image": "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=500&auto=format&fit=crop&q=80",
+            "id": "prod-x-bacon-artesanal",
+            "name": "X-Bacon Supremo Defumado",
+            "description": "Pão brioche selado na manteiga, burger Angus 180g grelhado no ponto da casa, queijo cheddar inglês derretido, tiras crocantes de bacon artesanal e maionese defumada.",
+            "price": 34.9,
+            "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=80",
+            "isAvailable": true,
+            "optionGroups": [
+              {
+                "id": "opt-ponto-carne-xbacon",
+                "name": "Ponto da Carne",
+                "min": 1,
+                "max": 1,
+                "options": [
+                  { "id": "opt-ponto-vermelho", "name": "Ao Ponto para Mal (Vermelhinho)", "price": 0 },
+                  { "id": "opt-ponto-casa", "name": "Ao Ponto da Casa (Rosado e Suculento)", "price": 0 },
+                  { "id": "opt-bem-passado", "name": "Bem Passado", "price": 0 }
+                ]
+              },
+              {
+                "id": "opt-adicionais-xbacon",
+                "name": "Turbine seu Burger",
+                "min": 0,
+                "max": 3,
+                "options": [
+                  { "id": "opt-bacon-extra", "name": "Bacon Crocante Extra (+60g)", "price": 6.0 },
+                  { "id": "opt-queijo-cheddar-extra", "name": "Cheddar Cremoso Extra", "price": 5.0 },
+                  { "id": "opt-cebola-caramelizada", "name": "Cebola Caramelizada no Shoyu", "price": 4.5 }
+                ]
+              }
+            ]
+          },
+          {
+            "id": "prod-smash-duplo",
+            "name": "Duplo Smash Cheddar Bacon",
+            "description": "Dois burgers ultra-smash prensados com crostinha crocante (100g cada), fatias duplas de queijo prato, cebola roxa picadinha, picles artesanal e molho especial da casa no pão de batata.",
+            "price": 29.9,
+            "image": "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=500&auto=format&fit=crop&q=80",
             "isAvailable": true
           },
           {
-            "id": "serv-barboterapia",
-            "name": "Barboterapia Tradicional (Toalha Quente)",
-            "description": "Alinhamento com navalhete descartável, esfoliação facial prévia, toalha quente com óleo essencial de menta e pós-barba hidratante.",
-            "price": 38,
-            "durationMinutes": 35,
-            "image": "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          },
-          {
-            "id": "serv-combo-completo",
-            "name": "Combo Style: Cabelo + Barba + Sobrancelha",
-            "description": "Nosso pacote completo mais pedido. Atendimento de 1 hora com direito a 1 cerveja long neck cortesia da casa.",
-            "price": 75,
-            "durationMinutes": 60,
-            "image": "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=500&auto=format&fit=crop&q=80",
+            "id": "prod-x-trufa-gourmet",
+            "name": "Burger Trufado com Queijo Brie",
+            "description": "Burger Angus 200g grelhado, fatias generosas de queijo brie maçaricado, geleia caseira de pimenta vermelha, rúcula precoce e azeite trufado branco no pão australiano tostado.",
+            "price": 42.9,
+            "image": "https://images.unsplash.com/photo-1594212699903-ec8a3eca50f5?w=500&auto=format&fit=crop&q=80",
             "isAvailable": true
           }
         ]
       },
       {
-        "id": "cat-produtos-barbearia",
-        "name": "Produtos para Levar",
-        "icon": "🧴",
+        "id": "cat-acompanhamentos",
+        "name": "Porções & Acompanhamentos Crocantes",
+        "icon": "🍟",
         "products": [
           {
-            "id": "prod-pomada-matte",
-            "name": "Pomada Modeladora Efeito Matte 150g",
-            "description": "Fixação forte sem brilho, à base de água e com aroma amadeirado. Não deixa resíduos.",
-            "price": 39.9,
-            "image": "https://images.unsplash.com/photo-1535585209827-a15fcdbc4c2d?w=500&auto=format&fit=crop&q=80",
+            "id": "prod-batata-rustica-alecrim",
+            "name": "Batatas Rústicas com Alecrim & Alho Confitado",
+            "description": "400g de batatas selecionadas com casca crocante por fora e macias por dentro, salpicadas com sal de parrilla, alecrim fresco e dentes de alho confitados.",
+            "price": 22.0,
+            "image": "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500&auto=format&fit=crop&q=80",
+            "isAvailable": true
+          },
+          {
+            "id": "prod-onion-rings",
+            "name": "Onion Rings Empanadas na Cerveja (10 unidades)",
+            "description": "Anéis de cebola doce fresca empanados em massa temperada com cerveja artesanal e fritos até dourar. Acompanha molho barbecue rústico.",
+            "price": 24.0,
+            "image": "https://images.unsplash.com/photo-1639024471285-0af50758e74a?w=500&auto=format&fit=crop&q=80",
+            "isAvailable": true
+          }
+        ]
+      },
+      {
+        "id": "cat-bebidas-sobremesas",
+        "name": "Bebidas & Sobremesas Artesanais",
+        "icon": "🥤",
+        "products": [
+          {
+            "id": "prod-coca-cola-lata",
+            "name": "Coca-Cola Original Lata 350ml Gelada",
+            "description": "Lata 350ml trincando de gelada.",
+            "price": 6.5,
+            "image": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500&auto=format&fit=crop&q=80",
+            "isAvailable": true
+          },
+          {
+            "id": "prod-shake-nutella",
+            "name": "Milk-Shake Cremoso de Nutella com Ninho 400ml",
+            "description": "Sorvete artesanal de baunilha batido com leite integral, camadas generosas de Nutella pura e finalizado com leite Ninho polvilhado no topo.",
+            "price": 19.9,
+            "image": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=500&auto=format&fit=crop&q=80",
             "isAvailable": true
           }
         ]
@@ -366,7 +655,7 @@ export const ALL_10_STORES: StoreSeedData[] = [
     "minOrderValue": 50,
     "openingHours": {
       "open": "09:00",
-      "close": "18:00"
+      "close": "19:00"
     },
     "pixConfig": {
       "key": "11999990000",
@@ -382,20 +671,20 @@ export const ALL_10_STORES: StoreSeedData[] = [
         "icon": "✨",
         "products": [
           {
-            "id": "prod-conjunto-alfaiataria",
-            "name": "Conjunto Alfaiataria Colete + Calça Pantalona",
-            "description": "Tecido crepe duna encorpado que não amassa. Calça de cintura alta com bolsos faca e colete estruturado com botões encapados.",
-            "price": 189.9,
-            "image": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          },
-          {
             "id": "prod-blazer-oversized",
             "name": "Blazer Feminino Oversized Alfaiataria Max",
             "description": "Forrado internamente, caimento impecável e ombreiras discretas. Versátil para looks casuais ou executivos.",
             "price": 159.9,
             "image": "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500&auto=format&fit=crop&q=80",
             "isAvailable": true
+          },
+          {
+            "id": "prod-conjunto-alfaiataria",
+            "name": "Conjunto Alfaiataria Colete + Calça Pantalona",
+            "description": "Tecido crepe duna encorpado que não amassa. Calça de cintura alta com bolsos faca e colete estruturado com botões encapados.",
+            "price": 189.9,
+            "image": "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=500&auto=format&fit=crop&q=80",
+            "isAvailable": false
           }
         ]
       },
@@ -405,20 +694,20 @@ export const ALL_10_STORES: StoreSeedData[] = [
         "icon": "👗",
         "products": [
           {
-            "id": "prod-vestido-midi",
-            "name": "Vestido Midi Canelado Gola Alta Fenda Lateral",
-            "description": "Malha canelada premium de alta elasticidade que valoriza a silhueta com extremo conforto e elegância.",
-            "price": 99.9,
-            "image": "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          },
-          {
             "id": "prod-vestido-longo-fluido",
             "name": "Vestido Longo Floral Fluido com Lastéx",
             "description": "Alças reguláveis, decote coração com elastex ajustável nas costas. Tecido viscose acetinada fresquinho.",
             "price": 129.9,
             "image": "https://images.unsplash.com/photo-1572804013309-59a88b7e92f1?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
+            "isAvailable": false
+          },
+          {
+            "id": "prod-vestido-midi",
+            "name": "Vestido Midi Canelado Gola Alta Fenda Lateral",
+            "description": "Malha canelada premium de alta elasticidade que valoriza a silhueta com extremo conforto e elegância.",
+            "price": 99.9,
+            "image": "https://images.unsplash.com/photo-1496747611176-843222e1e57c?w=500&auto=format&fit=crop&q=80",
+            "isAvailable": false
           }
         ]
       },
@@ -428,12 +717,20 @@ export const ALL_10_STORES: StoreSeedData[] = [
         "icon": "👚",
         "products": [
           {
+            "id": "prod-camisa-linho",
+            "name": "Camisa Feminina Social Viscolinho Premium",
+            "description": "Toque leve de linho com viscose, mangas compridas com martingale para dobrar e botões tartaruga.",
+            "price": 89.9,
+            "image": "https://images.unsplash.com/photo-1598554747436-c9293d6a588f?w=500&auto=format&fit=crop&q=80",
+            "isAvailable": false
+          },
+          {
             "id": "prod-cropped-amarracao",
             "name": "Cropped Manga Bufante com Amarração Frontal",
             "description": "Tendência absoluta! Mangas com elástico suave e amarração frontal que permite ajustar o decote.",
             "price": 59.9,
             "image": "https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
+            "isAvailable": false
           },
           {
             "id": "prod-tshirt-algodao",
@@ -441,15 +738,7 @@ export const ALL_10_STORES: StoreSeedData[] = [
             "description": "Gola redonda em ribana, toque aveludado e estampa silk de alta durabilidade que não desbota na lavagem.",
             "price": 49.9,
             "image": "https://images.unsplash.com/photo-1521572267360-ee0c2909d518?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          },
-          {
-            "id": "prod-camisa-linho",
-            "name": "Camisa Feminina Social Viscolinho Premium",
-            "description": "Toque leve de linho com viscose, mangas compridas com martingale para dobrar e botões tartaruga.",
-            "price": 89.9,
-            "image": "https://images.unsplash.com/photo-1598554747436-c9293d6a588f?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
+            "isAvailable": false
           }
         ]
       },
@@ -464,7 +753,7 @@ export const ALL_10_STORES: StoreSeedData[] = [
             "description": "Jeans 100% algodão sem elastano, caimento soltinho reto da coxa até a barra. Clássico contemporâneo.",
             "price": 139.9,
             "image": "https://images.unsplash.com/photo-1541099649105-f69ad21f3246?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
+            "isAvailable": false
           },
           {
             "id": "prod-calca-pantalona-crepe",
@@ -502,89 +791,106 @@ export const ALL_10_STORES: StoreSeedData[] = [
     ]
   },
   {
-    "slug": "cafe-central",
-    "name": "Café Central",
-    "description": "Cafés especiais moídos na hora, cappuccinos artesanais, croissants folhados e confeitaria fina.",
-    "logo": "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=150&auto=format&fit=crop&q=80",
-    "banner": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=1200&auto=format&fit=crop&q=80",
-    "phoneWhatsApp": "11988881111",
-    "address": "Rua Oscar Freire, 320 - Jardins, São Paulo - SP",
-    "businessCategory": "menu",
-    "theme": "food",
+    "slug": "barbearia-style",
+    "name": "Barbearia Vintage Style",
+    "description": "Cortes clássicos e modernos, barba com toalha quente, navalha e cerveja gelada.",
+    "logo": "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=150&auto=format&fit=crop&q=80",
+    "banner": "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=1200&auto=format&fit=crop&q=80",
+    "phoneWhatsApp": "11977778888",
+    "address": "Rua Augusta, 500 - Consolação",
+    "businessCategory": "hub",
+    "theme": "barber",
     "currency": "BRL",
-    "deliveryFee": 8,
-    "minOrderValue": 25,
+    "deliveryFee": 0,
+    "minOrderValue": 0,
     "openingHours": {
-      "open": "07:30",
-      "close": "19:00"
+      "open": "09:00",
+      "close": "20:00"
     },
     "pixConfig": {
-      "key": "11988881111",
+      "key": "11977778888",
       "keyType": "phone",
-      "beneficiary": "Café Central Bistrô",
+      "beneficiary": "Vintage Style Barbearia LTDA",
       "city": "SAO PAULO",
       "allowTestCent": true
     },
+    "professionals": [
+      {
+        "id": "prof-1",
+        "name": "Carlos Navalha",
+        "role": "Master Barber & Visagista",
+        "isAvailable": true,
+        "availableDays": [1, 2, 3, 4, 5, 6],
+        "workHours": { "start": "09:00", "end": "19:00" },
+        "lunchBreak": { "start": "12:00", "end": "13:00", "enabled": true }
+      },
+      {
+        "id": "prof-2",
+        "name": "Lucas Fade",
+        "role": "Especialista em Degradê & Barba Terapêutica",
+        "isAvailable": true,
+        "availableDays": [1, 2, 3, 4, 5, 6],
+        "workHours": { "start": "10:00", "end": "20:00" },
+        "lunchBreak": { "start": "13:00", "end": "14:00", "enabled": true }
+      }
+    ],
     "categories": [
       {
-        "id": "cat-cafes-quentes",
-        "name": "Cafés Especiais & Bebidas Quentes",
-        "icon": "☕",
+        "id": "cat-servicos-barba-cabelo",
+        "name": "Serviços de Cabelo & Barba",
+        "icon": "✂️",
         "products": [
           {
-            "id": "prod-cappuccino-italiano",
-            "name": "Cappuccino Italiano Clássico com Canela",
-            "description": "Dose dupla de espresso arábica, leite vaporizado cremoso, polvilhado com cacau 70% e raspas de canela.",
-            "price": 14.5,
-            "image": "https://images.unsplash.com/photo-1534778101976-62847782c213?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
+            "id": "prod-corte-cabelo-degrade",
+            "name": "Corte Masculino Degradê / Social na Tesoura",
+            "description": "Lavagem com shampoo mentolado, corte personalizado conforme o visagismo do rosto e finalização com pomada modeladora matte.",
+            "price": 45.0,
+            "image": "https://images.unsplash.com/photo-1622286342621-4bd786c2447c?w=500&auto=format&fit=crop&q=80",
+            "isAvailable": true,
+            "durationMinutes": 30
           },
           {
-            "id": "prod-espresso-duplo",
-            "name": "Espresso Duplo Grãos Selecionados Cerrado Mineiro",
-            "description": "60ml de café puro com crema espessa e notas aromáticas amendoadas de chocolate meio amargo.",
-            "price": 9.9,
-            "image": "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
+            "id": "prod-barba-terapia-toalha-quente",
+            "name": "Barba Terapia com Toalha Quente & Ozônio",
+            "description": "Esfoliação facial, aplicação de óleos essenciais, toalha quente emoliente, barbear clássico na navalha descartável e pós-barba refrescante.",
+            "price": 35.0,
+            "image": "https://images.unsplash.com/photo-1503951914875-452162b0f3f1?w=500&auto=format&fit=crop&q=80",
+            "isAvailable": true,
+            "durationMinutes": 30
           },
           {
-            "id": "prod-mocha-chocolate",
-            "name": "Mocha Especial com Calda Artesanal de Chocolate Belga",
-            "description": "Espresso, leite vaporizado e generosa camada de ganache de chocolate belga finalizado com chantilly.",
-            "price": 18,
-            "image": "https://images.unsplash.com/photo-1572442388796-11668a67e53d?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
+            "id": "prod-combo-cabelo-barba",
+            "name": "Combo Completo: Cabelo + Barba + Sobrancelha",
+            "description": "Experiência completa de cuidado masculino com corte, barba terapia e alinhamento de sobrancelha na navalha. Cortesia: 1 Cerveja Long Neck.",
+            "price": 75.0,
+            "image": "https://images.unsplash.com/photo-1517832606589-7157be614e5b?w=500&auto=format&fit=crop&q=80",
+            "isAvailable": true,
+            "durationMinutes": 60
           }
         ]
       },
       {
-        "id": "cat-confeitaria-folhados",
-        "name": "Croissants, Quiches & Confeitaria",
-        "icon": "🥐",
+        "id": "cat-pomadas-cuidados",
+        "name": "Produtos de Barbearia para Levar",
+        "icon": "💈",
         "products": [
           {
-            "id": "prod-croissant-manteiga",
-            "name": "Croissant Francês Folhado na Manteiga",
-            "description": "Massa artesanal fermentada por 48h, super crocante por fora e com alvéolos macios amanteigados por dentro.",
-            "price": 16,
-            "image": "https://images.unsplash.com/photo-1555507036-ab1f4038808a?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
+            "id": "prod-pomada-matte-150g",
+            "name": "Pomada Modeladora Efeito Matte Seco 150g",
+            "description": "Alta fixação sem brilho, fácil de remover na água e aroma refrescante amadeirado.",
+            "price": 35.0,
+            "image": "https://images.unsplash.com/photo-1512290900672-1a48c4fa06ef?w=500&auto=format&fit=crop&q=80",
+            "isAvailable": true,
+            "durationMinutes": 0
           },
           {
-            "id": "prod-cheesecake-frutas",
-            "name": "Cheesecake Clássica com Calda de Frutas Vermelhas",
-            "description": "Base crocante de biscoito amanteigado, recheio denso de cream cheese e calda artesanal com pedaços de amora e framboesa.",
-            "price": 22.9,
-            "image": "https://images.unsplash.com/photo-1533134242443-d4fd215305ad?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          },
-          {
-            "id": "prod-quiche-alho-poro",
-            "name": "Fatia de Quiche Lorraine com Alho-Poró e Queijo Gruyère",
-            "description": "Massa brisée levinha que derrete na boca com recheio cremoso à base de creme de leite fresco e queijos selecionados.",
-            "price": 19.5,
-            "image": "https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
+            "id": "prod-oleo-para-barba-30ml",
+            "name": "Óleo Hidratante para Barba com Cravo & Cedro 30ml",
+            "description": "Hidrata os fios ressecados, alivia a coceira inicial da barba e deixa toque sedoso com brilho suave.",
+            "price": 29.9,
+            "image": "https://images.unsplash.com/photo-1608248597359-21b2bfa9f664?w=500&auto=format&fit=crop&q=80",
+            "isAvailable": true,
+            "durationMinutes": 0
           }
         ]
       }
@@ -592,12 +898,12 @@ export const ALL_10_STORES: StoreSeedData[] = [
   },
   {
     "slug": "clinica-sorriso",
-    "name": "Clínica Sorriso",
-    "description": "Odontologia moderna, implantes guiados, clareamento a laser, ortodontia invisível e harmonização facial.",
+    "name": "Clínica Odonto Sorriso",
+    "description": "Tratamentos odontológicos completos, ortodontia, clareamento e implantes com tecnologia de ponta.",
     "logo": "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=150&auto=format&fit=crop&q=80",
-    "banner": "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=1200&auto=format&fit=crop&q=80",
-    "phoneWhatsApp": "11966665555",
-    "address": "Av. Rebouças, 1500 - Pinheiros, São Paulo - SP",
+    "banner": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?w=1200&auto=format&fit=crop&q=80",
+    "phoneWhatsApp": "11966667777",
+    "address": "Alameda Santos, 1000 - Jardins",
     "businessCategory": "pro",
     "theme": "health",
     "currency": "BRL",
@@ -608,73 +914,121 @@ export const ALL_10_STORES: StoreSeedData[] = [
       "close": "19:00"
     },
     "pixConfig": {
-      "key": "11966665555",
+      "key": "11966667777",
       "keyType": "phone",
-      "beneficiary": "Clinica Sorriso Odonto LTDA",
+      "beneficiary": "Clinica Odonto Sorriso LTDA",
       "city": "SAO PAULO",
-      "allowTestCent": true,
-      "depositPercentage": 20
+      "allowTestCent": true
     },
     "professionals": [
       {
         "id": "prof-1",
-        "name": "Dra. Camila Rocha",
-        "role": "Ortodontista & Estética",
+        "name": "Dra. Beatriz Mendes",
+        "role": "Cirurgiã Dentista & Ortodontista (CRO-SP 114829)",
         "isAvailable": true,
-        "availableDays": [1, 2, 3, 4, 5, 6],
-        "workHours": { "start": "08:00", "end": "18:00" },
+        "availableDays": [1, 2, 3, 4, 5],
+        "workHours": { "start": "08:00", "end": "17:00" },
         "lunchBreak": { "start": "12:00", "end": "13:00", "enabled": true }
       },
       {
         "id": "prof-2",
-        "name": "Dr. Rafael Mendes",
-        "role": "Implantodontista & Cirurgião",
+        "name": "Dr. Fernando Sato",
+        "role": "Implantodontista & Reabilitação Oral (CRO-SP 98231)",
         "isAvailable": true,
-        "availableDays": [2, 3, 4, 5, 6],
-        "workHours": { "start": "09:00", "end": "19:00" },
+        "availableDays": [1, 2, 3, 4, 5],
+        "workHours": { "start": "09:00", "end": "18:00" },
         "lunchBreak": { "start": "13:00", "end": "14:00", "enabled": true }
-      },
-      {
-        "id": "prof-3",
-        "name": "Dra. Beatriz Lima",
-        "role": "Clínica Geral & Periodontia",
-        "isAvailable": true,
-        "availableDays": [1, 3, 4, 5, 6],
-        "workHours": { "start": "08:00", "end": "17:00" },
-        "lunchBreak": { "start": "12:00", "end": "13:00", "enabled": true }
       }
     ],
     "categories": [
       {
-        "id": "cat-consultas-procedimentos",
+        "id": "cat-consultas-odontologicas",
         "name": "Procedimentos & Consultas Odontológicas",
         "icon": "🦷",
         "products": [
           {
-            "id": "serv-avaliacao-inicial",
-            "name": "Consulta de Avaliação Completa com Check-up Digital",
-            "description": "Exame clínico detalhado, câmera intraoral de alta definição e planejamento digital do tratamento.",
-            "price": 120,
-            "durationMinutes": 45,
+            "id": "prod-avaliacao-checkup-digital",
+            "name": "Consulta de Avaliação & Check-up Digital Completo",
+            "description": "Exame clínico detalhado, profilaxia com jato de bicarbonato, registro fotográfico intraoral e planejamento digital do sorriso.",
+            "price": 120.0,
             "image": "https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
+            "isAvailable": true,
+            "durationMinutes": 45
           },
           {
-            "id": "serv-limpeza-profilaxia",
-            "name": "Profilaxia Profissional com Ultrassom e Jato de Bicarbonato",
-            "description": "Remoção completa de tártaro e placa bacteriana, polimento dental coronário e aplicação tópica de flúor.",
-            "price": 180,
-            "durationMinutes": 50,
+            "id": "prod-clareamento-laser",
+            "name": "Sessão de Clareamento Dental a Laser no Consultório",
+            "description": "Sessão clínica com gel clareador de alta performance ativado por luz de laser de última geração. Dentes brancos em 1 hora.",
+            "price": 380.0,
             "image": "https://images.unsplash.com/photo-1606811841689-23dfddce3e95?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
+            "isAvailable": true,
+            "durationMinutes": 60
           },
           {
-            "id": "serv-clareamento-laser",
-            "name": "Sessão de Clareamento Dental a Laser em Consultório",
-            "description": "Aplicação de gel clareador de peróxido potencializado por luz LED/Laser. Dentes até 4 tons mais brancos na sessão.",
-            "price": 450,
-            "durationMinutes": 60,
-            "image": "https://images.unsplash.com/photo-1629909613654-28e377c37b09?w=500&auto=format&fit=crop&q=80",
+            "id": "prod-manutencao-ortodontica",
+            "name": "Manutenção Ortodôntica Mensal (Aparelho Fixo / Alinhador)",
+            "description": "Troca de fios e borrachinhas, ajuste da força mecânica e acompanhamento da movimentação dental.",
+            "price": 110.0,
+            "image": "https://images.unsplash.com/photo-1598256989800-fe5f95da9787?w=500&auto=format&fit=crop&q=80",
+            "isAvailable": true,
+            "durationMinutes": 30
+          }
+        ]
+      },
+      {
+        "id": "cat-higiene-oral-home",
+        "name": "Produtos de Higiene Oral Recomendados",
+        "icon": "✨",
+        "products": [
+          {
+            "id": "prod-kit-escova-curaprox",
+            "name": "Kit Escova Curaprox Ultra Soft 5460 (2 unidades)",
+            "description": "Cerdas ultra macias de Curen que não agridem a gengiva nem desgastam o esmalte dentário.",
+            "price": 49.9,
+            "image": "https://images.unsplash.com/photo-1559591937-e62fb330bc1f?w=500&auto=format&fit=crop&q=80",
+            "isAvailable": true,
+            "durationMinutes": 0
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "slug": "cafe-central",
+    "name": "Café & Bistrô Central",
+    "description": "Cafés especiais moídos na hora, brunchs deliciosos, tortas artesanais e pães de fermentação natural.",
+    "logo": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?w=150&auto=format&fit=crop&q=80",
+    "banner": "https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=1200&auto=format&fit=crop&q=80",
+    "phoneWhatsApp": "11944445555",
+    "address": "Praça da Sé, 50 - Centro Histórico",
+    "businessCategory": "menu",
+    "theme": "food",
+    "currency": "BRL",
+    "deliveryFee": 6,
+    "minOrderValue": 20,
+    "openingHours": {
+      "open": "07:30",
+      "close": "19:00"
+    },
+    "pixConfig": {
+      "key": "11944445555",
+      "keyType": "phone",
+      "beneficiary": "Cafe Bistro Central Eireli",
+      "city": "SAO PAULO",
+      "allowTestCent": true
+    },
+    "categories": [
+      {
+        "id": "cat-cafes-especiais",
+        "name": "Cafés Filtrados & Espresso",
+        "icon": "☕",
+        "products": [
+          {
+            "id": "prod-cappuccino-italiano",
+            "name": "Cappuccino Italiano Cremoso com Canela",
+            "description": "Dose dupla de espresso da Alta Mogiana, leite vaporizado com microespuma densa e toque suave de cacau 70% com canela.",
+            "price": 14.9,
+            "image": "https://images.unsplash.com/photo-1534778101976-62847782c213?w=500&auto=format&fit=crop&q=80",
             "isAvailable": true
           }
         ]
@@ -683,261 +1037,40 @@ export const ALL_10_STORES: StoreSeedData[] = [
   },
   {
     "slug": "espetaria-brasa",
-    "name": "Espetaria & Hamburgueria Brasa Viva",
-    "description": "Espetinhos nobres grelhados no fogo a lenha, jantinhas completas com tropeiro e burgers defumados.",
+    "name": "Espetaria & Petiscaria Brasa Viva",
+    "description": "Espetos artesanais na brasa, porções caprichadas, chopp gelado e música ao vivo.",
     "logo": "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=150&auto=format&fit=crop&q=80",
     "banner": "https://images.unsplash.com/photo-1544025162-d76694265947?w=1200&auto=format&fit=crop&q=80",
-    "phoneWhatsApp": "11955558888",
-    "address": "Rua do Fogo, 400 - Tatuapé, São Paulo - SP",
+    "phoneWhatsApp": "11933334444",
+    "address": "Av. das Nações, 250 - Vila Nova",
     "businessCategory": "menu",
-    "theme": "rose",
+    "theme": "food",
     "currency": "BRL",
-    "deliveryFee": 9,
+    "deliveryFee": 8,
     "minOrderValue": 35,
     "openingHours": {
-      "open": "17:30",
-      "close": "23:59"
+      "open": "17:00",
+      "close": "01:00"
     },
     "pixConfig": {
-      "key": "11955558888",
+      "key": "11933334444",
       "keyType": "phone",
-      "beneficiary": "Espetaria Brasa Viva LTDA",
+      "beneficiary": "Brasa Viva Espetaria LTDA",
       "city": "SAO PAULO",
       "allowTestCent": true
     },
     "categories": [
       {
-        "id": "cat-espetinhos-carnes",
-        "name": "Espetos Nobres na Brasa",
+        "id": "cat-espetos-carvao",
+        "name": "Espetos Artesanais na Brasa",
         "icon": "🍢",
         "products": [
           {
             "id": "prod-espeto-picanha",
-            "name": "Espetinho de Picanha Grill com Sal Grosso de Parrilla",
-            "description": "Cubos macios de picanha maturada, intercalados com bacon crocante e selados no ponto certo.",
-            "price": 22,
-            "image": "https://images.unsplash.com/photo-1544025162-d76694265947?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          },
-          {
-            "id": "prod-espeto-frango-bacon",
-            "name": "Medalhão de Frango com Bacon Defumado Artesanal",
-            "description": "Peito de frango suculento marinado em ervas finas e envolvido em fatias crocantes de bacon.",
-            "price": 16.5,
-            "image": "https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          },
-          {
-            "id": "prod-espeto-queijo-coalho",
-            "name": "Espeto de Queijo Coalho Dourado com Melaço de Cana",
-            "description": "Capa dourada e crocante por fora com interior macio, acompanhado de sachê de melaço artesanal.",
-            "price": 15,
-            "image": "https://images.unsplash.com/photo-1563245372-f21724e3856d?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          }
-        ]
-      },
-      {
-        "id": "cat-jantinhas-combos",
-        "name": "Jantinhas Completas da Casa",
-        "icon": "🥘",
-        "products": [
-          {
-            "id": "prod-jantinha-tradicional",
-            "name": "Jantinha Clássica Mineira (Espeto à Escolha + Acompanhamentos)",
-            "description": "Acompanha arroz branco soltinho, feijão tropeiro tradicional com torresmo, mandioca cozida na manteiga de garrafa e vinagrete.",
-            "price": 38.9,
+            "name": "Espeto de Picanha Grill com Farofa e Vinagrete",
+            "description": "Cubos nobres de picanha com capa de gordura dourada no braseiro alto. Acompanha farofa crocante e vinagrete caseiro.",
+            "price": 18.9,
             "image": "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          }
-        ]
-      },
-      {
-        "id": "cat-acompanhamentos-porcoes",
-        "name": "Porções & Guarnições",
-        "icon": "🍟",
-        "products": [
-          {
-            "id": "prod-mandioca-frita-bacon",
-            "name": "Porção de Mandioca Cremosa com Bacon e Queijo Parmesão",
-            "description": "Cozida e frita na hora, super crocante com queijo ralado fresco derretido por cima.",
-            "price": 28,
-            "image": "https://images.unsplash.com/photo-1576107232684-1279f3908594?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          }
-        ]
-      },
-      {
-        "id": "cat-bebidas-geladas",
-        "name": "Bebidas & Refrigerantes",
-        "icon": "🥤",
-        "products": [
-          {
-            "id": "prod-refrigerante-lata",
-            "name": "Coca-Cola Original 350ml Lata Gelada",
-            "description": "Lata de 350ml entregue bem gelada.",
-            "price": 6.5,
-            "image": "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "slug": "hamburgueria-x",
-    "name": "Hamburgueria X Artesanal",
-    "description": "Burgers artesanais grelhados no fogo alto, smashs ultra crocantes, batatas rústicas e milkshakes cremosos.",
-    "logo": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=150&auto=format&fit=crop&q=80",
-    "banner": "https://images.unsplash.com/photo-1550547660-d9450f859349?w=1200&auto=format&fit=crop&q=80",
-    "phoneWhatsApp": "11988882222",
-    "address": "Av. Ibirapuera, 900 - Moema, São Paulo - SP",
-    "businessCategory": "menu",
-    "theme": "amber",
-    "currency": "BRL",
-    "deliveryFee": 8.5,
-    "minOrderValue": 30,
-    "openingHours": {
-      "open": "18:00",
-      "close": "23:59"
-    },
-    "pixConfig": {
-      "key": "11988882222",
-      "keyType": "phone",
-      "beneficiary": "Hamburgueria X Artesanal LTDA",
-      "city": "SAO PAULO",
-      "allowTestCent": true
-    },
-    "categories": [
-      {
-        "id": "cat-burgers-artesanais",
-        "name": "Burgers Artesanais no Brioche",
-        "icon": "🍔",
-        "products": [
-          {
-            "id": "prod-x-bacon-artesanal",
-            "name": "X-Bacon Supremo (Blend 180g + Cheddar Inglês)",
-            "description": "Pão brioche tostado na manteiga, blend bovino Angus 180g, fatias generosas de bacon crocante, cheddar derretido e maionese defumada da casa.",
-            "price": 36.9,
-            "image": "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          },
-          {
-            "id": "prod-double-smash-crocante",
-            "name": "Double Smash Burger Crocante com Picles e Cebola Roxa",
-            "description": "2x ultra smash 90g com crostinha tostada perfeita, queijo prato duplo, picles agridoce em fatias e molho especial.",
-            "price": 32.9,
-            "image": "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          }
-        ]
-      },
-      {
-        "id": "cat-acompanhamentos-fritas",
-        "name": "Batatas & Snacks",
-        "icon": "🍟",
-        "products": [
-          {
-            "id": "prod-batata-rustica-alecrim",
-            "name": "Batata Rústica com Alecrim e Sal Grosso",
-            "description": "Batatas cortadas à mão com casca, fritas na temperatura perfeita com dentes de alho confitados e alecrim fresco.",
-            "price": 24,
-            "image": "https://images.unsplash.com/photo-1573080496219-bb080dd4f877?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          }
-        ]
-      },
-      {
-        "id": "cat-milkshakes-sobremesas",
-        "name": "Milkshakes & Sobremesas",
-        "icon": "🥤",
-        "products": [
-          {
-            "id": "prod-shake-nutella",
-            "name": "Milkshake de Nutella com Ninho 500ml",
-            "description": "Sorvete artesanal de baunilha batido com creme de avelã Nutella pura, leite Ninho e borda com calda.",
-            "price": 22.9,
-            "image": "https://images.unsplash.com/photo-1572490122747-3968b75cc699?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "slug": "karine-finardi",
-    "name": "Karine Finardi Semijoias",
-    "description": "Semijoias finas antialérgicas, banhadas a ouro 18k e prata 925 com garantia de 1 ano e design autoral.",
-    "logo": "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?w=150&auto=format&fit=crop&q=80",
-    "banner": "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=1200&auto=format&fit=crop&q=80",
-    "phoneWhatsApp": "11999998888",
-    "address": "Centro Comercial Morato - Francisco Morato - SP",
-    "businessCategory": "shop",
-    "theme": "rose",
-    "currency": "BRL",
-    "deliveryFee": 10,
-    "minOrderValue": 50,
-    "openingHours": {
-      "open": "09:00",
-      "close": "19:00"
-    },
-    "pixConfig": {
-      "key": "11999998888",
-      "keyType": "phone",
-      "beneficiary": "Karine Finardi Semijoias",
-      "city": "FRANCISCO MORATO",
-      "allowTestCent": true
-    },
-    "categories": [
-      {
-        "id": "cat-colares-chokers",
-        "name": "Colares, Chokers & Pingentes",
-        "icon": "📿",
-        "products": [
-          {
-            "id": "prod-colar-ponto-luz",
-            "name": "Colar Ponto de Luz Zircônia Redonda Ouro 18k",
-            "description": "Corrente veneziana de 45cm com extensor de 5cm e zircônia cúbica com brilho de diamante. Banho antialérgico de 10 milésimos.",
-            "price": 89.9,
-            "image": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          },
-          {
-            "id": "prod-choker-fita-laminada",
-            "name": "Choker Fita Laminada Espelhada 4mm Banhada Ouro 18k",
-            "description": "Brilho espelhado que reflete a luz com movimento fluido. Fecho lagosta resistente com verniz cataforético.",
-            "price": 119.9,
-            "image": "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          }
-        ]
-      },
-      {
-        "id": "cat-brincos-argolas",
-        "name": "Brincos, Argolas & Earcuffs",
-        "icon": "💎",
-        "products": [
-          {
-            "id": "prod-argola-cravejada",
-            "name": "Argola Média Cravejada em Microzircônias Prata 925",
-            "description": "Fecho click anatômico super confortável que não machuca para dormir. Duas fileiras de microzircônias brancas.",
-            "price": 79.9,
-            "image": "https://images.unsplash.com/photo-1630019852942-f89202989a59?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          }
-        ]
-      },
-      {
-        "id": "cat-pulseiras-braceletes",
-        "name": "Pulseiras & Riviera",
-        "icon": "✨",
-        "products": [
-          {
-            "id": "prod-pulseira-riviera",
-            "name": "Pulseira Riviera Tennis Cravejada com Trava Dupla",
-            "description": "Sofisticação absoluta. Zircônias lapidadas individualmente presas por 4 garras seguras.",
-            "price": 149.9,
-            "image": "https://images.unsplash.com/photo-1611591475839-729c24ed983b?w=500&auto=format&fit=crop&q=80",
             "isAvailable": true
           }
         ]
@@ -946,14 +1079,14 @@ export const ALL_10_STORES: StoreSeedData[] = [
   },
   {
     "slug": "restaurante-bella-italia",
-    "name": "Restaurante Bella Italia",
-    "description": "Massas frescas artesanais preparadas na hora, molhos tradicionais italianos e sobremesas típicas.",
-    "logo": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=150&auto=format&fit=crop&q=80",
-    "banner": "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=1200&auto=format&fit=crop&q=80",
-    "phoneWhatsApp": "11944443333",
-    "address": "Rua Treze de Maio, 700 - Bixiga, São Paulo - SP",
+    "name": "Cantina & Restaurante Bella Itália",
+    "description": "Massas artesanais frescas, molhos italianos tradicionais, risotos e cartas de vinhos nobres.",
+    "logo": "https://images.unsplash.com/photo-1551183053-bf91a1d81141?w=150&auto=format&fit=crop&q=80",
+    "banner": "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=1200&auto=format&fit=crop&q=80",
+    "phoneWhatsApp": "11922223333",
+    "address": "Rua Treze de Maio, 800 - Bixiga",
     "businessCategory": "menu",
-    "theme": "emerald",
+    "theme": "food",
     "currency": "BRL",
     "deliveryFee": 10,
     "minOrderValue": 45,
@@ -962,160 +1095,24 @@ export const ALL_10_STORES: StoreSeedData[] = [
       "close": "23:00"
     },
     "pixConfig": {
-      "key": "11944443333",
+      "key": "11922223333",
       "keyType": "phone",
-      "beneficiary": "Restaurante Bella Italia LTDA",
+      "beneficiary": "Cantina Bella Italia LTDA",
       "city": "SAO PAULO",
       "allowTestCent": true
     },
     "categories": [
       {
         "id": "cat-massas-frescas",
-        "name": "Massas Artesanais da Nonna",
+        "name": "Massas Artesanais da Casa",
         "icon": "🍝",
         "products": [
           {
             "id": "prod-fettuccine-alfredo",
-            "name": "Fettuccine Alfredo Clássico com Lascas de Parmigiano Reggiano",
-            "description": "Massa longa fresca feita com sêmola de trigo durum, emulsão cremosa de manteiga trufada e queijo parmesão 24 meses.",
-            "price": 58,
+            "name": "Fettuccine Alfredo com Iscas de Filet Mignon",
+            "description": "Massa fresca da casa salteada em emulsão rica de manteiga francesa, parmesão Grana Padano ralado na hora e tiras macias de filé mignon.",
+            "price": 49.9,
             "image": "https://images.unsplash.com/photo-1645112411341-6c4fd023714a?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          },
-          {
-            "id": "prod-lasanha-bolonhesa",
-            "name": "Lasanha Tradicional com Ragu de Carne Cozido por 6h",
-            "description": "Camadas intercaladas de massa fresca, bechamel aveludado com noz-moscada e ragu de carne bovina e suína.",
-            "price": 54,
-            "image": "https://images.unsplash.com/photo-1574894709920-11b28e7367e3?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          }
-        ]
-      },
-      {
-        "id": "cat-sobremesas-italianas",
-        "name": "Dolci / Sobremesas Típicas",
-        "icon": "🍰",
-        "products": [
-          {
-            "id": "prod-tiramisu-tradicional",
-            "name": "Tiramisù Tradicional com Mascarpone Italiano e Cacau",
-            "description": "Biscoitos savoiardi embebidos em café espresso com licor amaretto, creme denso de queijo mascarpone e cacau 100%.",
-            "price": 28,
-            "image": "https://images.unsplash.com/photo-1571877227200-a0d98ea607e9?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          }
-        ]
-      }
-    ]
-  },
-  {
-    "slug": "studio-nail-design",
-    "name": "Studio Nail Design",
-    "description": "Alongamento em fibra de vidro, esmaltação em gel, nail art personalizada e spa dos pés.",
-    "logo": "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=150&auto=format&fit=crop&q=80",
-    "banner": "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=1200&auto=format&fit=crop&q=80",
-    "phoneWhatsApp": "11933332222",
-    "address": "Alameda dos Anapurus, 600 - Moema, São Paulo - SP",
-    "businessCategory": "hub",
-    "theme": "rose",
-    "currency": "BRL",
-    "deliveryFee": 0,
-    "minOrderValue": 0,
-    "openingHours": {
-      "open": "09:00",
-      "close": "19:00"
-    },
-    "pixConfig": {
-      "key": "11933332222",
-      "keyType": "phone",
-      "beneficiary": "Studio Nail Design LTDA",
-      "city": "SAO PAULO",
-      "allowTestCent": true,
-      "depositPercentage": 30
-    },
-    "professionals": [
-      {
-        "id": "prof-1",
-        "name": "Juliana Ferreira",
-        "role": "Master Nail Designer",
-        "isAvailable": true,
-        "availableDays": [1, 2, 3, 4, 5, 6],
-        "workHours": { "start": "09:00", "end": "19:00" },
-        "lunchBreak": { "start": "12:30", "end": "13:30", "enabled": true }
-      },
-      {
-        "id": "prof-2",
-        "name": "Patrícia Souza",
-        "role": "Especialista em Esmaltação em Gel",
-        "isAvailable": true,
-        "availableDays": [2, 3, 4, 5, 6],
-        "workHours": { "start": "10:00", "end": "18:00" },
-        "lunchBreak": { "start": "13:00", "end": "14:00", "enabled": true }
-      }
-    ],
-    "categories": [
-      {
-        "id": "cat-alongamento-unhas",
-        "name": "Alongamentos & Manutenção",
-        "icon": "💅",
-        "products": [
-          {
-            "id": "serv-alongamento-fibra",
-            "name": "Alongamento de Unhas em Fibra de Vidro (Aplicação)",
-            "description": "Procedimento completo com preparação anatômica da lâmina, curvatura C duradoura, ponto de tensão perfeito e lixamento técnico.",
-            "price": 160,
-            "durationMinutes": 120,
-            "image": "https://images.unsplash.com/photo-1604654894610-df63bc536371?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          },
-          {
-            "id": "serv-manutencao-fibra",
-            "name": "Manutenção Periódica de Fibra de Vidro (até 25 dias)",
-            "description": "Nivelamento do crescimento, reforço da fibra, reparo de até 2 unhas quebradas e finalização com top coat extra brilho.",
-            "price": 110,
-            "durationMinutes": 90,
-            "image": "https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          }
-        ]
-      },
-      {
-        "id": "cat-esmaltacao-spa",
-        "name": "Esmaltação & Spa dos Pés",
-        "icon": "✨",
-        "products": [
-          {
-            "id": "serv-esmaltacao-gel",
-            "name": "Esmaltação em Gel com Cuticulagem Russa",
-            "description": "Secagem instantânea na cabine LED/UV, brilho espelhado que não descasca por até 20 dias.",
-            "price": 75,
-            "durationMinutes": 60,
-            "image": "https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          },
-          {
-            "id": "serv-spa-pes",
-            "name": "Spa dos Pés com Esfoliação e Massagem Relaxante",
-            "description": "Imersão em sais aromáticos de lavanda, esfoliação com açúcar mascavo e óleos vegetais, hidratação profunda e massagem.",
-            "price": 65,
-            "durationMinutes": 45,
-            "image": "https://images.unsplash.com/photo-1519415510236-718bdfcd89c8?w=500&auto=format&fit=crop&q=80",
-            "isAvailable": true
-          }
-        ]
-      },
-      {
-        "id": "cat-home-care",
-        "name": "Cuidados Diários (Home Care)",
-        "icon": "🧴",
-        "products": [
-          {
-            "id": "prod-oleo-cuticulas",
-            "name": "Óleo Hidratante de Cutículas com Vitamina E 15ml",
-            "description": "Frasco conta-gotas com óleo de jojoba e melaleuca para manter as cutículas hidratadas e sem pelinhas soltas.",
-            "price": 25,
-            "image": "https://images.unsplash.com/photo-1608248597359-00994f87a324?w=500&auto=format&fit=crop&q=80",
             "isAvailable": true
           }
         ]
@@ -1124,7 +1121,9 @@ export const ALL_10_STORES: StoreSeedData[] = [
   }
 ]
 
-export async function seedAllStores(db: { query: (sql: string, params?: unknown[]) => Promise<any> }) {
+export const ALL_STORES = ALL_10_STORES
+
+export async function seedAllStores(db: any) {
   let totalTenants = 0
   let totalCats = 0
   let totalProds = 0
@@ -1132,19 +1131,16 @@ export async function seedAllStores(db: { query: (sql: string, params?: unknown[
   for (const store of ALL_10_STORES) {
     totalTenants++
     const tenantId = `ten-${store.slug}`
-    const deliveryFeeCents = Math.round((store.deliveryFee ?? 0) * 100)
-    const minOrderValueCents = Math.round((store.minOrderValue ?? 0) * 100)
+    const deliveryFeeCents = Math.round((store.deliveryFee || 0) * 100)
+    const minOrderValueCents = Math.round((store.minOrderValue || 0) * 100)
 
     const tenantRes = await db.query(
       `INSERT INTO tenants (
         id, slug, name, description, logo, banner, phone_whatsapp, address,
         business_category, theme, custom_domain, opening_hours, pix_config,
-        delivery_fee_cents, min_order_value_cents, is_active, professionals, reviews, updated_at
-      ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, true, $16, $17, NOW()
-      )
-      ON CONFLICT (id) DO UPDATE SET
-        slug = EXCLUDED.slug,
+        delivery_fee_cents, min_order_value_cents, professionals, reviews
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+      ON CONFLICT (slug) DO UPDATE SET
         name = EXCLUDED.name,
         description = EXCLUDED.description,
         logo = EXCLUDED.logo,
@@ -1158,10 +1154,8 @@ export async function seedAllStores(db: { query: (sql: string, params?: unknown[
         pix_config = EXCLUDED.pix_config,
         delivery_fee_cents = EXCLUDED.delivery_fee_cents,
         min_order_value_cents = EXCLUDED.min_order_value_cents,
-        is_active = true,
         professionals = EXCLUDED.professionals,
-        reviews = EXCLUDED.reviews,
-        updated_at = NOW()
+        reviews = EXCLUDED.reviews
       RETURNING id;`,
       [
         tenantId,
@@ -1192,13 +1186,7 @@ export async function seedAllStores(db: { query: (sql: string, params?: unknown[
         totalCats++
 
         await db.query(
-          `INSERT INTO categories (id, tenant_id, name, icon, sort_order)
-           VALUES ($1, $2, $3, $4, $5)
-           ON CONFLICT (id) DO UPDATE SET
-             tenant_id = EXCLUDED.tenant_id,
-             name = EXCLUDED.name,
-             icon = EXCLUDED.icon,
-             sort_order = EXCLUDED.sort_order;`,
+          `INSERT INTO categories (id, tenant_id, name, icon, sort_order)\n           VALUES ($1, $2, $3, $4, $5)\n           ON CONFLICT (id) DO UPDATE SET\n             tenant_id = EXCLUDED.tenant_id,\n             name = EXCLUDED.name,\n             icon = EXCLUDED.icon,\n             sort_order = EXCLUDED.sort_order;`,
           [cat.id, realTenantId, cat.name, cat.icon || null, cIdx]
         )
 
