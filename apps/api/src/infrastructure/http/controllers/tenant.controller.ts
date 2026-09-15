@@ -14,6 +14,7 @@ import {
 } from '@alaska/contracts/tenant';
 import { ITenantRepository } from '../../../core/application/ports/tenant.repository.port';
 import { IPasswordHasher } from '../../../core/application/ports/password-hasher.port';
+import { EntityNotFoundError } from '../../../core/domain/errors/domain.error';
 
 @ApiTags('tenants')
 @Controller('tenants')
@@ -83,6 +84,9 @@ export class TenantController {
   })
   async resolveByDomain(@Query('host') host: string) {
     const tenant = await this.resolveTenantByDomainUseCase.execute({ host });
+    if (!tenant) {
+      throw new EntityNotFoundError('Tenant', host);
+    }
     return {
       success: true,
       data: tenant,
@@ -146,6 +150,9 @@ export class TenantController {
   })
   async getBySlug(@Param('slug') slug: string) {
     const tenant = await this.getTenantBySlugUseCase.execute({ slug });
+    if (!tenant) {
+      throw new EntityNotFoundError('Tenant', slug);
+    }
     return {
       success: true,
       data: tenant,
@@ -207,7 +214,7 @@ export class TenantController {
     @Param('slug') slug: string,
     @Body() body: MerchantLoginInput,
   ) {
-    return this.authenticateMerchantUseCase.execute(slug, body.pin);
+    return this.authenticateMerchantUseCase.execute({ slug, pin: body.pin });
   }
 
   @Post(':slug/hours')
