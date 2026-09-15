@@ -1,7 +1,8 @@
-// Re-exporta todos os contratos canônicos compartilhados do Monorepo
+// types/index.ts
+// Fonte Canônica Central (Single Source of Truth) do Monorepo
 export * from '@alaska/contracts'
 
-// Mantém retrocompatibilidade para helpers específicos de frontend
+// Tipos e Schemas específicos de interface e UI
 export * from './tenant'
 export * from './cart'
 export * from './booking'

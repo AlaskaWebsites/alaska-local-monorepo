@@ -15,11 +15,11 @@ Após auditoria aprofundada nas três camadas de código (`packages/contracts`, 
 
 | Camada / Dimensão | Maturidade | Status | Principais Destaques / Pontos de Atenção |
 | :--- | :---: | :---: | :--- |
-| **`@alaska/contracts` (SSOT)** | **9.0 / 10** | 🟢 Sólido | Schemas Zod 3.24 cobrindo Tenant, Catalog, Order, Booking, Pix e Common. Build duplo ESM/CJS com `.d.ts`. |
+| **`@alaska/contracts` (SSOT)** | **9.5 / 10** | 🟢 Sólido | Schemas Zod 3.24 cobrindo Tenant, Catalog, Order, Booking, Pix e Common. Build duplo ESM/CJS com `.d.ts`. |
 | **`apps/api` Core Domain** | **9.5 / 10** | 🟢 Exemplar | Clean Architecture pura, Value Objects imutáveis (`Money` em centavos inteiros), entidades ricas e zero dependência de framework. |
 | **`apps/api` Presentation** | **6.5 / 10** | 🟡 Atenção | Erosão de schemas nos controllers: `ProductController` e `TenantController.updateHours` recorreram a `@Body() body: any` para contornar divergências de payloads do cliente. |
 | **`apps/web` Composables** | **7.5 / 10** | 🟡 Bom | Lógica de negócio robusta e testada (Vitest), mas uso frequente de `$fetch<any>` e ausência de `safeParse` na persistência do `localStorage`. |
-| **`apps/web` Types (Shadowing)** | **5.5 / 10** | 🔴 Alerta | **Dívida de Shadowing**: `apps/web/types/tenant.ts` duplica schemas do `@alaska/contracts`, gerando risco crônico de *Contract Drift*. |
+| **`apps/web` Types (Shadowing)** | **9.5 / 10** | 🟢 Resolvido (Fase 1) | **Shadowing Eliminado**: `apps/web/types/` unificado sob `@alaska/contracts`, centralizando SSOT e mantendo retrocompatibilidade total. |
 
 ---
 
@@ -107,17 +107,9 @@ O pacote `@alaska/contracts` centraliza os contratos de dados do ecossistema:
 * Placeholders de imagem em SVG vetorial embutido (Data URI), garantindo CLS = 0 e tolerância a 404.
 
 #### 2. Fragilidades de Tipagem e Fail-Fast Identificadas:
-* **Shadowing de Tipos (`apps/web/types/index.ts`)**:
-  * `apps/web/types/index.ts` reexporta tanto `@alaska/contracts` quanto os arquivos locais `tenant.ts`, `cart.ts` e `booking.ts`:
-    ```typescript
-    // apps/web/types/index.ts
-    export * from '@alaska/contracts'
-    export * from './tenant' // <--- Sobrepõe TenantSchema, Tenant, Product, etc.
-    export * from './cart'
-    export * from './booking'
-    ```
-  * `apps/web/types/tenant.ts` contém uma versão paralela de `TenantSchema`, `ProductSchema`, `OptionGroupSchema`, etc.
-  * Quando um desenvolvedor adiciona um novo campo ao `@alaska/contracts` (ex: `minOrderValueCents`, `template`), o frontend pode não enxergar ou apresentar tipos inconsistentes porque o arquivo local assume precedência.
+* **Shadowing de Tipos (`apps/web/types/index.ts`) [RESOLVIDO NA FASE 1]**:
+  * `apps/web/types/tenant.ts` e `apps/web/types/booking.ts` foram convertidos em re-exportadores estritos de `@alaska/contracts`.
+  * Schemas canônicos completos residem agora exclusivamente no `@alaska/contracts`.
 * **Persistência em `localStorage` sem Blindagem Zod**:
   * No composable `useMerchantAdmin.ts`, a função `saveOverrides` grava diretamente o JSON no `localStorage` sem validar via schema Zod (`TenantOverridesSchema`). Se uma chave corrompida for escrita, ela permanecerá no navegador do lojista até o cache ser limpo.
   * O mesmo ocorre em `useCart.ts`, onde `useLocalStorage<CartItem[]>` armazena objetos sem passar por um validador de integridade no momento da leitura (hydration).
@@ -135,9 +127,9 @@ O pacote `@alaska/contracts` centraliza os contratos de dados do ecossistema:
 ┌─────────────────────────────────────────────────────────────────────────┐
 │                    ROADMAP DE BLINDAGEM DE TIPAGEM                      │
 │                                                                         │
-│  Fase 1: Eliminar Shadowing de Tipos no Frontend                        │
-│          Deprecar schemas duplicados em apps/web/types/tenant.ts        │
-│          e re-exportar estritamente de @alaska/contracts.               │
+│  [CONCLUÍDO] Fase 1: Eliminar Shadowing de Tipos no Frontend            │
+│          Schemas canônicos centralizados no @alaska/contracts           │
+│          e apps/web/types re-exportando estritamente do SSOT.           │
 │                                                                         │
 │  Fase 2: Contratos Canônicos para Ações Operacionais                    │
 │          Criar UpdateOrderStatusSchema e UpdateBookingStatusSchema      │
@@ -155,9 +147,11 @@ O pacote `@alaska/contracts` centraliza os contratos de dados do ecossistema:
 
 ### Detalhamento das Etapas:
 
-1. **Fase 1 — Eliminação do Shadowing de Tipos no Web**:
-   * Migrar os componentes e composables de `apps/web` para importar diretamente de `@alaska/contracts`.
-   * Manter em `apps/web/types/` apenas tipagens exclusivas de UI (ex: `CheckoutFormData`, `ThemeSvgConfig`, estados de modais).
+1. **Fase 1 — Eliminação do Shadowing de Tipos no Web (CONCLUÍDO)**:
+   * **Centralização no `@alaska/contracts`**: Enriquecimento do `TenantSchema` com `currency`, `categories`, `professionals`, `services`, `paymentMethods`, `distance`, `priceRange`, `deliveryFeeCents`, `minOrderValueCents` e `.passthrough()`.
+   * **Inclusão de Agendamento Canônico**: `BookingDaySchema`, `BookingAppointmentPayloadSchema` e aliases incorporados em `@alaska/contracts/booking`.
+   * **Desacoplamento em `apps/web/types/`**: `tenant.ts` e `booking.ts` convertidos em adaptadores puros que re-exportam 100% do `@alaska/contracts`, eliminando duplicatas e blindando o ecossistema contra *Contract Drift*.
+   * **Isolamento de UI em `cart.ts`**: Preservação de interfaces estritas de apresentação (`CheckoutFormData`, `CartState`, `ViaCepResponseSchema`).
 
 2. **Fase 2 — Novos Schemas Operacionais no `@alaska/contracts`**:
    * Declarar `UpdateOrderStatusSchema = z.object({ status: OrderStatusSchema })`.
