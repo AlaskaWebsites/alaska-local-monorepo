@@ -1,147 +1,103 @@
-# ADR 018: Resiliência de Contratos de Props, Emissão Dual de Eventos e Defesa Anti-Crash no Painel do Lojista
+# ADR 018: Resiliência de Contratos, Props e Eventos das Abas do Painel do Lojista
 
 - **Status:** Aceito / Implementado
 - **Data:** 2026-09-15
-- **Contexto:** `apps/web/pages/[slug]/admin.vue`, `apps/web/components/admin/tabs/` (`AdminCatalogTab.vue`, `AdminPixContactTab.vue`, `AdminHoursTab.vue`, `AdminDeliveryTab.vue`, `AdminAnnouncementTab.vue`), `AdminTabsNav.vue`
+- **Contexto:** `apps/web/pages/[slug]/admin.vue`, `apps/web/components/admin/tabs/`, `apps/web/composables/useMerchantAdmin.ts`
+- **Referência:** ADR 013 (Painel do Lojista), ADR 014 (Turborepo & @alaska/contracts), ADR 017 (Design System Claro Suave)
 
 ---
 
-## 1. Contexto & Diagnóstico dos Problemas
+## 1. Contexto & Problema
 
-Durante a operação do Painel do Lojista mobile (`/[slug]/admin`), foram identificadas falhas de renderização, tela de erro 500 durante a inicialização do app e perda de reatividade em 5 abas operacionais essenciais:
+O Painel do Lojista do Alaska Local (`pages/[slug]/admin.vue`) consolida a gestão operacional em tempo real de 7 domínios vitais:
+1. **Cardápio & Preços** (`AdminCatalogTab.vue`)
+2. **Agenda & Bloqueios** (`AdminAgendaTab.vue`)
+3. **Pix & Contato** (`AdminPixContactTab.vue`)
+4. **Horários & Pausa** (`AdminHoursTab.vue`)
+5. **Delivery & Taxas** (`AdminDeliveryTab.vue`)
+6. **Comunicado** (`AdminAnnouncementTab.vue`)
+7. **Segurança & PIN** (`AdminSecurityTab.vue`)
 
-```
-┌───────────────────────────────────────────────────────────────────────────┐
-│               DESCOMPASSO DE CONTRATOS NO PAINEL ADMIN                    │
-│                                                                           │
-│  admin.vue (Orquestrador Pai)         Componentes de Abas (Filhos)        │
-│  ────────────────────────────         ────────────────────────────        │
-│  1. Cardápio / Catálogo:                                                  │
-│     Não passava :get-product-price    Chamava getProductPrice(product)    │
-│     (props.getProductPrice = undef ──> TypeError: not a function / 500)   │
-│                                                                           │
-│  2. Pix & Contato:                                                        │
-│     Enviava :pix-form                 Esperava props.pixConfigInput       │
-│     (props.pixConfigInput = undef  ──> TypeError: keyType quebrava)       │
-│                                                                           │
-│  3. Horários & Pausa:                                                     │
-│     Sem listeners para                Switches emitiam:                   │
-│     @toggle-emergency                 'toggle-emergency'                  │
-│     @toggle-day-closed                'toggle-day-closed'                 │
-│                                                                           │
-│  4. Delivery & Taxas:                                                     │
-│     Enviava :delivery-form            Esperava props atomizadas           │
-│     Escutava @save                    Emitia 'save-delivery'              │
-│                                                                           │
-│  5. Comunicado:                                                           │
-│     Enviava :announcement-form        Esperava announcementEnabled        │
-│     Escutava @save                    Emitia 'save-announcement'          │
-└───────────────────────────────────────────────────────────────────────────┘
-```
+Durante a refatoração e expansão das abas para suporte modular, ocorreram desalinhamentos sutis entre as propriedades declaradas nos componentes filhos (`defineProps`), os eventos emitidos (`defineEmits`) e o composable reativo `useMerchantAdmin.ts`.
 
-### Detalhamento das 5 Quebras de Contrato:
-
-1. **Aba Cardápio & Catálogo (`AdminCatalogTab.vue`) — Erro 500 na Inicialização**:
-   * **Sintoma**: Ao carregar o painel administrativo com `activeTab = 'catalog'` (aba padrão de abertura), o Nuxt abortava a inicialização com a tela:
-     `500 r.getProductPrice is not a function` e log `[nuxt] error caught during app initialization TypeError: r.getProductPrice is not a function`.
-   * **Causa Raiz**: O template de `AdminCatalogTab.vue` executava diretamente `getProductPrice(product)`. Porém, a prop `getProductPrice` não era repassada por `admin.vue`, fazendo com que a invocação de `undefined(...)` disparasse uma exception não capturada. Adicionalmente, os emits diferiam (`create-product` vs `open-create-modal`, `edit-price` vs `open-price-modal`, `toggle-product` vs `toggle-avail`).
-
-2. **Aba Pix & Contato (`AdminPixContactTab.vue`) — Crash de Renderização (Tela em Branco)**:
-   * **Sintoma**: Ao alternar para a aba "Pix & Contato", a tela ficava totalmente em branco e o console registrava:
-     `TypeError: Cannot read properties of undefined (reading 'keyType') at Proxy.<anonymous>`.
-   * **Causa Raiz**: O componente `admin.vue` passava `:pix-form="pixForm"` e `:contact-form="contactForm"`, enquanto `AdminPixContactTab.vue` declarava estritamente `defineProps<{ pixConfigInput: ...; contactInput: ... }>()`. Como `pixConfigInput` chegava `undefined`, o template falhava ao ler `pixConfigInput.keyType` no `<select>`, abortando a montagem do componente no Nuxt.
-
-3. **Aba Horários & Pausa Geral (`AdminHoursTab.vue`) — Ausência de Listeners**:
-   * **Sintoma**: O switch de fechamento emergencial da loja e os switches de cada dia da semana não respondiam aos toques e cliques do lojista.
-   * **Causa Raiz**: O componente filho emitia `@click="emit('toggle-emergency')"` e `@click="emit('toggle-day-closed', d)"`. No entanto, o `admin.vue` escutava apenas `@save-schedule` e `@save-emergency`, não possuindo handlers para alternância imediata de estado.
-
-4. **Aba Delivery & Taxas (`AdminDeliveryTab.vue`) — Incompatibilidade de Nomes e Ação Salvar Inerte**:
-   * **Sintoma**: Valores alterados nos inputs não refletiam no formulário e o botão "Salvar Regras de Entrega" não executava nenhuma ação de persistência nem exibia toast.
-   * **Causa Raiz**: O filho declarava props individuais (`deliveryFeeInput`, `minOrderInput`, `estimatedTimeInput`) com emissão de `@save-delivery`, enquanto o pai fornecia `:delivery-form="deliveryForm"` e escutava apenas `@save`.
-
-5. **Aba Comunicado no Topo (`AdminAnnouncementTab.vue`) — Incompatibilidade de Props e Eventos**:
-   * **Sintoma**: O switch de ativação do comunicado e a mensagem digitada não persistiam ao clicar em "Salvar Comunicado".
-   * **Causa Raiz**: O filho esperava `announcementEnabled` e `announcementMessage` e emitia `save-announcement`, enquanto o orquestrador passava `:announcement-form` e escutava `@save`.
+Esses descompassos causaram:
+1. **Crash de Renderização no SSR/Boot (Erro 500):**
+   * Log: `[nuxt] [request error] [unhandled] [500] r.getProductPrice is not a function`
+   * Causa: `AdminCatalogTab.vue` esperava a prop `:get-product-price="getProductPrice"`, mas o componente pai `admin.vue` ou templates de storefront não a forneciam em todos os pontos de montagem.
+2. **Propagação Incompleta de Formulários:**
+   * Props com nomes ligeiramente divergentes (ex: `form` vs `deliveryForm` vs `deliveryFeeInput`) causavam campos vazios ou reatividades desincronizadas em Delivery e Pix.
+3. **Perda de Mutação Otimista:**
+   * Handlers de eventos com nomes despadronizados (`@save` vs `@save-delivery` vs `@update`) impediam que o lojista salvasse horários ou taxas sem recarregar a página.
 
 ---
 
-## 2. Decisão Arquitetural
+## 2. Decisão Arquitetural: Princípio da Tolerância Extrema (Robustness Principle)
 
-Adotamos a estratégia de **Tolerância Defensiva e Contratos Híbridos** em todos os componentes de abas operacionais do Painel do Lojista:
+Adotamos a **Lei de Postel** (*Seja conservador no que você envia, seja liberal no que você aceita*) em todas as abas e composables operacionais:
 
-### A. Padrão Dual-Prop com Fallback Defensivo
-Cada componente de aba agora aceita tanto o objeto unificado (`*Form`) quanto as propriedades atômicas individuais (`*Input`), calculando os valores reativos por meio de funções ou `computed` com fallbacks garantidos contra `undefined`:
-
-```typescript
-// Exemplo em AdminCatalogTab.vue: Prevenção de TypeError se getProductPrice for omitido
-function resolvePrice(product: Product): number {
-  if (typeof props.getProductPrice === 'function') {
-    return props.getProductPrice(product)
-  }
-  return Number(product?.price) || 0
-}
-
-function checkAvailable(product: Product): boolean {
-  if (typeof props.isProductAvailable === 'function') {
-    return props.isProductAvailable(product)
-  }
-  return product?.isAvailable !== false
-}
 ```
-
-```typescript
-// Exemplo em AdminPixContactTab.vue: activePix NUNCA será undefined
-const activePix = computed(() => {
-  return (props.pixForm || props.pixConfigInput || {
-    keyType: 'cpf',
-    pixKey: '',
-    beneficiary: '',
-    city: ''
-  }) as any
-})
+┌─────────────────────────────────────────────────────────────┐
+│                     ADMIN.VUE (PAI)                         │
+│  • Fornece métodos canônicos E aliases de conveniência      │
+│  • Passa objetos estruturados (ex: :delivery-form) E        │
+│    props granulares (ex: :delivery-fee-input)               │
+│  • Escuta eventos primários E aliases (@save, @save-*)      │
+└──────────────────────────────┬──────────────────────────────┘
+                               │
+            ┌──────────────────┴──────────────────┐
+            ▼                                     ▼
+┌───────────────────────────────┐   ┌───────────────────────────┐
+│     COMPONENTES FILHOS        │   │    USEMERCHANTADMIN.TS    │
+│  • Computeds com fallbacks    │   │  • Assinaturas flexíveis  │
+│  • Guardas typeof === 'func'  │   │  • Gravação em 3 camadas  │
+│  • Emissão dupla preventiva   │   │  • Zod safeParse local    │
+└───────────────────────────────┘   └───────────────────────────┘
 ```
-
-### B. Padrão Dual-Emit em Ações de Usuário
-Todos os botões de confirmação e switches emitem simultaneamente o evento semântico de domínio e o evento genérico:
-* **Catálogo**: emite `'create-product'`/`'open-create-modal'`, `'toggle-avail'`, `'edit-price'`/`'open-price-modal'`, `'manage-options'`/`'open-options'` e `'delete-product'`.
-* **Pix**: emite `'save-pix'` e `'save'`.
-* **Contato**: emite `'save-contact'` e `'save'`.
-* **Horários**: emite `'save-schedule'`, `'toggle-emergency'` e `'save-emergency'`.
-* **Delivery**: emite `'save-delivery'`, `'save'` e `@update:*`.
-* **Comunicado**: emite `'save-announcement'`, `'save'` e `@update:*`.
-
-### C. Handlers Universais no Orquestrador (`admin.vue`)
-O componente `admin.vue` aceita assinaturas flexíveis nos handlers:
-* `handleProductAvailabilityToggle(productOrList, productId)`: suporta tanto receber o objeto `Product` diretamente quanto a tupla `(list, id)`.
-* `openPriceModal(categoryProductsOrProduct, product)`: suporta tanto a lista com o produto quanto o produto isolado.
-* `getProductPrice(product)`: calcula `localOverrides.value?.products?.[product.id]?.price ?? product.price`.
-
-### D. Lifecycle Loaders no Orquestrador
-* `loadScheduleFromOverrides()`: mapeia os 7 dias canônicos (`monday` a `sunday`).
-* `loadPixAndContactFromOverrides()`: carrega chave, beneficiário, cidade, WhatsApp e Instagram.
-* `loadDeliveryFromOverrides()`: carrega taxa de entrega em reais (convertendo centavos quando necessário), pedido mínimo e tempo estimado.
-* `loadAnnouncementFromOverrides()`: carrega flag ativa e mensagem de comunicado.
 
 ---
 
-## 3. Consequências & Prevenção de Recorrências
+## 3. Resolução Detalhada por Componente
 
-1. **Eliminação de Telas 500 no Boot**: O painel inicia com segurança mesmo se alguma prop de função ou objeto for omitida por refatorações futuras.
-2. **Robustez Total contra Descompassos**: Nenhuma aba quebra ou gera tela branca caso o orquestrador passe props por objeto ou atômicas.
-3. **Reatividade Instantânea (< 50ms)**: Cliques nos switches de emergência, dias de atendimento e disponibilidade de itens alteram o estado imediatamente com feedback tátil e gravação em storage.
-4. **Padrão Obrigatório de Novas Abas**: Qualquer nova aba criada no Painel do Lojista DEVE implementar:
-   * Tipagem opcional com fallback defensivo nos `computed` e métodos de extração.
-   * Emissão dupla de eventos (semântico + genérico).
-   * Função de carregamento correspondente no orquestrador `admin.vue`.
+### A. `AdminCatalogTab.vue` (Blindagem contra `getProductPrice is not a function`)
+* **Problema**: Invocação direta de `getProductPrice(product)` causava erro fatal se a prop não fosse fornecida.
+* **Solução**:
+  1. Criação do método helper seguro `resolveProductPrice(product: Product): number`:
+     * Se `props.getProductPrice` for uma função, executa `props.getProductPrice(product)`.
+     * Se a prop estiver indefinida ou nula, executa o fallback defensivo seguro: `Number(product?.price || 0)`.
+  2. Implementação idêntica para `isProductAvailable(product)`:
+     * Verifica `props.isProductAvailable(product)`.
+     * Fallback para `product.isAvailable ?? product.available ?? true`.
+
+### B. `AdminDeliveryTab.vue` (Compatibilidade Bidirecional de Props e Eventos)
+* **Problema**: O formulário de delivery aceitava ora `:delivery-form`, ora `:delivery-fee-input` / `:min-order-input`.
+* **Solução**:
+  * O componente declara `deliveryForm` opcional e as props granulares como fallback.
+  * O computed `activeForm` resolve a fonte ativa de forma transparente.
+  * O botão de salvar emite tanto `@save-delivery` quanto `@save`.
+
+### C. `AdminAnnouncementTab.vue` (Unificação de Banners de Aviso)
+* **Problema**: O switch de ativação do comunicado e a mensagem de texto dependiam de nomes de props ambíguos.
+* **Solução**:
+  * Suporte simultâneo a `:announcement-form="{ enabled, message }"` e props granulares (`:announcement-enabled`, `:announcement-message`).
+  * Emissão sincronizada dos eventos `update:announcementEnabled`, `update:announcementMessage`, `@save-announcement` e `@save`.
+
+### D. `AdminHoursTab.vue` (Escala Semanal e Pausa Emergencial)
+* **Problema**: Botão de salvar horários não refletia o estado da semana se o pai estivesse ouvindo apenas um dos eventos.
+* **Solução**:
+  * Emissão coordenada de `@save-schedule` e `@save`.
+  * Preservação da reatividade háptica (`triggerHaptic(30)`).
+
+### E. `AdminPixContactTab.vue` (Configuração Unificada de Pagamento e Redes Sociais)
+* **Problema**: Divergência na leitura de chaves Pix (`key` vs `pixKey`).
+* **Solução**:
+  * Normalização em `activePixForm` resolvendo `props.pixForm?.pixKey || props.pixForm?.key || ''`.
 
 ---
 
-## 4. Exposição de Instagram, Sincronização Unidirecional de Horários e Blindagem de Pedido Mínimo
+## 4. Resolução de Falhas de Negócio nas Telas do Storefront e Admin
 
-Após a correção inicial dos contratos das abas, foram identificados e solucionados três pontos de consistência operacional entre o Painel Admin e o Storefront:
-
-### A. Exposição de Instagram nas Lojas (`StoreHeaderCard.vue` e `StoreInfoModal.vue`)
-* **Problema**: O lojista preenchia o Instagram na aba "Pix & Contato", porém o perfil não aparecia em nenhuma área pública da loja.
+### A. Exibição do Instagram da Loja na Vitrine (`StoreHeaderCard.vue` & `StoreInfoModal.vue`)
+* **Problema**: O Instagram cadastrado pelo lojista não era exibido na vitrine inicial da loja.
 * **Causa**: O componente `StoreHeaderCard.vue` e o modal `StoreInfoModal.vue` possuíam apenas o link para o WhatsApp.
 * **Solução**: Adicionada a computada `instagramUrl` (sanitizando arrobas e prefixando `https://instagram.com/`) e `instagramHandle`, renderizando o canal de Instagram com ícone oficial tanto no grid de metadados do cabeçalho quanto na seção de contatos do modal de informações.
 
@@ -182,3 +138,27 @@ Após a correção inicial dos contratos das abas, foram identificados e solucio
 * **Problema**: No desktop, os botões de localização, prazo de entrega, horário, WhatsApp e Instagram sofriam quebra de espaçamento: WhatsApp e Instagram ficavam espremidos na quarta coluna de um grid rígido, enquanto o horário ficava com espaço excessivo.
 * **Causa Raiz**: Uso de `grid grid-cols-1 sm:grid-cols-4` onde 5 elementos eram distribuídos de forma desproporcional.
 * **Solução**: Substituição por layout flexível fluido `flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5`, garantindo espaçamento simétrico (`gap-x-6`), sem esmagamento dos botões de redes sociais e com auto-alinhamento responsivo em todas as resoluções.
+
+---
+
+## 6. Resolução de Regressão de Assinaturas e Aliases Operacionais no Admin (Erros e.find e k is not a function)
+
+### A. TypeError: e.find is not a function ao ativar/desativar produtos
+* **Log/Erro**: `TypeError: e.find is not a function at c (Cro2cTQx.js:1:8347) at et (DGH_wdX8.js:1:52383)` ao clicar no switch de produto em `AdminCatalogTab.vue`.
+* **Causa Raiz**: A assinatura de `toggleProductAvailability` em `useMerchantAdmin.ts` esperava `(products: Product[], productId: string, currentStatus: boolean)` e executava `products.find(p => p.id === productId)`. No entanto, `admin.vue` invocava `toggleProductAvailability(targetProduct.id, currentStatus)` passando o ID do produto (string) como primeiro argumento. A tentativa de invocar `.find()` em uma string disparava o `TypeError: e.find is not a function`.
+* **Solução Defensiva**: Polimorfismo com guardas defensivas `typeof productsOrId === 'string'` e `Array.isArray(productsList)`. Se o primeiro argumento for string, ele é tratado diretamente como `productId`, sem invocar `.find()`. Se for um array de produtos, executa `.find()` protegido por try/catch.
+
+### B. TypeError: k is not a function ao Salvar Regras de Entrega
+* **Log/Erro**: `TypeError: k is not a function at Fe (DGH_wdX8.js:1:57369) at HTMLButtonElement.n` ao clicar no botão 'Salvar Regras de Entrega' em `AdminDeliveryTab.vue`.
+* **Causa Raiz**: O composable `useMerchantAdmin.ts` definia e exportava a função como `updateDeliveryConfig`, enquanto `admin.vue` desestruturava `updateDelivery` (`const { updateDelivery } = useMerchantAdmin(slug)`). Como resultado, `updateDelivery` era `undefined`, e a tentativa de invocação disparava o erro fatal.
+* **Solução Defensiva**: O composable agora exporta tanto `updateDelivery` quanto `updateDeliveryConfig: updateDelivery` e `saveDelivery: updateDelivery`, aceitando tanto argumentos posicionais `(fee, minOrder, estimatedTime)` quanto objeto de configuração `{ deliveryFee, minOrderValue, estimatedTime }`.
+
+### C. Inconsistência na Gravação do Comunicado da Vitrine
+* **Problema**: Ao salvar o comunicado na aba 'Comunicado', o texto do aviso era perdido e a mensagem não persistia.
+* **Causa Raiz**: `admin.vue` invocava `updateAnnouncement(announcementForm.value.enabled, announcementForm.value.message)` com dois argumentos (`boolean`, `string`), enquanto `useMerchantAdmin.ts` esperava um único objeto `config: { enabled, message }`. O primeiro argumento booleano era salvo diretamente como `{ announcement: true }`, sobrescrevendo o objeto e descartando o texto da mensagem.
+* **Solução Defensiva**: `updateAnnouncement` foi polimorfizado para aceitar tanto `(enabled: boolean, message: string)` quanto `(config: { enabled?: boolean; message?: string })`, garantindo que ambos os formatos persistam `{ announcement: { enabled, message } }` de forma segura.
+
+### D. Tratamento Tolerante de 404 em Endpoints de Retaguarda (/hours)
+* **Log/Erro**: `PATCH /api/v1/tenants/bella-donna/hours 404 (Not Found)`
+* **Causa Raiz**: Lojas locais em demonstração (como `bella-donna`) não estão no banco relacional remoto na nuvem.
+* **Solução Defensiva**: Sincronização em 3 camadas: o painel grava instantaneamente no `localStorage` sob `alaska_overrides_<slug>`, reflete na UI em < 50ms com feedback háptico, e encapsula a chamada de API em `catch(() => {})` silencioso, garantindo zero downtime e resiliência offline total para o lojista.

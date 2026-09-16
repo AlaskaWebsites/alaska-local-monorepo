@@ -168,6 +168,36 @@ describe('Unit: useMerchantAdmin Composable (ADR 013 & Novas Funcionalidades)', 
     expect(overrides.emergency?.isClosed).toBe(false)
   })
 
+  it('deve alternar disponibilidade de produto passando apenas o ID e status atual (assinatura da UI)', async () => {
+    const admin = useMerchantAdmin(slug)
+    // Inicializa produto como ativo
+    await admin.toggleProductAvailability('prod-1', true)
+    let overrides = admin.getOverrides()
+    expect(overrides.products?.['prod-1']?.isAvailable).toBe(false)
+
+    // Reativa o produto
+    await admin.toggleProductAvailability('prod-1', false)
+    overrides = admin.getOverrides()
+    expect(overrides.products?.['prod-1']?.isAvailable).toBe(true)
+  })
+
+  it('deve salvar configurações de delivery e taxas com assinatura posicional da UI', () => {
+    const admin = useMerchantAdmin(slug)
+    admin.updateDelivery(7.5, 150, '30-55 min')
+    const overrides = admin.getOverrides()
+    expect(overrides.delivery?.deliveryFee).toBe(7.5)
+    expect(overrides.delivery?.minOrderValue).toBe(150)
+    expect(overrides.delivery?.estimatedTime).toBe('30-55 min')
+  })
+
+  it('deve salvar comunicado no topo com assinatura posicional da UI', () => {
+    const admin = useMerchantAdmin(slug)
+    admin.updateAnnouncement(true, 'Entregas atrasadas devido à chuva')
+    const overrides = admin.getOverrides()
+    expect(overrides.announcement?.enabled).toBe(true)
+    expect(overrides.announcement?.message).toBe('Entregas atrasadas devido à chuva')
+  })
+
   describe('Fase 4: Validação de Hydration e Resiliência Zod Fail-Safe no LocalStorage', () => {
     it('deve descartar dados corrompidos ou tipos inválidos no localStorage e retornar objeto vazio são', () => {
       const admin = useMerchantAdmin(slug)
