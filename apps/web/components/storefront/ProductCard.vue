@@ -52,6 +52,7 @@ const emit = defineEmits<{
       <img
         :src="product.image"
         :alt="product.name"
+        referrerpolicy="no-referrer"
         class="w-full h-full object-cover"
         @error="handleImageError($event, theme)"
       />
