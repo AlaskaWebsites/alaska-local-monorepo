@@ -188,6 +188,72 @@ export const MerchantAuthResponseSchema = z.object({
   message: z.string().optional(),
 });
 
+// Schemas de Overrides Operacionais no LocalStorage do Painel do Lojista (ADR 013 / ADR 018 / Fase 4)
+export const DayScheduleSchema = z.object({
+  open: z.string(),
+  close: z.string(),
+  closed: z.boolean().optional(),
+}).passthrough();
+
+export const ProfessionalOverrideSchema = z.object({
+  isAvailable: z.boolean().optional(),
+  availableDays: z.array(z.number()).optional(),
+  workHours: z.object({ start: z.string(), end: z.string() }).passthrough().optional(),
+  lunchBreak: z.object({ start: z.string(), end: z.string(), enabled: z.boolean() }).passthrough().optional(),
+}).passthrough();
+
+export const PixConfigOverrideSchema = z.object({
+  keyType: z.enum(['cpf', 'cnpj', 'phone', 'email', 'random']).optional(),
+  pixKey: z.string().optional(),
+  beneficiary: z.string().optional(),
+  city: z.string().optional(),
+  enabled: z.boolean().optional(),
+  allowTestCent: z.boolean().optional(),
+  depositPercentage: z.number().optional(),
+}).passthrough();
+
+export const ContactOverrideSchema = z.object({
+  whatsapp: z.string().optional(),
+  phone: z.string().optional(),
+  instagram: z.string().optional(),
+}).passthrough();
+
+export const CustomProfessionalSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  role: z.string(),
+  isAvailable: z.boolean().default(true),
+  availableDays: z.array(z.number()),
+  workHours: z.object({ start: z.string(), end: z.string() }).passthrough(),
+  lunchBreak: z.object({ start: z.string(), end: z.string(), enabled: z.boolean() }).passthrough(),
+}).passthrough();
+
+export const ProductOverrideSchema = z.object({
+  isAvailable: z.boolean().optional(),
+  available: z.boolean().optional(),
+  price: z.number().optional(),
+}).passthrough();
+
+export const TenantOverridesSchema = z.object({
+  products: z.record(z.string(), ProductOverrideSchema).optional(),
+  openingHours: z.record(z.string(), DayScheduleSchema).and(z.object({ open: z.string().optional(), close: z.string().optional() }).passthrough()).optional(),
+  emergency: z.object({ isClosed: z.boolean(), message: z.string().optional() }).passthrough().optional(),
+  isEmergencyClosed: z.boolean().optional(),
+  closedEmergencyMessage: z.string().optional(),
+  delivery: z.object({ deliveryFee: z.number().optional(), minOrderValue: z.number().optional(), estimatedTime: z.string().optional() }).passthrough().optional(),
+  announcement: z.object({ enabled: z.boolean(), message: z.string() }).passthrough().optional(),
+  customPin: z.string().optional(),
+  professionals: z.record(z.string(), ProfessionalOverrideSchema).optional(),
+  blockedSlots: z.array(z.object({ date: z.string(), time: z.string() }).passthrough()).optional(),
+  pix: PixConfigOverrideSchema.optional(),
+  contact: ContactOverrideSchema.optional(),
+  customProducts: z.array(z.any()).optional(),
+  deletedProductIds: z.array(z.string()).optional(),
+  customProfessionals: z.array(CustomProfessionalSchema).optional(),
+  deletedProfessionalIds: z.array(z.string()).optional(),
+  pausedOptionIds: z.array(z.string()).optional(),
+}).passthrough();
+
 export type TenantCategory = z.infer<typeof TenantCategorySchema>;
 export type BusinessCategory = z.infer<typeof BusinessCategorySchema>;
 export type TenantTheme = z.infer<typeof TenantThemeSchema>;
@@ -204,3 +270,10 @@ export type UpdateTenantHoursDto = z.infer<typeof UpdateTenantHoursSchema>;
 export type VerifyAdminPinDto = z.infer<typeof VerifyAdminPinSchema>;
 export type MerchantLoginInput = z.infer<typeof MerchantLoginSchema>;
 export type MerchantAuthResponse = z.infer<typeof MerchantAuthResponseSchema>;
+export type DaySchedule = z.infer<typeof DayScheduleSchema>;
+export type ProfessionalOverride = z.infer<typeof ProfessionalOverrideSchema>;
+export type PixConfigOverride = z.infer<typeof PixConfigOverrideSchema>;
+export type ContactOverride = z.infer<typeof ContactOverrideSchema>;
+export type CustomProfessional = z.infer<typeof CustomProfessionalSchema>;
+export type ProductOverride = z.infer<typeof ProductOverrideSchema>;
+export type TenantOverrides = z.infer<typeof TenantOverridesSchema>;

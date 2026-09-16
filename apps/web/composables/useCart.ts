@@ -3,7 +3,8 @@ import { computed, isRef, type Ref } from 'vue'
 import { defineStore } from 'pinia'
 import { useLocalStorage } from '@vueuse/core'
 import { useHaptic } from './useHaptic'
-import type { CartItem, Tenant, DeliveryType, PaymentMethod, Address } from '~/types'
+import { CartItemSchema, type CartItem } from '~/types/cart'
+import type { Tenant, DeliveryType, PaymentMethod, Address } from '~/types'
 
 function areOptionsEqual(opt1?: any[], opt2?: any[]): boolean {
   const list1 = Array.isArray(opt1) ? opt1 : []
@@ -13,6 +14,52 @@ function areOptionsEqual(opt1?: any[], opt2?: any[]): boolean {
   const keys1 = list1.map(o => o.id || o.name || o.label).sort().join(',')
   const keys2 = list2.map(o => o.id || o.name || o.label).sort().join(',')
   return keys1 === keys2
+}
+
+/**
+ * Serializer defensivo com validação Zod (ADR 011 / Fase 4)
+ * Garante que dados corrompidos ou com schema inválido no localStorage sejam
+ * saneados automaticamente na hidratação, evitando crashes de runtime no storefront.
+ */
+export const cartItemSerializer = {
+  read: (raw: string): CartItem[] => {
+    try {
+      if (!raw || typeof raw !== 'string') return []
+      const parsed = JSON.parse(raw)
+      if (!Array.isArray(parsed)) return []
+
+      const sanitized: CartItem[] = []
+      for (const item of parsed) {
+        if (!item || typeof item !== 'object') continue
+        const result = CartItemSchema.safeParse(item)
+        if (result.success) {
+          sanitized.push(result.data as CartItem)
+        } else if (item.product && typeof item.product === 'object' && item.product.id) {
+          // Recuperação defensiva de item parcialmente válido
+          sanitized.push({
+            id: item.id || item.product.id,
+            product: item.product,
+            quantity: typeof item.quantity === 'number' && item.quantity > 0 ? Math.floor(item.quantity) : 1,
+            unitPrice: typeof item.unitPrice === 'number' ? item.unitPrice : (item.product.price || 0),
+            options: Array.isArray(item.options) ? item.options : (Array.isArray(item.selectedOptions) ? item.selectedOptions : []),
+            selectedOptions: item.selectedOptions || item.options || [],
+            notes: item.notes || item.observation || '',
+            observation: item.observation || item.notes || '',
+          } as CartItem)
+        }
+      }
+      return sanitized
+    } catch {
+      return []
+    }
+  },
+  write: (items: CartItem[]): string => {
+    try {
+      return JSON.stringify(Array.isArray(items) ? items : [])
+    } catch {
+      return '[]'
+    }
+  },
 }
 
 /**
@@ -54,10 +101,11 @@ export function useCart(tenantSource?: Ref<Tenant | string | null | undefined> |
   // Chave única e namespaced no localStorage para cada loja
   const storageKey = computed(() => `alaska_cart_${tenantSlug.value}`)
 
-  // Armazenamento reativo e persistente no localStorage via VueUse (SSR-safe)
+  // Armazenamento reativo e persistente no localStorage via VueUse com Serializer Zod Fail-Safe (SSR-safe)
   const items = useLocalStorage<CartItem[]>(storageKey.value, [], {
     mergeDefaults: true,
     listenToStorageChanges: true,
+    serializer: cartItemSerializer,
   })
 
   function addItem(item: CartItem) {

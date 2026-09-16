@@ -1,8 +1,8 @@
 import { z } from 'zod'
 import { AddressSchema } from '../common'
 
-export const DeliveryTypeSchema = z.enum(['delivery', 'pickup'])
-export const PaymentMethodSchema = z.enum(['pix', 'money', 'credit', 'debit'])
+export const DeliveryTypeSchema = z.enum(['delivery', 'pickup', 'takeaway'])
+export const PaymentMethodSchema = z.enum(['pix', 'money', 'credit', 'debit', 'Pix', 'Cartão de Crédito', 'Cartão de Débito', 'Dinheiro'])
 export const OrderStatusSchema = z.enum([
   'created',
   'pending_payment',
@@ -14,10 +14,13 @@ export const OrderStatusSchema = z.enum([
 ])
 
 export const OrderItemOptionSchema = z.object({
-  groupName: z.string(),
-  itemName: z.string(),
-  price: z.number().nonnegative(),
-})
+  groupName: z.string().optional(),
+  itemName: z.string().optional(),
+  id: z.string().optional(),
+  name: z.string().optional(),
+  label: z.string().optional(),
+  price: z.number().nonnegative().optional(),
+}).passthrough()
 
 export const OrderItemSchema = z.object({
   productId: z.string(),
@@ -48,6 +51,34 @@ export const CreateOrderSchema = z.object({
 export const UpdateOrderStatusSchema = z.object({
   status: OrderStatusSchema,
 })
+
+// Schemas da Sacola de Compras e Persistência no LocalStorage (ADR 011 / Fase 4)
+export const CartItemSchema = z.object({
+  id: z.string().optional(),
+  product: z.object({
+    id: z.string(),
+    name: z.string(),
+    price: z.number().nonnegative().optional().default(0),
+    description: z.string().optional(),
+    image: z.string().optional(),
+    isAvailable: z.boolean().optional(),
+    available: z.boolean().optional(),
+    categoryId: z.string().optional(),
+    durationMinutes: z.number().optional(),
+    optionGroups: z.array(z.any()).optional(),
+  }).passthrough(),
+  quantity: z.number().int().positive().default(1),
+  unitPrice: z.number().nonnegative().optional(),
+  selectedOptions: z.any().optional(),
+  options: z.array(z.any()).optional(),
+  notes: z.string().optional(),
+  observation: z.string().optional(),
+  observations: z.string().optional(),
+}).passthrough();
+
+export const CartItemsArraySchema = z.array(CartItemSchema);
+
+export type CartItem = z.infer<typeof CartItemSchema>;
 
 export type DeliveryType = z.infer<typeof DeliveryTypeSchema>
 export type PaymentMethod = z.infer<typeof PaymentMethodSchema>

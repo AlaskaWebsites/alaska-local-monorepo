@@ -26,6 +26,9 @@ describe('Unit: useMerchantAdmin Composable (ADR 013 & Novas Funcionalidades)', 
         categoryId: 'cat-2'
       }
     ]
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear()
+    }
   })
 
   it('deve realizar login com PIN válido de 4 dígitos', () => {
@@ -163,5 +166,40 @@ describe('Unit: useMerchantAdmin Composable (ADR 013 & Novas Funcionalidades)', 
     admin.updateEmergency(false)
     overrides = admin.getOverrides()
     expect(overrides.emergency?.isClosed).toBe(false)
+  })
+
+  describe('Fase 4: Validação de Hydration e Resiliência Zod Fail-Safe no LocalStorage', () => {
+    it('deve descartar dados corrompidos ou tipos inválidos no localStorage e retornar objeto vazio são', () => {
+      const admin = useMerchantAdmin(slug)
+      const key = `alaska_overrides_${slug}`
+
+      if (typeof localStorage !== 'undefined') {
+        // String inválida (JSON quebrado)
+        localStorage.setItem(key, '{ invalid json "')
+        expect(admin.getOverrides()).toEqual({})
+
+        // Tipo primitivo (número em vez de objeto)
+        localStorage.setItem(key, '12345')
+        expect(admin.getOverrides()).toEqual({})
+
+        // Array em vez de objeto
+        localStorage.setItem(key, '["item1", "item2"]')
+        expect(admin.getOverrides()).toEqual({})
+      }
+    })
+
+    it('deve validar e persistir overrides via TenantOverridesSchema', () => {
+      const admin = useMerchantAdmin(slug)
+      admin.saveOverrides({
+        customPin: '9999',
+        isEmergencyClosed: true,
+        closedEmergencyMessage: 'Pausa técnica para manutenção',
+      })
+
+      const overrides = admin.getOverrides()
+      expect(overrides.customPin).toBe('9999')
+      expect(overrides.isEmergencyClosed).toBe(true)
+      expect(overrides.closedEmergencyMessage).toBe('Pausa técnica para manutenção')
+    })
   })
 })

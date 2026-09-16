@@ -1,7 +1,7 @@
 // tests/units/cart.test.ts
 import { describe, it, expect, beforeEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
-import { useCart, useCartStore } from '~/composables/useCart'
+import { useCart, useCartStore, cartItemSerializer } from '~/composables/useCart'
 import type { Product, CartItem } from '~/types'
 
 describe('Unit: Gerenciamento e Persistência de Sacola (useCart & useCartStore)', () => {
@@ -124,6 +124,34 @@ describe('Unit: Gerenciamento e Persistência de Sacola (useCart & useCartStore)
 
             expect(store.items).toEqual([])
             expect(store.customerName).toBe('')
+        })
+    })
+
+    describe('3. Resiliência de Hydration no LocalStorage (ADR 011 / Fase 4)', () => {
+        it('cartItemSerializer.read deve descartar dados corrompidos ou não-array sem lançar exceção', () => {
+            expect(cartItemSerializer.read('{ "broken": true }')).toEqual([])
+            expect(cartItemSerializer.read('invalid-json')).toEqual([])
+            expect(cartItemSerializer.read('')).toEqual([])
+            expect(cartItemSerializer.read('null')).toEqual([])
+            expect(cartItemSerializer.read('12345')).toEqual([])
+        })
+
+        it('cartItemSerializer.read deve filtrar itens nulos ou corrompidos preservando itens válidos', () => {
+            const raw = JSON.stringify([
+                null,
+                { invalid: 'item' },
+                mockItem,
+                undefined,
+            ])
+            const items = cartItemSerializer.read(raw)
+            expect(items.length).toBe(1)
+            expect(items[0].product.name).toBe('Burger Duplo Smash')
+        })
+
+        it('cartItemSerializer.write deve serializar itens válidos em JSON', () => {
+            const json = cartItemSerializer.write([mockItem])
+            expect(typeof json).toBe('string')
+            expect(json).toContain('Burger Duplo Smash')
         })
     })
 })

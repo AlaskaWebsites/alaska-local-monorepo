@@ -1,6 +1,6 @@
 // types/cart.ts
 import { z } from 'zod'
-import type { Product, OptionItem } from '@alaska/contracts'
+export { CartItemSchema, CartItemsArraySchema, type CartItem } from '@alaska/contracts'
 
 export type DeliveryType = 'delivery' | 'takeaway' | 'pickup'
 
@@ -26,19 +26,8 @@ export interface CheckoutFormData {
   notes?: string
 }
 
-export interface CartItem {
-  id?: string
-  product: Product
-  quantity: number
-  selectedOptions?: Record<string, string | string[]> | OptionItem[] | any
-  options?: OptionItem[] | any[]
-  notes?: string
-  observation?: string
-  unitPrice: number
-}
-
 export interface CartState {
-  items: CartItem[]
+  items: import('@alaska/contracts').CartItem[]
   deliveryType: DeliveryType
   deliveryFee: number
   customerName: string
