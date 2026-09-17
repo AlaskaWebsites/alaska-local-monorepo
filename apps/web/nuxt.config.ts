@@ -6,7 +6,9 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:3333/api/v1',
-      appDomain: process.env.NUXT_PUBLIC_APP_DOMAIN || 'alaska.app'
+      appDomain: process.env.NUXT_PUBLIC_APP_DOMAIN || 'alaska.app',
+      cloudinaryCloudName: process.env.NUXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'gf5j6cdu',
+      cloudinaryUploadPreset: process.env.NUXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'alaska_products'
     }
   },
   experimental: {
