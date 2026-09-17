@@ -3,6 +3,7 @@ import { IProductRepository } from '../../../core/application/ports/product.repo
 import { Product } from '../../../core/domain/entities/product.entity'
 import { PostgresService } from './postgres.service'
 import { EntityNotFoundError } from '../../../core/domain/errors/domain.error'
+import { Money } from '../../../core/domain/value-objects/money.vo'
 
 @Injectable()
 export class PostgresProductRepository implements IProductRepository {
@@ -15,39 +16,17 @@ export class PostgresProductRepository implements IProductRepository {
       categoryId: row.category_id,
       name: row.name,
       description: row.description || undefined,
-      priceCents: row.price_cents,
+      price: Money.fromCents(row.price_cents),
       imageUrl: row.image || undefined,
       isAvailable: row.available ?? true,
       optionGroups: typeof row.option_groups === 'string' ? JSON.parse(row.option_groups) : (row.option_groups || []),
+      durationMinutes: row.duration_minutes ?? undefined,
       createdAt: row.created_at ? new Date(row.created_at) : undefined
     })
   }
 
   async findById(id: string): Promise<Product | null> {
-    let res = await this.db.query('SELECT * FROM products WHERE id = $1', [id])
-    if (res.rows.length === 0) {
-      res = await this.db.query(
-        `SELECT * FROM products
-         WHERE LOWER(id) = LOWER($1)
-            OR LOWER(id) = LOWER('prod-' || $1)
-            OR LOWER(REPLACE(id, 'prod-', '')) = LOWER($1)`,
-        [id]
-      )
-    }
-    if (res.rows.length === 0) {
-      const tokens = id.toLowerCase().replace(/^prod-/, '').split('-').filter(t => t.length >= 3)
-      if (tokens.length > 0) {
-        const clauses = tokens.map((_, i) => `(CASE WHEN LOWER(name) LIKE '%' || $${i + 1} || '%' OR LOWER(id) LIKE '%' || $${i + 1} || '%' THEN 1 ELSE 0 END)`).join(' + ')
-        const conds = tokens.map((_, i) => `(LOWER(name) LIKE '%' || $${i + 1} || '%' OR LOWER(id) LIKE '%' || $${i + 1} || '%')`).join(' OR ')
-        res = await this.db.query(
-          `SELECT * FROM products
-           WHERE ${conds}
-           ORDER BY (${clauses}) DESC
-           LIMIT 1`,
-          tokens
-        )
-      }
-    }
+    const res = await this.db.query('SELECT * FROM products WHERE id = $1', [id])
     if (res.rows.length === 0) return null
     return this.mapRowToProduct(res.rows[0])
   }
@@ -64,38 +43,10 @@ export class PostgresProductRepository implements IProductRepository {
   }
 
   async toggleAvailability(productId: string, isAvailable: boolean): Promise<Product> {
-    let res = await this.db.query(
+    const res = await this.db.query(
       `UPDATE products SET available = $1 WHERE id = $2 RETURNING *`,
       [isAvailable, productId]
     )
-    if (res.rows.length === 0) {
-      res = await this.db.query(
-        `UPDATE products SET available = $1
-         WHERE LOWER(id) = LOWER($2)
-            OR LOWER(id) = LOWER('prod-' || $2)
-            OR LOWER(REPLACE(id, 'prod-', '')) = LOWER($2)
-         RETURNING *`,
-        [isAvailable, productId]
-      )
-    }
-    if (res.rows.length === 0) {
-      const tokens = productId.toLowerCase().replace(/^prod-/, '').split('-').filter(t => t.length >= 3)
-      if (tokens.length > 0) {
-        const clauses = tokens.map((_, i) => `(CASE WHEN LOWER(name) LIKE '%' || $${i + 2} || '%' OR LOWER(id) LIKE '%' || $${i + 2} || '%' THEN 1 ELSE 0 END)`).join(' + ')
-        const conds = tokens.map((_, i) => `(LOWER(name) LIKE '%' || $${i + 2} || '%' OR LOWER(id) LIKE '%' || $${i + 2} || '%')`).join(' OR ')
-        res = await this.db.query(
-          `UPDATE products SET available = $1
-           WHERE id IN (
-             SELECT id FROM products
-             WHERE ${conds}
-             ORDER BY (${clauses}) DESC
-             LIMIT 1
-           )
-           RETURNING *`,
-          [isAvailable, ...tokens]
-        )
-      }
-    }
     if (res.rows.length === 0) {
       throw new EntityNotFoundError('Product', productId)
     }
@@ -110,7 +61,7 @@ export class PostgresProductRepository implements IProductRepository {
 
     const name = data.name ?? current.name
     const description = data.description !== undefined ? data.description : current.description
-    const priceCents = data.priceCents !== undefined ? data.priceCents : current.price.inCents
+    const priceCents = data.priceCents !== undefined ? data.priceCents : current.price.cents
     const isAvailable = data.isAvailable !== undefined ? data.isAvailable : current.isAvailable
     const optionGroups = data.optionGroups !== undefined ? JSON.stringify(data.optionGroups) : JSON.stringify(current.optionGroups || [])
 
@@ -131,8 +82,8 @@ export class PostgresProductRepository implements IProductRepository {
   async save(product: Product): Promise<void> {
     await this.db.query(
       `INSERT INTO products (
-        id, tenant_id, category_id, name, description, price_cents, image, available, option_groups
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        id, tenant_id, category_id, name, description, price_cents, image, available, duration_minutes, option_groups
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       ON CONFLICT (id) DO UPDATE SET
         tenant_id = EXCLUDED.tenant_id,
         category_id = EXCLUDED.category_id,
@@ -141,6 +92,7 @@ export class PostgresProductRepository implements IProductRepository {
         price_cents = EXCLUDED.price_cents,
         image = EXCLUDED.image,
         available = EXCLUDED.available,
+        duration_minutes = EXCLUDED.duration_minutes,
         option_groups = EXCLUDED.option_groups`,
       [
         product.id,
@@ -148,11 +100,16 @@ export class PostgresProductRepository implements IProductRepository {
         product.categoryId,
         product.name,
         product.description || null,
-        product.price.inCents,
+        product.price.cents,
         product.imageUrl || null,
         product.isAvailable,
+        product.durationMinutes || null,
         JSON.stringify(product.optionGroups || [])
       ]
     )
+  }
+
+  async delete(productId: string): Promise<void> {
+    await this.db.query('DELETE FROM products WHERE id = $1', [productId])
   }
 }

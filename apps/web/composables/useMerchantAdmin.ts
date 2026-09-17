@@ -1,5 +1,5 @@
 // composables/useMerchantAdmin.ts
-import { ref, computed, isRef, getCurrentInstance, type Ref } from 'vue'
+import { ref, computed, isRef, type Ref } from 'vue'
 import { useRoute } from 'vue-router'
 import type { Product, Category } from '@alaska/contracts'
 import { useHaptic } from './useHaptic'
@@ -118,15 +118,14 @@ function removeSessionItem(key: string): void {
   delete inMemorySession[key]
 }
 
-export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | undefined> | any) {
-  const { triggerHaptic } = useHaptic()
-  const route = getCurrentInstance() && typeof useRoute === 'function' ? useRoute() : null
+export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | undefined>) {
+  const route = typeof useRoute === 'function' ? useRoute() : null
   const apiBaseUrl = getApiBaseUrl()
 
   const currentSlug = computed(() => {
     if (typeof slugOrSource === 'string') return slugOrSource.trim().toLowerCase()
     if (isRef(slugOrSource)) return String(slugOrSource.value || 'default').trim().toLowerCase()
-    if (slugOrSource && typeof slugOrSource === 'object' && slugOrSource.slug) return String(slugOrSource.slug).trim().toLowerCase()
+    if (slugOrSource && typeof slugOrSource === 'object' && (slugOrSource as any).slug) return String((slugOrSource as any).slug).trim().toLowerCase()
     return String((route?.params?.slug as string) || 'default').trim().toLowerCase()
   })
 
@@ -134,9 +133,54 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   const overridesKey = computed(() => `alaska_overrides_${currentSlug.value}`)
   const pinSessionKey = computed(() => `alaska_admin_session_${currentSlug.value}`)
 
-  const isAuthenticated = ref(getSessionItem(pinSessionKey.value) === 'true')
+  const isAuthenticated = ref(false)
   const isSubmitting = ref(false)
   const errorMessage = ref('')
+
+  // Verifica autenticação inicial
+  if (typeof window !== 'undefined') {
+    const session = getSessionItem(pinSessionKey.value)
+    if (session) {
+      isAuthenticated.value = true
+    }
+  }
+
+  async function login(pin: string): Promise<boolean> {
+    isSubmitting.value = true
+    errorMessage.value = ''
+    try {
+      const overrides = getOverrides()
+      const configuredPin = overrides.customPin || '1234'
+      if (pin === configuredPin) {
+        setSessionItem(pinSessionKey.value, 'true')
+        isAuthenticated.value = true
+        triggerHaptic(30)
+        return true
+      }
+      errorMessage.value = 'PIN incorreto. Tente novamente.'
+      triggerHaptic(50)
+      return false
+    } finally {
+      isSubmitting.value = false
+    }
+  }
+
+  function logout(): void {
+    removeSessionItem(pinSessionKey.value)
+    isAuthenticated.value = false
+    triggerHaptic(20)
+  }
+
+  function changePin(newPin: string): boolean {
+    if (!newPin || newPin.length < 4 || newPin.length > 8) {
+      errorMessage.value = 'O PIN deve ter entre 4 e 8 dígitos numéricos.'
+      triggerHaptic(50)
+      return false
+    }
+    triggerHaptic(30)
+    saveOverrides({ customPin: newPin })
+    return true
+  }
 
   function getOverrides(): TenantOverrides {
     try {
@@ -147,7 +191,6 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       if (result.success) {
         return result.data as TenantOverrides
       }
-      // Se for um objeto com chaves mas falhou em algum detalhe estrito, recupera de forma defensiva
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
         return parsed as TenantOverrides
       }
@@ -194,40 +237,6 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     } catch (e) {
       // Silencioso
     }
-  }
-
-  function login(pin: string): boolean {
-    errorMessage.value = ''
-    const overrides = getOverrides()
-    const validPin = overrides.customPin || '1234'
-
-    if (pin === validPin || pin === '1234') {
-      isAuthenticated.value = true
-      setSessionItem(pinSessionKey.value, 'true')
-      triggerHaptic(30)
-      return true
-    }
-
-    errorMessage.value = 'PIN incorreto. Tente novamente.'
-    triggerHaptic(50)
-    return false
-  }
-
-  function logout(): void {
-    removeSessionItem(pinSessionKey.value)
-    isAuthenticated.value = false
-    triggerHaptic(20)
-  }
-
-  function changePin(newPin: string): boolean {
-    if (!newPin || newPin.length < 4 || newPin.length > 8) {
-      errorMessage.value = 'O PIN deve ter entre 4 e 8 dígitos numéricos.'
-      triggerHaptic(50)
-      return false
-    }
-    saveOverrides({ customPin: newPin })
-    triggerHaptic(30)
-    return true
   }
 
   // 1. Catálogo: Pausar e Atualizar Preço
@@ -360,7 +369,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     return true
   }
 
-  // 2. Catálogo: Criar e Excluir Produto
+  // 2. Catálogo: Criar e Excluir Produto com Persistência Real no PostgreSQL (ADR 010)
   function createProduct(productData: {
     name: string
     description?: string
@@ -383,9 +392,34 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       optionGroups: []
     }
 
+    // Camada 1 & 2: Reatividade instantânea na UI e cache otimista no LocalStorage
     const current = getOverrides()
     const list = [...(current.customProducts || []), newProd]
     saveOverrides({ customProducts: list })
+
+    // Camada 3: Persistência remota real no PostgreSQL via API NestJS
+    try {
+      if (typeof $fetch === 'function') {
+        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/products`
+        $fetch(url, {
+          method: 'POST',
+          body: {
+            id: newId,
+            name: productData.name,
+            description: productData.description || '',
+            price: Number(productData.price) || 0,
+            priceCents: Math.round((Number(productData.price) || 0) * 100),
+            categoryId: productData.categoryId,
+            image: productData.image || '',
+            durationMinutes: productData.durationMinutes || 0
+          },
+          timeout: 5000
+        }).catch((err) => {
+          console.warn('[AlaskaAdmin] Aviso ao persistir produto no backend (mantido override local):', err)
+        })
+      }
+    } catch {}
+
     return newProd
   }
 
@@ -398,6 +432,20 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       deletedProductIds: deleted,
       customProducts: customs
     })
+
+    // Exclusão remota real no PostgreSQL via API NestJS (Camada 3)
+    try {
+      if (typeof $fetch === 'function') {
+        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/products/${productId}`
+        $fetch(url, {
+          method: 'DELETE',
+          timeout: 4000
+        }).catch((err) => {
+          console.warn('[AlaskaAdmin] Aviso ao remover produto no backend (mantido override local):', err)
+        })
+      }
+    } catch {}
+
     return true
   }
 
@@ -693,6 +741,102 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     return index < 0
   }
 
+  function getEffectiveCategories(baseCategories: Category[]): Category[] {
+    const overrides = getOverrides()
+    const customProds = overrides.customProducts || []
+    const deletedIds = new Set(overrides.deletedProductIds || [])
+    const productOverrides = overrides.products || {}
+    const pausedOptions = new Set(overrides.pausedOptionIds || [])
+
+    const cloned: Category[] = JSON.parse(JSON.stringify(baseCategories || []))
+
+    for (const cat of cloned) {
+      cat.products = (cat.products || []).filter(p => !deletedIds.has(p.id))
+
+      for (const prod of cat.products) {
+        const over = productOverrides[prod.id]
+        if (over) {
+          if (typeof over.isAvailable === 'boolean') {
+            prod.isAvailable = over.isAvailable
+            if ('available' in prod) {
+              ;(prod as any).available = over.isAvailable
+            }
+          }
+          if (typeof over.price === 'number') {
+            prod.price = over.price
+          }
+        }
+
+        if (prod.optionGroups && Array.isArray(prod.optionGroups)) {
+          for (const og of prod.optionGroups) {
+            const items = (og as any).items || (og as any).options || []
+            for (const item of items) {
+              if (pausedOptions.has(item.id)) {
+                item.isAvailable = false
+                item.available = false
+              }
+            }
+          }
+        }
+      }
+
+      const prodsForCat = customProds.filter(p => p.categoryId === cat.id && !deletedIds.has(p.id))
+      for (const cp of prodsForCat) {
+        const over = productOverrides[cp.id]
+        if (over) {
+          if (typeof over.isAvailable === 'boolean') {
+            cp.isAvailable = over.isAvailable
+            if ('available' in cp) {
+              ;(cp as any).available = over.isAvailable
+            }
+          }
+          if (typeof over.price === 'number') {
+            cp.price = over.price
+          }
+        }
+        if (!cat.products.some(p => p.id === cp.id)) {
+          cat.products.push(cp)
+        }
+      }
+    }
+
+    return cloned
+  }
+
+  function getEffectiveProductPrice(product: Product): number {
+    if (!product) return 0
+    const overrides = getOverrides()
+    const overridePrice = overrides.products?.[product.id]?.price
+    if (typeof overridePrice === 'number' && overridePrice >= 0) {
+      return overridePrice
+    }
+    return typeof product.price === 'number' ? product.price : 0
+  }
+
+  function resolveProductPrice(product: Product): number {
+    return getEffectiveProductPrice(product)
+  }
+
+  function getProductPrice(product: Product): number {
+    return getEffectiveProductPrice(product)
+  }
+
+  function isProductPaused(product: Product): boolean {
+    if (!product) return false
+    const overrides = getOverrides()
+    const overrideAvailable = overrides.products?.[product.id]?.price !== undefined ? overrides.products?.[product.id]?.isAvailable : undefined
+    if (typeof overrideAvailable === 'boolean') {
+      return !overrideAvailable
+    }
+    if (typeof product.isAvailable === 'boolean') {
+      return !product.isAvailable
+    }
+    if ('available' in product && typeof (product as any).available === 'boolean') {
+      return !(product as any).available
+    }
+    return false
+  }
+
   return {
     isAuthenticated: computed(() => isAuthenticated.value),
     isSubmitting: computed(() => isSubmitting.value),
@@ -744,5 +888,10 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     savePix: updatePixConfig,
     updateContact,
     saveContact: updateContact,
+    getEffectiveCategories,
+    getEffectiveProductPrice,
+    resolveProductPrice,
+    getProductPrice,
+    isProductPaused,
   }
 }

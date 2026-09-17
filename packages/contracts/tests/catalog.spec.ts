@@ -5,6 +5,7 @@ import {
   ToggleProductAvailabilitySchema,
   ToggleOptionAvailabilitySchema,
   UpdateProductSchema,
+  CreateProductSchema,
 } from '../src/catalog'
 
 describe('Catalog Schemas (@alaska/contracts/catalog)', () => {
@@ -77,5 +78,40 @@ describe('Mutations Schemas', () => {
     const parsed = UpdateProductSchema.parse(updateData)
     expect(parsed.name).toBe('Smash Triplo')
     expect(parsed.isAvailable).toBe(false)
+  })
+
+  describe('CreateProductSchema (ADR 010)', () => {
+    it('deve validar criação de produto com campos canônicos', () => {
+      const payload = {
+        name: 'Smash Salad Burger',
+        price: 28.5,
+        categoryId: 'cat-burgers',
+        description: 'Hambúrguer artesanal fresco com salada',
+        image: 'https://res.cloudinary.com/demo/image/upload/sample.webp',
+      }
+      const parsed = CreateProductSchema.parse(payload)
+      expect(parsed.name).toBe('Smash Salad Burger')
+      expect(parsed.price).toBe(28.5)
+      expect(parsed.categoryId).toBe('cat-burgers')
+      expect(parsed.durationMinutes).toBe(0)
+      expect(parsed.isAvailable).toBe(true)
+    })
+
+    it('deve validar criação de serviço com durationMinutes positivo', () => {
+      const payload = {
+        name: 'Corte Degradê Navalhado',
+        price: 45.0,
+        categoryId: 'cat-cortes',
+        durationMinutes: 40,
+      }
+      const parsed = CreateProductSchema.parse(payload)
+      expect(parsed.name).toBe('Corte Degradê Navalhado')
+      expect(parsed.durationMinutes).toBe(40)
+    })
+
+    it('deve rejeitar payload sem nome ou sem categoria', () => {
+      expect(() => CreateProductSchema.parse({ price: 30, categoryId: 'cat-1' })).toThrow()
+      expect(() => CreateProductSchema.parse({ name: 'Produto', price: 30, categoryId: '' })).toThrow()
+    })
   })
 })

@@ -1,27 +1,103 @@
-import { Controller, Patch, Put, Body, Param, HttpCode, HttpStatus } from '@nestjs/common'
-import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiResponse, ApiBearerAuth } from '@nestjs/swagger'
+import { Controller, Patch, Put, Post, Delete, Body, Param, HttpCode, HttpStatus } from '@nestjs/common'
+import { ApiTags, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger'
 import {
   ToggleProductAvailabilitySchema,
   ToggleOptionAvailabilitySchema,
   UpdateProductSchema,
+  CreateProductSchema,
   type ToggleProductAvailabilityDto,
   type ToggleOptionAvailabilityDto,
-  type UpdateProductDto
+  type UpdateProductDto,
+  type CreateProductDto,
 } from '@alaska/contracts'
 import { ZodValidationPipe } from '../pipes/zod-validation.pipe'
 import { ToggleProductAvailabilityUseCase } from '@core/application/use-cases/toggle-product-availability.use-case'
 import { UpdateProductUseCase } from '@core/application/use-cases/update-product.use-case'
 import { ToggleOptionAvailabilityUseCase } from '@core/application/use-cases/toggle-option-availability.use-case'
+import { CreateProductUseCase } from '@core/application/use-cases/create-product.use-case'
+import { DeleteProductUseCase } from '@core/application/use-cases/delete-product.use-case'
 
-@ApiTags('products')
-@ApiBearerAuth('merchant-token')
+@ApiTags('Products')
 @Controller('tenants/:slug/products')
 export class ProductController {
   constructor(
     private readonly toggleAvailabilityUseCase: ToggleProductAvailabilityUseCase,
     private readonly updateProductUseCase: UpdateProductUseCase,
-    private readonly toggleOptionUseCase: ToggleOptionAvailabilityUseCase
+    private readonly toggleOptionUseCase: ToggleOptionAvailabilityUseCase,
+    private readonly createProductUseCase: CreateProductUseCase,
+    private readonly deleteProductUseCase: DeleteProductUseCase
   ) {}
+
+  @Post()
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({
+    summary: 'Cadastrar novo produto no catálogo do estabelecimento',
+    description: 'Persiste um novo produto/serviço no banco de dados relacional (PostgreSQL) associado ao tenant.'
+  })
+  @ApiParam({ name: 'slug', description: 'Slug do estabelecimento', example: 'hamburgueria-x' })
+  @ApiResponse({ status: 201, description: 'Produto criado e persistido com sucesso no PostgreSQL' })
+  @ApiResponse({ status: 400, description: 'Dados de produto inválidos (RFC 7807)' })
+  @ApiResponse({ status: 404, description: 'Estabelecimento não encontrado (RFC 7807)' })
+  async createProduct(
+    @Param('slug') slug: string,
+    @Body(new ZodValidationPipe(CreateProductSchema)) dto: CreateProductDto
+  ) {
+    const product = await this.createProductUseCase.execute({
+      tenantSlug: slug,
+      id: dto.id,
+      name: dto.name,
+      description: dto.description,
+      price: dto.price,
+      priceCents: dto.priceCents ?? Math.round(dto.price * 100),
+      categoryId: dto.categoryId,
+      image: dto.image || dto.imageUrl,
+      durationMinutes: dto.durationMinutes,
+      optionGroups: dto.optionGroups || dto.options
+    })
+
+    return {
+      success: true,
+      data: {
+        id: product.id,
+        name: product.name,
+        description: product.description,
+        price: product.price.amount,
+        priceCents: product.price.cents,
+        categoryId: product.categoryId,
+        image: product.imageUrl,
+        imageUrl: product.imageUrl,
+        isAvailable: product.isAvailable,
+        available: product.isAvailable,
+        durationMinutes: product.durationMinutes,
+        optionGroups: product.optionGroups
+      }
+    }
+  }
+
+  @Delete(':productId')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Excluir produto do catálogo do estabelecimento',
+    description: 'Remove o produto do banco de dados relacional (PostgreSQL) do estabelecimento.'
+  })
+  @ApiParam({ name: 'slug', description: 'Slug do estabelecimento', example: 'hamburgueria-x' })
+  @ApiParam({ name: 'productId', description: 'ID do produto a ser removido', example: 'prod-smash-bacon' })
+  @ApiResponse({ status: 200, description: 'Produto removido com sucesso' })
+  @ApiResponse({ status: 404, description: 'Produto não encontrado (RFC 7807)' })
+  async deleteProduct(
+    @Param('slug') slug: string,
+    @Param('productId') productId: string
+  ) {
+    await this.deleteProductUseCase.execute({
+      tenantSlug: slug,
+      productId
+    })
+
+    return {
+      success: true,
+      message: 'Produto removido com sucesso.'
+    }
+  }
 
   @Patch(':productId/availability')
   @HttpCode(HttpStatus.OK)
@@ -49,8 +125,8 @@ export class ProductController {
         type: 'https://alaska.app/errors/ENTITY_NOT_FOUND',
         title: 'Recurso Não Encontrado',
         status: 404,
-        detail: "Produto com identificador 'prod-smash-bacon' não foi encontrado.",
-        instance: '/api/v1/tenants/hamburgueria-x/products/prod-smash-bacon/availability'
+        detail: "Produto com identificador 'prod-inexistente' não foi encontrado.",
+        instance: '/api/v1/tenants/hamburgueria-x/products/prod-inexistente/availability'
       }
     }
   })
@@ -74,9 +150,9 @@ export class ProductController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Atualizar informações de produto (preço, opcionais, descrição)',
-    description: 'Permite editar preço (em centavos ou reais), nome, descrição e disponibilidade do produto. Suporta os métodos HTTP PUT e PATCH.'
+    description: 'Permite atualizar preço em reais decimais ou centavos, descrição e disponibilidade.'
   })
-  @ApiParam({ name: 'slug', description: 'Slug único do estabelecimento', example: 'hamburgueria-x' })
+  @ApiParam({ name: 'slug', description: 'Slug do estabelecimento', example: 'hamburgueria-x' })
   @ApiParam({ name: 'productId', description: 'ID do produto', example: 'prod-smash-bacon' })
   @ApiBody({
     schema: {
@@ -99,8 +175,8 @@ export class ProductController {
         type: 'https://alaska.app/errors/ENTITY_NOT_FOUND',
         title: 'Recurso Não Encontrado',
         status: 404,
-        detail: "Produto com identificador 'prod-smash-bacon' não foi encontrado.",
-        instance: '/api/v1/tenants/hamburgueria-x/products/prod-smash-bacon'
+        detail: "Produto com identificador 'prod-inexistente' não foi encontrado.",
+        instance: '/api/v1/tenants/hamburgueria-x/products/prod-inexistente'
       }
     }
   })
@@ -143,14 +219,14 @@ export class ProductController {
   @ApiResponse({ status: 200, description: 'Disponibilidade do opcional alterada com sucesso' })
   @ApiResponse({
     status: 404,
-    description: 'Produto ou opção não encontrado (RFC 7807)',
+    description: 'Opcional não encontrado (RFC 7807)',
     schema: {
       example: {
         type: 'https://alaska.app/errors/ENTITY_NOT_FOUND',
         title: 'Recurso Não Encontrado',
         status: 404,
-        detail: "Opção com identificador 'opt-bacon-extra' não foi encontrada.",
-        instance: '/api/v1/tenants/hamburgueria-x/products/prod-smash-bacon/options/opt-bacon-extra/availability'
+        detail: "Opcional com identificador 'opt-inexistente' não foi encontrado.",
+        instance: '/api/v1/tenants/hamburgueria-x/products/prod-smash-bacon/options/opt-inexistente/availability'
       }
     }
   })
@@ -190,19 +266,6 @@ export class ProductController {
     }
   })
   @ApiResponse({ status: 200, description: 'Disponibilidade do opcional alterada com sucesso' })
-  @ApiResponse({
-    status: 404,
-    description: 'Opção não encontrada (RFC 7807)',
-    schema: {
-      example: {
-        type: 'https://alaska.app/errors/ENTITY_NOT_FOUND',
-        title: 'Recurso Não Encontrado',
-        status: 404,
-        detail: "Opção com identificador 'opt-bacon-extra' não foi encontrada.",
-        instance: '/api/v1/tenants/hamburgueria-x/products/options/opt-bacon-extra/availability'
-      }
-    }
-  })
   async toggleOptionDirect(
     @Param('slug') slug: string,
     @Param('optionId') optionId: string,

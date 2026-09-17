@@ -4,6 +4,7 @@ export interface IProductRepository {
   findById(id: string): Promise<Product | null>
   listByTenantSlug(tenantSlug: string): Promise<Product[]>
   toggleAvailability(productId: string, isAvailable: boolean): Promise<Product>
-  update(productId: string, data: Partial<Product>): Promise<Product>
+  update(productId: string, data: Partial<Product> & { priceCents?: number; optionGroups?: any }): Promise<Product>
   save(product: Product): Promise<void>
+  delete(productId: string): Promise<void>
 }
