@@ -3,7 +3,7 @@
 import { ref } from 'vue'
 import { Sparkles, ChevronLeft, ChevronRight } from 'lucide-vue-next'
 import { formatCurrency } from '~/utils/formatters'
-import { handleImageError } from '~/utils/images'
+import { handleImageError, getFallbackImageUrl } from '~/utils/images'
 import type { Product } from '~/types'
 
 const props = defineProps<{
@@ -67,18 +67,26 @@ function scrollCarousel(direction: 'left' | 'right') {
         :key="product.id"
         @click="emit('select-product', product)"
         class="min-w-[240px] sm:min-w-[260px] max-w-[260px] bg-white rounded-2xl border border-slate-100 p-3 shadow-md hover:shadow-lg transition-all snap-start flex flex-col justify-between cursor-pointer active:scale-[0.99]"
-        :class="{ 'opacity-60 bg-slate-50/50': product.isAvailable === false }"
+        :class="{ 'opacity-60 bg-slate-50/50': !product.isAvailable }"
       >
         <div class="space-y-2.5">
           <div class="w-full h-32 rounded-xl overflow-hidden bg-slate-100 relative">
             <img
+              v-if="product.image"
               :src="product.image"
               :alt="product.name"
+              referrerpolicy="no-referrer"
               class="w-full h-full object-cover"
               @error="handleImageError($event, theme)"
             />
+            <img
+              v-else
+              :src="getFallbackImageUrl(theme)"
+              :alt="product.name"
+              class="w-full h-full object-cover"
+            />
             <span
-              v-if="product.isAvailable === false"
+              v-if="!product.isAvailable"
               class="absolute inset-0 bg-black/60 backdrop-blur-2xs flex items-center justify-center text-white text-xs font-bold uppercase tracking-wider"
             >
               Esgotado

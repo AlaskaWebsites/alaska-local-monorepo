@@ -14,7 +14,7 @@ describe('Unit: useImageUpload (Cloudinary Client-Direct)', () => {
     vi.restoreAllMocks()
   })
 
-  it('deve realizar upload e retornar URL otimizada com transformações automáticas', async () => {
+  it('deve realizar upload e retornar URL otimizada com transformações automáticas seguras', async () => {
     const fakeFile = new File(['mock-image-content'], 'hamburguer.jpg', { type: 'image/jpeg' })
     const mockCloudinaryUrl = 'https://res.cloudinary.com/gf5j6cdu/image/upload/v1726530000/alaska-products/hamburguer.jpg'
 
@@ -40,7 +40,7 @@ describe('Unit: useImageUpload (Cloudinary Client-Direct)', () => {
 
     expect(result).not.toBeNull()
     expect(result?.url).toBe(
-      'https://res.cloudinary.com/gf5j6cdu/image/upload/c_fill,g_auto,w_600,h_600,f_auto,q_auto/v1726530000/alaska-products/hamburguer.jpg'
+      'https://res.cloudinary.com/gf5j6cdu/image/upload/c_fill,w_600,h_600,f_auto,q_auto/v1726530000/alaska-products/hamburguer.jpg'
     )
     expect(result?.publicId).toBe('alaska-products/hamburguer')
     expect(isUploading.value).toBe(false)

@@ -25,7 +25,6 @@ export function useImageUpload() {
       const formData = new FormData()
       formData.append('file', file)
       formData.append('upload_preset', uploadPreset)
-      formData.append('folder', 'alaska-products')
 
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
@@ -50,12 +49,12 @@ export function useImageUpload() {
 
       const data = await response.json()
 
-      // Aplica transformações automáticas para vitrine (f_auto, q_auto, corte inteligente w=600, h=600)
+      // Aplica transformações automáticas seguras para vitrine (corte 1:1, formato e compressão automáticos)
       const secureUrl = data.secure_url as string
       const optimizedUrl = secureUrl.includes('/image/upload/')
         ? secureUrl.replace(
             '/image/upload/',
-            '/image/upload/c_fill,g_auto,w_600,h_600,f_auto,q_auto/'
+            '/image/upload/c_fill,w_600,h_600,f_auto,q_auto/'
           )
         : secureUrl
 

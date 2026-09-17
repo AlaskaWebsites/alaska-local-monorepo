@@ -1,21 +1,13 @@
 <!-- components/storefront/ProductCard.vue -->
 <script setup lang="ts">
 import { formatCurrency } from '~/utils/formatters'
-import { handleImageError } from '~/utils/images'
+import { handleImageError, getFallbackImageUrl } from '~/utils/images'
 import type { Product } from '~/types'
 
-const props = withDefaults(
-  defineProps<{
-    product: Product
-    theme?: string
-    themeClasses?: any
-    isServiceStore?: boolean
-    layout?: 'horizontal' | 'grid'
-  }>(),
-  {
-    layout: 'grid'
-  }
-)
+const props = defineProps<{
+  product: Product
+  theme?: string
+}>()
 
 const emit = defineEmits<{
   (e: 'click', product: Product): void
@@ -50,11 +42,18 @@ const emit = defineEmits<{
 
     <div class="w-20 h-20 sm:w-22 sm:h-22 rounded-xl overflow-hidden bg-slate-100 shrink-0 relative border border-slate-100">
       <img
+        v-if="product.image"
         :src="product.image"
         :alt="product.name"
         referrerpolicy="no-referrer"
         class="w-full h-full object-cover"
         @error="handleImageError($event, theme)"
+      />
+      <img
+        v-else
+        :src="getFallbackImageUrl(theme)"
+        :alt="product.name"
+        class="w-full h-full object-cover"
       />
       <span
         v-if="product.isAvailable === false"

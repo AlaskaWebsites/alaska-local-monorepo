@@ -1,8 +1,10 @@
 <!-- components/admin/modals/AdminCreateProductModal.vue -->
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { Plus, Upload, Loader2, X, Link2 } from 'lucide-vue-next'
 import { useImageUpload } from '~/composables/useImageUpload'
+import { useMerchantAdmin } from '~/composables/useMerchantAdmin'
 import type { Category } from '~/types'
 
 const props = defineProps<{
@@ -13,9 +15,13 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   (e: 'close'): void
+  (e: 'confirm', form: { name: string; price: number; categoryId: string; description: string; image?: string }): void
   (e: 'submit', form: { name: string; price: number; categoryId: string; description: string; image?: string }): void
 }>()
 
+const route = useRoute()
+const slug = computed(() => (route.params.slug as string) || 'default')
+const { getOverrides, saveOverrides } = useMerchantAdmin(slug)
 const { uploadImage, isUploading, uploadError } = useImageUpload()
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
@@ -80,7 +86,31 @@ function removeImage() {
 
 function handleSubmit() {
   if (isUploading.value) return
-  emit('submit', form.value)
+  
+  const payload = { ...form.value }
+  emit('submit', payload)
+  emit('confirm', payload)
+
+  // Sincronização direta de imagem nos overrides locais
+  if (payload.image) {
+    const injectImageToLastCustom = () => {
+      try {
+        const overrides = getOverrides()
+        const customs = overrides.customProducts || []
+        if (customs.length > 0) {
+          const lastIndex = customs.length - 1
+          const lastProd = customs[lastIndex]
+          if (lastProd && lastProd.name === payload.name && lastProd.image !== payload.image) {
+            lastProd.image = payload.image
+            saveOverrides({ customProducts: [...customs] })
+          }
+        }
+      } catch {}
+    }
+
+    injectImageToLastCustom()
+    setTimeout(injectImageToLastCustom, 50)
+  }
 }
 </script>
 
