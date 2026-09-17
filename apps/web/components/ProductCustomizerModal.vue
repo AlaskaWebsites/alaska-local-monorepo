@@ -240,12 +240,15 @@ function handleAddToCart() {
         <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-6">
           <!-- Imagem e Descrição -->
           <div v-if="product.image || product.description" class="space-y-3">
-            <div v-if="product.image" class="w-full h-48 sm:h-56 rounded-2xl overflow-hidden bg-slate-50/80 border border-slate-100 flex items-center justify-center p-2 relative">
+            <div
+              v-if="product.image"
+              class="w-full aspect-[16/10] sm:h-64 rounded-2xl overflow-hidden bg-slate-100 border border-slate-100 relative"
+            >
               <img
                 :src="product.image"
                 :alt="product.name"
                 referrerpolicy="no-referrer"
-                class="w-full h-full object-contain"
+                class="w-full h-full object-cover object-center"
                 @error="handleImageError($event, tenant?.theme)"
               />
             </div>
@@ -262,7 +265,7 @@ function handleAddToCart() {
               class="border border-slate-200/90 rounded-2xl p-4 bg-slate-50/50 space-y-3"
             >
               <div class="flex items-center justify-between">
-                <div >
+                <div>
                   <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                     <span>{{ group.title }}</span>
                     <span

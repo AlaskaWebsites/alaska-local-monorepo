@@ -197,7 +197,7 @@ function handleSubmit() {
               <img
                 :src="previewUrl || form.image"
                 alt="Preview"
-                class="w-full h-full object-cover"
+                class="w-full h-full object-cover object-center"
                 referrerpolicy="no-referrer"
               />
               <div v-if="isUploading" class="absolute inset-0 bg-black/60 flex items-center justify-center">
