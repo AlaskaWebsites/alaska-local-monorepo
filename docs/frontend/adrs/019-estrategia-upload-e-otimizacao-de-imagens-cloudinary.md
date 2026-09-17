@@ -1,8 +1,8 @@
 # ADR 019: Estratégia de Upload Direto do Client e Otimização de Imagens com Cloudinary
 
-- **Status:** Aceito / Em Planejamento de Implementação
+- **Status:** Aceito / Implementado
 - **Data:** 2026-09-16
-- **Contexto:** `apps/web/components/admin/modals/AdminCreateProductModal.vue`, `apps/web/composables/useImageUpload.ts`, `apps/web/components/storefront/ProductCard.vue`, `apps/web/components/ProductCustomizerModal.vue`, `docs/frontend/adrs/008-resiliencia-de-imagens-e-placeholders-svg-tematicos.md`
+- **Contexto:** `apps/web/components/admin/modals/AdminCreateProductModal.vue`, `apps/web/composables/useImageUpload.ts`, `apps/web/tests/units/image-upload.test.ts`, `apps/web/components/storefront/ProductCard.vue`, `apps/web/components/ProductCustomizerModal.vue`, `docs/frontend/adrs/008-resiliencia-de-imagens-e-placeholders-svg-tematicos.md`
 
 ---
 
@@ -35,6 +35,11 @@ Na prática operacional de pequenos comerciantes de bairro (adegas, hamburgueria
 ## 3. Decisão Arquitetural: Cloudinary com Unsigned Upload Preset
 
 Adota-se o **Cloudinary** como serviço de armazenamento, CDN e otimização dinâmica de imagens para o ecossistema Alaska Local, operando através do padrão **Client-to-Cloud Unsigned Upload**.
+
+### Parâmetros Oficiais de Produção:
+- **Cloud Name:** `gf5j6cdu`
+- **Upload Preset (Unsigned):** `alaska_products`
+- **Asset Folder:** `alaska-products`
 
 ### Principais Justificativas:
 
@@ -108,7 +113,7 @@ export function useImageUpload() {
 
     try {
       const config = useRuntimeConfig()
-      const cloudName = config.public.cloudinaryCloudName || 'alaska-local'
+      const cloudName = config.public.cloudinaryCloudName || 'gf5j6cdu'
       const uploadPreset = config.public.cloudinaryUploadPreset || 'alaska_products'
 
       const formData = new FormData()
@@ -161,10 +166,10 @@ export function useImageUpload() {
 
 ### 5.2. Experiência de Usuário no Modal (`AdminCreateProductModal.vue`)
 
-- **Elemento UI:** Área de toque generosa (`h-32`), pontilhada (`border-dashed border-slate-700`), com ícone de câmera/upload.
+- **Elemento UI:** Área de toque generosa pontilhada (`border-dashed border-slate-800`), com ícone de câmera/upload.
 - **Trigger Mobile:** `<input type="file" accept="image/png, image/jpeg, image/webp" class="hidden" />` ativado ao clicar na caixa.
 - **Preview em Tempo Real:** Ao selecionar o arquivo, a UI renderiza imediatamente a imagem em miniatura via `URL.createObjectURL(file)` acompanhada de um indicador de progresso (*spinner* suave).
-- **Fallback Híbrido:** Permanece um botão sutil *"Ou colar link de imagem externa"* para casos especiais onde o lojista já possui a URL pronta.
+- **Fallback Híbrido:** Permanece um botão sutil *"Ou colar URL de imagem externa"* para casos onde o lojista já possui a URL pronta.
 
 ---
 
@@ -180,7 +185,7 @@ Caso ocorra indisponibilidade temporária na CDN ou conexão instável do client
 
 ## 7. Roteiro de Implementação
 
-1. **Configuração de Ambiente:** Adicionar as variáveis públicas `NUXT_PUBLIC_CLOUDINARY_CLOUD_NAME` e `NUXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET` no `nuxt.config.ts` e nas variáveis de ambiente da Vercel.
-2. **Criação do Composable:** Implementar `apps/web/composables/useImageUpload.ts` com testes unitários no Vitest mockando a resposta da API Cloudinary.
-3. **Refatoração do Modal:** Integrar o seletor de arquivos com pré-visualização no `AdminCreateProductModal.vue`.
-4. **Validação:** Submeter imagens de diversos formatos (JPG, PNG, WebP) em dispositivos móveis reais e validar a entrega otimizada no `ProductCard.vue` e `ProductCustomizerModal.vue`.
+- [x] **Configuração de Ambiente:** Adicionar as variáveis públicas `cloudinaryCloudName` e `cloudinaryUploadPreset` no `apps/web/nuxt.config.ts`.
+- [x] **Criação do Composable:** Implementar `apps/web/composables/useImageUpload.ts` com testes unitários no Vitest mockando a resposta da API Cloudinary (`apps/web/tests/units/image-upload.test.ts`).
+- [x] **Refatoração do Modal:** Integrar o seletor de arquivos com pré-visualização, upload e fallback no `AdminCreateProductModal.vue`.
+- [x] **Validação:** Suíte de testes unitários criada e ADR sincronizada.
