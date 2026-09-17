@@ -62,13 +62,13 @@ export class ProductController {
         name: product.name,
         description: product.description,
         price: product.price.amount,
-        priceCents: product.price.cents,
+        priceCents: product.price.inCents,
         categoryId: product.categoryId,
         image: product.imageUrl,
         imageUrl: product.imageUrl,
         isAvailable: product.isAvailable,
         available: product.isAvailable,
-        durationMinutes: product.durationMinutes,
+        durationMinutes: dto.durationMinutes || 0,
         optionGroups: product.optionGroups
       }
     }

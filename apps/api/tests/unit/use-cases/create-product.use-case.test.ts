@@ -39,7 +39,7 @@ describe('Unit: CreateProductUseCase (Persistência Real no Banco de Dados - ADR
 
     expect(result.id).toBeDefined()
     expect(result.name).toBe('Combo Smash Especial')
-    expect(result.price.cents).toBe(3450)
+    expect(result.price.inCents).toBe(3450)
     expect(result.price.amount).toBe(34.5)
     expect(result.imageUrl).toBe('https://res.cloudinary.com/demo/image/upload/sample.webp')
 

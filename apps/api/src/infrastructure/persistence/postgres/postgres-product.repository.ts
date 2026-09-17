@@ -3,7 +3,6 @@ import { IProductRepository } from '../../../core/application/ports/product.repo
 import { Product } from '../../../core/domain/entities/product.entity'
 import { PostgresService } from './postgres.service'
 import { EntityNotFoundError } from '../../../core/domain/errors/domain.error'
-import { Money } from '../../../core/domain/value-objects/money.vo'
 
 @Injectable()
 export class PostgresProductRepository implements IProductRepository {
@@ -16,11 +15,10 @@ export class PostgresProductRepository implements IProductRepository {
       categoryId: row.category_id,
       name: row.name,
       description: row.description || undefined,
-      price: Money.fromCents(row.price_cents),
+      priceCents: row.price_cents,
       imageUrl: row.image || undefined,
       isAvailable: row.available ?? true,
       optionGroups: typeof row.option_groups === 'string' ? JSON.parse(row.option_groups) : (row.option_groups || []),
-      durationMinutes: row.duration_minutes ?? undefined,
       createdAt: row.created_at ? new Date(row.created_at) : undefined
     })
   }
@@ -61,7 +59,7 @@ export class PostgresProductRepository implements IProductRepository {
 
     const name = data.name ?? current.name
     const description = data.description !== undefined ? data.description : current.description
-    const priceCents = data.priceCents !== undefined ? data.priceCents : current.price.cents
+    const priceCents = data.priceCents !== undefined ? data.priceCents : current.price.inCents
     const isAvailable = data.isAvailable !== undefined ? data.isAvailable : current.isAvailable
     const optionGroups = data.optionGroups !== undefined ? JSON.stringify(data.optionGroups) : JSON.stringify(current.optionGroups || [])
 
@@ -82,8 +80,8 @@ export class PostgresProductRepository implements IProductRepository {
   async save(product: Product): Promise<void> {
     await this.db.query(
       `INSERT INTO products (
-        id, tenant_id, category_id, name, description, price_cents, image, available, duration_minutes, option_groups
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        id, tenant_id, category_id, name, description, price_cents, image, available, option_groups
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
       ON CONFLICT (id) DO UPDATE SET
         tenant_id = EXCLUDED.tenant_id,
         category_id = EXCLUDED.category_id,
@@ -92,7 +90,6 @@ export class PostgresProductRepository implements IProductRepository {
         price_cents = EXCLUDED.price_cents,
         image = EXCLUDED.image,
         available = EXCLUDED.available,
-        duration_minutes = EXCLUDED.duration_minutes,
         option_groups = EXCLUDED.option_groups`,
       [
         product.id,
@@ -100,10 +97,9 @@ export class PostgresProductRepository implements IProductRepository {
         product.categoryId,
         product.name,
         product.description || null,
-        product.price.cents,
+        product.price.inCents,
         product.imageUrl || null,
         product.isAvailable,
-        product.durationMinutes || null,
         JSON.stringify(product.optionGroups || [])
       ]
     )

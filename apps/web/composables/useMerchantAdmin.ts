@@ -4,6 +4,14 @@ import { useRoute } from 'vue-router'
 import type { Product, Category } from '@alaska/contracts'
 import { useHaptic } from './useHaptic'
 
+function safeHaptic(duration = 20) {
+  try {
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      navigator.vibrate(duration)
+    }
+  } catch {}
+}
+
 import {
   TenantOverridesSchema,
   type TenantOverrides,
@@ -136,6 +144,13 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   const isAuthenticated = ref(false)
   const isSubmitting = ref(false)
   const errorMessage = ref('')
+  let triggerHaptic = safeHaptic
+  try {
+    const haptic = typeof useHaptic === 'function' ? useHaptic() : null
+    if (haptic && typeof haptic.triggerHaptic === 'function') {
+      triggerHaptic = haptic.triggerHaptic
+    }
+  } catch {}
 
   // Verifica autenticação inicial
   if (typeof window !== 'undefined') {
@@ -145,7 +160,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     }
   }
 
-  async function login(pin: string): Promise<boolean> {
+  function login(pin: string): boolean {
     isSubmitting.value = true
     errorMessage.value = ''
     try {
@@ -185,18 +200,25 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   function getOverrides(): TenantOverrides {
     try {
       const raw = getStorageItem(overridesKey.value)
-      if (!raw || typeof raw !== 'string') return {}
+      if (!raw || typeof raw !== 'string') return { pausedOptionIds: [] }
       const parsed = JSON.parse(raw)
       const result = TenantOverridesSchema.safeParse(parsed)
       if (result.success) {
-        return result.data as TenantOverrides
+        const data = result.data as TenantOverrides
+        return {
+          ...data,
+          pausedOptionIds: data.pausedOptionIds ?? []
+        }
       }
       if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        return parsed as TenantOverrides
+        return {
+          ...(parsed as TenantOverrides),
+          pausedOptionIds: (parsed as any).pausedOptionIds ?? []
+        }
       }
-      return {}
+      return { pausedOptionIds: [] }
     } catch {
-      return {}
+      return { pausedOptionIds: [] }
     }
   }
 

@@ -2,7 +2,6 @@ import { IProductRepository } from '../ports/product.repository.port'
 import { ITenantRepository } from '../ports/tenant.repository.port'
 import { EntityNotFoundError } from '@core/domain/errors/domain.error'
 import { Product } from '@core/domain/entities/product.entity'
-import { Money } from '@core/domain/value-objects/money.vo'
 
 export interface CreateProductInput {
   tenantSlug: string
@@ -49,10 +48,9 @@ export class CreateProductUseCase {
       categoryId: input.categoryId,
       name: input.name.trim(),
       description: input.description || '',
-      price: Money.fromCents(priceCents),
+      priceCents,
       imageUrl: imageUrl || undefined,
       isAvailable: true,
-      durationMinutes: input.durationMinutes || 0,
       optionGroups: input.optionGroups || [],
       createdAt: new Date()
     })
