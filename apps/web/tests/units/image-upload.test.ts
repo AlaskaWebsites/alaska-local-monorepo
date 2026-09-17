@@ -40,7 +40,7 @@ describe('Unit: useImageUpload (Cloudinary Client-Direct)', () => {
 
     expect(result).not.toBeNull()
     expect(result?.url).toBe(
-      'https://res.cloudinary.com/gf5j6cdu/image/upload/c_fill,w_600,h_600,f_auto,q_auto/v1726530000/alaska-products/hamburguer.jpg'
+      'https://res.cloudinary.com/gf5j6cdu/image/upload/c_limit,w_1000,h_1000,f_auto,q_auto/v1726530000/alaska-products/hamburguer.jpg'
     )
     expect(result?.publicId).toBe('alaska-products/hamburguer')
     expect(isUploading.value).toBe(false)

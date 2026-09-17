@@ -49,12 +49,12 @@ export function useImageUpload() {
 
       const data = await response.json()
 
-      // Aplica transformações automáticas seguras para vitrine (corte 1:1, formato e compressão automáticos)
+      // Aplica transformações automáticas seguras no Cloudinary sem cortar bordas (mantendo proporção e qualidade)
       const secureUrl = data.secure_url as string
       const optimizedUrl = secureUrl.includes('/image/upload/')
         ? secureUrl.replace(
             '/image/upload/',
-            '/image/upload/c_fill,w_600,h_600,f_auto,q_auto/'
+            '/image/upload/c_limit,w_1000,h_1000,f_auto,q_auto/'
           )
         : secureUrl
 

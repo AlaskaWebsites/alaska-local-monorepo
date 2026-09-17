@@ -70,13 +70,13 @@ function scrollCarousel(direction: 'left' | 'right') {
         :class="{ 'opacity-60 bg-slate-50/50': !product.isAvailable }"
       >
         <div class="space-y-2.5">
-          <div class="w-full h-32 rounded-xl overflow-hidden bg-slate-100 relative">
+          <div class="w-full h-36 rounded-xl overflow-hidden bg-slate-50/80 relative flex items-center justify-center p-1.5 border border-slate-100/60">
             <img
               v-if="product.image"
               :src="product.image"
               :alt="product.name"
               referrerpolicy="no-referrer"
-              class="w-full h-full object-cover"
+              class="w-full h-full object-contain"
               @error="handleImageError($event, theme)"
             />
             <img

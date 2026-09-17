@@ -40,13 +40,13 @@ const emit = defineEmits<{
       </div>
     </div>
 
-    <div class="w-20 h-20 sm:w-22 sm:h-22 rounded-xl overflow-hidden bg-slate-100 shrink-0 relative border border-slate-100">
+    <div class="w-20 h-20 sm:w-22 sm:h-22 rounded-xl overflow-hidden bg-slate-50/80 shrink-0 relative border border-slate-100 flex items-center justify-center p-1">
       <img
         v-if="product.image"
         :src="product.image"
         :alt="product.name"
         referrerpolicy="no-referrer"
-        class="w-full h-full object-cover"
+        class="w-full h-full object-contain"
         @error="handleImageError($event, theme)"
       />
       <img

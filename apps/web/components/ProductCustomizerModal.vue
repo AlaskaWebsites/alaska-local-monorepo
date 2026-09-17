@@ -1,6 +1,6 @@
 <!-- components/ProductCustomizerModal.vue -->
 <script setup lang="ts">
-import { ref, computed, toRef, watch, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted, toRef } from 'vue'
 import { useBodyScrollLock } from '~/composables/useBodyScrollLock'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 import { formatCurrency } from '~/utils/formatters'
@@ -240,12 +240,12 @@ function handleAddToCart() {
         <div class="p-4 sm:p-5 overflow-y-auto flex-1 space-y-6">
           <!-- Imagem e Descrição -->
           <div v-if="product.image || product.description" class="space-y-3">
-            <div v-if="product.image" class="w-full h-44 rounded-2xl overflow-hidden bg-slate-100 border border-slate-100">
+            <div v-if="product.image" class="w-full h-48 sm:h-56 rounded-2xl overflow-hidden bg-slate-50/80 border border-slate-100 flex items-center justify-center p-2 relative">
               <img
                 :src="product.image"
                 :alt="product.name"
                 referrerpolicy="no-referrer"
-                class="w-full h-full object-cover"
+                class="w-full h-full object-contain"
                 @error="handleImageError($event, tenant?.theme)"
               />
             </div>
@@ -262,7 +262,7 @@ function handleAddToCart() {
               class="border border-slate-200/90 rounded-2xl p-4 bg-slate-50/50 space-y-3"
             >
               <div class="flex items-center justify-between">
-                <div>
+                <div >
                   <h3 class="text-xs font-bold text-slate-900 flex items-center gap-1.5">
                     <span>{{ group.title }}</span>
                     <span
@@ -343,8 +343,8 @@ function handleAddToCart() {
         </div>
 
         <!-- Rodapé Fixo com Quantidade e Botão Adicionar -->
-        <div class="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3 shrink-0">
-          <div class="flex items-center border border-slate-200 rounded-xl bg-white p-1">
+        <div class="p-4 border-t border-slate-100 bg-white flex items-center gap-3 shrink-0">
+          <div class="flex items-center border border-slate-200 rounded-xl bg-slate-50 p-1 shrink-0">
             <button
               type="button"
               @click="decrementQuantity"
