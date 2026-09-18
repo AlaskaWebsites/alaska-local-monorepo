@@ -795,7 +795,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     const deleted = Array.from(new Set([...(current.deletedProfessionalIds || []), profId]))
     const customs = (current.customProfessionals || []).filter(p => p.id !== profId)
     saveOverrides({
-      deletedProductIds: deleted,
+      deletedProfessionalIds: deleted,
       customProfessionals: customs
     })
 
