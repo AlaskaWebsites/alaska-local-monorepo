@@ -7,9 +7,28 @@ import { SEED_TENANTS } from '../in-memory/seed-data'
 
 @Injectable()
 export class PostgresTenantRepository implements ITenantRepository {
+  private schemaEnsured = false
+
   constructor(private readonly postgresService: PostgresService) {}
 
+  private async ensureTenantColumns(): Promise<void> {
+    if (this.schemaEnsured) return
+    try {
+      await this.postgresService.query(`
+        ALTER TABLE tenants ADD COLUMN IF NOT EXISTS is_closed_emergency BOOLEAN DEFAULT false;
+        ALTER TABLE tenants ADD COLUMN IF NOT EXISTS closed_emergency_message TEXT;
+        ALTER TABLE tenants ADD COLUMN IF NOT EXISTS announcement JSONB;
+        ALTER TABLE tenants ADD COLUMN IF NOT EXISTS estimated_time VARCHAR(50);
+        ALTER TABLE tenants ADD COLUMN IF NOT EXISTS instagram VARCHAR(100);
+      `)
+      this.schemaEnsured = true
+    } catch {
+      this.schemaEnsured = true
+    }
+  }
+
   async findById(id: string): Promise<Tenant | null> {
+    await this.ensureTenantColumns()
     const res = await this.postgresService.query<TenantRow>(
       `SELECT * FROM tenants WHERE id = $1 LIMIT 1`,
       [id]
@@ -22,6 +41,7 @@ export class PostgresTenantRepository implements ITenantRepository {
   }
 
   async findBySlug(slug: string): Promise<Tenant | null> {
+    await this.ensureTenantColumns()
     const cleanSlug = (slug || '').trim().toLowerCase()
     const res = await this.postgresService.query<TenantRow>(
       `SELECT * FROM tenants WHERE LOWER(slug) = $1 LIMIT 1`,
@@ -44,6 +64,7 @@ export class PostgresTenantRepository implements ITenantRepository {
   }
 
   async findByCustomDomain(domain: string): Promise<Tenant | null> {
+    await this.ensureTenantColumns()
     const cleanDomain = (domain || '').trim().toLowerCase().replace(/^www\./, '').split(':')[0]
     const res = await this.postgresService.query<TenantRow>(
       `SELECT * FROM tenants WHERE LOWER(custom_domain) = $1 LIMIT 1`,
@@ -70,13 +91,15 @@ export class PostgresTenantRepository implements ITenantRepository {
   }
 
   async save(tenant: Tenant): Promise<void> {
+    await this.ensureTenantColumns()
     const p = TenantMapper.toPersistence(tenant)
     await this.postgresService.query(
       `INSERT INTO tenants (
         id, slug, name, description, logo, banner, phone_whatsapp, address,
         business_category, theme, custom_domain, opening_hours, pix_config,
-        delivery_fee_cents, min_order_value_cents, is_active, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+        delivery_fee_cents, min_order_value_cents, estimated_time, instagram, announcement,
+        is_closed_emergency, closed_emergency_message, is_active, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
       ON CONFLICT (slug) DO UPDATE SET
         name = EXCLUDED.name,
         description = EXCLUDED.description,
@@ -91,12 +114,18 @@ export class PostgresTenantRepository implements ITenantRepository {
         pix_config = EXCLUDED.pix_config,
         delivery_fee_cents = EXCLUDED.delivery_fee_cents,
         min_order_value_cents = EXCLUDED.min_order_value_cents,
+        estimated_time = EXCLUDED.estimated_time,
+        instagram = EXCLUDED.instagram,
+        announcement = EXCLUDED.announcement,
+        is_closed_emergency = EXCLUDED.is_closed_emergency,
+        closed_emergency_message = EXCLUDED.closed_emergency_message,
         is_active = EXCLUDED.is_active,
         updated_at = NOW()`,
       [
         p.id, p.slug, p.name, p.description, p.logo, p.banner, p.phone_whatsapp, p.address,
         p.business_category, p.theme, p.custom_domain, p.opening_hours, p.pix_config,
-        p.delivery_fee_cents, p.min_order_value_cents, p.is_active, p.created_at, p.updated_at
+        p.delivery_fee_cents, p.min_order_value_cents, p.estimated_time, p.instagram, p.announcement,
+        p.is_closed_emergency, p.closed_emergency_message, p.is_active, p.created_at, p.updated_at
       ]
     )
   }
@@ -106,6 +135,7 @@ export class PostgresTenantRepository implements ITenantRepository {
   }
 
   async listAllActive(): Promise<Tenant[]> {
+    await this.ensureTenantColumns()
     const res = await this.postgresService.query<TenantRow>(
       `SELECT * FROM tenants WHERE is_active = true ORDER BY name ASC`
     )
