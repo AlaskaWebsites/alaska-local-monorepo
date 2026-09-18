@@ -486,6 +486,28 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   function updatePixConfig(pixData: PixConfigOverride): boolean {
     triggerHaptic(30)
     saveOverrides({ pix: pixData })
+
+    try {
+      if (typeof $fetch === 'function') {
+        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/pix`
+        $fetch(url, {
+          method: 'PATCH',
+          body: {
+            key: pixData.pixKey,
+            pixKey: pixData.pixKey,
+            keyType: pixData.keyType,
+            beneficiary: pixData.beneficiary,
+            city: pixData.city,
+            allowTestCent: pixData.allowTestCent,
+            depositPercentage: pixData.depositPercentage
+          },
+          timeout: 15000
+        }).catch((err) => {
+          console.warn('[AlaskaAdmin] Aviso ao salvar chave Pix no backend:', err)
+        })
+      }
+    } catch {}
+
     return true
   }
 
@@ -493,6 +515,25 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   function updateContact(contactData: ContactOverride): boolean {
     triggerHaptic(30)
     saveOverrides({ contact: contactData })
+
+    try {
+      if (typeof $fetch === 'function') {
+        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/contact`
+        $fetch(url, {
+          method: 'PATCH',
+          body: {
+            phoneWhatsApp: contactData.whatsapp || contactData.phone,
+            whatsapp: contactData.whatsapp || contactData.phone,
+            phone: contactData.phone,
+            instagram: contactData.instagram
+          },
+          timeout: 15000
+        }).catch((err) => {
+          console.warn('[AlaskaAdmin] Aviso ao salvar canais de contato no backend:', err)
+        })
+      }
+    } catch {}
+
     return true
   }
 
@@ -697,7 +738,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     avatar?: string
     availableDays?: number[]
     workHours?: { start: string; end: string }
-    lunchBreak?: { start: string; end: string; enabled: boolean }
+    lunchBreak?: { start: string; end: string; enabled?: boolean }
   }): CustomProfessional {
     triggerHaptic(35)
     const newId = `prof-custom-${Date.now()}`
@@ -708,7 +749,11 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       isAvailable: true,
       availableDays: profData.availableDays || [1, 2, 3, 4, 5],
       workHours: profData.workHours || { start: '08:00', end: '18:00' },
-      lunchBreak: profData.lunchBreak || { start: '12:00', end: '13:00', enabled: true }
+      lunchBreak: profData.lunchBreak ? {
+        start: profData.lunchBreak.start,
+        end: profData.lunchBreak.end,
+        enabled: profData.lunchBreak.enabled ?? true
+      } : { start: '12:00', end: '13:00', enabled: true }
     }
 
     const current = getOverrides()
@@ -727,7 +772,11 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
             avatar: profData.avatar,
             availableDays: profData.availableDays || [1, 2, 3, 4, 5],
             workHours: profData.workHours || { start: '08:00', end: '18:00' },
-            lunchBreak: profData.lunchBreak || { start: '12:00', end: '13:00', enabled: true },
+            lunchBreak: profData.lunchBreak ? {
+              start: profData.lunchBreak.start,
+              end: profData.lunchBreak.end,
+              enabled: profData.lunchBreak.enabled ?? true
+            } : { start: '12:00', end: '13:00', enabled: true },
             isAvailable: true
           },
           timeout: 15000
@@ -746,7 +795,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     const deleted = Array.from(new Set([...(current.deletedProfessionalIds || []), profId]))
     const customs = (current.customProfessionals || []).filter(p => p.id !== profId)
     saveOverrides({
-      deletedProfessionalIds: deleted,
+      deletedProductIds: deleted,
       customProfessionals: customs
     })
 
@@ -789,6 +838,25 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     saveOverrides({
       delivery: { deliveryFee: fee, minOrderValue: minOrder, estimatedTime }
     })
+
+    try {
+      if (typeof $fetch === 'function') {
+        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/delivery`
+        $fetch(url, {
+          method: 'PATCH',
+          body: {
+            deliveryFee: fee,
+            deliveryFeeCents: Math.round(fee * 100),
+            minOrderValue: minOrder,
+            minOrderValueCents: Math.round(minOrder * 100),
+            estimatedTime
+          },
+          timeout: 15000
+        }).catch((err) => {
+          console.warn('[AlaskaAdmin] Aviso ao salvar regras de delivery no backend:', err)
+        })
+      }
+    } catch {}
   }
 
   function updateAnnouncement(
@@ -810,6 +878,19 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     saveOverrides({
       announcement: { enabled, message }
     })
+
+    try {
+      if (typeof $fetch === 'function') {
+        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/announcement`
+        $fetch(url, {
+          method: 'PATCH',
+          body: { enabled, message },
+          timeout: 15000
+        }).catch((err) => {
+          console.warn('[AlaskaAdmin] Aviso ao salvar comunicado no backend:', err)
+        })
+      }
+    } catch {}
   }
 
   function updateEmergency(isClosed: boolean, message: string = '') {
@@ -819,6 +900,19 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       isEmergencyClosed: isClosed,
       closedEmergencyMessage: message
     })
+
+    try {
+      if (typeof $fetch === 'function') {
+        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/emergency`
+        $fetch(url, {
+          method: 'PATCH',
+          body: { isClosed, message },
+          timeout: 15000
+        }).catch((err) => {
+          console.warn('[AlaskaAdmin] Aviso ao salvar pausa emergencial no backend:', err)
+        })
+      }
+    } catch {}
   }
 
   // 10. Bloqueio de Slots de Agenda com Persistência no PostgreSQL (ADR 011 / ADR 021)
