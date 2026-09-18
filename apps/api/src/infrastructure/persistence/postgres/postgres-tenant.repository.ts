@@ -65,6 +65,10 @@ export class PostgresTenantRepository implements ITenantRepository {
     return TenantMapper.toDomain(res.rows[0], categories, professionals)
   }
 
+  async findByDomain(domain: string): Promise<Tenant | null> {
+    return this.findByCustomDomain(domain)
+  }
+
   async save(tenant: Tenant): Promise<void> {
     const p = TenantMapper.toPersistence(tenant)
     await this.postgresService.query(
@@ -95,6 +99,10 @@ export class PostgresTenantRepository implements ITenantRepository {
         p.delivery_fee_cents, p.min_order_value_cents, p.is_active, p.created_at, p.updated_at
       ]
     )
+  }
+
+  async update(tenant: Tenant): Promise<void> {
+    await this.save(tenant)
   }
 
   async listAllActive(): Promise<Tenant[]> {
