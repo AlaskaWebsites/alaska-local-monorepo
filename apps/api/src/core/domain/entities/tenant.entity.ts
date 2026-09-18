@@ -44,6 +44,11 @@ export interface PixConfig {
   depositPercentage?: number
 }
 
+export interface TenantAnnouncement {
+  enabled: boolean
+  message: string
+}
+
 export interface TenantProps {
   id: string
   slug: string
@@ -62,6 +67,9 @@ export interface TenantProps {
   customDomains?: string[]
   deliveryFeeCents?: number
   minOrderValueCents?: number
+  estimatedTime?: string
+  instagram?: string
+  announcement?: TenantAnnouncement
   categories?: unknown[]
   professionals?: unknown[]
   reviews?: unknown
@@ -90,6 +98,9 @@ export class Tenant {
       businessCategory: (props.businessCategory as BusinessCategory) || 'menu',
       deliveryFeeCents: props.deliveryFeeCents ?? 0,
       minOrderValueCents: props.minOrderValueCents ?? 0,
+      estimatedTime: props.estimatedTime || '30-45 min',
+      instagram: props.instagram || '',
+      announcement: props.announcement || { enabled: false, message: '' },
       categories: props.categories || [],
       professionals: props.professionals || [],
       isActive: props.isActive ?? true,
@@ -129,6 +140,9 @@ export class Tenant {
   get customDomains(): string[] | undefined { return this.props.customDomains }
   get deliveryFeeCents(): number { return this.props.deliveryFeeCents ?? 0 }
   get minOrderValueCents(): number { return this.props.minOrderValueCents ?? 0 }
+  get estimatedTime(): string | undefined { return this.props.estimatedTime }
+  get instagram(): string | undefined { return this.props.instagram }
+  get announcement(): TenantAnnouncement | undefined { return this.props.announcement }
   get categories(): unknown[] { return this.props.categories || [] }
   get professionals(): unknown[] { return this.props.professionals || [] }
   get reviews(): unknown { return this.props.reviews }
@@ -211,6 +225,29 @@ export class Tenant {
     this.props.updatedAt = new Date()
   }
 
+  updateDeliverySettings(settings: { deliveryFeeCents?: number; minOrderValueCents?: number; estimatedTime?: string }): void {
+    if (settings.deliveryFeeCents !== undefined) this.props.deliveryFeeCents = settings.deliveryFeeCents
+    if (settings.minOrderValueCents !== undefined) this.props.minOrderValueCents = settings.minOrderValueCents
+    if (settings.estimatedTime !== undefined) this.props.estimatedTime = settings.estimatedTime
+    this.props.updatedAt = new Date()
+  }
+
+  updateContactSettings(settings: { phoneWhatsApp?: string; instagram?: string }): void {
+    if (settings.phoneWhatsApp) {
+      this.props.phoneWhatsApp = settings.phoneWhatsApp
+      this.props.whatsapp = settings.phoneWhatsApp
+    }
+    if (settings.instagram !== undefined) {
+      this.props.instagram = settings.instagram
+    }
+    this.props.updatedAt = new Date()
+  }
+
+  setAnnouncement(enabled: boolean, message: string): void {
+    this.props.announcement = { enabled, message }
+    this.props.updatedAt = new Date()
+  }
+
   setPinHash(hash: string): void {
     this.props.pinHash = hash
     this.props.updatedAt = new Date()
@@ -243,6 +280,9 @@ export class Tenant {
       whatsapp: this.whatsapp,
       deliveryFeeCents: this.props.deliveryFeeCents ?? 0,
       minOrderValueCents: this.props.minOrderValueCents ?? 0,
+      estimatedTime: this.props.estimatedTime,
+      instagram: this.props.instagram,
+      announcement: this.props.announcement,
       categories: this.props.categories || [],
       professionals: this.props.professionals || [],
       isActive: this.props.isActive ?? true,
