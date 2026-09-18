@@ -1,108 +1,77 @@
-import { Injectable, Logger } from '@nestjs/common';
-import { ITenantRepository } from '../../../core/application/ports/tenant.repository.port';
-import { Tenant } from '../../../core/domain/entities/tenant.entity';
-import { PostgresService } from './postgres.service';
-import { TenantMapper } from './mappers/tenant.mapper';
-import { SEED_TENANTS } from '../in-memory/seed-data';
-import { ALL_10_STORES } from './seed-catalog';
+import { Injectable } from '@nestjs/common'
+import { ITenantRepository } from '@core/application/ports/tenant.repository.port'
+import { Tenant } from '@core/domain/entities/tenant.entity'
+import { PostgresService } from './postgres.service'
+import { TenantMapper, TenantRow } from './mappers/tenant.mapper'
+import { SEED_TENANTS } from '../in-memory/seed-data'
 
 @Injectable()
 export class PostgresTenantRepository implements ITenantRepository {
-  private readonly logger = new Logger(PostgresTenantRepository.name);
-
-  constructor(private readonly db: PostgresService) {}
+  constructor(private readonly postgresService: PostgresService) {}
 
   async findById(id: string): Promise<Tenant | null> {
-    try {
-      const result = await this.db.query(
-        'SELECT * FROM tenants WHERE id = $1',
-        [id],
-      );
-      if (result.rows.length === 0) return null;
-      const categories = await this.fetchCategoriesAndProducts(result.rows[0].id);
-      const seedStore = ALL_10_STORES.find((s) => s.slug.toLowerCase() === result.rows[0].slug?.toLowerCase() || `ten-${s.slug.toLowerCase()}` === result.rows[0].id?.toLowerCase());
-      const finalCategories = (categories && (categories as unknown[]).length > 0) ? categories : (seedStore?.categories || []);
-      return TenantMapper.toDomain(result.rows[0], finalCategories);
-    } catch (err) {
-      this.logger.warn(`Erro ao buscar tenant por ID ${id}: ${(err as Error).message}`);
-      return SEED_TENANTS.find((t) => t.id === id) || null;
-    }
+    const res = await this.postgresService.query<TenantRow>(
+      `SELECT * FROM tenants WHERE id = $1 LIMIT 1`,
+      [id]
+    )
+    if (res.rowCount === 0 || !res.rows[0]) return null
+
+    const categories = await this.fetchCategoriesAndProducts(res.rows[0].id)
+    const professionals = await this.fetchProfessionals(res.rows[0].id)
+    return TenantMapper.toDomain(res.rows[0], categories, professionals)
   }
 
   async findBySlug(slug: string): Promise<Tenant | null> {
-    let cleanSlug = (slug || '').trim().toLowerCase();
-    if (cleanSlug === 'adega-e-casa-de-racao-do-rei' || cleanSlug === 'casa-de-racao-do-rei') {
-      cleanSlug = 'adega-do-rei';
-    }
-    try {
-      const result = await this.db.query(
-        'SELECT * FROM tenants WHERE LOWER(slug) = $1',
-        [cleanSlug],
-      );
-      if (result.rows.length === 0) {
-        const seed = SEED_TENANTS.find((t) => t.slug.toLowerCase() === cleanSlug);
-        if (seed) {
-          try {
-            await this.save(seed);
-          } catch (saveErr) {
-            this.logger.warn(`Seed do tenant ${cleanSlug} retornado sem persistência: ${(saveErr as Error).message}`);
-          }
-          return seed;
-        }
-        return null;
+    const cleanSlug = (slug || '').trim().toLowerCase()
+    const res = await this.postgresService.query<TenantRow>(
+      `SELECT * FROM tenants WHERE LOWER(slug) = $1 LIMIT 1`,
+      [cleanSlug]
+    )
+    if (res.rowCount === 0 || !res.rows[0]) {
+      const seed = SEED_TENANTS.find(t => t.slug.toLowerCase() === cleanSlug)
+      if (seed) {
+        try {
+          await this.save(seed)
+        } catch {}
+        return seed
       }
-      const categories = await this.fetchCategoriesAndProducts(result.rows[0].id);
-      const seedStore = ALL_10_STORES.find((s) => s.slug.toLowerCase() === result.rows[0].slug?.toLowerCase() || `ten-${s.slug.toLowerCase()}` === result.rows[0].id?.toLowerCase());
-      const finalCategories = (categories && (categories as unknown[]).length > 0) ? categories : (seedStore?.categories || []);
-      return TenantMapper.toDomain(result.rows[0], finalCategories);
-    } catch (err) {
-      this.logger.warn(`Erro em findBySlug(${slug}): ${(err as Error).message}`);
-      const seed = SEED_TENANTS.find((t) => t.slug.toLowerCase() === cleanSlug);
-      if (seed) return seed;
-      return null;
+      return null
     }
+
+    const categories = await this.fetchCategoriesAndProducts(res.rows[0].id)
+    const professionals = await this.fetchProfessionals(res.rows[0].id)
+    return TenantMapper.toDomain(res.rows[0], categories, professionals)
   }
 
   async findByCustomDomain(domain: string): Promise<Tenant | null> {
-    const clean = (domain || '').trim().toLowerCase().replace(/^www\./, '').split(':')[0];
-    try {
-      const result = await this.db.query(
-        'SELECT * FROM tenants WHERE custom_domain = $1',
-        [clean],
-      );
-      if (result.rows.length === 0) {
-        const seed = SEED_TENANTS.find((t) => t.customDomain && t.customDomain.toLowerCase() === clean);
-        if (seed) {
-          try {
-            await this.save(seed);
-          } catch {}
-          return seed;
-        }
-        return null;
+    const cleanDomain = (domain || '').trim().toLowerCase().replace(/^www\./, '').split(':')[0]
+    const res = await this.postgresService.query<TenantRow>(
+      `SELECT * FROM tenants WHERE LOWER(custom_domain) = $1 LIMIT 1`,
+      [cleanDomain]
+    )
+    if (res.rowCount === 0 || !res.rows[0]) {
+      const seed = SEED_TENANTS.find(t => t.customDomain && t.customDomain.toLowerCase() === cleanDomain)
+      if (seed) {
+        try {
+          await this.save(seed)
+        } catch {}
+        return seed
       }
-      const categories = await this.fetchCategoriesAndProducts(result.rows[0].id);
-      const seedStore = ALL_10_STORES.find((s) => s.slug.toLowerCase() === result.rows[0].slug?.toLowerCase() || `ten-${s.slug.toLowerCase()}` === result.rows[0].id?.toLowerCase());
-      const finalCategories = (categories && (categories as unknown[]).length > 0) ? categories : (seedStore?.categories || []);
-      return TenantMapper.toDomain(result.rows[0], finalCategories);
-    } catch (err) {
-      this.logger.warn(`Erro em findByCustomDomain(${domain}): ${(err as Error).message}`);
-      const seed = SEED_TENANTS.find((t) => t.customDomain && t.customDomain.toLowerCase() === clean);
-      if (seed) return seed;
-      return null;
+      return null
     }
-  }
 
-  async findByDomain(domain: string): Promise<Tenant | null> {
-    return this.findByCustomDomain(domain);
+    const categories = await this.fetchCategoriesAndProducts(res.rows[0].id)
+    const professionals = await this.fetchProfessionals(res.rows[0].id)
+    return TenantMapper.toDomain(res.rows[0], categories, professionals)
   }
 
   async save(tenant: Tenant): Promise<void> {
-    const row = TenantMapper.toPersistence(tenant) as any;
-    await this.db.query(
+    const p = TenantMapper.toPersistence(tenant)
+    await this.postgresService.query(
       `INSERT INTO tenants (
         id, slug, name, description, logo, banner, phone_whatsapp, address,
         business_category, theme, custom_domain, opening_hours, pix_config,
-        delivery_fee_cents, min_order_value_cents, is_active, professionals, reviews
+        delivery_fee_cents, min_order_value_cents, is_active, created_at, updated_at
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
       ON CONFLICT (slug) DO UPDATE SET
         name = EXCLUDED.name,
@@ -119,215 +88,82 @@ export class PostgresTenantRepository implements ITenantRepository {
         delivery_fee_cents = EXCLUDED.delivery_fee_cents,
         min_order_value_cents = EXCLUDED.min_order_value_cents,
         is_active = EXCLUDED.is_active,
-        professionals = EXCLUDED.professionals,
-        reviews = EXCLUDED.reviews;`,
+        updated_at = NOW()`,
       [
-        row.id,
-        row.slug,
-        row.name,
-        row.description,
-        row.logo,
-        row.banner,
-        row.phone_whatsapp,
-        row.address,
-        row.business_category,
-        row.theme,
-        row.custom_domain,
-        row.opening_hours,
-        row.pix_config,
-        row.delivery_fee_cents,
-        row.min_order_value_cents,
-        row.is_active,
-        row.professionals,
-        row.reviews,
-      ],
-    );
-  }
-
-  async update(tenant: Tenant): Promise<void> {
-    await this.save(tenant);
-  }
-
-  async updateHours(
-    tenantId: string,
-    hours: Record<string, { open: string; close: string; closed?: boolean }>,
-  ): Promise<Tenant> {
-    const result = await this.db.query(
-      `UPDATE tenants
-       SET opening_hours = $1
-       WHERE id = $2
-       RETURNING *;`,
-      [JSON.stringify(hours), tenantId],
-    );
-    const categories = await this.fetchCategoriesAndProducts(tenantId);
-    return TenantMapper.toDomain(result.rows[0], categories);
-  }
-
-  async setEmergencyClose(
-    tenantId: string,
-    closed: boolean,
-    message?: string,
-  ): Promise<Tenant> {
-    const result = await this.db.query(
-      `UPDATE tenants
-       SET is_closed_emergency = $1, closed_emergency_message = $2
-       WHERE id = $3
-       RETURNING *;`,
-      [closed, message || null, tenantId],
-    );
-    const categories = await this.fetchCategoriesAndProducts(tenantId);
-    return TenantMapper.toDomain(result.rows[0], categories);
+        p.id, p.slug, p.name, p.description, p.logo, p.banner, p.phone_whatsapp, p.address,
+        p.business_category, p.theme, p.custom_domain, p.opening_hours, p.pix_config,
+        p.delivery_fee_cents, p.min_order_value_cents, p.is_active, p.created_at, p.updated_at
+      ]
+    )
   }
 
   async listAllActive(): Promise<Tenant[]> {
-    try {
-      const result = await this.db.query(
-        'SELECT * FROM tenants WHERE is_active = true ORDER BY name ASC',
-      );
-      if (result.rows.length === 0) {
-        return SEED_TENANTS.filter((t) => t.isActive);
-      }
-      const tenants: Tenant[] = [];
-      for (const row of result.rows) {
-        const categories = await this.fetchCategoriesAndProducts(row.id);
-        tenants.push(TenantMapper.toDomain(row, categories));
-      }
-      return tenants;
-    } catch (err) {
-      this.logger.warn(`Erro em listAllActive: ${(err as Error).message}`);
-      return SEED_TENANTS.filter((t) => t.isActive);
+    const res = await this.postgresService.query<TenantRow>(
+      `SELECT * FROM tenants WHERE is_active = true ORDER BY name ASC`
+    )
+    if (res.rowCount === 0) {
+      return SEED_TENANTS
     }
+    return res.rows.map(row => TenantMapper.toDomain(row))
   }
 
   private async fetchCategoriesAndProducts(tenantId: string): Promise<unknown[]> {
     try {
-      let catResult = await this.db.query(
-        `SELECT * FROM categories
-         WHERE tenant_id = $1
-         ORDER BY sort_order ASC, created_at ASC;`,
-        [tenantId],
-      );
+      const catRes = await this.postgresService.query(
+        `SELECT id, name, icon, sort_order FROM categories WHERE tenant_id = $1 ORDER BY sort_order ASC`,
+        [tenantId]
+      )
+      if (catRes.rowCount === 0) return []
 
-      let prodResult = await this.db.query(
-        `SELECT * FROM products
-         WHERE tenant_id = $1
-         ORDER BY created_at ASC;`,
-        [tenantId],
-      );
+      const prodRes = await this.postgresService.query(
+        `SELECT id, category_id, name, description, price_cents, image_url, is_available, option_groups, duration_minutes
+         FROM products WHERE tenant_id = $1 AND is_available = true ORDER BY name ASC`,
+        [tenantId]
+      )
 
-      if (catResult.rows.length === 0) {
-        const cleanSlug = tenantId.replace(/^ten-/, '').toLowerCase();
-        const seedStore = ALL_10_STORES.find(
-          (s) => s.slug.toLowerCase() === cleanSlug || `ten-${s.slug.toLowerCase()}` === tenantId.toLowerCase() || (s.slug === 'adega-do-rei' && (tenantId.includes('rei') || cleanSlug.includes('rei'))),
-        );
+      return catRes.rows.map(cat => ({
+        id: cat.id,
+        name: cat.name,
+        icon: cat.icon,
+        items: prodRes.rows
+          .filter(p => p.category_id === cat.id)
+          .map(p => ({
+            id: p.id,
+            name: p.name,
+            description: p.description,
+            price: p.price_cents / 100,
+            image: p.image_url,
+            isAvailable: p.is_available,
+            optionGroups: p.option_groups || [],
+            durationMinutes: p.duration_minutes
+          }))
+      }))
+    } catch {
+      return []
+    }
+  }
 
-        if (seedStore && seedStore.categories && seedStore.categories.length > 0) {
-          this.logger.log(`Auto-seeding categorias e produtos no PostgreSQL para tenant ${tenantId}...`);
-          try {
-            let sortOrder = 0;
-            for (const cat of seedStore.categories) {
-              await this.db.query(
-                `INSERT INTO categories (id, tenant_id, name, icon, sort_order)
-                 VALUES ($1, $2, $3, $4, $5)
-                 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, icon = EXCLUDED.icon, sort_order = EXCLUDED.sort_order;`,
-                [cat.id, tenantId, cat.name, cat.icon || null, sortOrder++],
-              );
-
-              if (cat.products && cat.products.length > 0) {
-                for (const prod of cat.products) {
-                  const priceCents = Math.round(Number(prod.price || 0) * 100);
-                  const optGroups = prod.optionGroups ? JSON.stringify(prod.optionGroups) : JSON.stringify([]);
-                  await this.db.query(
-                    `INSERT INTO products (id, tenant_id, category_id, name, description, price_cents, image, available, duration_minutes, option_groups)
-                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-                     ON CONFLICT (id) DO UPDATE SET
-                       name = EXCLUDED.name,
-                       description = EXCLUDED.description,
-                       price_cents = EXCLUDED.price_cents,
-                       image = EXCLUDED.image,
-                       available = EXCLUDED.available,
-                       duration_minutes = EXCLUDED.duration_minutes,
-                       option_groups = EXCLUDED.option_groups;`,
-                    [
-                      prod.id,
-                      tenantId,
-                      cat.id,
-                      prod.name,
-                      prod.description || null,
-                      priceCents,
-                      prod.image || null,
-                      prod.isAvailable ?? prod.available ?? true,
-                      prod.durationMinutes || 0,
-                      optGroups,
-                    ],
-                  );
-                }
-              }
-            }
-
-            catResult = await this.db.query(
-              `SELECT * FROM categories
-               WHERE tenant_id = $1
-               ORDER BY sort_order ASC, created_at ASC;`,
-              [tenantId],
-            );
-
-            prodResult = await this.db.query(
-              `SELECT * FROM products
-               WHERE tenant_id = $1
-               ORDER BY created_at ASC;`,
-              [tenantId],
-            );
-          } catch (seedErr) {
-            this.logger.warn(`Erro ao auto-popular categorias no banco para ${tenantId}: ${(seedErr as Error).message}`);
-          }
-
-          if (catResult.rows.length === 0) {
-            return seedStore.categories.map((c) => ({
-              ...c,
-              products: (c.products || []).map((p) => ({
-                ...p,
-                price: Number(p.price || 0),
-                isAvailable: p.isAvailable ?? p.available ?? true,
-                optionGroups: p.optionGroups || [],
-              })),
-            }));
-          }
-        }
-      }
-
-      return catResult.rows.map((cat: any) => ({
-        ...cat,
-        products: prodResult.rows
-          .filter((p: any) => p.category_id === cat.id)
-          .map((p: any) => ({
-            ...p,
-            price: Number(p.price_cents || 0) / 100,
-            isAvailable: p.available ?? true,
-            optionGroups:
-              typeof p.option_groups === 'string'
-                ? JSON.parse(p.option_groups)
-                : (p.option_groups || []),
-          })),
-      }));
-    } catch (err) {
-      this.logger.error('Erro ao buscar categorias e produtos:', err);
-      const cleanSlug = tenantId.replace(/^ten-/, '').toLowerCase();
-      const seedStore = ALL_10_STORES.find(
-        (s) => s.slug.toLowerCase() === cleanSlug || `ten-${s.slug.toLowerCase()}` === tenantId.toLowerCase() || (s.slug === 'adega-do-rei' && (tenantId.includes('rei') || cleanSlug.includes('rei'))),
-      );
-      if (seedStore && seedStore.categories) {
-        return seedStore.categories.map((c) => ({
-          ...c,
-          products: (c.products || []).map((p) => ({
-            ...p,
-            price: Number(p.price || 0),
-            isAvailable: p.isAvailable ?? p.available ?? true,
-            optionGroups: p.optionGroups || [],
-          })),
-        }));
-      }
-      return [];
+  private async fetchProfessionals(tenantId: string): Promise<unknown[]> {
+    try {
+      const res = await this.postgresService.query(
+        `SELECT id, name, role, avatar, available_days, work_hours, lunch_break, is_available
+         FROM professionals WHERE tenant_id = $1 ORDER BY name ASC`,
+        [tenantId]
+      )
+      if (res.rowCount === 0) return []
+      return res.rows.map(r => ({
+        id: r.id,
+        name: r.name,
+        role: r.role || 'Profissional',
+        avatar: r.avatar,
+        availableDays: typeof r.available_days === 'string' ? JSON.parse(r.available_days) : (r.available_days || [1, 2, 3, 4, 5]),
+        workHours: typeof r.work_hours === 'string' ? JSON.parse(r.work_hours) : (r.work_hours || { start: '08:00', end: '18:00' }),
+        lunchBreak: typeof r.lunch_break === 'string' ? JSON.parse(r.lunch_break) : (r.lunch_break || { start: '12:00', end: '13:00', enabled: true }),
+        isAvailable: r.is_available ?? true,
+        available: r.is_available ?? true
+      }))
+    } catch {
+      return []
     }
   }
 }
