@@ -25,7 +25,7 @@ export interface TenantRow {
 }
 
 export class TenantMapper {
-  static toDomain(row: TenantRow, categories: unknown[] = []): Tenant {
+  static toDomain(row: TenantRow, categories: unknown[] = [], professionals: unknown[] = []): Tenant {
     return new Tenant({
       id: row.id,
       slug: row.slug,
@@ -43,7 +43,7 @@ export class TenantMapper {
       deliveryFeeCents: row.delivery_fee_cents ?? 0,
       minOrderValueCents: row.min_order_value_cents ?? 0,
       categories: categories.length > 0 ? categories : (row.categories || []),
-      professionals: (row.professionals as any) || [],
+      professionals: professionals.length > 0 ? professionals : (row.professionals || []),
       reviews: row.reviews || undefined,
       isActive: row.is_active ?? true,
       createdAt: row.created_at ? new Date(row.created_at) : undefined,
@@ -68,11 +68,7 @@ export class TenantMapper {
       pix_config: tenant.pixConfig ? JSON.stringify(tenant.pixConfig) : null,
       delivery_fee_cents: tenant.deliveryFeeCents,
       min_order_value_cents: tenant.minOrderValueCents,
-      professionals: (tenant as any).professionals ? JSON.stringify((tenant as any).professionals) : JSON.stringify([]),
-      reviews: (tenant as any).reviews ? JSON.stringify((tenant as any).reviews) : null,
-      is_active: tenant.isActive,
-      created_at: tenant.createdAt,
-      updated_at: tenant.updatedAt
+      is_active: tenant.isActive
     }
   }
 }
