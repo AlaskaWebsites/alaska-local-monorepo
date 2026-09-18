@@ -127,12 +127,14 @@ export const BookingRequestSchema = BookingAppointmentPayloadSchema;
 
 export const CreateBookingSchema = z.object({
   tenantSlug: z.string().optional(),
-  customerName: z.string().min(2, 'Nome deve ter no mínimo 2 caracteres'),
-  customerPhone: z.string().min(10, 'Telefone inválido'),
-  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data no formato YYYY-MM-DD'),
-  time: z.string().regex(/^\d{2}:\d{2}$/, 'Horário no formato HH:mm'),
-  serviceIds: z.array(z.string()).min(1, 'Ao menos um serviço deve ser selecionado'),
+  serviceIds: z.array(z.string()).min(1, 'Selecione ao menos um serviço'),
   professionalId: z.string().optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Data deve estar no formato YYYY-MM-DD'),
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Hora deve estar no formato HH:mm'),
+  customerName: z.string().min(2, 'Nome é obrigatório'),
+  customerPhone: z.string().min(10, 'Telefone é obrigatório'),
+  upsellProductIds: z.array(z.string()).optional(),
+  totalPriceCents: z.number().int().nonnegative().optional().default(0),
   paymentMethod: z.string().optional().default('Pix'),
   depositAmountCents: z.number().int().nonnegative().optional().default(0),
   notes: z.string().optional(),
@@ -141,8 +143,21 @@ export const CreateBookingSchema = z.object({
 
 export const BlockBookingSlotSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
-  time: z.string().regex(/^\d{2}:\d{2}$/),
+  time: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/),
   reason: z.string().optional().default('Horário Bloqueado pelo Lojista'),
+});
+
+// Schemas Operacionais de Agendamento (ADR 013 / Fase 2)
+export const BookingStatusSchema = z.enum([
+  'scheduled',
+  'confirmed',
+  'completed',
+  'cancelled',
+  'no_show',
+]);
+
+export const UpdateBookingStatusSchema = z.object({
+  status: BookingStatusSchema,
 });
 
 export type WorkHours = z.infer<typeof WorkHoursSchema>;
@@ -161,3 +176,5 @@ export type BookingAppointmentPayload = z.infer<typeof BookingAppointmentPayload
 export type BookingRequest = z.infer<typeof BookingRequestSchema>;
 export type CreateBookingDto = z.infer<typeof CreateBookingSchema>;
 export type BlockBookingSlotDto = z.infer<typeof BlockBookingSlotSchema>;
+export type BookingStatus = z.infer<typeof BookingStatusSchema>;
+export type UpdateBookingStatusDto = z.infer<typeof UpdateBookingStatusSchema>;
