@@ -142,30 +142,19 @@ export const TenantSchema = z
     customDomains: z.array(z.string()).optional(),
     distance: z.string().optional(),
     priceRange: z.string().optional().default('$$'),
+    isClosedEmergency: z.boolean().optional().default(false),
+    closedEmergencyMessage: z.string().optional(),
+    pinHash: z.string().optional(),
     createdAt: z.string().optional(),
     updatedAt: z.string().optional(),
   })
   .passthrough();
 
-// Schemas de Gestão Operacional e Painel do Lojista (ADR 013 / Fase 3)
-export const UpdateTenantHoursSchema = z.preprocess(
-  (val: any) => {
-    if (val && typeof val === 'object') {
-      if ('openingHours' in val && val.openingHours) {
-        return { openingHours: val.openingHours, hours: val.openingHours };
-      }
-      if ('hours' in val && val.hours) {
-        return { openingHours: val.hours, hours: val.hours };
-      }
-      return { openingHours: val, hours: val };
-    }
-    return val;
-  },
-  z.object({
-    openingHours: OpeningHoursSchema,
-    hours: OpeningHoursSchema.optional(),
-  })
-);
+// Schemas de Gestão Operacional e Painel do Lojista (ADR 013 / ADR 012)
+export const UpdateTenantHoursSchema = z.object({
+  hours: z.record(z.string(), z.any()).optional(),
+  openingHours: z.any().optional(),
+}).passthrough();
 
 export const VerifyAdminPinSchema = z.object({
   pin: z
@@ -254,6 +243,42 @@ export const TenantOverridesSchema = z.object({
   pausedOptionIds: z.array(z.string()).optional(),
 }).passthrough();
 
+// Schemas de Mutação Operacional das Configurações Globais da Loja (ADR 012 / Opção B)
+export const UpdateEmergencySchema = z.object({
+  isClosed: z.boolean(),
+  message: z.string().optional().default(''),
+}).passthrough();
+
+export const UpdateDeliveryConfigSchema = z.object({
+  deliveryFee: z.number().optional(),
+  deliveryFeeCents: z.number().int().nonnegative().optional(),
+  minOrderValue: z.number().optional(),
+  minOrderValueCents: z.number().int().nonnegative().optional(),
+  estimatedTime: z.string().optional(),
+}).passthrough();
+
+export const UpdatePixConfigSchema = z.object({
+  key: z.string().optional(),
+  pixKey: z.string().optional(),
+  keyType: z.enum(['cpf', 'cnpj', 'email', 'phone', 'random']).optional(),
+  beneficiary: z.string().optional(),
+  city: z.string().optional(),
+  allowTestCent: z.boolean().optional(),
+  depositPercentage: z.number().optional(),
+}).passthrough();
+
+export const UpdateContactSchema = z.object({
+  phoneWhatsApp: z.string().optional(),
+  whatsapp: z.string().optional(),
+  phone: z.string().optional(),
+  instagram: z.string().optional(),
+}).passthrough();
+
+export const UpdateAnnouncementSchema = z.object({
+  enabled: z.boolean(),
+  message: z.string().default(''),
+}).passthrough();
+
 export type TenantCategory = z.infer<typeof TenantCategorySchema>;
 export type BusinessCategory = z.infer<typeof BusinessCategorySchema>;
 export type TenantTheme = z.infer<typeof TenantThemeSchema>;
@@ -277,3 +302,8 @@ export type ContactOverride = z.infer<typeof ContactOverrideSchema>;
 export type CustomProfessional = z.infer<typeof CustomProfessionalSchema>;
 export type ProductOverride = z.infer<typeof ProductOverrideSchema>;
 export type TenantOverrides = z.infer<typeof TenantOverridesSchema>;
+export type UpdateEmergencyDto = z.infer<typeof UpdateEmergencySchema>;
+export type UpdateDeliveryConfigDto = z.infer<typeof UpdateDeliveryConfigSchema>;
+export type UpdatePixConfigDto = z.infer<typeof UpdatePixConfigSchema>;
+export type UpdateContactDto = z.infer<typeof UpdateContactSchema>;
+export type UpdateAnnouncementDto = z.infer<typeof UpdateAnnouncementSchema>;
