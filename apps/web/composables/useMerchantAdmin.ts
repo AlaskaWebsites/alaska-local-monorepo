@@ -16,20 +16,19 @@ import {
   TenantOverridesSchema,
   type TenantOverrides,
   type DaySchedule,
-  type ProfessionalOverride,
   type PixConfigOverride,
   type ContactOverride,
-  type CustomProfessional,
-} from '@alaska/contracts/tenant'
+  type ProfessionalOverride,
+  type CustomProfessional
+} from '@alaska/contracts'
 
-export { TenantOverridesSchema }
 export type {
   TenantOverrides,
   DaySchedule,
-  ProfessionalOverride,
   PixConfigOverride,
   ContactOverride,
-  CustomProfessional,
+  ProfessionalOverride,
+  CustomProfessional
 }
 
 // Interface mantida para compatibilidade interna se necessário
@@ -80,7 +79,7 @@ const inMemorySession: Record<string, string> = {}
 function getStorageItem(key: string): string | null {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
-      return localStorage.getItem(key)
+      return window.localStorage.getItem(key)
     }
   } catch {}
   return inMemoryStore[key] || null
@@ -88,20 +87,30 @@ function getStorageItem(key: string): string | null {
 
 function setStorageItem(key: string, value: string): void {
   try {
-    inMemoryStore[key] = value
     if (typeof window !== 'undefined' && window.localStorage) {
-      localStorage.setItem(key, value)
-      window.dispatchEvent(new Event('storage'))
+      window.localStorage.setItem(key, value)
       window.dispatchEvent(new CustomEvent('alaska_overrides_updated', { detail: { key, value } }))
       return
     }
   } catch {}
+  inMemoryStore[key] = value
+}
+
+function removeStorageItem(key: string): void {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem(key)
+      window.dispatchEvent(new CustomEvent('alaska_overrides_updated', { detail: { key } }))
+      return
+    }
+  } catch {}
+  delete inMemoryStore[key]
 }
 
 function getSessionItem(key: string): string | null {
   try {
     if (typeof window !== 'undefined' && window.sessionStorage) {
-      return sessionStorage.getItem(key)
+      return window.sessionStorage.getItem(key)
     }
   } catch {}
   return inMemorySession[key] || null
@@ -109,18 +118,19 @@ function getSessionItem(key: string): string | null {
 
 function setSessionItem(key: string, value: string): void {
   try {
-    inMemorySession[key] = value
     if (typeof window !== 'undefined' && window.sessionStorage) {
-      sessionStorage.setItem(key, value)
+      window.sessionStorage.setItem(key, value)
       return
     }
   } catch {}
+  inMemorySession[key] = value
 }
 
 function removeSessionItem(key: string): void {
   try {
     if (typeof window !== 'undefined' && window.sessionStorage) {
-      sessionStorage.removeItem(key)
+      window.sessionStorage.removeItem(key)
+      return
     }
   } catch {}
   delete inMemorySession[key]
@@ -222,43 +232,19 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     }
   }
 
-  function saveOverrides(newOverrides: Partial<TenantOverrides>): void {
+  function saveOverrides(patch: Partial<TenantOverrides>): void {
     try {
       const current = getOverrides()
-      const merged: TenantOverrides = {
-        ...current,
-        ...newOverrides,
-        products: { ...(current.products || {}), ...(newOverrides.products || {}) },
-        professionals: { ...(current.professionals || {}), ...(newOverrides.professionals || {}) },
-        openingHours: newOverrides.openingHours ? { ...(current.openingHours || {}), ...newOverrides.openingHours } : current.openingHours,
-        delivery: newOverrides.delivery ? { ...(current.delivery || {}), ...newOverrides.delivery } : current.delivery,
-        announcement: newOverrides.announcement ? { ...(current.announcement || {}), ...newOverrides.announcement } : current.announcement,
-        emergency: newOverrides.emergency ? { ...(current.emergency || {}), ...newOverrides.emergency } : current.emergency,
-        blockedSlots: newOverrides.blockedSlots ?? current.blockedSlots ?? [],
-        customPin: newOverrides.customPin ?? current.customPin,
-        pix: newOverrides.pix ? { ...(current.pix || {}), ...newOverrides.pix } : current.pix,
-        contact: newOverrides.contact ? { ...(current.contact || {}), ...newOverrides.contact } : current.contact,
-        customProducts: newOverrides.customProducts ?? current.customProducts ?? [],
-        deletedProductIds: newOverrides.deletedProductIds ?? current.deletedProductIds ?? [],
-        customProfessionals: newOverrides.customProfessionals ?? current.customProfessionals ?? [],
-        deletedProfessionalIds: newOverrides.deletedProfessionalIds ?? current.deletedProfessionalIds ?? [],
-        pausedOptionIds: newOverrides.pausedOptionIds ?? current.pausedOptionIds ?? []
-      }
-      const validated = TenantOverridesSchema.safeParse(merged)
-      const toSave = validated.success ? validated.data : merged
-      setStorageItem(overridesKey.value, JSON.stringify(toSave))
+      const merged = { ...current, ...patch }
+      setStorageItem(overridesKey.value, JSON.stringify(merged))
     } catch (e) {
-      // Silencioso
+      console.warn('[AlaskaAdmin] Erro ao salvar overrides no localStorage:', e)
     }
   }
 
   function resetOverrides(): void {
-    try {
-      setStorageItem(overridesKey.value, JSON.stringify({}))
-      triggerHaptic(50)
-    } catch (e) {
-      // Silencioso
-    }
+    removeStorageItem(overridesKey.value)
+    triggerHaptic(20)
   }
 
   // 1. Catálogo: Pausar e Atualizar Preço
@@ -291,7 +277,6 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
 
     const newStatus = !currentStatus
 
-    // Atualização otimista em memória na lista se fornecida
     if (productsList && Array.isArray(productsList)) {
       try {
         const prod = productsList.find(p => p && p.id === productId)
@@ -302,7 +287,6 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       } catch {}
     }
 
-    // Persiste imediatamente nos overrides locais do estabelecimento
     const current = getOverrides()
     const existing = current.products?.[productId] || {}
     saveOverrides({
@@ -322,7 +306,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
         await $fetch(url, {
           method: 'PATCH',
           body: { isAvailable: newStatus, available: newStatus },
-          timeout: 4000
+          timeout: 15000
         }).catch(() => {})
       }
     } catch {}
@@ -383,7 +367,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
             price: newPrice,
             priceCents: Math.round(newPrice * 100)
           },
-          timeout: 4000
+          timeout: 15000
         }).catch(() => {})
       }
     } catch {}
@@ -392,14 +376,14 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   }
 
   // 2. Catálogo: Criar e Excluir Produto com Persistência Real no PostgreSQL (ADR 010)
-  function createProduct(productData: {
+  async function createProduct(productData: {
     name: string
     description?: string
     price: number
     categoryId: string
     image?: string
     durationMinutes?: number
-  }): Product {
+  }): Promise<Product> {
     triggerHaptic(35)
     const newId = `prod-custom-${Date.now()}`
     const newProd: Product = {
@@ -414,16 +398,14 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       optionGroups: []
     }
 
-    // Camada 1 & 2: Reatividade instantânea na UI e cache otimista no LocalStorage
     const current = getOverrides()
     const list = [...(current.customProducts || []), newProd]
     saveOverrides({ customProducts: list })
 
-    // Camada 3: Persistência remota real no PostgreSQL via API NestJS
     try {
       if (typeof $fetch === 'function') {
         const url = `${apiBaseUrl}/tenants/${currentSlug.value}/products`
-        $fetch(url, {
+        await $fetch(url, {
           method: 'POST',
           body: {
             id: newId,
@@ -435,9 +417,9 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
             image: productData.image || '',
             durationMinutes: productData.durationMinutes || 0
           },
-          timeout: 5000
+          timeout: 15000
         }).catch((err) => {
-          console.warn('[AlaskaAdmin] Aviso ao persistir produto no backend (mantido override local):', err)
+          console.warn('[AlaskaAdmin] Aviso ao persistir produto no backend:', err)
         })
       }
     } catch {}
@@ -445,7 +427,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     return newProd
   }
 
-  function deleteProduct(productId: string): boolean {
+  async function deleteProduct(productId: string): Promise<boolean> {
     triggerHaptic(40)
     const current = getOverrides()
     const deleted = Array.from(new Set([...(current.deletedProductIds || []), productId]))
@@ -455,15 +437,14 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       customProducts: customs
     })
 
-    // Exclusão remota real no PostgreSQL via API NestJS (Camada 3)
     try {
       if (typeof $fetch === 'function') {
         const url = `${apiBaseUrl}/tenants/${currentSlug.value}/products/${productId}`
-        $fetch(url, {
+        await $fetch(url, {
           method: 'DELETE',
-          timeout: 4000
+          timeout: 15000
         }).catch((err) => {
-          console.warn('[AlaskaAdmin] Aviso ao remover produto no backend (mantido override local):', err)
+          console.warn('[AlaskaAdmin] Aviso ao remover produto no backend:', err)
         })
       }
     } catch {}
@@ -493,7 +474,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
         await $fetch(`${apiBaseUrl}/tenants/${currentSlug.value}${prodPath}/options/${optionId}/availability`, {
           method: 'PATCH',
           body: { isAvailable },
-          timeout: 4000
+          timeout: 15000
         }).catch(() => {})
       }
     } catch {}
@@ -527,7 +508,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
         await $fetch(`${apiBaseUrl}/tenants/${currentSlug.value}/hours`, {
           method: 'PATCH',
           body: { hours: schedule },
-          timeout: 4000
+          timeout: 15000
         }).catch(() => {})
       }
     } catch {}
@@ -535,8 +516,8 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     return true
   }
 
-  // 7. Especialistas / Barbeiros: Disponibilidade, Escala, Expediente e Almoço
-  function toggleProfessionalAvailability(profId: string, isAvailable: boolean) {
+  // 7. Especialistas / Barbeiros: Disponibilidade, Escala, Expediente e Almoço (ADR 011 / ADR 021)
+  async function toggleProfessionalAvailability(profId: string, isAvailable: boolean): Promise<boolean> {
     triggerHaptic(30)
     const current = getOverrides()
     const profs = current.professionals || {}
@@ -546,9 +527,24 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
         [profId]: { ...(profs[profId] || {}), isAvailable }
       }
     })
+
+    try {
+      if (typeof $fetch === 'function') {
+        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/professionals/${profId}/availability`
+        await $fetch(url, {
+          method: 'PATCH',
+          body: { isAvailable },
+          timeout: 15000
+        }).catch((err) => {
+          console.warn('[AlaskaAdmin] Aviso ao alterar disponibilidade de profissional no backend:', err)
+        })
+      }
+    } catch {}
+
+    return true
   }
 
-  function toggleProfessionalDay(profId: string, dayIndex: number): void {
+  async function toggleProfessionalDay(profId: string, dayIndex: number): Promise<void> {
     triggerHaptic(25)
     const current = getOverrides()
     const profs = current.professionals || {}
@@ -561,15 +557,29 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       days.add(dayIndex)
     }
 
+    const availableDays = Array.from(days).sort()
     saveOverrides({
       professionals: {
         ...profs,
         [profId]: {
           ...existing,
-          availableDays: Array.from(days).sort()
+          availableDays
         }
       }
     })
+
+    try {
+      if (typeof $fetch === 'function') {
+        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/professionals/${profId}`
+        await $fetch(url, {
+          method: 'PATCH',
+          body: { availableDays },
+          timeout: 15000
+        }).catch((err) => {
+          console.warn('[AlaskaAdmin] Aviso ao salvar escala de profissional no backend:', err)
+        })
+      }
+    } catch {}
   }
 
   function updateProfessionalDays(profId: string, availableDays: number[]) {
@@ -584,11 +594,11 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     })
   }
 
-  function updateProfessionalHours(
+  async function updateProfessionalHours(
     profId: string,
     workHoursOrStart: string | { start: string; end: string },
     endParam?: string,
-  ) {
+  ): Promise<void> {
     triggerHaptic(25)
     const current = getOverrides()
     const profs = current.professionals || {}
@@ -605,23 +615,37 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       endVal = endParam || existing.workHours?.end || '19:00'
     }
 
+    const workHours = { start: startVal, end: endVal }
     saveOverrides({
       professionals: {
         ...profs,
         [profId]: {
           ...existing,
-          workHours: { start: startVal, end: endVal },
+          workHours,
         },
       },
     })
+
+    try {
+      if (typeof $fetch === 'function') {
+        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/professionals/${profId}`
+        await $fetch(url, {
+          method: 'PATCH',
+          body: { workHours },
+          timeout: 15000
+        }).catch((err) => {
+          console.warn('[AlaskaAdmin] Aviso ao salvar expediente de profissional no backend:', err)
+        })
+      }
+    } catch {}
   }
 
-  function updateProfessionalLunch(
+  async function updateProfessionalLunch(
     profId: string,
     lunchOrStart: string | { start: string; end: string; enabled?: boolean },
     endParam?: string,
     enabledParam?: boolean,
-  ) {
+  ): Promise<void> {
     triggerHaptic(25)
     const current = getOverrides()
     const profs = current.professionals || {}
@@ -641,31 +665,46 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       enabledVal = enabledParam !== undefined ? Boolean(enabledParam) : (existing.lunchBreak?.enabled ?? true)
     }
 
+    const lunchBreak = { start: startVal, end: endVal, enabled: enabledVal }
     saveOverrides({
       professionals: {
         ...profs,
         [profId]: {
           ...existing,
-          lunchBreak: { start: startVal, end: endVal, enabled: enabledVal },
+          lunchBreak,
         },
       },
     })
+
+    try {
+      if (typeof $fetch === 'function') {
+        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/professionals/${profId}`
+        await $fetch(url, {
+          method: 'PATCH',
+          body: { lunchBreak },
+          timeout: 15000
+        }).catch((err) => {
+          console.warn('[AlaskaAdmin] Aviso ao salvar almoço de profissional no backend:', err)
+        })
+      }
+    } catch {}
   }
 
-  // 8. Especialistas: Criar e Excluir
-  function createProfessional(profData: {
+  // 8. Especialistas: Criar e Excluir com Persistência Real no PostgreSQL (ADR 011 / ADR 021)
+  async function createProfessional(profData: {
     name: string
-    role: string
+    role?: string
+    avatar?: string
     availableDays?: number[]
     workHours?: { start: string; end: string }
     lunchBreak?: { start: string; end: string; enabled: boolean }
-  }): CustomProfessional {
+  }): Promise<CustomProfessional> {
     triggerHaptic(35)
     const newId = `prof-custom-${Date.now()}`
     const newProf: CustomProfessional = {
       id: newId,
       name: profData.name,
-      role: profData.role,
+      role: profData.role || 'Profissional',
       isAvailable: true,
       availableDays: profData.availableDays || [1, 2, 3, 4, 5],
       workHours: profData.workHours || { start: '08:00', end: '18:00' },
@@ -675,10 +714,33 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     const current = getOverrides()
     const list = [...(current.customProfessionals || []), newProf]
     saveOverrides({ customProfessionals: list })
+
+    try {
+      if (typeof $fetch === 'function') {
+        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/professionals`
+        await $fetch(url, {
+          method: 'POST',
+          body: {
+            id: newId,
+            name: profData.name,
+            role: profData.role || 'Profissional',
+            avatar: profData.avatar,
+            availableDays: profData.availableDays || [1, 2, 3, 4, 5],
+            workHours: profData.workHours || { start: '08:00', end: '18:00' },
+            lunchBreak: profData.lunchBreak || { start: '12:00', end: '13:00', enabled: true },
+            isAvailable: true
+          },
+          timeout: 15000
+        }).catch((err) => {
+          console.warn('[AlaskaAdmin] Aviso ao persistir profissional no backend:', err)
+        })
+      }
+    } catch {}
+
     return newProf
   }
 
-  function deleteProfessional(profId: string): boolean {
+  async function deleteProfessional(profId: string): Promise<boolean> {
     triggerHaptic(40)
     const current = getOverrides()
     const deleted = Array.from(new Set([...(current.deletedProfessionalIds || []), profId]))
@@ -687,6 +749,19 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       deletedProfessionalIds: deleted,
       customProfessionals: customs
     })
+
+    try {
+      if (typeof $fetch === 'function') {
+        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/professionals/${profId}`
+        await $fetch(url, {
+          method: 'DELETE',
+          timeout: 15000
+        }).catch((err) => {
+          console.warn('[AlaskaAdmin] Aviso ao remover profissional no backend:', err)
+        })
+      }
+    } catch {}
+
     return true
   }
 
@@ -746,8 +821,8 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     })
   }
 
-  // 10. Bloqueio de Slots de Agenda
-  function toggleBlockSlot(date: string, time: string): boolean {
+  // 10. Bloqueio de Slots de Agenda com Persistência no PostgreSQL (ADR 011 / ADR 021)
+  async function toggleBlockSlot(date: string, time: string): Promise<boolean> {
     triggerHaptic(25)
     const current = getOverrides()
     const blocked = current.blockedSlots ? [...current.blockedSlots] : []
@@ -760,6 +835,20 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     }
 
     saveOverrides({ blockedSlots: blocked })
+
+    try {
+      if (typeof $fetch === 'function') {
+        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/slots/toggle`
+        await $fetch(url, {
+          method: 'POST',
+          body: { date, time },
+          timeout: 15000
+        }).catch((err) => {
+          console.warn('[AlaskaAdmin] Aviso ao alternar slot no backend:', err)
+        })
+      }
+    } catch {}
+
     return index < 0
   }
 
@@ -864,7 +953,6 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     isSubmitting: computed(() => isSubmitting.value),
     errorMessage: computed(() => errorMessage.value),
     tenantSlug,
-    currentSlug,
     overridesKey,
     login,
     logout,
