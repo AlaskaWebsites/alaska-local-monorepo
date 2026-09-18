@@ -248,11 +248,11 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   }
 
   // 1. Catálogo: Pausar e Atualizar Preço
-  async function toggleProductAvailability(
+  function toggleProductAvailability(
     productsOrId: any,
     productIdOrStatus?: any,
     statusParam?: any
-  ): Promise<boolean> {
+  ): boolean {
     triggerHaptic(20)
     let productId = ''
     let currentStatus = true
@@ -303,7 +303,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     try {
       if (typeof $fetch === 'function') {
         const url = `${apiBaseUrl}/tenants/${currentSlug.value}/products/${productId}/availability`
-        await $fetch(url, {
+        $fetch(url, {
           method: 'PATCH',
           body: { isAvailable: newStatus, available: newStatus },
           timeout: 15000
@@ -314,11 +314,11 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     return true
   }
 
-  async function updateProductPrice(
+  function updateProductPrice(
     productsOrId: any,
     productIdOrPrice: any,
     priceParam?: any
-  ): Promise<boolean> {
+  ): boolean {
     triggerHaptic(20)
     let productId = ''
     let newPrice = 0
@@ -361,7 +361,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
 
     try {
       if (typeof $fetch === 'function') {
-        await $fetch(`${apiBaseUrl}/tenants/${currentSlug.value}/products/${productId}`, {
+        $fetch(`${apiBaseUrl}/tenants/${currentSlug.value}/products/${productId}`, {
           method: 'PUT',
           body: {
             price: newPrice,
@@ -376,14 +376,14 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   }
 
   // 2. Catálogo: Criar e Excluir Produto com Persistência Real no PostgreSQL (ADR 010)
-  async function createProduct(productData: {
+  function createProduct(productData: {
     name: string
     description?: string
     price: number
     categoryId: string
     image?: string
     durationMinutes?: number
-  }): Promise<Product> {
+  }): Product {
     triggerHaptic(35)
     const newId = `prod-custom-${Date.now()}`
     const newProd: Product = {
@@ -405,7 +405,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     try {
       if (typeof $fetch === 'function') {
         const url = `${apiBaseUrl}/tenants/${currentSlug.value}/products`
-        await $fetch(url, {
+        $fetch(url, {
           method: 'POST',
           body: {
             id: newId,
@@ -427,7 +427,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     return newProd
   }
 
-  async function deleteProduct(productId: string): Promise<boolean> {
+  function deleteProduct(productId: string): boolean {
     triggerHaptic(40)
     const current = getOverrides()
     const deleted = Array.from(new Set([...(current.deletedProductIds || []), productId]))
@@ -440,7 +440,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     try {
       if (typeof $fetch === 'function') {
         const url = `${apiBaseUrl}/tenants/${currentSlug.value}/products/${productId}`
-        await $fetch(url, {
+        $fetch(url, {
           method: 'DELETE',
           timeout: 15000
         }).catch((err) => {
@@ -453,7 +453,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   }
 
   // 3. Pausar / Ativar Opcionais e Adicionais (Estoque em Tempo Real)
-  async function toggleOptionAvailability(optionId: string, isAvailable: boolean, productId?: string): Promise<boolean> {
+  function toggleOptionAvailability(optionId: string, isAvailable: boolean, productId?: string): boolean {
     triggerHaptic(25)
     const current = getOverrides()
     let paused = current.pausedOptionIds ? [...current.pausedOptionIds] : []
@@ -471,7 +471,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     try {
       if (typeof $fetch === 'function') {
         const prodPath = productId ? `/products/${productId}` : ''
-        await $fetch(`${apiBaseUrl}/tenants/${currentSlug.value}${prodPath}/options/${optionId}/availability`, {
+        $fetch(`${apiBaseUrl}/tenants/${currentSlug.value}${prodPath}/options/${optionId}/availability`, {
           method: 'PATCH',
           body: { isAvailable },
           timeout: 15000
@@ -497,7 +497,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   }
 
   // 6. Horários & Programação Semanal
-  async function updateWeeklySchedule(schedule: Record<string, DaySchedule>): Promise<boolean> {
+  function updateWeeklySchedule(schedule: Record<string, DaySchedule>): boolean {
     triggerHaptic(30)
     saveOverrides({
       openingHours: schedule as any
@@ -505,7 +505,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
 
     try {
       if (typeof $fetch === 'function') {
-        await $fetch(`${apiBaseUrl}/tenants/${currentSlug.value}/hours`, {
+        $fetch(`${apiBaseUrl}/tenants/${currentSlug.value}/hours`, {
           method: 'PATCH',
           body: { hours: schedule },
           timeout: 15000
@@ -517,7 +517,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   }
 
   // 7. Especialistas / Barbeiros: Disponibilidade, Escala, Expediente e Almoço (ADR 011 / ADR 021)
-  async function toggleProfessionalAvailability(profId: string, isAvailable: boolean): Promise<boolean> {
+  function toggleProfessionalAvailability(profId: string, isAvailable: boolean): boolean {
     triggerHaptic(30)
     const current = getOverrides()
     const profs = current.professionals || {}
@@ -531,7 +531,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     try {
       if (typeof $fetch === 'function') {
         const url = `${apiBaseUrl}/tenants/${currentSlug.value}/professionals/${profId}/availability`
-        await $fetch(url, {
+        $fetch(url, {
           method: 'PATCH',
           body: { isAvailable },
           timeout: 15000
@@ -544,7 +544,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     return true
   }
 
-  async function toggleProfessionalDay(profId: string, dayIndex: number): Promise<void> {
+  function toggleProfessionalDay(profId: string, dayIndex: number): void {
     triggerHaptic(25)
     const current = getOverrides()
     const profs = current.professionals || {}
@@ -571,7 +571,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     try {
       if (typeof $fetch === 'function') {
         const url = `${apiBaseUrl}/tenants/${currentSlug.value}/professionals/${profId}`
-        await $fetch(url, {
+        $fetch(url, {
           method: 'PATCH',
           body: { availableDays },
           timeout: 15000
@@ -582,7 +582,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     } catch {}
   }
 
-  function updateProfessionalDays(profId: string, availableDays: number[]) {
+  function updateProfessionalDays(profId: string, availableDays: number[]): void {
     triggerHaptic(30)
     const current = getOverrides()
     const profs = current.professionals || {}
@@ -594,11 +594,11 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     })
   }
 
-  async function updateProfessionalHours(
+  function updateProfessionalHours(
     profId: string,
     workHoursOrStart: string | { start: string; end: string },
     endParam?: string,
-  ): Promise<void> {
+  ): void {
     triggerHaptic(25)
     const current = getOverrides()
     const profs = current.professionals || {}
@@ -629,7 +629,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     try {
       if (typeof $fetch === 'function') {
         const url = `${apiBaseUrl}/tenants/${currentSlug.value}/professionals/${profId}`
-        await $fetch(url, {
+        $fetch(url, {
           method: 'PATCH',
           body: { workHours },
           timeout: 15000
@@ -640,12 +640,12 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     } catch {}
   }
 
-  async function updateProfessionalLunch(
+  function updateProfessionalLunch(
     profId: string,
     lunchOrStart: string | { start: string; end: string; enabled?: boolean },
     endParam?: string,
     enabledParam?: boolean,
-  ): Promise<void> {
+  ): void {
     triggerHaptic(25)
     const current = getOverrides()
     const profs = current.professionals || {}
@@ -679,7 +679,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     try {
       if (typeof $fetch === 'function') {
         const url = `${apiBaseUrl}/tenants/${currentSlug.value}/professionals/${profId}`
-        await $fetch(url, {
+        $fetch(url, {
           method: 'PATCH',
           body: { lunchBreak },
           timeout: 15000
@@ -691,14 +691,14 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   }
 
   // 8. Especialistas: Criar e Excluir com Persistência Real no PostgreSQL (ADR 011 / ADR 021)
-  async function createProfessional(profData: {
+  function createProfessional(profData: {
     name: string
     role?: string
     avatar?: string
     availableDays?: number[]
     workHours?: { start: string; end: string }
     lunchBreak?: { start: string; end: string; enabled: boolean }
-  }): Promise<CustomProfessional> {
+  }): CustomProfessional {
     triggerHaptic(35)
     const newId = `prof-custom-${Date.now()}`
     const newProf: CustomProfessional = {
@@ -718,7 +718,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     try {
       if (typeof $fetch === 'function') {
         const url = `${apiBaseUrl}/tenants/${currentSlug.value}/professionals`
-        await $fetch(url, {
+        $fetch(url, {
           method: 'POST',
           body: {
             id: newId,
@@ -740,20 +740,20 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     return newProf
   }
 
-  async function deleteProfessional(profId: string): Promise<boolean> {
+  function deleteProfessional(profId: string): boolean {
     triggerHaptic(40)
     const current = getOverrides()
     const deleted = Array.from(new Set([...(current.deletedProfessionalIds || []), profId]))
     const customs = (current.customProfessionals || []).filter(p => p.id !== profId)
     saveOverrides({
-      deletedProfessionalIds: deleted,
+      deletedProductIds: deleted,
       customProfessionals: customs
     })
 
     try {
       if (typeof $fetch === 'function') {
         const url = `${apiBaseUrl}/tenants/${currentSlug.value}/professionals/${profId}`
-        await $fetch(url, {
+        $fetch(url, {
           method: 'DELETE',
           timeout: 15000
         }).catch((err) => {
@@ -822,7 +822,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   }
 
   // 10. Bloqueio de Slots de Agenda com Persistência no PostgreSQL (ADR 011 / ADR 021)
-  async function toggleBlockSlot(date: string, time: string): Promise<boolean> {
+  function toggleBlockSlot(date: string, time: string): boolean {
     triggerHaptic(25)
     const current = getOverrides()
     const blocked = current.blockedSlots ? [...current.blockedSlots] : []
@@ -839,7 +839,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     try {
       if (typeof $fetch === 'function') {
         const url = `${apiBaseUrl}/tenants/${currentSlug.value}/slots/toggle`
-        await $fetch(url, {
+        $fetch(url, {
           method: 'POST',
           body: { date, time },
           timeout: 15000
