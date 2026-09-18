@@ -20,6 +20,7 @@ export class PostgresTenantRepository implements ITenantRepository {
         ALTER TABLE tenants ADD COLUMN IF NOT EXISTS announcement JSONB;
         ALTER TABLE tenants ADD COLUMN IF NOT EXISTS estimated_time VARCHAR(50);
         ALTER TABLE tenants ADD COLUMN IF NOT EXISTS instagram VARCHAR(100);
+        ALTER TABLE tenants ADD COLUMN IF NOT EXISTS pin_hash VARCHAR(255);
       `)
       this.schemaEnsured = true
     } catch {
@@ -98,8 +99,8 @@ export class PostgresTenantRepository implements ITenantRepository {
         id, slug, name, description, logo, banner, phone_whatsapp, address,
         business_category, theme, custom_domain, opening_hours, pix_config,
         delivery_fee_cents, min_order_value_cents, estimated_time, instagram, announcement,
-        is_closed_emergency, closed_emergency_message, is_active, created_at, updated_at
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23)
+        is_closed_emergency, closed_emergency_message, pin_hash, is_active, created_at, updated_at
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, $22, $23, $24)
       ON CONFLICT (slug) DO UPDATE SET
         name = EXCLUDED.name,
         description = EXCLUDED.description,
@@ -119,13 +120,14 @@ export class PostgresTenantRepository implements ITenantRepository {
         announcement = EXCLUDED.announcement,
         is_closed_emergency = EXCLUDED.is_closed_emergency,
         closed_emergency_message = EXCLUDED.closed_emergency_message,
+        pin_hash = EXCLUDED.pin_hash,
         is_active = EXCLUDED.is_active,
         updated_at = NOW()`,
       [
         p.id, p.slug, p.name, p.description, p.logo, p.banner, p.phone_whatsapp, p.address,
         p.business_category, p.theme, p.custom_domain, p.opening_hours, p.pix_config,
         p.delivery_fee_cents, p.min_order_value_cents, p.estimated_time, p.instagram, p.announcement,
-        p.is_closed_emergency, p.closed_emergency_message, p.is_active, p.created_at, p.updated_at
+        p.is_closed_emergency, p.closed_emergency_message, p.pin_hash, p.is_active, p.created_at, p.updated_at
       ]
     )
   }
