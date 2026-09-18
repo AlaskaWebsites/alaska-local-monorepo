@@ -1,4 +1,4 @@
-import { Tenant, BusinessCategory, TenantTheme, OpeningHours, PixConfig } from '@core/domain/entities/tenant.entity'
+import { Tenant, BusinessCategory, TenantTheme, OpeningHours, PixConfig, TenantAnnouncement } from '@core/domain/entities/tenant.entity'
 
 export interface TenantRow {
   id: string
@@ -16,6 +16,11 @@ export interface TenantRow {
   pix_config?: PixConfig | null
   delivery_fee_cents?: number | null
   min_order_value_cents?: number | null
+  estimated_time?: string | null
+  instagram?: string | null
+  announcement?: TenantAnnouncement | string | null
+  is_closed_emergency?: boolean | null
+  closed_emergency_message?: string | null
   categories?: unknown[] | null
   professionals?: unknown[] | null
   reviews?: unknown | null
@@ -26,6 +31,17 @@ export interface TenantRow {
 
 export class TenantMapper {
   static toDomain(row: TenantRow, categories: unknown[] = [], professionals: unknown[] = []): Tenant {
+    let parsedAnnouncement: TenantAnnouncement | undefined = undefined
+    if (row.announcement) {
+      if (typeof row.announcement === 'string') {
+        try {
+          parsedAnnouncement = JSON.parse(row.announcement)
+        } catch {}
+      } else if (typeof row.announcement === 'object') {
+        parsedAnnouncement = row.announcement as TenantAnnouncement
+      }
+    }
+
     return new Tenant({
       id: row.id,
       slug: row.slug,
@@ -42,6 +58,11 @@ export class TenantMapper {
       pixConfig: row.pix_config || undefined,
       deliveryFeeCents: row.delivery_fee_cents ?? 0,
       minOrderValueCents: row.min_order_value_cents ?? 0,
+      estimatedTime: row.estimated_time || '30-45 min',
+      instagram: row.instagram || undefined,
+      announcement: parsedAnnouncement,
+      isClosedEmergency: row.is_closed_emergency ?? false,
+      closedEmergencyMessage: row.closed_emergency_message || undefined,
       categories: categories.length > 0 ? categories : (row.categories || []),
       professionals: professionals.length > 0 ? professionals : (row.professionals || []),
       reviews: row.reviews || undefined,
@@ -68,6 +89,11 @@ export class TenantMapper {
       pix_config: tenant.pixConfig ? JSON.stringify(tenant.pixConfig) : null,
       delivery_fee_cents: tenant.deliveryFeeCents,
       min_order_value_cents: tenant.minOrderValueCents,
+      estimated_time: tenant.estimatedTime || null,
+      instagram: tenant.instagram || null,
+      announcement: tenant.announcement ? JSON.stringify(tenant.announcement) : null,
+      is_closed_emergency: tenant.isClosedEmergency,
+      closed_emergency_message: tenant.closedEmergencyMessage || null,
       is_active: tenant.isActive
     }
   }
