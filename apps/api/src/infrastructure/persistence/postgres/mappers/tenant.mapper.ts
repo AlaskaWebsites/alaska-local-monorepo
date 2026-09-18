@@ -21,6 +21,7 @@ export interface TenantRow {
   announcement?: TenantAnnouncement | string | null
   is_closed_emergency?: boolean | null
   closed_emergency_message?: string | null
+  pin_hash?: string | null
   categories?: unknown[] | null
   professionals?: unknown[] | null
   reviews?: unknown | null
@@ -63,6 +64,7 @@ export class TenantMapper {
       announcement: parsedAnnouncement,
       isClosedEmergency: row.is_closed_emergency ?? false,
       closedEmergencyMessage: row.closed_emergency_message || undefined,
+      pinHash: row.pin_hash || undefined,
       categories: categories.length > 0 ? categories : (row.categories || []),
       professionals: professionals.length > 0 ? professionals : (row.professionals || []),
       reviews: row.reviews || undefined,
@@ -94,6 +96,7 @@ export class TenantMapper {
       announcement: tenant.announcement ? JSON.stringify(tenant.announcement) : null,
       is_closed_emergency: tenant.isClosedEmergency,
       closed_emergency_message: tenant.closedEmergencyMessage || null,
+      pin_hash: tenant.pinHash || null,
       is_active: tenant.isActive
     }
   }
