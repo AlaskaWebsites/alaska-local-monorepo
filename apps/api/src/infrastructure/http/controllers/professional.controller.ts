@@ -33,7 +33,7 @@ export class ProfessionalController {
   ) {}
 
   @Get('professionals')
-  @ApiOperation({ summary: 'Listar profissionais do estabelecimento' })
+  @ApiOperation({ summary: 'Listar profissionais do estabelecimento' })\\
   async listProfessionals(@Param('slug') slug: string) {
     const list = await this.professionalRepository.listByTenantSlug(slug)
     return {
@@ -57,7 +57,11 @@ export class ProfessionalController {
       avatar: dto.avatar,
       availableDays: dto.availableDays,
       workHours: dto.workHours,
-      lunchBreak: dto.lunchBreak,
+      lunchBreak: dto.lunchBreak ? {
+        start: dto.lunchBreak.start,
+        end: dto.lunchBreak.end,
+        enabled: dto.lunchBreak.enabled ?? true
+      } : undefined,
       isAvailable: dto.isAvailable
     })
 
@@ -101,7 +105,11 @@ export class ProfessionalController {
       avatar: dto.avatar,
       availableDays: dto.availableDays,
       workHours: dto.workHours,
-      lunchBreak: dto.lunchBreak,
+      lunchBreak: dto.lunchBreak ? {
+        start: dto.lunchBreak.start,
+        end: dto.lunchBreak.end,
+        enabled: dto.lunchBreak.enabled ?? true
+      } : undefined,
       isAvailable: dto.isAvailable
     })
 
