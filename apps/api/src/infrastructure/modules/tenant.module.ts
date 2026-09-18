@@ -3,6 +3,7 @@ import { TOKENS } from '@core/application/tokens'
 import { GetTenantBySlugUseCase } from '@core/application/use-cases/get-tenant-by-slug.use-case'
 import { ResolveTenantByDomainUseCase } from '@core/application/use-cases/resolve-tenant-by-domain.use-case'
 import { AuthenticateMerchantUseCase } from '@core/application/use-cases/authenticate-merchant.use-case'
+import { ChangeAdminPinUseCase } from '@core/application/use-cases/change-admin-pin.use-case'
 import { UpdateTenantHoursUseCase } from '@core/application/use-cases/update-tenant-hours.use-case'
 import { UpdateTenantEmergencyUseCase } from '@core/application/use-cases/update-tenant-emergency.use-case'
 import { UpdateTenantDeliveryUseCase } from '@core/application/use-cases/update-tenant-delivery.use-case'
@@ -55,6 +56,11 @@ import { validateEnv } from '../../config/env.schema'
       inject: [TOKENS.TENANT_REPOSITORY, TOKENS.PASSWORD_HASHER]
     },
     {
+      provide: ChangeAdminPinUseCase,
+      useFactory: (repo: ITenantRepository, hasher: IPasswordHasher) => new ChangeAdminPinUseCase(repo, hasher),
+      inject: [TOKENS.TENANT_REPOSITORY, TOKENS.PASSWORD_HASHER]
+    },
+    {
       provide: UpdateTenantHoursUseCase,
       useFactory: (repo: ITenantRepository) => new UpdateTenantHoursUseCase(repo),
       inject: [TOKENS.TENANT_REPOSITORY]
@@ -91,6 +97,7 @@ import { validateEnv } from '../../config/env.schema'
     GetTenantBySlugUseCase,
     ResolveTenantByDomainUseCase,
     AuthenticateMerchantUseCase,
+    ChangeAdminPinUseCase,
     UpdateTenantHoursUseCase,
     UpdateTenantEmergencyUseCase,
     UpdateTenantDeliveryUseCase,
