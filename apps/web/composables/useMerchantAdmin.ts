@@ -507,7 +507,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       if (typeof $fetch === 'function') {
         $fetch(`${apiBaseUrl}/tenants/${currentSlug.value}/hours`, {
           method: 'PATCH',
-          body: { hours: schedule },
+          body: { hours: schedule, openingHours: schedule },
           timeout: 15000
         }).catch(() => {})
       }
@@ -582,7 +582,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     } catch {}
   }
 
-  function updateProfessionalDays(profId: string, availableDays: number[]): void {
+  function updateProfessionalDays(profId: string, availableDays: number[]) {
     triggerHaptic(30)
     const current = getOverrides()
     const profs = current.professionals || {}
@@ -746,7 +746,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     const deleted = Array.from(new Set([...(current.deletedProfessionalIds || []), profId]))
     const customs = (current.customProfessionals || []).filter(p => p.id !== profId)
     saveOverrides({
-      deletedProductIds: deleted,
+      deletedProfessionalIds: deleted,
       customProfessionals: customs
     })
 
