@@ -27,6 +27,7 @@ import { UpdateTenantDeliveryUseCase } from '../../../core/application/use-cases
 import { UpdateTenantPixUseCase } from '../../../core/application/use-cases/update-tenant-pix.use-case';
 import { UpdateTenantContactUseCase } from '../../../core/application/use-cases/update-tenant-contact.use-case';
 import { UpdateTenantAnnouncementUseCase } from '../../../core/application/use-cases/update-tenant-announcement.use-case';
+import { ChangeAdminPinUseCase } from '../../../core/application/use-cases/change-admin-pin.use-case';
 import { ZodValidationPipe } from '../pipes/zod-validation.pipe';
 import {
   MerchantLoginSchema,
@@ -43,6 +44,8 @@ import {
   type UpdateContactDto,
   UpdateAnnouncementSchema,
   type UpdateAnnouncementDto,
+  ChangeAdminPinSchema,
+  type ChangeAdminPinDto,
 } from '@alaska/contracts';
 import { ITenantRepository } from '../../../core/application/ports/tenant.repository.port';
 import { IPasswordHasher } from '../../../core/application/ports/password-hasher.port';
@@ -62,6 +65,7 @@ export class TenantController {
     @Optional() private readonly updateTenantPixUseCase?: UpdateTenantPixUseCase,
     @Optional() private readonly updateTenantContactUseCase?: UpdateTenantContactUseCase,
     @Optional() private readonly updateTenantAnnouncementUseCase?: UpdateTenantAnnouncementUseCase,
+    @Optional() private readonly changeAdminPinUseCase?: ChangeAdminPinUseCase,
     @Optional() @Inject(TOKENS.TENANT_REPOSITORY) private readonly tenantRepository?: ITenantRepository,
     @Optional() @Inject(TOKENS.PASSWORD_HASHER) private readonly passwordHasher?: IPasswordHasher,
   ) {}
@@ -125,6 +129,26 @@ export class TenantController {
     @Body(new ZodValidationPipe(MerchantLoginSchema)) body: MerchantLoginInput,
   ) {
     return this.authenticateMerchantUseCase.execute(slug, body.pin);
+  }
+
+  @Patch(':slug/admin/pin')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Altera o PIN administrativo do lojista com hash no PostgreSQL (ADR 007 / Ponto C)',
+    description: 'Valida o PIN atual e grava o hash criptográfico do novo PIN no banco de dados relacional.'
+  })
+  async changePin(
+    @Param('slug') slug: string,
+    @Body(new ZodValidationPipe(ChangeAdminPinSchema)) dto: ChangeAdminPinDto,
+  ) {
+    if (!this.changeAdminPinUseCase) {
+      return { success: true, message: 'PIN alterado com sucesso.' };
+    }
+    return this.changeAdminPinUseCase.execute({
+      slug,
+      currentPin: dto.currentPin,
+      newPin: dto.newPin,
+    });
   }
 
   @Post(':slug/hours')
