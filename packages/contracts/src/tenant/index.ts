@@ -279,6 +279,15 @@ export const UpdateAnnouncementSchema = z.object({
   message: z.string().default(''),
 }).passthrough();
 
+// Schema de Alteração de PIN Administrativo (ADR 007 / Ponto C)
+export const ChangeAdminPinSchema = z.object({
+  currentPin: z.string().min(4).max(8).optional(),
+  newPin: z
+    .string()
+    .min(4, 'O novo PIN deve ter no mínimo 4 dígitos')
+    .max(8, 'O novo PIN deve ter no máximo 8 dígitos'),
+});
+
 export type TenantCategory = z.infer<typeof TenantCategorySchema>;
 export type BusinessCategory = z.infer<typeof BusinessCategorySchema>;
 export type TenantTheme = z.infer<typeof TenantThemeSchema>;
@@ -307,3 +316,4 @@ export type UpdateDeliveryConfigDto = z.infer<typeof UpdateDeliveryConfigSchema>
 export type UpdatePixConfigDto = z.infer<typeof UpdatePixConfigSchema>;
 export type UpdateContactDto = z.infer<typeof UpdateContactSchema>;
 export type UpdateAnnouncementDto = z.infer<typeof UpdateAnnouncementSchema>;
+export type ChangeAdminPinDto = z.infer<typeof ChangeAdminPinSchema>;
