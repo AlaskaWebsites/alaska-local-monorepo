@@ -5,5 +5,5 @@ export const TOKENS = {
   ORDER_REPOSITORY: Symbol('IOrderRepository'),
   BOOKING_REPOSITORY: Symbol('IBookingRepository'),
   PIX_GATEWAY: Symbol('IPixGateway'),
-  PASSWORD_HASHER: Symbol('IPasswordHasher'),
-} as const;
+  PROFESSIONAL_REPOSITORY: Symbol('IProfessionalRepository')
+} as const
