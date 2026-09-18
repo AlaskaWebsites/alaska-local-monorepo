@@ -33,7 +33,7 @@ export class ProfessionalController {
   ) {}
 
   @Get('professionals')
-  @ApiOperation({ summary: 'Listar profissionais do estabelecimento' })\\
+  @ApiOperation({ summary: 'Listar profissionais do estabelecimento' })
   async listProfessionals(@Param('slug') slug: string) {
     const list = await this.professionalRepository.listByTenantSlug(slug)
     return {
