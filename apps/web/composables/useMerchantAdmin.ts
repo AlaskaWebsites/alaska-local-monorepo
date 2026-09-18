@@ -196,7 +196,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     triggerHaptic(20)
   }
 
-  function changePin(newPin: string): boolean {
+  function changePin(newPin: string, currentPin?: string): boolean {
     if (!newPin || newPin.length < 4 || newPin.length > 8) {
       errorMessage.value = 'O PIN deve ter entre 4 e 8 dígitos numéricos.'
       triggerHaptic(50)
@@ -204,6 +204,20 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     }
     triggerHaptic(30)
     saveOverrides({ customPin: newPin })
+
+    try {
+      if (typeof $fetch === 'function') {
+        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/admin/pin`
+        $fetch(url, {
+          method: 'PATCH',
+          body: { currentPin, newPin },
+          timeout: 15000
+        }).catch((err) => {
+          console.warn('[AlaskaAdmin] Aviso ao persistir novo PIN no backend:', err)
+        })
+      }
+    } catch {}
+
     return true
   }
 
