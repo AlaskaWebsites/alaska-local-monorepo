@@ -80,10 +80,12 @@ export class PostgresOrderRepository implements IOrderRepository {
     return OrderMapper.toDomain(result.rows[0])
   }
 
-  async listByTenant(tenantId: string, limit = 50, offset = 0): Promise<Order[]> {
+  async listByTenant(tenantId: string, limit = 100, offset = 0): Promise<Order[]> {
+    const rawSlug = tenantId.replace(/^ten-/, '')
+    const idWithPrefix = tenantId.startsWith('ten-') ? tenantId : `ten-${tenantId}`
     const result = await this.postgresService.query(
-      'SELECT * FROM orders WHERE tenant_id = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
-      [tenantId, limit, offset]
+      'SELECT * FROM orders WHERE tenant_id = $1 OR tenant_id = $2 OR tenant_id = $3 ORDER BY created_at DESC LIMIT $4 OFFSET $5',
+      [tenantId, rawSlug, idWithPrefix, limit, offset]
     )
     return result.rows.map(row => OrderMapper.toDomain(row))
   }
