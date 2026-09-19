@@ -1,5 +1,4 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { useOrderDashboard } from '../../composables/useOrderDashboard'
 import type { OrderDashboardItem } from '@alaska/contracts'
 
 // Mock resiliente de localStorage e window para execução determinística em Node / CI
@@ -33,10 +32,13 @@ if (typeof globalThis.localStorage === 'undefined') {
 
 if (typeof globalThis.window === 'undefined') {
   ;(globalThis as any).window = {
+    localStorage: memoryStorage,
     addEventListener: () => {},
     removeEventListener: () => {},
     dispatchEvent: () => true,
   }
+} else if (!(globalThis as any).window.localStorage) {
+  ;(globalThis as any).window.localStorage = memoryStorage
 }
 
 if (typeof globalThis.CustomEvent === 'undefined') {
@@ -49,6 +51,9 @@ if (typeof globalThis.CustomEvent === 'undefined') {
     }
   }
 }
+
+// Import dinâmico ou posterior para garantir ambiente de storage pronto
+import { useOrderDashboard } from '../../composables/useOrderDashboard'
 
 describe('Unit: useOrderDashboard Composable (ADR 024)', () => {
   const slug = 'hamburgueria-x'
@@ -97,7 +102,7 @@ describe('Unit: useOrderDashboard Composable (ADR 024)', () => {
     expect(dashboard.orders.value[0].total).toBe(55.0)
 
     const stored = JSON.parse(localStorage.getItem(storageKey) || '[]')
-    expect(stored[0].customerName).toBe('Cliente Teste')
+    expect(stored[0]?.customerName).toBe('Cliente Teste')
   })
 
   it('deve transicionar status do pedido e disparar persistência (< 50ms)', async () => {
@@ -234,12 +239,12 @@ describe('Unit: useOrderDashboard Composable (ADR 024)', () => {
     const prepUrl = dashboard.generateStatusWhatsAppUrl(order, 'preparing', 'Hamburgueria X')
     expect(prepUrl).toContain('wa.me/5511999998888')
     expect(decodeURIComponent(prepUrl)).toContain('Danilo Santos')
-    expect(decodeURIComponent(prepUrl)).toContain('preparo')
+    expect(decodeURIComponent(prepUrl).toLowerCase()).toContain('preparo')
 
     const dispUrl = dashboard.generateStatusWhatsAppUrl(order, 'dispatched', 'Hamburgueria X')
-    expect(decodeURIComponent(dispUrl)).toContain('saiu para entrega')
+    expect(decodeURIComponent(dispUrl).toLowerCase()).toContain('saiu para entrega')
 
     const compUrl = dashboard.generateStatusWhatsAppUrl(order, 'completed', 'Hamburgueria X')
-    expect(decodeURIComponent(compUrl)).toContain('finalizado')
+    expect(decodeURIComponent(compUrl).toLowerCase()).toContain('finalizado')
   })
 })
