@@ -80,6 +80,12 @@ function getShortId(id: string): string {
   return id.replace(/^ord-/, '').slice(-5).toUpperCase()
 }
 
+function getCustomerWhatsAppUrl(phone?: string): string {
+  if (!phone) return '#'
+  const clean = phone.replace(/\D/g, '')
+  return 'https://wa.me/55' + clean
+}
+
 function getStatusBadge(status: OrderStatus): { text: string; bg: string; textCol: string; border: string } {
   switch (status) {
     case 'created':
@@ -352,7 +358,7 @@ async function confirmCancel(orderId: string) {
               <!-- Badge do Status -->
               <span
                 class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border"
-                :class="[getStatusBadge(order.status).bg, getStatusBadge(order.status).textCol, getStatusBadge(order.status).border]\"
+                :class="[getStatusBadge(order.status).bg, getStatusBadge(order.status).textCol, getStatusBadge(order.status).border]"
               >
                 {{ getStatusBadge(order.status).text }}
               </span>
@@ -365,7 +371,7 @@ async function confirmCancel(orderId: string) {
               <span class="font-bold text-slate-900 text-sm">{{ order.customerName }}</span>
               <a
                 v-if="order.customerPhone"
-                :href="`https://wa.me/55${order.customerPhone.replace(/\D/g, '')}`"
+                :href="getCustomerWhatsAppUrl(order.customerPhone)"
                 target="_blank"
                 rel="noopener noreferrer"
                 class="text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md transition-colors"
