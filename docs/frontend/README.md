@@ -1,59 +1,102 @@
 # 🌐 Alaska Local — Front-end Architecture Documentation (`@alaska/web`)
 
-O `@alaska/web` é o frontend do ecossistema **Alaska Local**, projetado sob o paradigma **One Codebase, Infinite Domains** com Nuxt 3, Vue 3, Tailwind CSS e TypeScript.
+Documentação técnica oficial da aplicação front-end Nuxt 3 / Vue 3 do ecossistema **Alaska Local**, cobrindo as 4 verticais de negócio (**Alaska Menu**, **Alaska Shop**, **Alaska Hub** e **Alaska Pro**).
 
 ---
 
-## 🏛️ Pilares de Engenharia do Front-end
+## 🏛️ 1. Princípios Arquiteturais & Filosofia
 
-1. **One Codebase, Infinite Domains:**  
-   Suporte a infinitos estabelecimentos locais (Menu, Shop, Hub e Pro) através de resolução dinâmica por subdomínio wildcard e header `Host`.
-2. **End-to-End Type Safety com Monorepo:**  
-   Tipagens e schemas Zod centralizados no pacote compartilhado do monorepo, garantindo segurança ponta a ponta.
-3. **Integração Client-Server Resiliente:**  
-   Estratégia API-First conectada ao NestJS no Render, com fallback offline gracioso para `~/data/*.json` e mutações otimistas em < 50ms no Painel do Lojista.
-4. **Motor Comercial WhatsApp:**  
-   Despacho estruturado de comandas de delivery, retirada e agendamentos de serviços diretamente no WhatsApp oficial do lojista.
-5. **Zero Layout Shift (CLS):**  
-   Imagens com placeholders SVG temáticos codificados em Data URI que garantem renderização instantânea mesmo com conexões instáveis.
-6. **Acessibilidade W3C / WCAG 2.1 AA:**  
-   Todos os modais possuem `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, foco inicial automático, atalho `Escape` e trava de rolagem com `useBodyScrollLock`.
-7. **Pipeline de Deploy Determinístico (ADR 016):**  
-   Deploy serverless na Vercel orquestrado via Turborepo e PNPM v10 com Build Output API v3.
-8. **Design System Claro Suave (ADR 017):**  
-   Padronização visual em `bg-slate-50`, cards `bg-white border-slate-200/90 shadow-2xs` e 11 temas cromáticos dinâmicos.
-9. **Resiliência de Contratos em Abas do Admin e Storefront (ADR 018):**  
-   Padrão dual-prop, dual-emit, exibição de canais sociais (Instagram), sincronização unidirecional de horários, trava de pedido mínimo no checkout e layout flexbox balanceado.
+- **One Codebase, Infinite Domains**: Resolução dinâmica de múltiplos estabelecimentos através de `pages/[slug]/index.vue`, subdomínios wildcard e domínios próprios via header `host` no middleware Nitro (`server/middleware/tenant.ts`).
+- **Single Source of Truth (`@alaska/contracts` — ADR 014)**: Centralização de schemas Zod e tipagens inferidas no workspace `@alaska/contracts`, prevenindo *Contract Drift*.
+- **Páginas como Orquestradoras (ADR 015)**: `pages/[slug]/index.vue` e `pages/[slug]/admin.vue` atuam exclusivamente gerenciando estado reativo e orquestrando componentes atômicos desacoplados em `components/storefront/` e `components/admin/`.
+- **Resiliência e Zero Downtime**: Fallback inteligente para dados locais (`~/data/*.json`) e imagens com geração dinâmica de SVGs temáticos (`utils/images.ts`).
+- **Acessibilidade Semântica W3C / WCAG**: Todos os modais e gavetas contam com `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, captura de tecla `Escape` e trava de rolagem via `useBodyScrollLock`.
+- **Mural de Pedidos em Tempo Real (ADR 024)**: Gestão ágil de comandas no balcão e delivery com avanço de status em 1 toque (< 50ms), notificações pré-formatadas para WhatsApp e métricas de faturamento do dia.
 
 ---
 
-## 📜 Decisões Arquiteturais (ADRs)
+## 🧩 2. Mapa de Composables (`apps/web/composables/`)
 
-- **[ADR 001: Fundação Arquitetural Nuxt 3](./adrs/001-fase1-fundacao-arquitetural.md)** — Estrutura base, roteamento multi-tenant e SSR.
-- **[ADR 002: Arquitetura NestJS e Validação Zod](./adrs/002-arquitetura-nestjs-validacao-zod.md)** — Integração com o backend e contratos tipados.
-- **[ADR 003: Desacoplamento de Composables e Modais](./adrs/003-desacoplamento-composables-modais-acessibilidade.md)** — Acessibilidade WCAG e separação de concerns.
-- **[ADR 004: Categorização de Negócios e Templates](./adrs/004-categorizacao-de-negocios-e-templates.md)** — As 4 verticais: Menu, Shop, Hub e Pro.
-- **[ADR 005: Integração ViaCEP e Autocompletion de Endereço](./adrs/005-integracao-viacep-autocompletion-endereco.md)** — Preenchimento inteligente de checkout.
-- **[ADR 006: Módulo de Agendamento e Venda Híbrida](./adrs/006-modulo-agendamento-servicos-e-venda-hibrida.md)** — Slots de 30 min, escala semanal e produtos de balcão.
-- **[ADR 007: Cálculo de Horário Noturno e Badges Dinâmicos](./adrs/007-calculo-horario-noturno-e-badges-dinamicos.md)** — Indicadores de loja aberta/fechada e turnos noturnos.
-- **[ADR 008: Resiliência de Imagens e Placeholders SVG Temáticos](./adrs/008-resiliencia-de-imagens-e-placeholders-svg-tematicos.md)** — Data URIs vetoriais anti-404.
-- **[ADR 009: Protocolo de Despacho WhatsApp e Venda Híbrida](./adrs/009-protocolo-despacho-whatsapp-e-venda-hibrida.md)** — Formatação determinística de comandas.
-- **[ADR 010: Busca Client-Side Zero Latência e Normalização Unicode](./adrs/010-busca-client-side-zero-latencia-e-normalizacao-unicode.md)** — Busca NFD insensível a acentos.
-- **[ADR 011: Persistência de Carrinho Namespaced por Loja](./adrs/011-persistencia-carrinho-namespaced-localstorage.md)** — Isolamento `alaska_cart_<slug>`.
-- **[ADR 012: Arquitetura de Pagamentos Pix (Estágio 1)](./adrs/012-arquitetura-pagamentos-pix-estagio-1.md)** — Integração Pix Copia e Cola D+0.
-- **[ADR 013: Painel do Lojista e Gestão em Tempo Real](./adrs/013-painel-do-lojista-e-gestao-operacional-em-tempo-real.md)** — Mutações operacionais pelo celular.
+| Composable | Responsabilidade Central | Dependências / Integrações |
+| :--- | :--- | :--- |
+| **`useTenant.ts`** | Resolução síncrona e reativa do tenant ativo, cache com `useState`, deduplicação de requisições em voo, debounce de 2s e fallback local. | `useState`, `@alaska/contracts`, `TenantSchema` |
+| **`useMerchantAdmin.ts`** | Gestão operacional mobile (< 50ms): 8 abas operacionais, pausa rápida, criação/exclusão de itens/especialistas, escala 7 dias, Pix e segurança PIN. | `@alaska/contracts`, `useHaptic`, `localStorage` |
+| **`useOrderDashboard.ts`** | Gestão de pedidos e comandas em tempo real (< 50ms): métricas do dia, transições de status da esteira, WhatsApp, polling e fallback local. | `@alaska/contracts`, `useHaptic`, `localStorage` |
+| **`useCart.ts`** | Sacola isolada por loja (`alaska_cart_<slug>`), múltiplos adicionais, observações e feedback tátil. | `@vueuse/core`, `useHaptic` |
+| **`useOpeningHours.ts`** | Verificação em tempo real do status de atendimento, cálculo do próximo horário de abertura/fechamento e detecção da pausa geral de emergência. | `@alaska/contracts`, `Date` |
+| **`useBookingSlots.ts`** | Cálculo dinâmico de horários de agendamento (30 min), soma cumulativa de procedimentos, filtro de expediente, almoço e bloqueios manuais. | `@alaska/contracts`, `useMerchantAdmin` |
+| **`useProductSearch.ts`** | Motor de busca client-side com zero latência, normalização Unicode NFD (ignora acentos e caixa alta/baixa). | `Product`, `Category` |
+| **`useTenantTheme.ts`** | Mapeamento e injeção de classes Tailwind reativas para os 11 temas cromáticos do ecossistema. | `TenantThemeSchema`, `TenantTheme` |
+| **`useCep.ts`** | Consulta de CEP assíncrona na API ViaCEP com sanitização de dígitos, máscara e foco no número. | `sanitizeDigits`, `ViaCEP` |
+| **`useHaptic.ts`** | Feedback tátil mobile via Vibration API para cliques, adições à sacola e switches. | `navigator.vibrate` |
+| **`useShare.ts`** | Compartilhamento nativo mobile via Web Share API com fallback para cópia de URL na área de transferência. | `navigator.share`, `navigator.clipboard` |
+| **`useBodyScrollLock.ts`** | Trava de rolagem de fundo (`overflow: hidden`) em modais e gavetas abertas. | `document.body.style` |
+| **`useApiClient.ts`** | Cliente HTTP resiliente para comunicação com a API NestJS (`apps/api`). | `$fetch`, `useRuntimeConfig` |
+
+---
+
+## 🧱 3. Estrutura de Componentes Desacoplados (ADR 015 & ADR 024)
+
+```
+apps/web/components/
+├── storefront/                 # Componentes Visuais da Vitrine Pública
+│   ├── StoreHeroBanner.vue         # Imagem de capa, gradiente, botão voltar e botão compartilhar (useShare)
+│   ├── StoreHeaderCard.vue         # Logo, nome, avaliações, status Aberto/Fechado e botão de agendamento
+│   ├── FeaturedProductsCarousel.vue# Carrossel horizontal de produtos em destaque
+│   ├── ProductCard.vue             # Card individual de produto (preço, badge esgotado, foto com fallback)
+│   ├── ProductCatalogGrid.vue      # Listagem por categorias com estados vazios e grid responsivo
+│   └── BottomCartFloatingBar.vue   # Barra fixa flutuante de acesso à sacola (ClientOnly)
+│
+├── admin/                      # Componentes do Painel do Lojista (8 Abas & 4 Modais)
+│   ├── AdminLoginCard.vue          # Tela de bloqueio por PIN com validação
+│   ├── AdminTopHeader.vue          # Cabeçalho do painel com status pulse e botão Sair
+│   ├── AdminTabsNav.vue            # Barra de abas com rolagem lateral e setas (badge de novos pedidos)
+│   │
+│   ├── tabs/
+│   │   ├── AdminOrdersTab.vue        # Aba 0: Mural de pedidos em tempo real, métricas e WhatsApp (ADR 024)
+│   │   ├── AdminCatalogTab.vue       # Aba 1: Pausa de itens, criação/exclusão e edição de preços
+│   │   ├── AdminAgendaTab.vue        # Aba 2: Especialistas (escala, folgas, almoço), slots e alerta de fechamento
+│   │   ├── AdminPixContactTab.vue    # Aba 3: Configuração Pix (D+0) e canais WhatsApp/Instagram
+│   │   ├── AdminHoursTab.vue         # Aba 4: Pausa geral de emergência e escala semanal de 7 dias
+│   │   ├── AdminDeliveryTab.vue      # Aba 5: Taxas de entrega, pedido mínimo e prazos
+│   │   ├── AdminAnnouncementTab.vue  # Aba 6: Banner de comunicado oficial no topo
+│   │   └── AdminSecurityTab.vue      # Aba 7: Troca de PIN de segurança do lojista (ADR 023)
+│   │
+│   └── modals/
+│       ├── AdminPriceModal.vue         # Modal de ajuste de preço de produto
+│       ├── AdminCreateProductModal.vue # Modal de cadastro de novo produto
+│       ├── AdminCreateProfModal.vue    # Modal de cadastro de novo especialista
+│       └── AdminOptionsModal.vue       # Modal de pausa/ativação de opcionais/adicionais
+│
+├── BookingModal.vue            # Modal de Agendamento em 4 Passos com bloqueio de 0 vagas e Pix
+├── CartDrawerModal.vue         # Gaveta lateral de sacola e checkout WhatsApp
+├── ProductCustomizerModal.vue  # Modal de customização de produto com adicionais
+├── CategoryTabs.vue            # Barra de categorias com âncora suave
+├── ProductSearchInput.vue      # Input de busca client-side
+├── StoreInfoModal.vue          # Modal de horários e endereço detalhado
+├── StoreReviewsModal.vue       # Modal de avaliações iFood-Style com distribuição por estrelas
+└── PixPaymentModal.vue         # Modal avulso de pagamento via Pix
+```
+
+---
+
+## 🏛️ Registros de Decisões de Arquitetura (ADRs)
+
+- **[ADR 013: Painel do Lojista e Gestão Operacional em Tempo Real](./adrs/013-painel-do-lojista-e-gestao-operacional-em-tempo-real.md)** — Gestão mobile, PIN e mutações otimistas.
 - **[ADR 014: Monorepo Turborepo e Pacote @alaska/contracts](./adrs/014-monorepo-turborepo-e-pacote-contracts.md)** — Centralização de contratos Zod.
 - **[ADR 015: Desacoplamento Atômico de Componentes Storefront e Admin](./adrs/015-desacoplamento-atomico-componentes-storefront-e-admin.md)** — Páginas como orquestradoras.
 - **[ADR 016: Pipeline de CI/CD Vercel com Turborepo e PNPM](./adrs/016-pipeline-ci-cd-vercel-turborepo-pnpm.md)** — Build Output API v3 e deploy contínuo.
 - **[ADR 017: Padronização do Design System Claro Suave e Temas Dinâmicos](./adrs/017-padronizacao-design-system-claro-suave-e-temas-dinamicos-admin.md)** — Fundo `bg-slate-50` e temas cromáticos no admin.
-- **[ADR 018: Resiliência de Contratos de Props, Emissão Dual de Eventos e Defesa Anti-Crash](./adrs/018-resiliencia-de-contratos-props-e-eventos-das-abas-admin.md)** — Blindagem das abas operacionais do Admin (Catálogo, Pix, Horários, Delivery e Comunicado), exibição de Instagram, trava de pedido mínimo, eliminação de 404 em disponibilidade e layout flexbox balanceado.
+- **[ADR 018: Resiliência de Contratos de Props, Emissão Dual e Defesa Anti-Crash](./adrs/018-resiliencia-de-contratos-props-e-eventos-das-abas-admin.md)** — Blindagem das abas operacionais do Admin e canais sociais.
+- **[ADR 023: Persistência do PIN Administrativo no PostgreSQL](./adrs/023-persistencia-pin-administrativo-postgresql.md)** — Hashing SHA-256 e sincronização autoritativa.
+- **[ADR 024: Mural de Pedidos em Tempo Real e Gestão Operacional (Order Dashboard)](./adrs/024-mural-de-pedidos-e-gestao-em-tempo-real-order-dashboard.md)** — Acompanhamento de comandas, transições de esteira, WhatsApp e métricas diárias.
 
 ---
 
-## 📚 Guias de Arquitetura Frontend (`docs/frontend/architecture/`)
+## 📚 4. Guias Especializados de Arquitetura do Frontend
 
-- **[Integração Client-Server Resiliente](./architecture/integracao-client-server.md)** — Estratégia de hidratação e tolerância a cold-start.
-- **[Performance, Resiliência e Integração SSR](./architecture/performance-e-resiliencia-frontend.md)** — Cache reativo, deduplicação em voo e Web Share API.
-- **[Design System & 11 Temas Cromáticos](./architecture/design-system-e-temas.md)** — Paleta Claro Suave e tokens dinâmicos.
-- **[Módulo de Agendamentos & Serviços](./architecture/modulo-agendamento-e-servicos.md)** — Prevenção de horário fantasma e cálculo de slots.
-- **[Guia de Criação de Novos Tenants](./operations/guia-criacao-novos-tenants.md)** — Checklist e validação via `pnpm validate:tenants`.
+* **[Design System & 11 Temas Cromáticos](./architecture/design-system-e-temas.md)** — Base Clara Suave (`bg-slate-50`), tipografia ergonômica e paletas dinâmicas.
+* **[Módulo de Agendamentos & Venda Híbrida](./architecture/modulo-agendamento-e-servicos.md)** — Extração dinâmica, bloqueio de horário fantasma e cálculo de slots.
+* **[Performance, Resiliência & Integração SSR](./architecture/performance-e-resiliencia-frontend.md)** — Cache `useState`, deduplicação em voo, `useShare` e middleware Nitro.
+* **[Padrões de Acessibilidade W3C / WCAG](./architecture/padroes-de-acessibilidade-e-ux.md)** — Modais acessíveis, focus trap e atalho Escape.
+* **[Categorias Canônicas de Negócio](./architecture/categorias-de-negocio.md)** — As 4 verticais: Menu, Shop, Hub e Pro.
