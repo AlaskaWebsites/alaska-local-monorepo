@@ -30,7 +30,7 @@ const CreateOrderDtoSchema = z.object({
     .array(
       z.object({
         productId: z.string(),
-        productName: z.string(),
+        productName: z.string().optional().default('Item'),
         quantity: z.number().int().positive(),
         unitPriceCents: z.number().int().nonnegative(),
         options: z
@@ -121,29 +121,35 @@ export class OrderController {
               cep: order.address.cep,
             }
           : null,
-        items: (order.items || []).map((i) => ({
-          productId: i.productId,
-          productName: i.productName,
-          quantity: i.quantity,
-          unitPriceCents: i.unitPrice?.cents ?? 0,
-          unitPrice: i.unitPrice?.amount ?? 0,
-          options: (i.options || []).map((o) => ({
-            id: o.id,
-            name: o.name,
-            priceCents: o.price?.cents ?? 0,
-            price: o.price?.amount ?? 0,
-          })),
-          notes: i.notes,
-        })),
+        items: (order.items || []).map((i: any) => {
+          const unitPriceCents = typeof i.unitPriceCents === 'number' ? i.unitPriceCents : (i.unitPrice?.cents ?? 0)
+          return {
+            productId: i.productId,
+            productName: i.productName || 'Item',
+            quantity: i.quantity || 1,
+            unitPriceCents,
+            unitPrice: unitPriceCents / 100,
+            options: (i.options || []).map((o: any) => {
+              const priceCents = typeof o.priceCents === 'number' ? o.priceCents : (o.price?.cents ?? 0)
+              return {
+                id: o.id,
+                name: o.name,
+                priceCents,
+                price: priceCents / 100,
+              }
+            }),
+            notes: i.notes || i.observation,
+          }
+        }),
         paymentMethod: order.paymentMethod,
         subtotal: order.calculateSubtotal().amount,
         deliveryFee: order.deliveryFee?.amount ?? 0,
         total: order.calculateTotal().amount,
         status: order.status,
         pixCode: order.pixCode,
-        notes: order.notes,
+        notes: (order as any).notes || (order as any).props?.notes,
         createdAt: order.createdAt,
-        updatedAt: order.updatedAt,
+        updatedAt: (order as any).updatedAt || (order as any).props?.updatedAt || order.createdAt,
       },
     }
   }
@@ -159,48 +165,56 @@ export class OrderController {
     const orders = await this.orderRepository.listByTenant(tenantId)
     return {
       success: true,
-      data: orders.map((order) => ({
-        id: order.id,
-        tenantId: order.tenantId,
-        customerName: order.customerName,
-        customerPhone: order.customerPhone,
-        deliveryType: order.deliveryType,
-        address: order.address
-          ? {
-              street: order.address.street,
-              number: order.address.number,
-              neighborhood: order.address.neighborhood,
-              city: order.address.city,
-              state: order.address.state,
-              complement: order.address.complement,
-              reference: order.address.reference,
-              cep: order.address.cep,
+      data: orders.map((order) => {
+        return {
+          id: order.id,
+          tenantId: order.tenantId,
+          customerName: order.customerName,
+          customerPhone: order.customerPhone,
+          deliveryType: order.deliveryType,
+          address: order.address
+            ? {
+                street: order.address.street,
+                number: order.address.number,
+                neighborhood: order.address.neighborhood,
+                city: order.address.city,
+                state: order.address.state,
+                complement: order.address.complement,
+                reference: order.address.reference,
+                cep: order.address.cep,
+              }
+            : null,
+          items: (order.items || []).map((i: any) => {
+            const unitPriceCents = typeof i.unitPriceCents === 'number' ? i.unitPriceCents : (i.unitPrice?.cents ?? 0)
+            return {
+              productId: i.productId,
+              productName: i.productName || 'Item',
+              quantity: i.quantity || 1,
+              unitPriceCents,
+              unitPrice: unitPriceCents / 100,
+              options: (i.options || []).map((o: any) => {
+                const priceCents = typeof o.priceCents === 'number' ? o.priceCents : (o.price?.cents ?? 0)
+                return {
+                  id: o.id,
+                  name: o.name,
+                  priceCents,
+                  price: priceCents / 100,
+                }
+              }),
+              notes: i.notes || i.observation,
             }
-          : null,
-        items: (order.items || []).map((i) => ({
-          productId: i.productId,
-          productName: i.productName,
-          quantity: i.quantity,
-          unitPriceCents: i.unitPrice?.cents ?? 0,
-          unitPrice: i.unitPrice?.amount ?? 0,
-          options: (i.options || []).map((o) => ({
-            id: o.id,
-            name: o.name,
-            priceCents: o.price?.cents ?? 0,
-            price: o.price?.amount ?? 0,
-          })),
-          notes: i.notes,
-        })),
-        paymentMethod: order.paymentMethod,
-        subtotal: order.calculateSubtotal().amount,
-        deliveryFee: order.deliveryFee?.amount ?? 0,
-        total: order.calculateTotal().amount,
-        status: order.status,
-        pixCode: order.pixCode,
-        notes: order.notes,
-        createdAt: order.createdAt,
-        updatedAt: order.updatedAt,
-      })),
+          }),
+          paymentMethod: order.paymentMethod,
+          subtotal: order.calculateSubtotal().amount,
+          deliveryFee: order.deliveryFee?.amount ?? 0,
+          total: order.calculateTotal().amount,
+          status: order.status,
+          pixCode: order.pixCode,
+          notes: (order as any).notes || (order as any).props?.notes,
+          createdAt: order.createdAt,
+          updatedAt: (order as any).updatedAt || (order as any).props?.updatedAt || order.createdAt,
+        }
+      }),
     }
   }
 
@@ -241,7 +255,7 @@ export class OrderController {
       data: {
         id: order.id,
         status: order.status,
-        updatedAt: order.updatedAt,
+        updatedAt: (order as any).updatedAt || (order as any).props?.updatedAt || new Date(),
       },
     }
   }
