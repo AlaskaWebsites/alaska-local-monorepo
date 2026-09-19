@@ -1,13 +1,63 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { useOrderDashboard } from '../../composables/useOrderDashboard'
-import type { OrderDashboardItem, OrderStatus } from '@alaska/contracts'
+import type { OrderDashboardItem } from '@alaska/contracts'
+
+// Mock resiliente de localStorage e window para execução determinística em Node / CI
+const memoryStorage = (() => {
+  let store: Record<string, string> = {}
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => {
+      store[key] = String(value)
+    },
+    removeItem: (key: string) => {
+      delete store[key]
+    },
+    clear: () => {
+      store = {}
+    },
+    get length() {
+      return Object.keys(store).length
+    },
+    key: (index: number) => Object.keys(store)[index] ?? null,
+  }
+})()
+
+if (typeof globalThis.localStorage === 'undefined') {
+  Object.defineProperty(globalThis, 'localStorage', {
+    value: memoryStorage,
+    writable: true,
+    configurable: true,
+  })
+}
+
+if (typeof globalThis.window === 'undefined') {
+  ;(globalThis as any).window = {
+    addEventListener: () => {},
+    removeEventListener: () => {},
+    dispatchEvent: () => true,
+  }
+}
+
+if (typeof globalThis.CustomEvent === 'undefined') {
+  ;(globalThis as any).CustomEvent = class CustomEvent {
+    type: string
+    detail: any
+    constructor(type: string, params: any = {}) {
+      this.type = type
+      this.detail = params.detail
+    }
+  }
+}
 
 describe('Unit: useOrderDashboard Composable (ADR 024)', () => {
   const slug = 'hamburgueria-x'
   const storageKey = `alaska_orders_${slug}`
 
   beforeEach(() => {
-    localStorage.clear()
+    if (typeof localStorage !== 'undefined') {
+      localStorage.clear()
+    }
     vi.restoreAllMocks()
   })
 
