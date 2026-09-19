@@ -6,7 +6,15 @@ import { useTenant } from '~/composables/useTenant'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 import { ChevronLeft, ChevronRight } from 'lucide-vue-next'
 
-export type AdminTabKey = 'catalog' | 'agenda' | 'pix_contact' | 'hours' | 'delivery' | 'announcement' | 'security'
+export type AdminTabKey =
+  | 'orders'
+  | 'catalog'
+  | 'agenda'
+  | 'pix_contact'
+  | 'hours'
+  | 'delivery'
+  | 'announcement'
+  | 'security'
 
 const props = withDefaults(
   defineProps<{
@@ -14,12 +22,14 @@ const props = withDefaults(
     activeTab?: AdminTabKey
     isServiceStore?: boolean
     isHealthStore?: boolean
+    pendingOrdersCount?: number
   }>(),
   {
     modelValue: undefined,
     activeTab: undefined,
     isServiceStore: false,
-    isHealthStore: false
+    isHealthStore: false,
+    pendingOrdersCount: 0
   }
 )
 
@@ -33,30 +43,36 @@ const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
 const { tenant } = useTenant(slug)
 const { themeClasses } = useTenantTheme(tenant)
 
-const currentTab = computed(() => props.activeTab || props.modelValue || 'catalog')
+const currentTab = computed(() => props.activeTab || props.modelValue || 'orders')
 
 const navContainerRef = ref<HTMLElement | null>(null)
 const canScrollNavLeft = ref(false)
 const canScrollNavRight = ref(false)
 
 function checkNavScroll() {
-  if (!navContainerRef.value) return
-  const { scrollLeft, scrollWidth, clientWidth } = navContainerRef.value
-  canScrollNavLeft.value = scrollLeft > 8
-  canScrollNavRight.value = scrollLeft < scrollWidth - clientWidth - 8
+  const el = navContainerRef.value
+  if (!el) return
+  canScrollNavLeft.value = el.scrollLeft > 10
+  canScrollNavRight.value = el.scrollLeft < el.scrollWidth - el.clientWidth - 10
 }
 
 function scrollNav(direction: 'left' | 'right') {
-  if (!navContainerRef.value) return
-  const offset = direction === 'left' ? -220 : 220
-  navContainerRef.value.scrollBy({ left: offset, behavior: 'smooth' })
+  const el = navContainerRef.value
+  if (!el) return
+  const scrollAmount = 200
+  el.scrollBy({
+    left: direction === 'left' ? -scrollAmount : scrollAmount,
+    behavior: 'smooth'
+  })
   setTimeout(checkNavScroll, 300)
 }
 
 function handleNavWheel(e: WheelEvent) {
-  if (!navContainerRef.value) return
-  if (Math.abs(e.deltaX) < Math.abs(e.deltaY)) {
-    navContainerRef.value.scrollLeft += e.deltaY
+  const el = navContainerRef.value
+  if (!el) return
+  if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+    e.preventDefault()
+    el.scrollLeft += e.deltaY
     checkNavScroll()
   }
 }
@@ -69,45 +85,59 @@ function selectTab(tab: AdminTabKey) {
 
 onMounted(() => {
   nextTick(checkNavScroll)
-  if (typeof window !== 'undefined') {
-    window.addEventListener('resize', checkNavScroll)
+  window.addEventListener('resize', checkNavScroll)
+  const el = navContainerRef.value
+  if (el) {
+    el.addEventListener('wheel', handleNavWheel, { passive: false })
   }
 })
 
 onUnmounted(() => {
-  if (typeof window !== 'undefined') {
-    window.removeEventListener('resize', checkNavScroll)
+  window.removeEventListener('resize', checkNavScroll)
+  const el = navContainerRef.value
+  if (el) {
+    el.removeEventListener('wheel', handleNavWheel)
   }
 })
 </script>
 
 <template>
-  <div class="relative px-4 pt-4">
-    <!-- Botão Scroll Esquerda -->
+  <div class="relative group">
+    <!-- Seta de Rolagem para Esquerda -->
     <button
       v-if="canScrollNavLeft"
       type="button"
       @click="scrollNav('left')"
-      class="hidden sm:flex absolute left-2 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-white/95 border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all shadow-md cursor-pointer backdrop-blur-xs active:scale-95"
-      aria-label="Rolar abas para a esquerda"
+      class="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 bg-white/95 backdrop-blur-xs border border-slate-200/90 rounded-full shadow-md flex items-center justify-center text-slate-700 hover:text-slate-950 transition-all cursor-pointer"
+      aria-label="Rolar abas para esquerda"
     >
       <ChevronLeft class="w-4 h-4" />
     </button>
 
-    <!-- Fade Gradient Esquerdo -->
+    <!-- Barra de Navegação com Rolagem Suave -->
     <div
-      v-if="canScrollNavLeft"
-      class="hidden sm:block pointer-events-none absolute left-4 top-4 bottom-2 w-8 bg-gradient-to-r from-slate-50 to-transparent z-10"
-    ></div>
-
-    <!-- Container de Abas -->
-    <nav
       ref="navContainerRef"
       @scroll="checkNavScroll"
-      @wheel.passive="handleNavWheel"
-      class="flex gap-2 overflow-x-auto no-scrollbar pb-2 scroll-smooth w-full pr-12 sm:pr-8 select-none"
+      class="flex items-center gap-2 overflow-x-auto no-scrollbar scroll-smooth px-1 py-1"
       role="tablist"
     >
+      <!-- Aba 0: Mural de Pedidos em Tempo Real -->
+      <button
+        type="button"
+        @click="selectTab('orders')"
+        class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
+        :class="currentTab === 'orders' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md font-bold'] : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300 shadow-2xs'"
+      >
+        <span>🛎️ Pedidos</span>
+        <span
+          v-if="pendingOrdersCount > 0"
+          class="px-1.5 py-0.2 bg-amber-500 text-slate-950 rounded-full text-[10px] font-black animate-pulse"
+        >
+          {{ pendingOrdersCount }}
+        </span>
+      </button>
+
+      <!-- Aba 1: Catálogo / Cardápio -->
       <button
         type="button"
         @click="selectTab('catalog')"
@@ -117,6 +147,7 @@ onUnmounted(() => {
         <span>{{ isServiceStore ? '📋 Serviços & Itens' : '📋 Cardápio & Preços' }}</span>
       </button>
 
+      <!-- Aba 2: Agenda & Especialistas (Serviços) -->
       <button
         v-if="isServiceStore"
         type="button"
@@ -127,6 +158,7 @@ onUnmounted(() => {
         <span>{{ isHealthStore ? '🩺 Especialistas & Agenda' : '💈 Barbeiros & Agenda' }}</span>
       </button>
 
+      <!-- Aba 3: Pix & Contato -->
       <button
         type="button"
         @click="selectTab('pix_contact')"
@@ -136,6 +168,7 @@ onUnmounted(() => {
         <span>💠 Pix & Contato</span>
       </button>
 
+      <!-- Aba 4: Horários & Pausa Geral -->
       <button
         type="button"
         @click="selectTab('hours')"
@@ -145,6 +178,7 @@ onUnmounted(() => {
         <span>🕒 Horários & Pausa</span>
       </button>
 
+      <!-- Aba 5: Delivery & Taxas -->
       <button
         v-if="!isServiceStore"
         type="button"
@@ -155,6 +189,7 @@ onUnmounted(() => {
         <span>🛵 Delivery & Taxas</span>
       </button>
 
+      <!-- Aba 6: Comunicado Oficial -->
       <button
         type="button"
         @click="selectTab('announcement')"
@@ -164,6 +199,7 @@ onUnmounted(() => {
         <span>📢 Comunicado</span>
       </button>
 
+      <!-- Aba 7: Segurança & PIN -->
       <button
         type="button"
         @click="selectTab('security')"
@@ -172,21 +208,15 @@ onUnmounted(() => {
       >
         <span>🔒 PIN & Segurança</span>
       </button>
-    </nav>
+    </div>
 
-    <!-- Fade Gradient Direito -->
-    <div
-      v-if="canScrollNavRight"
-      class="hidden sm:block pointer-events-none absolute right-4 top-4 bottom-2 w-8 bg-gradient-to-l from-slate-50 to-transparent z-10"
-    ></div>
-
-    <!-- Botão Scroll Direita -->
+    <!-- Seta de Rolagem para Direita -->
     <button
       v-if="canScrollNavRight"
       type="button"
       @click="scrollNav('right')"
-      class="hidden sm:flex absolute right-2 top-1/2 -translate-y-1/2 z-20 p-1.5 rounded-full bg-white/95 border border-slate-200 text-slate-600 hover:text-slate-900 hover:bg-slate-50 transition-all shadow-md cursor-pointer backdrop-blur-xs active:scale-95"
-      aria-label="Rolar abas para a direita"
+      class="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-7 h-7 bg-white/95 backdrop-blur-xs border border-slate-200/90 rounded-full shadow-md flex items-center justify-center text-slate-700 hover:text-slate-950 transition-all cursor-pointer"
+      aria-label="Rolar abas para direita"
     >
       <ChevronRight class="w-4 h-4" />
     </button>
