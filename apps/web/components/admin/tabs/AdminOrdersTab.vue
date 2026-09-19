@@ -43,6 +43,7 @@ const { tenant } = useTenant(slug)
 const { themeClasses } = useTenantTheme(tenant)
 
 const {
+  orders,
   filteredOrders,
   loading,
   searchQuery,
@@ -263,7 +264,7 @@ async function confirmCancel(orderId: string) {
           class="px-3 py-1.5 rounded-lg font-bold transition-all shrink-0 cursor-pointer"
           :class="statusFilter === 'all' ? [themeClasses.primaryBg, 'text-slate-950 shadow-2xs'] : 'bg-slate-100 text-slate-600 hover:text-slate-900'"
         >
-          Todos ({{ orders.length }})
+          Todos ({{ orders?.length ?? 0 }})
         </button>
 
         <button
@@ -351,7 +352,7 @@ async function confirmCancel(orderId: string) {
               <!-- Badge do Status -->
               <span
                 class="px-2.5 py-0.5 rounded-full text-[11px] font-bold border"
-                :class="[getStatusBadge(order.status).bg, getStatusBadge(order.status).textCol, getStatusBadge(order.status).border]"
+                :class="[getStatusBadge(order.status).bg, getStatusBadge(order.status).textCol, getStatusBadge(order.status).border]\"
               >
                 {{ getStatusBadge(order.status).text }}
               </span>
