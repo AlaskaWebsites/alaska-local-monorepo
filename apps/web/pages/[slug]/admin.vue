@@ -1,56 +1,51 @@
 <!-- pages/[slug]/admin.vue -->
 <template>
-  <div class="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500 selection:text-white pb-12">
+  <div class="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500 selection:text-white">
     <ClientOnly>
-      <!-- 1. TELA DE LOGIN POR PIN -->
-      <div v-if="!isAuthenticated" class="min-h-screen flex items-center justify-center p-4">
-        <AdminLoginCard
-          :slug="slug"
-          :error-message="errorMessage"
-          :is-submitting="isSubmitting"
-          @login="handleLogin"
-        />
-      </div>
+      <!-- 1. Tela de Login por PIN -->
+      <AdminLoginCard
+        v-if="!isAuthenticated"
+        :error-message="errorMessage"
+        :slug="slug"
+        @login="handleLogin"
+      />
 
-      <!-- 2. PAINEL OPERACIONAL ATIVO -->
-      <div v-else class="max-w-4xl mx-auto space-y-6">
-        <!-- Toast de Notificação -->
-        <Transition
-          enter-active-class="transition duration-200 ease-out"
-          enter-from-class="transform -translate-y-4 opacity-0"
-          enter-to-class="transform translate-y-0 opacity-100"
-          leave-active-class="transition duration-150 ease-in"
-          leave-from-class="transform translate-y-0 opacity-100"
-          leave-to-class="transform -translate-y-4 opacity-0"
-        >
-          <div
-            v-if="toastMessage"
-            class="fixed top-4 right-4 z-50 bg-emerald-500 text-slate-950 font-bold px-4 py-2.5 rounded-xl shadow-xl flex items-center gap-2 text-xs"
-          >
-            <span>⚡</span>
-            <span>{{ toastMessage }}</span>
-          </div>
-        </Transition>
-
+      <!-- 2. Painel Operacional Ativo -->
+      <div v-else class="max-w-2xl mx-auto pb-24">
         <!-- Header Superior Fixo -->
         <AdminTopHeader
+          :store-name="tenant?.name"
+          :is-emergency-closed="isEmergencyClosed"
+          :is-health-store="isHealthStore"
+          :is-service-store="isServiceStore"
           :slug="slug"
-          :tenant-name="tenant?.name || 'Gestão do Estabelecimento'"
           @logout="logout"
         />
 
-        <!-- Navegação de Abas Operacionais -->
+        <!-- Toast de Notificação Rápida -->
+        <div v-if="adminToastMsg" class="sticky top-16 z-30 mx-4 mt-2 p-3 rounded-xl bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-bold text-center shadow-lg animate-in fade-in duration-150">
+          {{ adminToastMsg }}
+        </div>
+
+        <!-- Navegação em Abas Operacionais com Rolagem e Setas Desktop/Mobile -->
         <AdminTabsNav
-          v-model="activeTab"
           v-model:active-tab="activeTab"
           :is-service-store="isServiceStore"
           :is-health-store="isHealthStore"
+          :pending-orders-count="pendingOrdersCount"
         />
 
-        <!-- CONTEÚDO DAS ABAS -->
-        <!-- ABA 1: Cardápio / Catálogo -->
+        <!-- ABA 0: Mural / Gestão de Pedidos em Tempo Real (ADR 024) -->
+        <AdminOrdersTab
+          v-if="activeTab === 'orders'"
+          :store-name="tenant?.name || 'Estabelecimento'"
+          :phone-whatsapp="tenant?.phoneWhatsApp || ''"
+          :is-service-store="isServiceStore"
+        />
+
+        <!-- ABA 1: Catálogo e Serviços (Pausa, Criação, Exclusão e Preços) -->
         <AdminCatalogTab
-          v-if="activeTab === 'catalog'"
+          v-else-if="activeTab === 'catalog'"
           :categories="categories"
           :is-service-store="isServiceStore"
           :is-product-available="isProductAvailable"
@@ -70,17 +65,14 @@
           v-else-if="activeTab === 'agenda' && isServiceStore"
           :is-health-store="isHealthStore"
           :professionals-list="professionalsList"
-          :store-close-hour="storeCloseHour"
-          :selected-agenda-date="selectedAgendaDate"
+          v-model:selected-agenda-date="selectedAgendaDate"
           :sample-slots="sampleSlots"
           :is-slot-blocked="isSlotBlocked"
-          @update:selected-agenda-date="selectedAgendaDate = $event"
-          @update:selectedAgendaDate="selectedAgendaDate = $event"
           @create-prof="openCreateProfModal"
           @toggle-prof-avail="handleProfAvailabilityToggle"
           @toggle-prof-day="handleProfDayToggle"
-          @change-work-hours="handleProfWorkHoursChange"
-          @change-lunch="handleProfLunchChange"
+          @change-prof-hours="handleProfWorkHoursChange"
+          @change-prof-lunch="handleProfLunchChange"
           @delete-prof="handleDeleteProf"
           @toggle-slot="handleSlotToggle"
         />
@@ -88,69 +80,53 @@
         <!-- ABA 3: Pix & Contato -->
         <AdminPixContactTab
           v-else-if="activeTab === 'pix_contact'"
-          :pix-form="pixForm"
-          :pix-config-input="pixForm"
-          :contact-form="contactForm"
-          :contact-input="contactForm"
+          :pix-config-input="pixConfigInput"
+          :contact-input="contactInput"
           @save-pix="savePixConfig"
           @save-contact="saveContactConfig"
-          @save="savePixConfig"
         />
 
-        <!-- ABA 4: Horários & Pausa de Emergência -->
+        <!-- ABA 4: Horários & Pausa Geral -->
         <AdminHoursTab
           v-else-if="activeTab === 'hours'"
+          :is-emergency-closed="isEmergencyClosed"
           :weekly-days-config="weeklyDaysConfig"
           :schedule-success-msg="scheduleSuccessMsg"
-          :is-emergency-closed="isEmergencyClosed"
-          :emergency-message="emergencyMessage"
           @toggle-emergency="toggleEmergencyPause"
           @toggle-day-closed="toggleDayClosed"
-          @save-schedule="saveScheduleConfig"
-          @save-emergency="saveEmergencyConfig"
+          @save-schedule="saveWeeklySchedule"
         />
 
         <!-- ABA 5: Delivery & Taxas -->
         <AdminDeliveryTab
-          v-else-if="activeTab === 'delivery'"
-          :delivery-form="deliveryForm"
-          :delivery-success-msg="deliverySuccessMsg"
-          :delivery-fee-input="deliveryForm.deliveryFee"
-          :min-order-input="deliveryForm.minOrderValue"
-          :estimated-time-input="deliveryForm.estimatedTime"
-          @update:delivery-fee-input="deliveryForm.deliveryFee = $event"
-          @update:min-order-input="deliveryForm.minOrderValue = $event"
-          @update:estimated-time-input="deliveryForm.estimatedTime = $event"
-          @save="saveDeliveryConfig"
+          v-else-if="activeTab === 'delivery' && !isServiceStore"
+          v-model:delivery-fee-input="deliveryFeeInput"
+          v-model:min-order-input="minOrderInput"
+          v-model:estimated-time-input="estimatedTimeInput"
           @save-delivery="saveDeliveryConfig"
         />
 
-        <!-- ABA 6: Comunicado no Topo -->
+        <!-- ABA 6: Comunicado Oficial -->
         <AdminAnnouncementTab
           v-else-if="activeTab === 'announcement'"
-          :announcement-form="announcementForm"
-          :announcement-success-msg="announcementSuccessMsg"
-          :announcement-enabled="announcementForm.enabled"
-          :announcement-message="announcementForm.message"
-          @update:announcement-enabled="announcementForm.enabled = $event"
-          @update:announcement-message="announcementForm.message = $event"
-          @save="saveAnnouncementConfig"
+          v-model:announcement-enabled="announcementEnabled"
+          v-model:announcement-message="announcementMessage"
           @save-announcement="saveAnnouncementConfig"
         />
 
-        <!-- ABA 7: Segurança & Senha de Acesso -->
+        <!-- ABA 7: Segurança e PIN -->
         <AdminSecurityTab
           v-else-if="activeTab === 'security'"
           :pin-success-msg="pinSuccessMsg"
           @save-pin="saveNewPin"
         />
 
-        <!-- MODAIS OPERACIONAIS -->
+        <!-- Modais Operacionais -->
         <AdminPriceModal
           :is-open="isPriceModalOpen"
           :product="editingProduct"
-          :product-name="editingProduct?.name || ''"
-          :initial-price="newPriceInput"
+          :model-value="newPriceInput"
+          @update:model-value="newPriceInput = $event"
           @close="isPriceModalOpen = false"
           @confirm="confirmPriceEdit"
         />
@@ -160,20 +136,20 @@
           :categories="categories"
           :is-service-store="isServiceStore"
           @close="isCreateProductOpen = false"
-          @submit="handleCreateProductSubmit"
+          @create="handleCreateProduct"
         />
 
         <AdminCreateProfModal
           :is-open="isCreateProfOpen"
           :is-health-store="isHealthStore"
           @close="isCreateProfOpen = false"
-          @submit="handleCreateProfSubmit"
+          @create="handleCreateProf"
         />
 
         <AdminOptionsModal
           :is-open="isOptionsModalOpen"
-          :product="selectedProductForOptions"
-          :is-option-paused="isOptionPaused"
+          :product="optionsProduct"
+          :paused-option-ids="localOverrides.pausedOptionIds || []"
           @close="isOptionsModalOpen = false"
           @toggle-option="toggleOptionStatus"
         />
@@ -186,12 +162,10 @@
 import { ref, computed, watch, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { useTenant } from '~/composables/useTenant'
-import { useMerchantAdmin, type TenantOverrides } from '~/composables/useMerchantAdmin'
-import type { Category, Product, DaySchedule } from '~/types'
-
-import AdminLoginCard from '~/components/admin/AdminLoginCard.vue'
-import AdminTopHeader from '~/components/admin/AdminTopHeader.vue'
-import AdminTabsNav, { type AdminTabKey } from '~/components/admin/AdminTabsNav.vue'
+import { useTenantTheme } from '~/composables/useTenantTheme'
+import { useMerchantAdmin } from '~/composables/useMerchantAdmin'
+import { useOrderDashboard } from '~/composables/useOrderDashboard'
+import AdminOrdersTab from '~/components/admin/tabs/AdminOrdersTab.vue'
 import AdminCatalogTab from '~/components/admin/tabs/AdminCatalogTab.vue'
 import AdminAgendaTab from '~/components/admin/tabs/AdminAgendaTab.vue'
 import AdminPixContactTab from '~/components/admin/tabs/AdminPixContactTab.vue'
@@ -199,77 +173,107 @@ import AdminHoursTab from '~/components/admin/tabs/AdminHoursTab.vue'
 import AdminDeliveryTab from '~/components/admin/tabs/AdminDeliveryTab.vue'
 import AdminAnnouncementTab from '~/components/admin/tabs/AdminAnnouncementTab.vue'
 import AdminSecurityTab from '~/components/admin/tabs/AdminSecurityTab.vue'
-
 import AdminPriceModal from '~/components/admin/modals/AdminPriceModal.vue'
 import AdminCreateProductModal from '~/components/admin/modals/AdminCreateProductModal.vue'
 import AdminCreateProfModal from '~/components/admin/modals/AdminCreateProfModal.vue'
 import AdminOptionsModal from '~/components/admin/modals/AdminOptionsModal.vue'
+import AdminLoginCard from '~/components/admin/AdminLoginCard.vue'
+import AdminTopHeader from '~/components/admin/AdminTopHeader.vue'
+import AdminTabsNav, { type AdminTabKey } from '~/components/admin/AdminTabsNav.vue'
+import type { Product, Category, DaySchedule } from '@alaska/contracts'
 
 const route = useRoute()
-const slug = computed(() => String(route.params.slug || 'hamburgueria-x').toLowerCase())
+const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
 const { tenant, refresh } = useTenant(slug)
+const { themeClasses } = useTenantTheme(tenant)
+
 const {
   isAuthenticated,
-  isSubmitting,
   errorMessage,
   login,
   logout,
+  changePin,
   getOverrides,
-  updateProductPrice,
   toggleProductAvailability,
-  toggleOptionAvailability,
+  updateProductPrice,
   createProduct,
   deleteProduct,
+  toggleOptionAvailability,
   updateWeeklySchedule,
   updateEmergency,
   updateDelivery,
   updateAnnouncement,
-  updatePixConfig,
-  updateContact,
-  changePin,
-  createProfessional,
-  deleteProfessional,
   toggleProfessionalAvailability,
-  toggleProfessionalDay,
+  updateProfessionalDays,
   updateProfessionalHours,
   updateProfessionalLunch,
-  toggleBlockSlot
+  toggleBlockSlot,
+  createProfessional,
+  deleteProfessional,
+  updatePixConfig,
+  updateContact
 } = useMerchantAdmin(slug)
 
-const activeTab = ref<AdminTabKey>('catalog')
-const toastMessage = ref('')
+const { pendingCount: pendingOrdersCount } = useOrderDashboard(slug)
 
-function showToast(msg: string) {
-  toastMessage.value = msg
-  setTimeout(() => {
-    toastMessage.value = ''
-  }, 3000)
-}
-
-const localOverrides = ref<TenantOverrides>({})
+const activeTab = ref<AdminTabKey>('orders')
+const localOverrides = ref(getOverrides())
 
 function refreshLocalOverrides() {
   localOverrides.value = getOverrides()
 }
 
-// 1. Gestão de Login
-function handleLogin(pin: string) {
-  login(pin)
+// 1. Toast helper
+const adminToastMsg = ref('')
+let toastTimer: any = null
+function showToast(msg: string) {
+  if (toastTimer) clearTimeout(toastTimer)
+  adminToastMsg.value = msg
+  toastTimer = setTimeout(() => {
+    adminToastMsg.value = ''
+  }, 2500)
 }
 
-// 2. Catálogo & Preços
-const categories = computed<Category[]>(() => {
-  const baseCategories = (tenant.value?.categories || []) as Category[]
-  const overrides = localOverrides.value
-  const deletedIds = overrides.deletedProductIds || []
-  const customProducts = overrides.customProducts || []
+// 2. Autenticação por PIN
+async function handleLogin(pin: string) {
+  const success = await login(pin)
+  if (success) {
+    refreshLocalOverrides()
+    loadPixAndContactFromOverrides()
+    loadScheduleFromOverrides()
+    loadDeliveryFromOverrides()
+    loadAnnouncementFromOverrides()
+    showToast('Painel operacional liberado!')
+  }
+}
 
-  return baseCategories.map(cat => {
-    const existing = (cat.products || []).filter(p => !deletedIds.includes(p.id))
-    const additions = customProducts.filter(p => p.categoryId === cat.id && !deletedIds.includes(p.id))
+// 3. Flags de Categoria da Loja
+const isServiceStore = computed(() => {
+  const cat = tenant.value?.businessCategory
+  return cat === 'hub' || cat === 'pro' || slug.value === 'barbearia-style' || slug.value === 'clinica-sorriso'
+})
+
+const isHealthStore = computed(() => {
+  return tenant.value?.businessCategory === 'pro' || slug.value === 'clinica-sorriso'
+})
+
+const isEmergencyClosed = computed(() => {
+  return Boolean(localOverrides.value?.emergency?.isClosed)
+})
+
+// 4. Catálogo: Categorias & Produtos com Overrides
+const categories = computed<Category[]>(() => {
+  const base = (tenant.value?.categories || []) as Category[]
+  const overrides = localOverrides.value || {}
+  const deletedIds = new Set(overrides.deletedProductIds || [])
+  const customProds = overrides.customProducts || []
+
+  return base.map((cat) => {
+    const prods = (cat.products || []).filter((p) => !deletedIds.has(p.id))
+    const extraForCat = customProds.filter((p) => p.categoryId === cat.id && !deletedIds.has(p.id))
     return {
       ...cat,
-      products: [...existing, ...additions]
+      products: [...prods, ...extraForCat]
     }
   })
 })
@@ -282,10 +286,9 @@ function getProductPrice(product: Product): number {
 function isProductAvailable(product: Product): boolean {
   const prodOverrides = localOverrides.value?.products
   if (prodOverrides?.[product.id]?.isAvailable !== undefined) {
-    return Boolean(prodOverrides[product.id].isAvailable)
+    return prodOverrides[product.id].isAvailable!
   }
-  if (product.isAvailable !== undefined) return Boolean(product.isAvailable)
-  if ((product as any).available !== undefined) return Boolean((product as any).available)
+  if (product.isAvailable !== undefined) return product.isAvailable
   return true
 }
 
@@ -294,7 +297,7 @@ async function handleProductAvailabilityToggle(productOrList: any, productId?: s
   if (typeof productOrList === 'object' && productOrList !== null && 'id' in productOrList && !Array.isArray(productOrList)) {
     targetProduct = productOrList as Product
   } else if (Array.isArray(productOrList) && productId) {
-    targetProduct = productOrList.find(p => p.id === productId)
+    targetProduct = productOrList.find((p) => p.id === productId)
   }
   if (!targetProduct) return
   const currentStatus = isProductAvailable(targetProduct)
@@ -306,6 +309,7 @@ async function handleProductAvailabilityToggle(productOrList: any, productId?: s
   showToast(currentStatus ? `⏸️ ${targetProduct.name} pausado!` : `✅ ${targetProduct.name} ativado!`)
 }
 
+// 5. Modais de Catálogo
 const isPriceModalOpen = ref(false)
 const editingProduct = ref<Product | null>(null)
 const editingProductsList = ref<Product[]>([])
@@ -326,90 +330,57 @@ function openPriceModal(categoryProductsOrProduct: any, product?: Product) {
   }
 }
 
-// 3. Criação e Exclusão de Produtos
-const isCreateProductOpen = ref(false)
-const isCreateProfOpen = ref(false)
-
-function handleCreateProductSubmit(form: { name: string; price: number; categoryId: string; description: string }) {
-  createProduct({
-    name: form.name,
-    price: form.price,
-    categoryId: form.categoryId,
-    description: form.description
-  })
-  refreshLocalOverrides()
-  isCreateProductOpen.value = false
-  showToast(`✅ ${form.name} cadastrado na vitrine!`)
-}
-
-function handleDeleteProduct(productId: string, productName: string) {
-  if (confirm(`Deseja excluir "${productName}" da vitrine?`)) {
-    deleteProduct(productId)
+async function confirmPriceEdit(newPrice: number) {
+  if (editingProduct.value) {
+    await updateProductPrice(editingProduct.value.id, newPrice)
     refreshLocalOverrides()
-    showToast(`🗑️ ${productName} removido da vitrine!`)
+    if (typeof refresh === 'function') {
+      await refresh()
+    }
+    isPriceModalOpen.value = false
+    showToast(`Preço de ${editingProduct.value.name} atualizado!`)
   }
 }
 
-// 4. Modais Operacionais de Opcionais & Adicionais
+const isCreateProductOpen = ref(false)
+function handleCreateProduct(payload: any) {
+  createProduct(payload)
+  refreshLocalOverrides()
+  if (typeof refresh === 'function') {
+    refresh()
+  }
+  isCreateProductOpen.value = false
+  showToast('Novo item cadastrado com sucesso!')
+}
+
+function handleDeleteProduct(productId: string, productName: string) {
+  if (confirm(`Deseja realmente excluir "${productName}" do catálogo?`)) {
+    deleteProduct(productId)
+    refreshLocalOverrides()
+    if (typeof refresh === 'function') {
+      refresh()
+    }
+    showToast(`"${productName}" excluído do catálogo.`)
+  }
+}
+
 const isOptionsModalOpen = ref(false)
-const selectedProductForOptions = ref<Product | null>(null)
+const optionsProduct = ref<Product | null>(null)
 
 function openOptionsModal(product: Product) {
-  selectedProductForOptions.value = product
+  optionsProduct.value = product
   isOptionsModalOpen.value = true
 }
 
-function isOptionPaused(optionId: string): boolean {
-  const paused = localOverrides.value.pausedOptionIds || []
-  return paused.includes(optionId)
-}
-
-function toggleOptionStatus(optionId: string, currentPaused?: boolean) {
-  const isPaused = currentPaused !== undefined ? currentPaused : isOptionPaused(optionId)
-  toggleOptionAvailability(optionId, isPaused)
+function toggleOptionStatus(optionId: string, currentAvailable: boolean) {
+  toggleOptionAvailability(optionId, !currentAvailable)
   refreshLocalOverrides()
-  showToast(isPaused ? 'Adicional reativado!' : 'Adicional pausado em tempo real!')
+  showToast(currentAvailable ? 'Opcional pausado!' : 'Opcional reativado!')
 }
 
-// 5. Verificações de Tipo de Estabelecimento
-const isServiceStore = computed(() => {
-  if (!tenant.value) return false
-  const cat = tenant.value.businessCategory
-  return cat === 'hub' || cat === 'pro' || tenant.value.slug === 'barbearia-style' || tenant.value.slug === 'clinica-sorriso'
-})
-
-const isHealthStore = computed(() => {
-  return tenant.value?.slug === 'clinica-sorriso'
-})
-
-const storeCloseHour = computed(() => {
-  const hours = tenant.value?.openingHours as any
-  return hours?.close || '20:00'
-})
-
-// 6. Especialistas & Agenda (Hub & Pro)
-const isEmergencyClosed = computed(() => {
-  return localOverrides.value.emergency?.isClosed ?? tenant.value?.isEmergencyClosed ?? false
-})
-
-const emergencyMessage = computed(() => {
-  return localOverrides.value.emergency?.message || tenant.value?.closedEmergencyMessage || ''
-})
-
+// 6. Agenda & Especialistas
 const professionalsList = computed(() => {
-  const baseProfs = (tenant.value?.professionals || []) as any[]
-  const profsOverrides = localOverrides.value?.professionals || {}
-
-  return baseProfs.map(p => {
-    const ov = profsOverrides[p.id] || {}
-    return {
-      ...p,
-      isAvailable: ov.isAvailable !== undefined ? ov.isAvailable : (p.isAvailable ?? true),
-      availableDays: ov.availableDays || p.availableDays || [1, 2, 3, 4, 5, 6],
-      workHours: ov.workHours || p.workHours || { start: '09:00', end: '19:00' },
-      lunchBreak: ov.lunchBreak || p.lunchBreak || { start: '12:00', end: '13:00', enabled: true }
-    }
-  })
+  return (tenant.value?.professionals || []) as any[]
 })
 
 const selectedAgendaDate = ref(new Date().toISOString().split('T')[0])
@@ -417,276 +388,235 @@ const sampleSlots = ref(['09:00', '10:00', '11:00', '14:00', '15:00', '16:00', '
 
 function isSlotBlocked(slot: string): boolean {
   const blocked = localOverrides.value?.blockedSlots || []
-  return blocked.some((b: any) => b.date === selectedAgendaDate.value && b.time === slot)
+  return blocked.some((b) => b.date === selectedAgendaDate.value && b.time === slot)
 }
 
 function handleProfAvailabilityToggle(profId: string, currentAvailable: boolean, name: string) {
-  toggleProfessionalAvailability(profId, currentAvailable)
+  toggleProfessionalAvailability(profId, !currentAvailable)
   refreshLocalOverrides()
-  showToast(currentAvailable ? `⏸️ ${name} marcado como folga hoje!` : `✅ ${name} ativado para atendimento!`)
+  showToast(`Status de ${name} atualizado!`)
 }
 
 function handleProfDayToggle(profId: string, dayIndex: number, name: string) {
-  toggleProfessionalDay(profId, dayIndex)
+  const currentDays = localOverrides.value?.professionals?.[profId]?.availableDays || [1, 2, 3, 4, 5]
+  const updatedDays = currentDays.includes(dayIndex)
+    ? currentDays.filter((d) => d !== dayIndex)
+    : [...currentDays, dayIndex]
+  updateProfessionalDays(profId, updatedDays)
   refreshLocalOverrides()
-  showToast(`Escala semanal de ${name} atualizada!`)
 }
 
-function handleProfWorkHoursChange(profId: string, workHours: any, name: string) {
+function handleProfWorkHoursChange(profId: string, workHours: { start: string; end: string }, name: string) {
   updateProfessionalHours(profId, workHours)
   refreshLocalOverrides()
-  showToast(`Horário de expediente de ${name} atualizado!`)
 }
 
-function handleProfLunchChange(profId: string, lunchBreak: any, name: string) {
+function handleProfLunchChange(profId: string, lunchBreak: { start: string; end: string; enabled: boolean }, name: string) {
   updateProfessionalLunch(profId, lunchBreak)
   refreshLocalOverrides()
-  showToast(`Horário de almoço de ${name} atualizado!`)
 }
 
-function handleDeleteProf(profId: string, profName: string) {
-  if (confirm(`Deseja excluir "${profName}" da equipe?`)) {
-    deleteProfessional(profId)
-    refreshLocalOverrides()
-    showToast(`🗑️ ${profName} removido da equipe!`)
-  }
-}
-
+const isCreateProfOpen = ref(false)
 function openCreateProfModal() {
   isCreateProfOpen.value = true
 }
 
-function handleCreateProfSubmit(form: { name: string; role: string }) {
-  createProfessional({
-    name: form.name,
-    role: form.role,
-    availableDays: [1, 2, 3, 4, 5],
-    workHours: { start: '08:00', end: '18:00' },
-    lunchBreak: { start: '12:00', end: '13:00', enabled: true }
-  })
+function handleCreateProf(payload: any) {
+  createProfessional(payload)
   refreshLocalOverrides()
   isCreateProfOpen.value = false
-  showToast(`✅ Especialista ${form.name} cadastrado!`)
+  showToast('Novo especialista cadastrado!')
 }
 
-// 7. Bloqueio de Horários na Agenda
+function handleDeleteProf(profId: string, profName: string) {
+  if (confirm(`Deseja remover ${profName} da equipe?`)) {
+    deleteProfessional(profId)
+    refreshLocalOverrides()
+    showToast(`${profName} removido da equipe.`)
+  }
+}
+
 function handleSlotToggle(date: string, time: string) {
   const isBlocked = toggleBlockSlot(date, time)
   refreshLocalOverrides()
   showToast(isBlocked ? `Horário ${time} bloqueado!` : `Horário ${time} liberado!`)
 }
 
-// 8. Configurações Pix & Contato
-const pixForm = ref({
-  keyType: 'cpf',
+// 7. Pix & Contatos
+const pixConfigInput = ref({
+  keyType: 'phone' as 'cpf' | 'cnpj' | 'phone' | 'email' | 'random',
   pixKey: '',
   beneficiary: '',
-  city: '',
-  allowTestCent: true,
-  depositPercentage: 30
+  city: ''
 })
 
-const contactForm = ref({
+const contactInput = ref({
   whatsapp: '',
   instagram: ''
 })
 
 function loadPixAndContactFromOverrides() {
-  const overrides = localOverrides.value || {}
-  const tenantPix = tenant.value?.pixConfig as any
-  const ovPix = overrides.pix || {}
-
-  pixForm.value = {
-    keyType: ovPix.keyType || tenantPix?.keyType || 'cpf',
-    pixKey: ovPix.pixKey || ovPix.key || tenantPix?.key || tenantPix?.pixKey || '',
-    beneficiary: ovPix.beneficiary || tenantPix?.beneficiary || '',
-    city: ovPix.city || tenantPix?.city || '',
-    allowTestCent: ovPix.allowTestCent !== undefined ? ovPix.allowTestCent : (tenantPix?.allowTestCent ?? true),
-    depositPercentage: ovPix.depositPercentage !== undefined ? ovPix.depositPercentage : (tenantPix?.depositPercentage ?? 30)
+  const ov = localOverrides.value || {}
+  const basePix = tenant.value?.pixConfig || (tenant.value as any)?.pix || {}
+  pixConfigInput.value = {
+    keyType: ov.pix?.keyType || basePix.keyType || 'phone',
+    pixKey: ov.pix?.pixKey || basePix.key || basePix.pixKey || '',
+    beneficiary: ov.pix?.beneficiary || basePix.beneficiary || tenant.value?.name || '',
+    city: ov.pix?.city || basePix.city || 'SAO PAULO'
   }
 
-  const ovContact = overrides.contact || {}
-  contactForm.value = {
-    whatsapp: ovContact.whatsapp || tenant.value?.phoneWhatsApp || (tenant.value as any)?.whatsapp || '',
-    instagram: ovContact.instagram || (tenant.value as any)?.instagram || ''
+  contactInput.value = {
+    whatsapp: ov.contact?.whatsapp || tenant.value?.phoneWhatsApp || '',
+    instagram: ov.contact?.instagram || (tenant.value as any)?.instagram || ''
   }
 }
 
 function savePixConfig() {
-  updatePixConfig(pixForm.value)
+  updatePixConfig(pixConfigInput.value)
   refreshLocalOverrides()
   showToast('Configurações Pix salvas com sucesso!')
 }
 
 function saveContactConfig() {
-  updateContact(contactForm.value)
+  updateContact(contactInput.value)
   refreshLocalOverrides()
   showToast('Contatos salvos com sucesso!')
 }
 
-// 9. Horários & Pausa Geral
+// 8. Horários & Pausa Geral
 const weeklyDaysConfig = ref<Array<{ key: string; label: string; closed: boolean; open: string; close: string }>>([])
 const scheduleSuccessMsg = ref('')
 
-const defaultDays = [
-  { key: 'monday', label: 'Segunda-feira' },
-  { key: 'tuesday', label: 'Terça-feira' },
-  { key: 'wednesday', label: 'Quarta-feira' },
-  { key: 'thursday', label: 'Quinta-feira' },
-  { key: 'friday', label: 'Sexta-feira' },
-  { key: 'saturday', label: 'Sábado' },
-  { key: 'sunday', label: 'Domingo' }
-]
-
 function loadScheduleFromOverrides() {
-  const overrides = localOverrides.value || {}
-  const baseHours = tenant.value?.openingHours as any
-  const ovHours = overrides.openingHours || {}
-  const defaultOpen = ovHours.open || baseHours?.open || '09:00'
-  const defaultClose = ovHours.close || baseHours?.close || '20:00'
+  const ov = localOverrides.value || {}
+  const baseHours = (tenant.value?.openingHours || {}) as Record<string, DaySchedule> & { open?: string; close?: string }
+  const overrideHours = ov.openingHours || {}
+  const days = [
+    { key: 'monday', label: 'Segunda-feira' },
+    { key: 'tuesday', label: 'Terça-feira' },
+    { key: 'wednesday', label: 'Quarta-feira' },
+    { key: 'thursday', label: 'Quinta-feira' },
+    { key: 'friday', label: 'Sexta-feira' },
+    { key: 'saturday', label: 'Sábado' },
+    { key: 'sunday', label: 'Domingo' }
+  ]
 
-  weeklyDaysConfig.value = defaultDays.map(d => {
-    const dayConfig = ovHours[d.key] || baseHours?.[d.key]
-    const closed = dayConfig?.closed !== undefined ? Boolean(dayConfig.closed) : false
-    const open = dayConfig?.open || defaultOpen
-    const close = dayConfig?.close || defaultClose
+  weeklyDaysConfig.value = days.map((d) => {
+    const dOverride = (overrideHours as any)[d.key]
+    const dBase = (baseHours as any)[d.key]
     return {
       key: d.key,
       label: d.label,
-      closed,
-      open,
-      close
+      open: dOverride?.open || dBase?.open || baseHours.open || '09:00',
+      close: dOverride?.close || dBase?.close || baseHours.close || '22:00',
+      closed: dOverride?.closed ?? dBase?.closed ?? false
     }
   })
 }
 
 function toggleEmergencyPause() {
   const nextVal = !isEmergencyClosed.value
-  updateEmergency(nextVal, emergencyMessage.value || '')
+  updateEmergency(nextVal, '')
   refreshLocalOverrides()
-  showToast(nextVal ? 'Loja pausada temporariamente!' : 'Loja reaberta com sucesso!')
+  showToast(nextVal ? 'Atendimento emergencial pausado!' : 'Atendimento reativado!')
 }
 
-async function toggleDayClosed(day: any) {
-  if (day) {
-    await saveScheduleConfig()
-  }
+function toggleDayClosed(day: any) {
+  day.closed = !day.closed
 }
 
-async function saveScheduleConfig() {
-  const scheduleObj: Record<string, DaySchedule> = {}
-  for (const d of weeklyDaysConfig.value) {
-    scheduleObj[d.key] = {
+async function saveWeeklySchedule() {
+  const schedule: Record<string, DaySchedule> = {}
+  weeklyDaysConfig.value.forEach((d) => {
+    schedule[d.key] = {
       open: d.open,
       close: d.close,
       closed: d.closed
     }
-  }
-  await updateWeeklySchedule(scheduleObj)
+  })
+  await updateWeeklySchedule(schedule)
   refreshLocalOverrides()
+  if (typeof refresh === 'function') {
+    await refresh()
+  }
   scheduleSuccessMsg.value = 'Horários atualizados com sucesso!'
-  showToast('Horários salvos com sucesso!')
+  showToast('Horários de funcionamento atualizados!')
   setTimeout(() => {
     scheduleSuccessMsg.value = ''
   }, 3000)
 }
 
-function saveEmergencyConfig(data: { isClosed: boolean; message: string }) {
-  updateEmergency(data.isClosed, data.message)
-  refreshLocalOverrides()
-  showToast(data.isClosed ? 'Loja pausada temporariamente!' : 'Loja reaberta com sucesso!')
-}
-
-// 10. Delivery & Taxas
-const deliveryForm = ref({
-  deliveryFee: 5,
-  minOrderValue: 20,
-  estimatedTime: '30-45 min'
-})
-const deliverySuccessMsg = ref('')
+// 9. Delivery & Taxas
+const deliveryFeeInput = ref(5)
+const minOrderInput = ref(20)
+const estimatedTimeInput = ref('30-45 min')
 
 function loadDeliveryFromOverrides() {
-  const overrides = localOverrides.value || {}
-  const tenantDelivery = tenant.value as any
-  const ovDelivery = overrides.delivery || {}
-  deliveryForm.value = {
-    deliveryFee: ovDelivery.deliveryFee ?? (tenantDelivery?.deliveryFeeCents ? tenantDelivery.deliveryFeeCents / 100 : (tenantDelivery?.deliveryFee ?? 5)),
-    minOrderValue: ovDelivery.minOrderValue ?? (tenantDelivery?.minOrderValueCents ? tenantDelivery.minOrderValueCents / 100 : (tenantDelivery?.minOrderValue ?? 20)),
-    estimatedTime: ovDelivery.estimatedTime || tenantDelivery?.estimatedTime || '30-45 min'
-  }
+  const ov = localOverrides.value?.delivery || {}
+  deliveryFeeInput.value = ov.deliveryFee !== undefined ? ov.deliveryFee : Number(tenant.value?.deliveryFee ?? 6.0)
+  minOrderInput.value = ov.minOrderValue !== undefined ? ov.minOrderValue : Number(tenant.value?.minOrderValue ?? 0)
+  estimatedTimeInput.value = ov.estimatedTime || tenant.value?.estimatedTime || '30-45 min'
 }
 
 function saveDeliveryConfig() {
-  updateDelivery(deliveryForm.value.deliveryFee, deliveryForm.value.minOrderValue, deliveryForm.value.estimatedTime)
+  updateDelivery({
+    deliveryFee: Number(deliveryFeeInput.value),
+    minOrderValue: Number(minOrderInput.value),
+    estimatedTime: estimatedTimeInput.value
+  })
   refreshLocalOverrides()
-  deliverySuccessMsg.value = 'Configurações de entrega salvas com sucesso!'
-  showToast('Delivery atualizado!')
-  setTimeout(() => {
-    deliverySuccessMsg.value = ''
-  }, 3000)
+  showToast('Regras de delivery atualizadas!')
 }
 
-// 11. Comunicado no Topo
-const announcementForm = ref({
-  enabled: false,
-  message: ''
-})
-const announcementSuccessMsg = ref('')
+// 10. Comunicado Oficial
+const announcementEnabled = ref(false)
+const announcementMessage = ref('')
 
 function loadAnnouncementFromOverrides() {
-  const overrides = localOverrides.value || {}
-  const tenantAnnounce = tenant.value as any
-  const ovAnnounce = overrides.announcement || {}
-  announcementForm.value = {
-    enabled: ovAnnounce.enabled ?? tenantAnnounce?.announcementEnabled ?? false,
-    message: ovAnnounce.message || tenantAnnounce?.announcementMessage || ''
-  }
+  const ov = localOverrides.value?.announcement || {}
+  announcementEnabled.value = ov.enabled !== undefined ? ov.enabled : Boolean(tenant.value?.announcement?.enabled)
+  announcementMessage.value = ov.message || tenant.value?.announcement?.message || ''
 }
 
 function saveAnnouncementConfig() {
-  updateAnnouncement(announcementForm.value.enabled, announcementForm.value.message)
+  updateAnnouncement({
+    enabled: announcementEnabled.value,
+    message: announcementMessage.value
+  })
   refreshLocalOverrides()
-  announcementSuccessMsg.value = 'Comunicado salvo com sucesso!'
-  showToast('Comunicado atualizado!')
-  setTimeout(() => {
-    announcementSuccessMsg.value = ''
-  }, 3000)
+  showToast('Comunicado salvo!')
 }
 
-// 12. Segurança / Troca de PIN
+// 11. Segurança & PIN
 const pinSuccessMsg = ref('')
-
-function saveNewPin(newPin: string) {
-  if (changePin(newPin)) {
-    pinSuccessMsg.value = 'Senha PIN atualizada com sucesso!'
-    showToast('PIN alterado!')
+async function saveNewPin(newPin: string, currentPin?: string) {
+  const ok = await changePin(newPin, currentPin)
+  if (ok) {
+    pinSuccessMsg.value = 'PIN alterado com sucesso!'
+    showToast('PIN de segurança atualizado!')
     setTimeout(() => {
       pinSuccessMsg.value = ''
     }, 3000)
   }
 }
 
-// Inicialização de ciclo de vida
+// 12. Lifecycle Loaders & Sincronização
 onMounted(() => {
   refreshLocalOverrides()
-  loadScheduleFromOverrides()
   loadPixAndContactFromOverrides()
+  loadScheduleFromOverrides()
   loadDeliveryFromOverrides()
   loadAnnouncementFromOverrides()
+
   if (typeof window !== 'undefined') {
-    window.addEventListener('storage', refreshLocalOverrides)
     window.addEventListener('alaska_overrides_updated', refreshLocalOverrides)
   }
 })
 
-watch(
-  () => tenant.value,
-  () => {
-    loadScheduleFromOverrides()
-    loadPixAndContactFromOverrides()
-    loadDeliveryFromOverrides()
-    loadAnnouncementFromOverrides()
-  },
-  { deep: true }
-)
+watch(tenant, () => {
+  loadPixAndContactFromOverrides()
+  loadScheduleFromOverrides()
+  loadDeliveryFromOverrides()
+  loadAnnouncementFromOverrides()
+})
 </script>
