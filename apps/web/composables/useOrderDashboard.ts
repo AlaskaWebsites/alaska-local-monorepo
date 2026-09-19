@@ -1,4 +1,4 @@
-import { ref, computed, watch, onMounted, onUnmounted, type Ref, isRef } from 'vue'
+import { ref, computed, onMounted, onUnmounted, type Ref, isRef } from 'vue'
 import { useRoute } from 'vue-router'
 import { useHaptic } from './useHaptic'
 import type { OrderStatus, OrderDashboardItem } from '@alaska/contracts'
@@ -113,7 +113,8 @@ export function useOrderDashboard(slugOrSource?: string | Ref<string> | null | u
     // Se a API estiver offline e não houver pedidos locais, gera comanda demo realista
     if (orders.value.length === 0) {
       const demoOrders: OrderDashboardItem[] = [
-        {\n          id: `ord-${Date.now().toString().slice(-4)}1`,
+        {
+          id: `ord-${Date.now().toString().slice(-4)}1`,
           tenantId: `ten-${currentSlug.value}`,
           customerName: 'Danilo Algaranaz',
           customerPhone: '11999998888',
