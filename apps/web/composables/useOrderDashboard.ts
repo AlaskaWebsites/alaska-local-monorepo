@@ -26,7 +26,7 @@ function getApiBaseUrl(): string {
 
 function getStoredOrders(key: string): OrderDashboardItem[] {
   try {
-    if (typeof window === 'undefined' || !window.localStorage) return []
+    if (typeof localStorage === 'undefined') return []
     const raw = localStorage.getItem(key)
     if (!raw) return []
     const parsed = JSON.parse(raw)
@@ -38,12 +38,12 @@ function getStoredOrders(key: string): OrderDashboardItem[] {
 
 function saveStoredOrders(key: string, orders: OrderDashboardItem[]): void {
   try {
-    if (typeof window === 'undefined' || !window.localStorage) return
+    if (typeof localStorage === 'undefined') return
     localStorage.setItem(key, JSON.stringify(orders))
   } catch {}
 }
 
-export function useOrderDashboard(slugOrSource?: string | Ref<string | null | undefined>) {
+export function useOrderDashboard(slugOrSource?: string | Ref<string> | null | undefined) {
   const route = typeof useRoute === 'function' ? useRoute() : null
   const { triggerHaptic } = useHaptic()
   const apiBaseUrl = getApiBaseUrl()
@@ -113,8 +113,7 @@ export function useOrderDashboard(slugOrSource?: string | Ref<string | null | un
     // Se a API estiver offline e não houver pedidos locais, gera comanda demo realista
     if (orders.value.length === 0) {
       const demoOrders: OrderDashboardItem[] = [
-        {
-          id: `ord-${Date.now().toString().slice(-4)}1`,
+        {\n          id: `ord-${Date.now().toString().slice(-4)}1`,
           tenantId: `ten-${currentSlug.value}`,
           customerName: 'Danilo Algaranaz',
           customerPhone: '11999998888',
@@ -202,7 +201,7 @@ export function useOrderDashboard(slugOrSource?: string | Ref<string | null | un
     // Persistência local imediata
     saveStoredOrders(storageKey.value, orders.value)
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
       window.dispatchEvent(
         new CustomEvent('alaska_orders_updated', {
           detail: { orderId, status: newStatus },
@@ -248,7 +247,7 @@ export function useOrderDashboard(slugOrSource?: string | Ref<string | null | un
     orders.value = [newOrder, ...orders.value]
     saveStoredOrders(storageKey.value, orders.value)
 
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && typeof window.dispatchEvent === 'function') {
       window.dispatchEvent(
         new CustomEvent('alaska_orders_updated', {
           detail: { orderId: newOrder.id, status: newOrder.status },
@@ -404,14 +403,16 @@ export function useOrderDashboard(slugOrSource?: string | Ref<string | null | un
     }
   }
 
-  onMounted(() => {
-    fetchOrders()
-    startPolling()
-  })
+  try {
+    onMounted(() => {
+      fetchOrders()
+      startPolling()
+    })
 
-  onUnmounted(() => {
-    stopPolling()
-  })
+    onUnmounted(() => {
+      stopPolling()
+    })
+  } catch {}
 
   return {
     orders,
