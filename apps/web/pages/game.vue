@@ -5,9 +5,14 @@ import { ref, computed } from 'vue'
 const accepted = ref(false)
 const dodgeCount = ref(0)
 
-const noButtonPosition = ref<{ top: string; left: string; position: 'static' | 'fixed' }>({
-  top: 'auto',
-  left: 'auto',
+const noButtonPosition = ref<{
+  position: 'static' | 'fixed'
+  top?: string
+  bottom?: string
+  left?: string
+  right?: string
+  transform?: string
+}>({
   position: 'static'
 })
 
@@ -27,17 +32,25 @@ const noButtonTexts = [
 const currentNoText = ref('Não')
 const yesScale = ref(1)
 
-// Posições percentuais seguras (âncora central com translate(-50%, -50%)):
-// Alternam ativamente entre CIMA e BAIXO, mantendo-se sempre no miolo visível da tela do celular sem nunca encostar nos cantos ou sumir
-const safeSpots = [
-  { top: '22%', left: '50%' }, // 1. Acima do card (topo central)
-  { top: '72%', left: '50%' }, // 2. Abaixo do card (base central)
-  { top: '35%', left: '42%' }, // 3. Meio superior esquerdo
-  { top: '65%', left: '58%' }, // 4. Meio inferior direito
-  { top: '25%', left: '56%' }, // 5. Acima do card à direita
-  { top: '70%', left: '44%' }, // 6. Abaixo do card à esquerda
-  { top: '38%', left: '50%' }, // 7. Centro superior
-  { top: '67%', left: '50%' }  // 8. Centro inferior
+// Slots de fuga em tela cheia (ancorados nas bordas e cantos com margens seguras anti-corte):
+// Cruza diagonais, sobe, desce e vai pros dois lados em grande amplitude!
+const fullScreenSlots = [
+  // 1. Canto Superior Direito
+  { top: '55px', right: '20px', bottom: 'auto', left: 'auto', transform: 'none' },
+  // 2. Canto Inferior Esquerdo (com 115px de folga do rodapé)
+  { bottom: '115px', left: '20px', top: 'auto', right: 'auto', transform: 'none' },
+  // 3. Canto Superior Esquerdo
+  { top: '55px', left: '20px', bottom: 'auto', right: 'auto', transform: 'none' },
+  // 4. Canto Inferior Direito
+  { bottom: '115px', right: '20px', top: 'auto', left: 'auto', transform: 'none' },
+  // 5. Lateral Esquerda (Meio da tela)
+  { top: '50%', left: '16px', bottom: 'auto', right: 'auto', transform: 'translateY(-50%)' },
+  // 6. Lateral Direita (Meio da tela)
+  { top: '50%', right: '16px', bottom: 'auto', left: 'auto', transform: 'translateY(-50%)' },
+  // 7. Topo Central (acima do card)
+  { top: '50px', left: '50%', bottom: 'auto', right: 'auto', transform: 'translateX(-50%)' },
+  // 8. Base Central (abaixo do card)
+  { bottom: '115px', left: '50%', top: 'auto', right: 'auto', transform: 'translateX(-50%)' }
 ]
 
 function dodge() {
@@ -47,12 +60,15 @@ function dodge() {
   // Faz o Sim crescer gradualmente para convidar ao clique
   yesScale.value = Math.min(1.4, Number((yesScale.value + 0.06).toFixed(2)))
 
-  // Pega o próximo spot seguro da lista
-  const spot = safeSpots[(dodgeCount.value - 1) % safeSpots.length]
+  // Pega o próximo slot que faz o botão cruzar a tela
+  const slot = fullScreenSlots[(dodgeCount.value - 1) % fullScreenSlots.length]
   noButtonPosition.value = {
-    top: spot.top,
-    left: spot.left,
-    position: 'fixed'
+    position: 'fixed',
+    top: slot.top,
+    bottom: slot.bottom,
+    left: slot.left,
+    right: slot.right,
+    transform: slot.transform
   }
 }
 
@@ -61,8 +77,10 @@ const noButtonStyle = computed(() => {
     return {
       position: 'fixed' as const,
       top: noButtonPosition.value.top,
+      bottom: noButtonPosition.value.bottom,
       left: noButtonPosition.value.left,
-      transform: 'translate(-50%, -50%)',
+      right: noButtonPosition.value.right,
+      transform: noButtonPosition.value.transform,
       zIndex: 50
     }
   }
@@ -109,7 +127,7 @@ function handleAccept() {
           SIM! ❤️
         </button>
 
-        <!-- Botão NÃO: Foge com âncora central percentual fixa, 100% contido no campo de visão da tela -->
+        <!-- Botão NÃO: Voa pela tela inteira de ponta a ponta com ancoragem de margens seguras anti-corte -->
         <button
           type="button"
           :style="noButtonStyle"
@@ -117,7 +135,7 @@ function handleAccept() {
           @touchstart.prevent="dodge"
           @pointerdown.prevent="dodge"
           @click="dodge"
-          class="px-6 py-4 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm sm:text-base rounded-2xl transition-all duration-150 cursor-pointer shadow-md active:scale-95 select-none whitespace-nowrap max-w-[85vw] text-center"
+          class="px-6 py-4 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm sm:text-base rounded-2xl transition-all duration-200 ease-out cursor-pointer shadow-md active:scale-95 select-none whitespace-nowrap max-w-[calc(100vw-36px)] text-center"
         >
           {{ currentNoText }}
         </button>
