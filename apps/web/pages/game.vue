@@ -11,6 +11,8 @@ const noButtonPosition = ref<{ top: string; left: string; position: 'static' | '
 })
 
 const dodgeCount = ref(0)
+const isGoingUp = ref(true)
+
 const noButtonTexts = [
   'Não',
   'Tem certeza? 🥺',
@@ -35,61 +37,46 @@ function dodge() {
   yesScale.value = Math.min(1.4, Number((yesScale.value + 0.06).toFixed(2)))
 
   if (typeof window !== 'undefined') {
-    const btnWidth = 200
-    const btnHeight = 56
-    const safeMarginX = 16
-    const safeMarginTop = 32
-    const safeMarginBottom = 90 // Protege contra a barra de navegação/gestos do Android e iOS
-
     const winW = window.innerWidth
     const winH = window.innerHeight
 
-    // Pega as dimensões reais do card na tela
+    const btnWidth = 190
+    const btnHeight = 56
+    const padX = 16
+    const padTop = 36
+    const padBottom = 110 // Margem generosa para NUNCA cortar na barra de navegação/gestos inferior
+
+    const maxX = Math.max(padX, winW - btnWidth - padX)
+    const randomX = Math.floor(Math.random() * (maxX - padX)) + padX
+
     const cardEl = cardRef.value
     const rect = cardEl ? cardEl.getBoundingClientRect() : null
-
     const cardTop = rect ? rect.top : winH * 0.25
     const cardBottom = rect ? rect.bottom : winH * 0.70
-    const cardLeft = rect ? rect.left : winW * 0.05
-    const cardRight = rect ? rect.right : winW * 0.95
 
-    // Lista de posições seguras garantidas ao redor do card e da tela
-    const safePositions: Array<{ x: number; y: number }> = [
-      // 1. Logo abaixo do card (centralizado, mas bem visível)
-      { x: cardLeft + (cardRight - cardLeft - btnWidth) / 2, y: cardBottom + 20 },
-      // 2. Logo acima do card (centralizado)
-      { x: cardLeft + (cardRight - cardLeft - btnWidth) / 2, y: cardTop - btnHeight - 20 },
-      // 3. Dentro da área inferior do card (lado esquerdo)
-      { x: cardLeft + 24, y: cardBottom - btnHeight - 24 },
-      // 4. Dentro da área inferior do card (lado direito)
-      { x: cardRight - btnWidth - 24, y: cardBottom - btnHeight - 24 },
-      // 5. Logo abaixo do card (inclinado à direita)
-      { x: cardRight - btnWidth, y: cardBottom + 16 },
-      // 6. Logo abaixo do card (inclinado à esquerda)
-      { x: cardLeft, y: cardBottom + 16 },
-      // 7. Logo acima do card (lado direito)
-      { x: cardRight - btnWidth, y: cardTop - btnHeight - 16 },
-      // 8. Logo acima do card (lado esquerdo)
-      { x: cardLeft, y: cardTop - btnHeight - 16 }
-    ]
+    let targetY: number
 
-    // Se estiver em desktop com espaço lateral sobrando, adiciona laterais
-    if (winW > 650) {
-      safePositions.push(
-        { x: cardLeft - btnWidth - 24, y: cardTop + 100 },
-        { x: cardRight + 24, y: cardTop + 100 }
-      )
+    // Alterna ativamente entre CIMA e BAIXO para o botão se mover pelos dois lados da tela!
+    if (isGoingUp.value) {
+      // Pula para cima do card (zona superior bem visível)
+      const maxTopY = Math.max(padTop + 15, Math.min(winH * 0.3, cardTop - btnHeight - 12))
+      targetY = Math.floor(Math.random() * Math.max(10, maxTopY - padTop)) + padTop
+      isGoingUp.value = false
+    } else {
+      // Pula para baixo do card (zona inferior segura, acima da barra)
+      const minBottomY = Math.max(cardBottom + 16, winH * 0.68)
+      const maxBottomY = winH - btnHeight - padBottom
+      if (maxBottomY > minBottomY) {
+        targetY = Math.floor(Math.random() * (maxBottomY - minBottomY)) + minBottomY
+      } else {
+        targetY = maxBottomY
+      }
+      isGoingUp.value = true
     }
 
-    // Seleciona a próxima posição com variação
-    const target = safePositions[dodgeCount.value % safePositions.length]
-
-    // Clamp rigoroso: NUNCA deixa passar dos limites visíveis da viewport
-    const maxX = Math.max(safeMarginX, winW - btnWidth - safeMarginX)
-    const maxY = Math.max(safeMarginTop, winH - btnHeight - safeMarginBottom)
-
-    const finalX = Math.round(Math.max(safeMarginX, Math.min(maxX, target.x)))
-    const finalY = Math.round(Math.max(safeMarginTop, Math.min(maxY, target.y)))
+    // Clamp estrito de segurança
+    const finalX = Math.round(Math.max(padX, Math.min(maxX, randomX)))
+    const finalY = Math.round(Math.max(padTop, Math.min(winH - btnHeight - padBottom, targetY)))
 
     noButtonPosition.value = {
       top: finalY + 'px',
@@ -140,7 +127,7 @@ function handleAccept() {
           SIM! ❤️
         </button>
 
-        <!-- Botão NÃO que foge com limites rigorosos na tela -->
+        <!-- Botão NÃO que foge alternando para cima e para baixo -->
         <button
           type="button"
           :style="{
@@ -165,7 +152,7 @@ function handleAccept() {
       </div>
     </div>
 
-    <!-- TELA 2: Sucesso / Ela disse SIM -->
+    <!-- TELA 2: Sucesso / Ela disse SIM (Sem a caixa de print) -->
     <div
       v-else
       class="bg-white/95 backdrop-blur-md border border-rose-300 rounded-3xl p-8 sm:p-12 max-w-md w-full shadow-2xl text-center space-y-6 z-10 animate-in fade-in zoom-in duration-300"
@@ -181,10 +168,6 @@ function handleAccept() {
         <p class="text-base sm:text-lg text-rose-700 font-semibold leading-relaxed">
           Agora é oficial! Os melhores momentos começam agora. ❤️
         </p>
-      </div>
-
-      <div class="p-5 bg-rose-50 border border-rose-200 rounded-2xl text-sm sm:text-base text-rose-800 font-bold leading-relaxed shadow-xs">
-        📸 Tira um print dessa tela e me manda lá no WhatsApp pra comemorarmos! 🥂
       </div>
     </div>
   </div>
