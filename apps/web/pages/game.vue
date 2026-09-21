@@ -18,15 +18,23 @@ const noButtonPosition = ref<{
 
 const noButtonTexts = [
   'Não',
-  'Tem certeza? 🥺',
-  'Pensa bem! 👀',
-  'Ops, errou! 😂',
-  'Nem tenta kkk',
-  'Erro 404: Não encontrado',
-  'Clica no Sim logo! ❤️',
-  'Sem chance 😜',
-  'Desiste hahaha',
-  'Só vale SIM! 💍'
+  'Tem certeza, Thaís? 🥺',
+  'Pensa bem, Thaís! 👀',
+  'Thaís, clica no Sim logo! ❤️',
+  'Errou o botão, Thaís! 😂',
+  'Nem tenta fugir, Thaís kkk',
+  'Thaís, você me ama que eu sei 🥰',
+  'O botão Não quebrou, Thaís 🤷‍♂️',
+  'Sem chance, Thaís 😜',
+  'Thaís do céu, clica no SIM! 😂',
+  'Desiste, Thaís hahaha',
+  'Thaís, só tem uma resposta certa! 💍',
+  'Aceita logo, Thaís! 💖',
+  'Já era, Thaís, é SIM! 🔒',
+  'Cansou de tentar o Não, Thaís?',
+  'Thaís, eu não aceito não! 😜',
+  'Duvido você conseguir clicar aqui kkk',
+  'Vem pro SIM, Thaís! ❤️'
 ]
 
 const currentNoText = ref('Não')
@@ -57,8 +65,8 @@ function dodge() {
   dodgeCount.value++
   currentNoText.value = noButtonTexts[dodgeCount.value % noButtonTexts.length]
 
-  // Faz o Sim crescer gradualmente para convidar ao clique
-  yesScale.value = Math.min(1.4, Number((yesScale.value + 0.06).toFixed(2)))
+  // Faz o Sim crescer visivelmente a cada tentativa, ficando bem caricato e chamativo
+  yesScale.value = Math.min(1.85, Number((yesScale.value + 0.12).toFixed(2)))
 
   // Pega o próximo slot que faz o botão cruzar a tela
   const slot = fullScreenSlots[(dodgeCount.value - 1) % fullScreenSlots.length]
@@ -111,23 +119,23 @@ function handleAccept() {
           Quer namorar comigo?
         </h1>
         <p class="text-sm sm:text-base text-rose-600 font-semibold max-w-xs mx-auto leading-relaxed">
-          Pensa com bastante carinho antes de responder... 👀
+          Pensa com bastante carinho antes de responder, Thaís... 👀
         </p>
       </div>
 
       <!-- Botões de Ação -->
       <div class="flex items-center justify-center gap-4 min-h-[110px] relative">
-        <!-- Botão SIM -->
+        <!-- Botão SIM: Cresce caricato a cada clique no Não -->
         <button
           type="button"
           @click="handleAccept"
           :style="{ transform: 'scale(' + yesScale + ')' }"
-          class="px-8 py-4 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-black text-base sm:text-lg rounded-2xl shadow-xl shadow-rose-500/30 hover:shadow-rose-500/50 transition-all duration-200 cursor-pointer active:scale-95 shrink-0 z-10"
+          class="px-8 py-4 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white font-black text-base sm:text-lg rounded-2xl shadow-xl shadow-rose-500/30 hover:shadow-rose-500/50 transition-transform duration-200 cursor-pointer active:scale-95 shrink-0 z-10"
         >
           SIM! ❤️
         </button>
 
-        <!-- Botão NÃO: Voa pela tela inteira de ponta a ponta com ancoragem de margens seguras anti-corte -->
+        <!-- Botão NÃO: Foge pela tela com frases personalizadas da Thaís -->
         <button
           type="button"
           :style="noButtonStyle"
@@ -143,12 +151,12 @@ function handleAccept() {
 
       <div v-if="dodgeCount > 0" class="pt-2">
         <span class="text-xs sm:text-sm font-bold text-rose-600 bg-rose-100/70 border border-rose-200 px-4 py-2 rounded-full inline-block animate-pulse">
-          Dica: eu não aceito um &quot;não&quot; como resposta! 😜
+          Dica: eu não aceito um &quot;não&quot; como resposta, Thaís! 😜
         </span>
       </div>
     </div>
 
-    <!-- TELA 2: Sucesso / Ela disse SIM (Sem a caixa de print) -->
+    <!-- TELA 2: Sucesso / Ela disse SIM -->
     <div
       v-else
       class="bg-white/95 backdrop-blur-md border border-rose-300 rounded-3xl p-8 sm:p-12 max-w-md w-full shadow-2xl text-center space-y-6 z-10 animate-in fade-in zoom-in duration-300"
@@ -159,7 +167,7 @@ function handleAccept() {
 
       <div class="space-y-3">
         <h2 class="text-2xl sm:text-4xl font-black text-rose-950 tracking-tight leading-tight">
-          SABIA QUE VOCÊ IA ACEITAR! 🥰
+          SABIA QUE VOCÊ IA ACEITAR, THAÍS! 🥰
         </h2>
         <p class="text-base sm:text-lg text-rose-700 font-semibold leading-relaxed">
           Agora é oficial! Os melhores momentos começam agora. ❤️
