@@ -1,33 +1,44 @@
 <!-- pages/game.vue -->
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
-const cardRef = ref<HTMLElement | null>(null)
 const accepted = ref(false)
+const dodgeCount = ref(0)
+
 const noButtonPosition = ref<{ top: string; left: string; position: 'static' | 'fixed' }>({
   top: 'auto',
   left: 'auto',
   position: 'static'
 })
 
-const dodgeCount = ref(0)
-const isGoingUp = ref(true)
-
 const noButtonTexts = [
   'Não',
   'Tem certeza? 🥺',
   'Pensa bem! 👀',
   'Ops, errou! 😂',
-  'Nem tenta kkkk',
+  'Nem tenta kkk',
   'Erro 404: Não encontrado',
   'Clica no Sim logo! ❤️',
-  'Sem chance de recusar 😜',
+  'Sem chance 😜',
   'Desiste hahaha',
-  'Só tem uma resposta! 💍'
+  'Só vale SIM! 💍'
 ]
 
 const currentNoText = ref('Não')
 const yesScale = ref(1)
+
+// Posições percentuais seguras (âncora central com translate(-50%, -50%)):
+// Alternam ativamente entre CIMA e BAIXO, mantendo-se sempre no miolo visível da tela do celular sem nunca encostar nos cantos ou sumir
+const safeSpots = [
+  { top: '22%', left: '50%' }, // 1. Acima do card (topo central)
+  { top: '72%', left: '50%' }, // 2. Abaixo do card (base central)
+  { top: '35%', left: '42%' }, // 3. Meio superior esquerdo
+  { top: '65%', left: '58%' }, // 4. Meio inferior direito
+  { top: '25%', left: '56%' }, // 5. Acima do card à direita
+  { top: '70%', left: '44%' }, // 6. Abaixo do card à esquerda
+  { top: '38%', left: '50%' }, // 7. Centro superior
+  { top: '67%', left: '50%' }  // 8. Centro inferior
+]
 
 function dodge() {
   dodgeCount.value++
@@ -36,55 +47,27 @@ function dodge() {
   // Faz o Sim crescer gradualmente para convidar ao clique
   yesScale.value = Math.min(1.4, Number((yesScale.value + 0.06).toFixed(2)))
 
-  if (typeof window !== 'undefined') {
-    const winW = window.innerWidth
-    const winH = window.innerHeight
-
-    const btnWidth = 190
-    const btnHeight = 56
-    const padX = 16
-    const padTop = 36
-    const padBottom = 110 // Margem generosa para NUNCA cortar na barra de navegação/gestos inferior
-
-    const maxX = Math.max(padX, winW - btnWidth - padX)
-    const randomX = Math.floor(Math.random() * (maxX - padX)) + padX
-
-    const cardEl = cardRef.value
-    const rect = cardEl ? cardEl.getBoundingClientRect() : null
-    const cardTop = rect ? rect.top : winH * 0.25
-    const cardBottom = rect ? rect.bottom : winH * 0.70
-
-    let targetY: number
-
-    // Alterna ativamente entre CIMA e BAIXO para o botão se mover pelos dois lados da tela!
-    if (isGoingUp.value) {
-      // Pula para cima do card (zona superior bem visível)
-      const maxTopY = Math.max(padTop + 15, Math.min(winH * 0.3, cardTop - btnHeight - 12))
-      targetY = Math.floor(Math.random() * Math.max(10, maxTopY - padTop)) + padTop
-      isGoingUp.value = false
-    } else {
-      // Pula para baixo do card (zona inferior segura, acima da barra)
-      const minBottomY = Math.max(cardBottom + 16, winH * 0.68)
-      const maxBottomY = winH - btnHeight - padBottom
-      if (maxBottomY > minBottomY) {
-        targetY = Math.floor(Math.random() * (maxBottomY - minBottomY)) + minBottomY
-      } else {
-        targetY = maxBottomY
-      }
-      isGoingUp.value = true
-    }
-
-    // Clamp estrito de segurança
-    const finalX = Math.round(Math.max(padX, Math.min(maxX, randomX)))
-    const finalY = Math.round(Math.max(padTop, Math.min(winH - btnHeight - padBottom, targetY)))
-
-    noButtonPosition.value = {
-      top: finalY + 'px',
-      left: finalX + 'px',
-      position: 'fixed'
-    }
+  // Pega o próximo spot seguro da lista
+  const spot = safeSpots[(dodgeCount.value - 1) % safeSpots.length]
+  noButtonPosition.value = {
+    top: spot.top,
+    left: spot.left,
+    position: 'fixed'
   }
 }
+
+const noButtonStyle = computed(() => {
+  if (noButtonPosition.value.position === 'fixed') {
+    return {
+      position: 'fixed' as const,
+      top: noButtonPosition.value.top,
+      left: noButtonPosition.value.left,
+      transform: 'translate(-50%, -50%)',
+      zIndex: 50
+    }
+  }
+  return {}
+})
 
 function handleAccept() {
   accepted.value = true
@@ -100,7 +83,6 @@ function handleAccept() {
     <!-- TELA 1: A Pergunta -->
     <div
       v-if="!accepted"
-      ref="cardRef"
       class="bg-white/95 backdrop-blur-md border border-rose-200/90 rounded-3xl p-6 sm:p-10 max-w-md w-full shadow-2xl text-center space-y-7 z-10 transition-all"
     >
       <div class="space-y-3">
@@ -127,19 +109,15 @@ function handleAccept() {
           SIM! ❤️
         </button>
 
-        <!-- Botão NÃO que foge alternando para cima e para baixo -->
+        <!-- Botão NÃO: Foge com âncora central percentual fixa, 100% contido no campo de visão da tela -->
         <button
           type="button"
-          :style="{
-            position: noButtonPosition.position,
-            top: noButtonPosition.top,
-            left: noButtonPosition.left
-          }"
+          :style="noButtonStyle"
           @mouseenter="dodge"
           @touchstart.prevent="dodge"
           @pointerdown.prevent="dodge"
           @click="dodge"
-          class="px-6 py-4 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm sm:text-base rounded-2xl transition-all duration-150 cursor-pointer shadow-md active:scale-95 select-none whitespace-nowrap z-30"
+          class="px-6 py-4 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-sm sm:text-base rounded-2xl transition-all duration-150 cursor-pointer shadow-md active:scale-95 select-none whitespace-nowrap max-w-[85vw] text-center"
         >
           {{ currentNoText }}
         </button>
