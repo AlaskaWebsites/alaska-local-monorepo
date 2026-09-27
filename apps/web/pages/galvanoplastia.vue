@@ -109,23 +109,23 @@ const servicesList = [
 const galleryImages = [
   {
     url: 'https://images.unsplash.com/photo-1525328437458-0c4d4db7cab4?auto=format&fit=crop&w=800&q=80',
-    title: 'Fileiras com Brilho Espelhado',
-    subtitle: 'Frotas finalizadas pós-banho de galvanoplastia'
+    title: 'Frotas em Fileiras Espelhadas',
+    subtitle: 'Carrinhos finalizados pós-banho galvânico de zinco'
   },
   {
-    url: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=800&q=80',
-    title: 'Padrão de Loja Nova',
-    subtitle: 'Carrinhos no salão de vendas sem ruído ou travamentos'
+    url: 'https://upload.wikimedia.org/wikipedia/commons/6/62/Lidl_Einkaufswagen.jpg',
+    title: 'Alinhamento em Lotes Industriais',
+    subtitle: 'Encaixe suave e padronização sem travamento'
   },
   {
-    url: 'https://images.unsplash.com/photo-1580913428023-02c695666d61?auto=format&fit=crop&w=800&q=80',
-    title: 'Estrutura e Soldas Reforçadas',
-    subtitle: 'Aramado recuperado e resistente para alto impacto'
+    url: 'https://upload.wikimedia.org/wikipedia/commons/8/83/Shopping_cart.jpg',
+    title: 'Aramado e Chassi Recuperados',
+    subtitle: 'Solda MIG, gabarito e proteção anticorrosiva'
   },
   {
-    url: 'https://images.unsplash.com/photo-1534723452862-4c874018d66d?auto=format&fit=crop&w=800&q=80',
-    title: 'Atacarejos e Supermercados',
-    subtitle: 'Capacidade para frotas de 50 a 1.000 unidades'
+    url: 'https://upload.wikimedia.org/wikipedia/commons/7/71/Wanzl_Concentra.jpg',
+    title: 'Rodízios e Acabamentos Novos',
+    subtitle: 'Rodas em PU maciço com rolamento blindado'
   }
 ]
 </script>
@@ -294,8 +294,8 @@ const galleryImages = [
               <!-- Foto do Carrinho Desgastado -->
               <div class="aspect-[16/9] rounded-2xl overflow-hidden bg-slate-900 relative border border-rose-200">
                 <img
-                  src="https://images.unsplash.com/photo-1580913428023-02c695666d61?auto=format&fit=crop&w=700&q=80"
-                  alt="Carrinho desgastado sem manutenção"
+                  src="https://upload.wikimedia.org/wikipedia/commons/5/5e/Abandoned_shopping_cart_in_Rotterdam.jpg"
+                  alt="Carrinho com desgaste, ferrugem e aramado oxidado"
                   class="w-full h-full object-cover filter saturate-50 contrast-125"
                   @error="handleImgError"
                   loading="lazy"
@@ -342,9 +342,9 @@ const galleryImages = [
               <!-- Foto do Carrinho Espelhado e Limpo -->
               <div class="aspect-[16/9] rounded-2xl overflow-hidden bg-slate-900 relative border border-emerald-300">
                 <img
-                  src="https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=700&q=80"
-                  alt="Carrinho galvanizado espelhado em supermercado"
-                  class="w-full h-full object-cover"
+                  src="https://upload.wikimedia.org/wikipedia/commons/8/83/Shopping_cart.jpg"
+                  alt="Carrinho reformado com galvanoplastia espelhada e rodízios novos"
+                  class="w-full h-full object-cover bg-white"
                   @error="handleImgError"
                   loading="lazy"
                 />
