@@ -13,7 +13,9 @@ import {
   TrendingDown,
   Layers,
   ChevronRight,
-  Check
+  Check,
+  Star,
+  Eye
 } from 'lucide-vue-next'
 
 // Metadados da página
@@ -41,10 +43,18 @@ function formatBRL(val: number): string {
 const whatsappNumber = '5511999999999' // Pode ser customizado com o número do cliente
 const whatsappUrl = computed(() => {
   const text = encodeURIComponent(
-    `Olá! Estava vendo a página e gostaria de solicitar um orçamento/vistoria gratuita para reforma e galvanoplastia de aproximadamente ${cartQuantity.value} carrinhos de supermercado.`
+    `Olá! Estive vendo a página e gostaria de solicitar uma vistoria técnica gratuita e orçamento para reforma e galvanoplastia de aproximadamente ${cartQuantity.value} carrinhos de supermercado.`
   )
   return `https://wa.me/${whatsappNumber}?text=${text}`
 })
+
+// Fallback de imagem anti-404
+function handleImgError(e: Event) {
+  const target = e.target as HTMLImageElement
+  if (target) {
+    target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400" fill="%23f1f5f9"><rect width="100%" height="100%" fill="%23f8fafc"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="bold" fill="%2394a3b8">🛒 GalvanoCarts Industrial</text></svg>'
+  }
+}
 
 const beforeAfterSteps = [
   {
@@ -95,12 +105,35 @@ const servicesList = [
     icon: Layers
   }
 ]
+
+const galleryImages = [
+  {
+    url: 'https://images.unsplash.com/photo-1525328437458-0c4d4db7cab4?auto=format&fit=crop&w=800&q=80',
+    title: 'Fileiras com Brilho Espelhado',
+    subtitle: 'Frotas finalizadas pós-banho de galvanoplastia'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=800&q=80',
+    title: 'Padrão de Loja Nova',
+    subtitle: 'Carrinhos no salão de vendas sem ruído ou travamentos'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1580913428023-02c695666d61?auto=format&fit=crop&w=800&q=80',
+    title: 'Estrutura e Soldas Reforçadas',
+    subtitle: 'Aramado recuperado e resistente para alto impacto'
+  },
+  {
+    url: 'https://images.unsplash.com/photo-1534723452862-4c874018d66d?auto=format&fit=crop&w=800&q=80',
+    title: 'Atacarejos e Supermercados',
+    subtitle: 'Capacidade para frotas de 50 a 1.000 unidades'
+  }
+]
 </script>
 
 <template>
   <div class="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-600 selection:text-white">
     <!-- 1. BARRA SUPERIOR / HEADER -->
-    <header class="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
         <div class="flex items-center gap-2.5">
           <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center font-black text-lg shadow-sm">
@@ -131,71 +164,120 @@ const servicesList = [
       </div>
     </header>
 
-    <!-- 2. HERO SECTION DE ALTO IMPACTO B2B -->
-    <section class="relative overflow-hidden pt-10 pb-16 sm:pt-16 sm:pb-24 border-b border-slate-200/80 bg-gradient-to-b from-white via-slate-50 to-slate-100/60">
+    <!-- 2. HERO SECTION COM FOTO REAL DE CARRINHOS GALVANIZADOS -->
+    <section class="relative overflow-hidden pt-8 pb-16 sm:pt-14 sm:pb-20 border-b border-slate-200/80 bg-gradient-to-b from-white via-slate-50 to-slate-100/60">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 relative z-10">
-        <div class="max-w-3xl mx-auto text-center space-y-5">
-          <!-- Tag de Destaque -->
-          <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-bold shadow-2xs">
-            <Sparkles class="w-3.5 h-3.5 text-blue-600" />
-            <span>Reforma Industrial com Banho Galvânico de Alta Duração</span>
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+          <!-- Coluna Esquerda: Textos e Proposta de Valor -->
+          <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-bold shadow-2xs">
+              <Sparkles class="w-3.5 h-3.5 text-blue-600" />
+              <span>Reforma Industrial com Banho Galvânico de Alta Duração</span>
+            </div>
+
+            <h1 class="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.15]">
+              Não compre carrinhos novos.<br />
+              <span class="text-blue-600 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+                Restaure com Galvanoplastia
+              </span>
+              e economize até 70%.
+            </h1>
+
+            <p class="text-sm sm:text-lg text-slate-600 font-medium leading-relaxed max-w-xl mx-auto lg:mx-0">
+              Transformamos carrinhos enferrujados, desalinhados e barulhentos em frotas com <strong>brilho de novo</strong>, rodagem macia e proteção anticorrosiva para supermercados e atacarejos.
+            </p>
+
+            <!-- Badges de Garantia -->
+            <div class="flex flex-wrap items-center justify-center lg:justify-start gap-2.5 pt-1 text-xs font-semibold text-slate-700">
+              <span class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-2xs">
+                <CheckCircle2 class="w-4 h-4 text-emerald-600 shrink-0" />
+                Retirada e devolução por lotes
+              </span>
+              <span class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-2xs">
+                <CheckCircle2 class="w-4 h-4 text-emerald-600 shrink-0" />
+                Carrinhos reserva inclusos
+              </span>
+              <span class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-2xs">
+                <CheckCircle2 class="w-4 h-4 text-emerald-600 shrink-0" />
+                Garantia estrutural e de brilho
+              </span>
+            </div>
+
+            <!-- Botões de Ação Hero -->
+            <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-3">
+              <a
+                :href="whatsappUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="w-full sm:w-auto px-7 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer"
+              >
+                <span>Agendar Vistoria sem Custo</span>
+                <ArrowRight class="w-4 h-4" />
+              </a>
+
+              <a
+                href="#calculadora"
+                class="w-full sm:w-auto px-6 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-all shadow-2xs"
+              >
+                <TrendingDown class="w-4 h-4 text-emerald-600" />
+                <span>Simular Economia</span>
+              </a>
+            </div>
           </div>
 
-          <!-- Headline Principal -->
-          <h1 class="text-3xl sm:text-5xl font-black text-slate-900 tracking-tight leading-[1.15]">
-            Não compre carrinhos novos.<br />
-            <span class="text-blue-600 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              Restaure com Galvanoplastia
-            </span>
-            e economize até 70%.
-          </h1>
+          <!-- Coluna Direita: Imagem de Destaque da Frota Reluzente -->
+          <div class="lg:col-span-5">
+            <div class="relative mx-auto max-w-md lg:max-w-none">
+              <!-- Imagem Principal com Bordas Suaves e Sombra -->
+              <div class="aspect-[4/3] rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-200/90 shadow-2xl relative">
+                <img
+                  src="https://images.unsplash.com/photo-1525328437458-0c4d4db7cab4?auto=format&fit=crop&w=1000&q=80"
+                  alt="Carrinhos de supermercado reformados com galvanoplastia brilhante"
+                  class="w-full h-full object-cover"
+                  @error="handleImgError"
+                  loading="eager"
+                />
+                <!-- Gradiente sutil no rodapé da imagem -->
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent"></div>
 
-          <!-- Subtítulo -->
-          <p class="text-sm sm:text-lg text-slate-600 font-medium leading-relaxed max-w-2xl mx-auto">
-            Transformamos carrinhos enferrujados, desalinhados e barulhentos em frotas com <strong>brilho de novo</strong>, rodagem macia e proteção anticorrosiva para supermercados e atacarejos.
-          </p>
+                <!-- Legenda sobre a imagem -->
+                <div class="absolute bottom-4 left-4 right-4 text-white space-y-0.5">
+                  <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded-md border border-emerald-500/40">
+                    Resultado GalvanoCarts
+                  </span>
+                  <p class="text-sm font-black">Frota 100% Zincada e Alinhada</p>
+                  <p class="text-[11px] text-slate-300">Padrão estético e mecânico de carrinho recém-saído de fábrica.</p>
+                </div>
+              </div>
 
-          <!-- Badges Rápidas -->
-          <div class="flex flex-wrap items-center justify-center gap-3 pt-2 text-xs font-semibold text-slate-700">
-            <span class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-2xs">
-              <CheckCircle2 class="w-4 h-4 text-emerald-600 shrink-0" />
-              Retirada e devolução por lotes
-            </span>
-            <span class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-2xs">
-              <CheckCircle2 class="w-4 h-4 text-emerald-600 shrink-0" />
-              Carrinhos reserva para sua operação
-            </span>
-            <span class="flex items-center gap-1.5 bg-white border border-slate-200 rounded-lg px-3 py-1.5 shadow-2xs">
-              <CheckCircle2 class="w-4 h-4 text-emerald-600 shrink-0" />
-              Garantia de brilho e estrutura
-            </span>
-          </div>
+              <!-- Selo Flutuante 1 (Topo Direito) -->
+              <div class="absolute -top-3 -right-3 bg-white border border-slate-200 rounded-2xl p-3 shadow-xl flex items-center gap-2.5 text-xs font-black text-slate-900 animate-in fade-in duration-300">
+                <div class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm">
+                  ✨
+                </div>
+                <div>
+                  <p class="leading-none">Zero Ferrugem</p>
+                  <p class="text-[10px] text-slate-500 font-semibold mt-0.5">Banho de Zinco Brilhante</p>
+                </div>
+              </div>
 
-          <!-- Botões de Ação Hero -->
-          <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-4">
-            <a
-              :href="whatsappUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="w-full sm:w-auto px-7 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition-all active:scale-95"
-            >
-              <span>Agendar Vistoria sem Custo</span>
-              <ArrowRight class="w-4 h-4" />
-            </a>
-
-            <a
-              href="#calculadora"
-              class="w-full sm:w-auto px-6 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-all shadow-2xs"
-            >
-              <TrendingDown class="w-4 h-4 text-emerald-600" />
-              <span>Simular Economia</span>
-            </a>
+              <!-- Selo Flutuante 2 (Base Esquerda) -->
+              <div class="hidden sm:flex absolute -bottom-4 -left-4 bg-white border border-slate-200 rounded-2xl p-3 shadow-xl items-center gap-2.5 text-xs font-black text-slate-900">
+                <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-sm">
+                  ⚡
+                </div>
+                <div>
+                  <p class="leading-none">Economia de ~70%</p>
+                  <p class="text-[10px] text-slate-500 font-semibold mt-0.5">Em relação a carrinhos novos</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 3. COMPARATIVO ANTES E DEPOIS (O QUE O SUPERMERCADISTA ODEIA VS A SOLUÇÃO) -->
+    <!-- 3. COMPARATIVO ANTES E DEPOIS COM FOTOS REAIS -->
     <section class="py-14 sm:py-20 border-b border-slate-200 bg-white">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 space-y-10">
         <div class="text-center space-y-2 max-w-2xl mx-auto">
@@ -206,75 +288,141 @@ const servicesList = [
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <!-- Card Negativo: Carrinho Velho -->
-          <div class="bg-rose-50/50 border border-rose-200 rounded-3xl p-6 sm:p-8 space-y-4">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-lg">
-                ❌
+          <!-- Card Negativo: Carrinho Velho (Antes) -->
+          <div class="bg-rose-50/50 border border-rose-200 rounded-3xl p-6 sm:p-8 space-y-5 flex flex-col justify-between">
+            <div class="space-y-4">
+              <!-- Foto do Carrinho Desgastado -->
+              <div class="aspect-[16/9] rounded-2xl overflow-hidden bg-slate-900 relative border border-rose-200">
+                <img
+                  src="https://images.unsplash.com/photo-1580913428023-02c695666d61?auto=format&fit=crop&w=700&q=80"
+                  alt="Carrinho desgastado sem manutenção"
+                  class="w-full h-full object-cover filter saturate-50 contrast-125"
+                  @error="handleImgError"
+                  loading="lazy"
+                />
+                <div class="absolute top-3 left-3 bg-rose-600 text-white text-[11px] font-black uppercase px-2.5 py-1 rounded-lg shadow-sm">
+                  Antes: Desgaste e Oxidação
+                </div>
               </div>
-              <div>
-                <h3 class="font-extrabold text-rose-950 text-base sm:text-lg">Carrinho Degradado</h3>
-                <p class="text-xs text-rose-700">Prejudica a percepção e diminui o tempo de compra</p>
-              </div>
-            </div>
 
-            <ul class="space-y-2.5 text-xs sm:text-sm text-slate-700 pt-2">
-              <li class="flex items-start gap-2">
-                <span class="text-rose-600 font-bold">✕</span>
-                <span><strong>Ferrugem e manchas:</strong> Passa impressão de falta de higiene no contato com alimentos.</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-rose-600 font-bold">✕</span>
-                <span><strong>Rodas travadas e barulhentas:</strong> Irrita o cliente, que abandona a compra mais cedo.</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-rose-600 font-bold">✕</span>
-                <span><strong>Chassi puxando pro lado:</strong> Gera cansaço físico e acidentes contra gôndolas e veículos.</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-rose-600 font-bold">✕</span>
-                <span><strong>Comprar novo é inviável:</strong> Gastar de R$ 750 a R$ 900 por unidade drena o caixa da empresa.</span>
-              </li>
-            </ul>
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-lg shrink-0">
+                  ❌
+                </div>
+                <div>
+                  <h3 class="font-extrabold text-rose-950 text-base sm:text-lg">Carrinho Degradado</h3>
+                  <p class="text-xs text-rose-700">Prejudica a percepção e diminui o tempo de compra</p>
+                </div>
+              </div>
+
+              <ul class="space-y-2.5 text-xs sm:text-sm text-slate-700 pt-1">
+                <li class="flex items-start gap-2">
+                  <span class="text-rose-600 font-bold">✕</span>
+                  <span><strong>Ferrugem e manchas:</strong> Passa impressão de falta de higiene no contato com alimentos.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-rose-600 font-bold">✕</span>
+                  <span><strong>Rodas travadas e barulhentas:</strong> Irrita o cliente, que abandona a compra mais cedo.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-rose-600 font-bold">✕</span>
+                  <span><strong>Chassi puxando pro lado:</strong> Gera cansaço físico e acidentes contra gôndolas e veículos.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-rose-600 font-bold">✕</span>
+                  <span><strong>Comprar novo é inviável:</strong> Gastar de R$ 750 a R$ 900 por unidade drena o caixa da empresa.</span>
+                </li>
+              </ul>
+            </div>
           </div>
 
-          <!-- Card Positivo: Carrinho Reformado -->
-          <div class="bg-emerald-50/60 border border-emerald-300 rounded-3xl p-6 sm:p-8 space-y-4 shadow-sm">
-            <div class="flex items-center gap-3">
-              <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg">
-                ✨
+          <!-- Card Positivo: Carrinho Reformado (Depois) -->
+          <div class="bg-emerald-50/60 border border-emerald-300 rounded-3xl p-6 sm:p-8 space-y-5 flex flex-col justify-between shadow-sm">
+            <div class="space-y-4">
+              <!-- Foto do Carrinho Espelhado e Limpo -->
+              <div class="aspect-[16/9] rounded-2xl overflow-hidden bg-slate-900 relative border border-emerald-300">
+                <img
+                  src="https://images.unsplash.com/photo-1578916171728-46686eac8d58?auto=format&fit=crop&w=700&q=80"
+                  alt="Carrinho galvanizado espelhado em supermercado"
+                  class="w-full h-full object-cover"
+                  @error="handleImgError"
+                  loading="lazy"
+                />
+                <div class="absolute top-3 left-3 bg-emerald-600 text-white text-[11px] font-black uppercase px-2.5 py-1 rounded-lg shadow-sm">
+                  Depois: Banho Galvânico & Rodízios Novos
+                </div>
               </div>
-              <div>
-                <h3 class="font-extrabold text-emerald-950 text-base sm:text-lg">Carrinho GalvanoCarts</h3>
-                <p class="text-xs text-emerald-700">Padrão de loja nova por uma fração do investimento</p>
-              </div>
-            </div>
 
-            <ul class="space-y-2.5 text-xs sm:text-sm text-slate-700 pt-2">
-              <li class="flex items-start gap-2">
-                <span class="text-emerald-600 font-bold">✓</span>
-                <span><strong>Zincagem eletrolítica espelhada:</strong> Brilho reluzente com blindagem contra oxidação.</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-emerald-600 font-bold">✓</span>
-                <span><strong>Rodagem macia e silenciosa:</strong> Rodas novas com rolamento blindado para empurrar sem esforço.</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-emerald-600 font-bold">✓</span>
-                <span><strong>Alinhamento perfeito:</strong> Carrinho reto em gabarito sem desvios ou batidas.</span>
-              </li>
-              <li class="flex items-start gap-2">
-                <span class="text-emerald-600 font-bold">✓</span>
-                <span><strong>Até 70% de economia:</strong> Renove 100 carrinhos pelo custo de apenas 30 novos.</span>
-              </li>
-            </ul>
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg shrink-0">
+                  ✨
+                </div>
+                <div>
+                  <h3 class="font-extrabold text-emerald-950 text-base sm:text-lg">Carrinho GalvanoCarts</h3>
+                  <p class="text-xs text-emerald-700">Padrão de loja nova por uma fração do investimento</p>
+                </div>
+              </div>
+
+              <ul class="space-y-2.5 text-xs sm:text-sm text-slate-700 pt-1">
+                <li class="flex items-start gap-2">
+                  <span class="text-emerald-600 font-bold">✓</span>
+                  <span><strong>Zincagem eletrolítica espelhada:</strong> Brilho reluzente com blindagem contra oxidação.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-emerald-600 font-bold">✓</span>
+                  <span><strong>Rodagem macia e silenciosa:</strong> Rodas novas com rolamento blindado para empurrar sem esforço.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-emerald-600 font-bold">✓</span>
+                  <span><strong>Alinhamento perfeito:</strong> Carrinho reto em gabarito sem desvios ou batidas.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <span class="text-emerald-600 font-bold">✓</span>
+                  <span><strong>Até 70% de economia:</strong> Renove 100 carrinhos pelo custo de apenas 30 novos.</span>
+                </li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- 4. OS 4 PILARES DO NOSSO SERVIÇO -->
+    <!-- 4. GALERIA VISUAL DA FROTA EM OPERAÇÃO -->
     <section class="py-14 sm:py-20 border-b border-slate-200 bg-slate-50">
+      <div class="max-w-6xl mx-auto px-4 sm:px-6 space-y-10">
+        <div class="text-center space-y-2 max-w-2xl mx-auto">
+          <h2 class="text-xs font-bold uppercase tracking-wider text-blue-600">Padrão Industrial</h2>
+          <p class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+            Veja a qualidade do acabamento e durabilidade da frota
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div
+            v-for="(item, idx) in galleryImages"
+            :key="idx"
+            class="bg-white border border-slate-200/90 rounded-2xl overflow-hidden shadow-2xs hover:shadow-md transition-all group"
+          >
+            <div class="aspect-[4/3] overflow-hidden bg-slate-900 relative">
+              <img
+                :src="item.url"
+                :alt="item.title"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                @error="handleImgError"
+                loading="lazy"
+              />
+            </div>
+            <div class="p-4 space-y-1">
+              <h3 class="font-extrabold text-slate-900 text-sm">{{ item.title }}</h3>
+              <p class="text-[11px] text-slate-500 font-medium">{{ item.subtitle }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. OS 4 PILARES DO NOSSO SERVIÇO -->
+    <section class="py-14 sm:py-20 border-b border-slate-200 bg-white">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 space-y-12">
         <div class="text-center space-y-2 max-w-2xl mx-auto">
           <h2 class="text-xs font-bold uppercase tracking-wider text-blue-600">Serviços Especializados</h2>
@@ -287,13 +435,13 @@ const servicesList = [
           <div
             v-for="(service, idx) in servicesList"
             :key="idx"
-            class="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-2xs hover:shadow-md transition-all space-y-3 flex flex-col justify-between"
+            class="bg-slate-50 border border-slate-200/90 rounded-2xl p-6 shadow-2xs hover:shadow-md transition-all space-y-3 flex flex-col justify-between"
           >
             <div class="space-y-3">
-              <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-200/60 text-blue-600 flex items-center justify-center">
+              <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
                 <component :is="service.icon" class="w-6 h-6" />
               </div>
-              <span class="text-[10px] font-extrabold uppercase tracking-wider text-blue-700 bg-blue-50 px-2 py-0.5 rounded-md border border-blue-200/60 inline-block">
+              <span class="text-[10px] font-extrabold uppercase tracking-wider text-blue-700 bg-blue-100/60 px-2 py-0.5 rounded-md border border-blue-200 inline-block">
                 {{ service.badge }}
               </span>
               <h3 class="font-black text-slate-900 text-base">{{ service.title }}</h3>
@@ -309,8 +457,8 @@ const servicesList = [
       </div>
     </section>
 
-    <!-- 5. ETAPAS DO PROCESSO INDUSTRIAL (CONFIANÇA E ENGENHARIA) -->
-    <section class="py-14 sm:py-20 border-b border-slate-200 bg-white">
+    <!-- 6. ETAPAS DO PROCESSO INDUSTRIAL (CONFIANÇA E ENGENHARIA) -->
+    <section class="py-14 sm:py-20 border-b border-slate-200 bg-slate-50">
       <div class="max-w-5xl mx-auto px-4 sm:px-6 space-y-10">
         <div class="text-center space-y-2 max-w-xl mx-auto">
           <h2 class="text-xs font-bold uppercase tracking-wider text-blue-600">Processo Passo a Passo</h2>
@@ -323,13 +471,13 @@ const servicesList = [
           <div
             v-for="(step, idx) in beforeAfterSteps"
             :key="idx"
-            class="bg-slate-50 border border-slate-200/90 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+            class="bg-white border border-slate-200/90 rounded-2xl p-5 sm:p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-2xs"
           >
             <div class="space-y-1">
               <h3 class="font-black text-slate-900 text-base">{{ step.title }}</h3>
               <p class="text-xs sm:text-sm text-slate-600 font-medium">{{ step.desc }}</p>
             </div>
-            <span class="px-3 py-1 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg shrink-0">
+            <span class="px-3 py-1 bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold rounded-lg shrink-0">
               Etapa {{ idx + 1 }}
             </span>
           </div>
@@ -347,8 +495,8 @@ const servicesList = [
       </div>
     </section>
 
-    <!-- 6. CALCULADORA INTERATIVA DE ECONOMIA (FECHAMENTO DE VENDAS) -->
-    <section id="calculadora" class="py-14 sm:py-20 border-b border-slate-200 bg-gradient-to-b from-slate-50 to-white">
+    <!-- 7. CALCULADORA INTERATIVA DE ECONOMIA (FECHAMENTO DE VENDAS) -->
+    <section id="calculadora" class="py-14 sm:py-20 border-b border-slate-200 bg-gradient-to-b from-white to-slate-50">
       <div class="max-w-4xl mx-auto px-4 sm:px-6">
         <div class="bg-white border-2 border-blue-200 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8">
           <div class="text-center space-y-2">
@@ -431,7 +579,7 @@ const servicesList = [
       </div>
     </section>
 
-    <!-- 7. QUEM ATENDEMOS -->
+    <!-- 8. QUEM ATENDEMOS -->
     <section class="py-14 sm:py-16 border-b border-slate-200 bg-white">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 text-center space-y-6">
         <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">
@@ -447,7 +595,7 @@ const servicesList = [
       </div>
     </section>
 
-    <!-- 8. FOOTER / CONTATO COMERCIAL -->
+    <!-- 9. FOOTER / CONTATO COMERCIAL -->
     <footer class="bg-slate-900 text-slate-400 py-12 text-xs">
       <div class="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
         <div class="space-y-1">
