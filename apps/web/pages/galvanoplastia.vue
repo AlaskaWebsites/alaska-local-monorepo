@@ -180,14 +180,14 @@ const galleryImages = [
     subtitle: 'Estruturas alinhadas em gabarito sem puxar para os lados'
   },
   {
-    url: 'https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=800&q=80',
-    title: 'Barras, Tubos e Perfis Longos',
-    subtitle: 'Tanques de alta extensão para serralherias e estruturas'
+    url: 'https://upload.wikimedia.org/wikipedia/commons/2/26/Automatic_Crane_lifting_steel_tubes_--_ORITCRANES.jpg',
+    title: 'Barras de Ferro e Tubos Longos',
+    subtitle: 'Tanques de alta extensão para serralherias e perfis pesados'
   },
   {
-    url: 'https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=800&q=80',
-    title: 'Peças Pequenas em Tambor Rotativo',
-    subtitle: 'Zincagem e estanhagem uniforme de parafusos e componentes'
+    url: 'https://upload.wikimedia.org/wikipedia/commons/c/c3/Aneka_Macam_Mur_dan_Baut.jpg',
+    title: 'Peças e Fixadores de Banho',
+    subtitle: 'Banhos galvânicos em tambor rotativo para parafusos e miudezas'
   }
 ]
 </script>
