@@ -17,7 +17,6 @@ import {
   Scale,
   FileText,
   Zap,
-  Store,
   ChevronLeft,
   Mail,
   Send,
@@ -360,15 +359,11 @@ function resetLeadForm() {
           <a href="#faq" class="hover:text-[#2d7097] transition-colors">Dúvidas Frequentes</a>
         </nav>
 
-        <!-- Ações do Cabeçalho: Voltar à Home, Painel Admin e CTA WhatsApp -->
+        <!-- Ações do Cabeçalho: Voltar à Home e CTA WhatsApp -->
         <div class="flex items-center gap-2.5 sm:gap-3">
           <NuxtLink to="/" class="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-[#2d7097] transition-colors p-2 rounded-xl hover:bg-slate-100" title="Ver todos os estabelecimentos no Alaska Local">
             <ChevronLeft class="w-3.5 h-3.5" />
             <span>Alaska Local</span>
-          </NuxtLink>
-
-          <NuxtLink to="/bamatec/admin" class="p-2 rounded-xl text-slate-400 hover:text-[#2d7097] hover:bg-slate-100 transition-colors" title="Acessar Painel do Lojista">
-            <Store class="w-4 h-4" />
           </NuxtLink>
 
           <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
