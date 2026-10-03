@@ -21,11 +21,11 @@ import {
 
 // Metadados da página para SEO e autoridade B2B
 useHead({
-  title: 'Alcalá Galvanoplastia — Tratamento de Metais, Banhos Galvânicos e Frotas',
+  title: 'Bama TEC — Banho de Estanho, Cobre, Zinco e Reforma de Frotas | Itaquaquecetuba',
   meta: [
     {
       name: 'description',
-      content: 'Indústria especializada em galvanoplastia e tratamento de superfícies: banho em barras de ferro longas, peças pequenas em tambor rotativo, peças técnicas em gancheira e reforma de frotas de carrinhos de supermercado. Banhos de Zinco, Níquel, Estanho e Fosfatização.'
+      content: 'Bama TEC Beneficiamento de Metais Ltda — Mais de 10 anos de excelência em tratamento de superfícies e banhos químicos: Estanho (barramentos elétricos e telecomunicações), Cobre, Zinco eletrolítico, tambor rotativo, barras longas e reforma de frotas de carrinhos em Itaquaquecetuba e Grande SP.'
     }
   ]
 })
@@ -41,13 +41,13 @@ const estimatedSavings = computed(() => estimatedNewCost.value - estimatedReform
 
 // Parâmetros do Simulador: Peças Pequenas / Tambor
 const partWeight = ref(150) // em kg
-const selectedBathType = ref('zinco_azul')
+const selectedBathType = ref('estanho')
 const bathOptions = [
-  { id: 'zinco_azul', label: 'Zinco Branco/Azul (Eletrolítico)' },
+  { id: 'estanho', label: 'Estanho Eletrolítico (Barramentos / Alta Condutividade)' },
+  { id: 'cobre', label: 'Banho de Cobre (Cobreamento Eletrolítico)' },
+  { id: 'zinco_azul', label: 'Zinco Branco/Azul (Eletrolítico Brilhante)' },
   { id: 'zinco_amarelo', label: 'Zinco Amarelo (Trivalente/Bicromatizado)' },
-  { id: 'niquel', label: 'Níquel Químico / Eletrolítico' },
-  { id: 'estanho', label: 'Estanho Eletrolítico (Barramentos/Elétrica)' },
-  { id: 'fosfatizacao', label: 'Decapagem & Fosfatização' }
+  { id: 'decapagem', label: 'Decapagem Química & Desengraxe de Metais' }
 ]
 
 // Parâmetros do Simulador: Barras e Perfis Longos
@@ -59,20 +59,20 @@ function formatBRL(val: number): string {
 }
 
 // WhatsApp link generator contextualizado
-const whatsappNumber = '5511999999999' // Customizável com o WhatsApp comercial da Alcalá
+const whatsappNumber = '5511988936972' // Customizável com o WhatsApp comercial da Bama TEC
 
 const whatsappUrl = computed(() => {
-  let msg = 'Olá! Visitei a página da Alcalá Galvanoplastia e gostaria de solicitar um orçamento.'
+  let msg = 'Olá! Visitei a página da Bama TEC e gostaria de solicitar um orçamento.'
 
   if (activeTab.value === 'carrinhos') {
     msg = `Olá! Gostaria de uma cotação para reforma, alinhamento e zincagem de uma frota de aproximadamente ${cartQuantity.value} carrinhos de compras.`
   } else if (activeTab.value === 'peças') {
-    const bathLabel = bathOptions.find(b => b.id === selectedBathType.value)?.label || 'Galvanoplastia'
-    msg = `Olá! Preciso de cotação para banho em tambor rotativo para cerca de ${partWeight.value}kg de peças/fixadores. Banho desejado: ${bathLabel}.`
+    const bathLabel = bathOptions.find(b => b.id === selectedBathType.value)?.label || 'Banhos Químicos'
+    msg = `Olá! Preciso de cotação para banho em tambor rotativo/gancheira para cerca de ${partWeight.value}kg de peças/fixadores. Banho desejado: ${bathLabel}.`
   } else if (activeTab.value === 'barras') {
-    msg = `Olá! Gostaria de um orçamento para tratamento e galvanoplastia de aproximadamente ${barMeters.value} metros de barras/perfis metálicos.`
+    msg = `Olá! Gostaria de um orçamento para tratamento e banho galvânico de aproximadamente ${barMeters.value} metros de barras/perfis metálicos.`
   } else {
-    msg = 'Olá! Gostaria de enviar um desenho técnico / fotos de peças especiais para cotação de banho galvânico.'
+    msg = 'Olá! Gostaria de enviar um desenho técnico / fotos de peças especiais para cotação de banho com a Bama TEC.'
   }
 
   return `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(msg)}`
@@ -82,7 +82,7 @@ const whatsappUrl = computed(() => {
 function handleImgError(e: Event) {
   const target = e.target as HTMLImageElement
   if (target) {
-    target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400" fill="%23f1f5f9"><rect width="100%" height="100%" fill="%23f8fafc"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="bold" fill="%2394a3b8">⚙️ Alcalá Galvanoplastia</text></svg>'
+    target.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="600" height="400" viewBox="0 0 600 400" fill="%23f1f5f9"><rect width="100%" height="100%" fill="%23f8fafc"/><text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" font-family="sans-serif" font-size="18" font-weight="bold" fill="%2394a3b8">⚙️ Bama TEC Beneficiamento de Metais</text></svg>'
   }
 }
 
@@ -92,7 +92,7 @@ const itemsHandled = [
     title: 'Barras, Tubos e Perfis Longos',
     category: 'Linha Gancheira Pesada',
     desc: 'Tanques industriais compridos preparados para barras de ferro, perfis estruturais, tubulações e estruturas de serralheria de até 6 metros de comprimento sem emendas.',
-    features: ['Até 6 metros sem cortes', 'Camada uniforme sem escorrimentos', 'Zinco eletrolítico, níquel e decapagem'],
+    features: ['Até 6 metros sem cortes', 'Camada uniforme sem escorrimentos', 'Zinco eletrolítico, cobre e decapagem'],
     icon: Factory,
     tag: 'Serralheria & Estruturas'
   },
@@ -100,15 +100,15 @@ const itemsHandled = [
     title: 'Peças Pequenas & Fixadores em Tambor',
     category: 'Linha Tambor Rotativo',
     desc: 'Processamento de alta escala para parafusos, porcas, arruelas, molas, presilhas, rebites e miudezas metálicas. Tratamento uniforme com separação e centrifugação.',
-    features: ['Alta capacidade por batelada (kg)', 'Zincagem branca, amarela e preta', 'Custo altamente competitivo para escala'],
+    features: ['Alta capacidade por batelada (kg)', 'Zincagem branca e amarela', 'Custo altamente competitivo para escala'],
     icon: Box,
     tag: 'Autopeças & Metalúrgica'
   },
   {
     title: 'Componentes Elétricos & Barramentos',
-    category: 'Linha Estanho & Níquel',
-    desc: 'Estanhagem e niquelagem eletrolítica de precisão para barramentos de cobre, terminais de contato e componentes elétricos que exigem máxima condutividade e zero oxidação.',
-    features: ['Alta condutividade elétrica', 'Excelente soldabilidade técnica', 'Resistência à corrosão por sulfetação'],
+    category: 'Linha Estanho & Cobre',
+    desc: 'Estanhagem e cobreamento eletrolítico de alta precisão para barramentos de cobre, terminais de contato e componentes elétricos que exigem máxima condutividade e zero oxidação.',
+    features: ['Alta condutividade elétrica e térmica', 'Excelente soldabilidade técnica', 'Resistência à corrosão por sulfetação'],
     icon: Zap,
     tag: 'Elétrica & Painéis'
   },
@@ -125,6 +125,26 @@ const itemsHandled = [
 // Tipos de Banhos Químicos Oferecidos
 const bathTypes = [
   {
+    name: 'Estanho Eletrolítico (Estanhagem)',
+    badge: 'Especialidade Bama TEC',
+    color: 'border-blue-200 bg-blue-50/60 text-blue-950',
+    desc: 'Processo de tratamento superficial que confere proteção anticorrosiva superior, condutividade elétrica e térmica de alta precisão. Ideal para barramentos de cobre, telecomunicações e indústrias de alta tecnologia.',
+    variants: [
+      { name: 'Estanho para Barramentos Blindados', note: 'Alta capacidade de corrente e proteção à sulfetação' },
+      { name: 'Eletrônicos e Telecomunicações', note: 'Perfeita soldabilidade e contato elétrico estável' }
+    ]
+  },
+  {
+    name: 'Banho de Cobre (Cobreamento Eletrolítico)',
+    badge: 'Condutividade & Base Técnica',
+    color: 'border-amber-200 bg-amber-50/50 text-amber-950',
+    desc: 'Excelente condutividade elétrica, térmica e maleabilidade mecânica. Aplicado como camada intermediária de alta aderência para outros banhos ou acabamento técnico para componentes de transmissão elétrica.',
+    variants: [
+      { name: 'Cobre Alcalino e Ácido', note: 'Nivelamento uniforme de superfícies e ancoragem' },
+      { name: 'Barramentos e Contatos Elétricos', note: 'Máxima transferência de corrente sem aquecimento' }
+    ]
+  },
+  {
     name: 'Zinco Eletrolítico (Zincagem)',
     badge: 'Proteção Anticorrosiva',
     color: 'border-blue-200 bg-blue-50/50 text-blue-900',
@@ -133,26 +153,6 @@ const bathTypes = [
       { name: 'Passivação Azul (Brilhante)', note: 'Aspecto cromado/espelhado de alta estética' },
       { name: 'Passivação Amarela (Trivalente)', note: 'Bicromatizado isento de cromo hexavalente (RoHS)' },
       { name: 'Passivação Preta', note: 'Visual sofisticado e excelente resistência' }
-    ]
-  },
-  {
-    name: 'Níquel Eletrolítico & Químico',
-    badge: 'Dureza e Estética Nobre',
-    color: 'border-slate-200 bg-slate-50 text-slate-900',
-    desc: 'Acabamento de altíssima dureza e baixo coeficiente de atrito mecânico. Ideal para peças com desgaste constante, eixos, ferramentas e moldes.',
-    variants: [
-      { name: 'Níquel Brilhante', note: 'Espelhamento nobre e acabamento decorativo/técnico' },
-      { name: 'Níquel Semi-Brilhante & Químico', note: 'Camada de alta precisão com espessura micrométrica' }
-    ]
-  },
-  {
-    name: 'Estanho Eletrolítico (Estanhagem)',
-    badge: 'Condutividade Elétrica',
-    color: 'border-amber-200 bg-amber-50/40 text-amber-950',
-    desc: 'Indispensável para o setor eletroeletrônico. O estanho não oxida na presença de ar, garante ponto de contato estável e perfeita ancoragem de solda branda.',
-    variants: [
-      { name: 'Estanho Brilhante para Barramentos', note: 'Barramentos de cobre e latão de subestações' },
-      { name: 'Terminais e Conectores Automotivos', note: 'Resistência a atmosferas industriais agressivas' }
     ]
   },
   {
@@ -207,15 +207,15 @@ const galleryImages = [
           <div>
             <div class="flex items-center gap-2">
               <span class="text-base sm:text-xl font-black tracking-tight text-slate-900">
-                Alcalá <span class="text-blue-600">Galvanoplastia</span>
+                Bama <span class="text-blue-600">TEC</span>
               </span>
               <span
-                class="hidden md:inline-block text-[10px] font-bold text-slate-600 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded-full border border-slate-200">
-                Indústria B2B
+                class="hidden md:inline-block text-[10px] font-bold text-blue-700 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                Beneficiamento de Metais
               </span>
             </div>
             <p class="text-[11px] text-slate-500 font-medium hidden sm:block">
-              Tratamento de Metais • Zinco, Níquel, Estanho e Reforma de Frotas
+              10 Anos de Excelência • Banho de Estanho, Cobre, Zinco e Frotas • Itaquaquecetuba - SP
             </p>
           </div>
         </div>
@@ -251,29 +251,26 @@ const galleryImages = [
             <div
               class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-bold shadow-2xs">
               <Sparkles class="w-3.5 h-3.5 text-blue-600" />
-              <span>Tratamento de Superfícies & Galvanoplastia com Rigor Técnico</span>
+              <span>Tratamento de Metais & Banhos Químicos • 10 Anos de Mercado</span>
             </div>
 
             <h1 class="text-3xl sm:text-5xl lg:text-5xl font-black text-slate-900 tracking-tight leading-[1.15]">
-              Galvanoplastia Completa:<br />
+              Banhos Químicos & Galvanoplastia:<br />
               <span class="text-blue-600 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-                De Barras e Peças Técnicas
+                Estanho, Cobre e Zinco
               </span><br />
-              a Frotas de Supermercado.
+              para a Indústria e Varejo.
             </h1>
 
             <p class="text-sm sm:text-lg text-slate-600 font-medium leading-relaxed max-w-2xl mx-auto lg:mx-0">
-              Atendemos indústrias, metalúrgicas, serralherias e redes de varejo com capacidade para <strong>barras
-                longas em gancheiras de até 6m</strong>, <strong>fixadores em tambor rotativo</strong>,
-              <strong>estanhagem de barramentos</strong> e <strong>revitalização de frotas de carrinhos</strong> com
-              economia de até 70%.
+              Com mais de 10 anos de experiência, a <strong>Bama TEC</strong> é referência em beneficiamento de superfícies metálicas: especialistas em <strong>banho de estanho</strong> para barramentos elétricos e telecomunicações, <strong>banho de cobre</strong>, <strong>zinco eletrolítico</strong> para barras longas de até 6m, <strong>fixadores em tambor</strong> e <strong>reforma de frotas de carrinhos</strong> com economia de até 70%.
             </p>
 
             <!-- 4 Badges de Capacidade Fabril -->
             <div class="grid grid-cols-2 sm:grid-cols-2 gap-2.5 pt-2 text-xs font-semibold text-slate-700 text-left">
               <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-2.5 shadow-2xs">
                 <CheckCircle2 class="w-4 h-4 text-emerald-600 shrink-0" />
-                <span><strong>Zinco, Níquel & Estanho</strong> sob norma</span>
+                <span><strong>Estanho, Cobre & Zinco</strong> sob norma técnica</span>
               </div>
               <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-2.5 shadow-2xs">
                 <CheckCircle2 class="w-4 h-4 text-emerald-600 shrink-0" />
@@ -285,7 +282,7 @@ const galleryImages = [
               </div>
               <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-2.5 shadow-2xs">
                 <CheckCircle2 class="w-4 h-4 text-emerald-600 shrink-0" />
-                <span><strong>Logística Própria</strong> para coleta e entrega SP</span>
+                <span><strong>Fábrica em Itaquaquecetuba</strong> com logística SP</span>
               </div>
             </div>
 
@@ -293,7 +290,10 @@ const galleryImages = [
             <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-4">
               <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
                 class="w-full sm:w-auto px-7 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer">
-                <span>Falar com o Responsável Técnico</span>
+                <span class="flex items-center gap-2">
+                  <Phone class="w-4 h-4" />
+                  <span>Falar com o Diretor Bama</span>
+                </span>
                 <ArrowRight class="w-4 h-4" />
               </a>
 
@@ -324,9 +324,8 @@ const galleryImages = [
                     </span>
                     <span class="text-[10px] font-bold text-slate-300">Tanque & Tambor</span>
                   </div>
-                  <p class="text-sm font-black">Galvanoplastia Estática e Rotativa</p>
-                  <p class="text-[11px] text-slate-300">Peças usinadas, parafusaria, perfis pesados e frotas completas
-                    de varejo.</p>
+                  <p class="text-sm font-black">Bama TEC — Tratamento e Banhos Técnicos</p>
+                  <p class="text-[11px] text-slate-300">Barramentos elétricos, telecomunicações, fixadores, perfis pesados e frotas de varejo.</p>
                 </div>
               </div>
 
@@ -337,7 +336,7 @@ const galleryImages = [
                   ⚡
                 </div>
                 <div>
-                  <p class="leading-none">Zinco, Níquel e Estanho</p>
+                  <p class="leading-none">Estanho, Cobre e Zinco</p>
                   <p class="text-[10px] text-slate-500 font-semibold mt-0.5">Normas ASTM e ABNT</p>
                 </div>
               </div>
@@ -369,11 +368,10 @@ const galleryImages = [
             Versatilidade de Produção
           </span>
           <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-            Quais peças e itens passam pelo tratamento da Alcalá?
+            Quais peças e itens passam pelo tratamento da Bama TEC?
           </h2>
           <p class="text-sm sm:text-base text-slate-600 font-medium">
-            Estrutura fabril adaptada para receber desde miudezas a granel por peso (kg) até perfis metálicos pesados de
-            serralheria e frotas inteiras.
+            Estrutura fabril em Itaquaquecetuba adaptada para receber desde miudezas a granel por peso (kg) até barramentos blindados, perfis metálicos pesados e frotas comerciais.
           </p>
         </div>
 
@@ -393,9 +391,7 @@ const galleryImages = [
               </div>
 
               <div>
-                <span class="text-[11px] font-bold text-blue-600 uppercase tracking-wide">
-                  {{ item.category }}
-                </span>
+                <span class="text-[11px] font-black uppercase tracking-wider text-blue-600">{{ item.category }}</span>
                 <h3 class="text-lg font-black text-slate-900 mt-0.5 leading-snug">
                   {{ item.title }}
                 </h3>
@@ -405,9 +401,9 @@ const galleryImages = [
                 {{ item.desc }}
               </p>
 
-              <ul class="space-y-2 pt-2 border-t border-slate-200/70 text-xs text-slate-700 font-medium">
-                <li v-for="(feat, fIdx) in item.features" :key="fIdx" class="flex items-center gap-2">
-                  <Check class="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+              <ul class="space-y-1.5 pt-1 text-xs text-slate-700 font-semibold border-t border-slate-200/60">
+                <li v-for="(feat, fIdx) in item.features" :key="fIdx" class="flex items-center gap-1.5">
+                  <Check class="w-3.5 h-3.5 text-blue-600 shrink-0" />
                   <span>{{ feat }}</span>
                 </li>
               </ul>
@@ -425,7 +421,7 @@ const galleryImages = [
       </div>
     </section>
 
-    <!-- 4. TIPOS DE BANHOS E PROCESSOS QUÍMICOS (ZINCO, NÍQUEL, ESTANHO, ETC) -->
+    <!-- 4. TIPOS DE BANHOS E PROCESSOS QUÍMICOS (ESTANHO, COBRE, ZINCO, ETC) -->
     <section id="banhos" class="py-16 sm:py-24 border-b border-slate-200 bg-slate-50">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
         <div class="text-center space-y-3 max-w-3xl mx-auto">
@@ -434,11 +430,10 @@ const galleryImages = [
             Química de Superfície
           </span>
           <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-            Nossos Banhos e Tratamentos Galvânicos
+            Nossos Banhos e Tratamentos Químicos
           </h2>
           <p class="text-sm sm:text-base text-slate-600 font-medium">
-            Processos controlados quimicamente para conferir resistência à corrosão, dureza ao atrito, condutividade ou
-            padrão estético superior.
+            Processos controlados para conferir máxima condutividade elétrica, resistência anticorrosiva catódica, ancoragem mecânica e acabamento estético impecável.
           </p>
         </div>
 
@@ -465,8 +460,8 @@ const galleryImages = [
               {{ bath.desc }}
             </p>
 
-            <div class="space-y-2 pt-2 border-t border-slate-200/80">
-              <p class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+            <div class="space-y-2 pt-2 border-t border-slate-100">
+              <p class="text-xs font-black uppercase tracking-wider text-slate-800">
                 Variações e Aplicações:
               </p>
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
@@ -499,8 +494,7 @@ const galleryImages = [
           </p>
         </div>
 
-        <!-- Comparativo Visual Antes e Depois -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
           <!-- Card Antes -->
           <div class="bg-rose-50/40 border border-rose-200 rounded-3xl p-6 sm:p-8 space-y-5">
             <div class="aspect-[16/9] rounded-2xl overflow-hidden bg-slate-900 relative border border-rose-200">
@@ -515,7 +509,7 @@ const galleryImages = [
             </div>
 
             <div class="space-y-3">
-              <h3 class="font-extrabold text-rose-950 text-base sm:text-lg">Frota Velha e Degradada</h3>
+              <h3 class="font-black text-rose-950 text-lg">Frota Degradada Prejudica as Vendas</h3>
               <ul class="space-y-2 text-xs sm:text-sm text-slate-700">
                 <li class="flex items-start gap-2">
                   <span class="text-rose-600 font-bold">✕</span>
@@ -549,7 +543,7 @@ const galleryImages = [
             </div>
 
             <div class="space-y-3">
-              <h3 class="font-extrabold text-emerald-950 text-base sm:text-lg">Frota Alcalá Galvanizada</h3>
+              <h3 class="font-extrabold text-emerald-950 text-base sm:text-lg">Frota Bama TEC Galvanizada</h3>
               <ul class="space-y-2 text-xs sm:text-sm text-slate-700">
                 <li class="flex items-start gap-2">
                   <span class="text-emerald-600 font-bold">✓</span>
@@ -598,10 +592,10 @@ const galleryImages = [
             Simulador de Cotação Rápida
           </span>
           <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-            Calcule ou configure sua demanda em segundos
+            Calcule sua Necessidade por Tipo de Peça
           </h2>
           <p class="text-xs sm:text-sm text-slate-600 font-medium max-w-xl mx-auto">
-            Escolha o tipo de serviço que você precisa para pré-configurar os dados para nossa equipe técnica:
+            Escolha a categoria do seu material para estimar valores e solicitar uma proposta técnica sob medida.
           </p>
         </div>
 
@@ -618,27 +612,27 @@ const galleryImages = [
             'px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer',
             activeTab === 'peças' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-700 hover:text-slate-900'
           ]">
-            🔩 Peças em Tambor (kg)
+            📦 Peças / Tambor (kg)
           </button>
           <button @click="activeTab = 'barras'" :class="[
             'px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer',
             activeTab === 'barras' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-700 hover:text-slate-900'
           ]">
-            📏 Barras & Tubos Longos
+            🏗️ Barras e Perfis (m)
           </button>
           <button @click="activeTab = 'tecnicas'" :class="[
             'px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer',
             activeTab === 'tecnicas' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-700 hover:text-slate-900'
           ]">
-            📐 Peças Técnicas sob Desenho
+            ⚡ Peças Técnicas / Desenho
           </button>
         </div>
 
         <!-- Conteúdo da Aba: Carrinhos -->
         <div v-if="activeTab === 'carrinhos'"
-          class="bg-white border-2 border-blue-200 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-300">
-          <div class="text-center space-y-2">
-            <h3 class="text-xl sm:text-2xl font-black text-slate-900">
+          class="bg-white border-2 border-blue-200 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-200">
+          <div class="text-center space-y-1">
+            <h3 class="text-lg sm:text-xl font-black text-slate-900">
               Simulador de Economia de Frotas de Supermercado
             </h3>
             <p class="text-xs text-slate-600">Arraste a barra para selecionar a quantidade de carrinhos:</p>
@@ -662,22 +656,22 @@ const galleryImages = [
             </div>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
             <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center space-y-1">
               <span class="text-[11px] font-bold text-slate-500 uppercase">Comprando Novos</span>
               <p
                 class="text-lg sm:text-xl font-extrabold text-slate-700 font-mono line-through decoration-rose-500 decoration-2">
                 {{ formatBRL(estimatedNewCost) }}
               </p>
-              <span class="text-[10px] text-slate-400">Média R$ 750/un</span>
+              <span class="text-[10px] text-slate-400">Média de R$ 750/un</span>
             </div>
 
             <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center space-y-1">
-              <span class="text-[11px] font-bold text-slate-500 uppercase">Com Reforma Alcalá</span>
+              <span class="text-[11px] font-bold text-slate-500 uppercase">Com Reforma Bama TEC</span>
               <p class="text-lg sm:text-xl font-extrabold text-blue-700 font-mono">
                 {{ formatBRL(estimatedReformCost) }}
               </p>
-              <span class="text-[10px] text-slate-500">Média R$ 230/un completo</span>
+              <span class="text-[10px] text-slate-500">Média de R$ 230/un com tudo</span>
             </div>
 
             <div class="bg-emerald-50 border-2 border-emerald-400 rounded-2xl p-4 text-center space-y-1 shadow-xs">
@@ -700,132 +694,126 @@ const galleryImages = [
 
         <!-- Conteúdo da Aba: Peças Pequenas / Tambor -->
         <div v-else-if="activeTab === 'peças'"
-          class="bg-white border-2 border-blue-200 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-300">
-          <div class="text-center space-y-2">
-            <h3 class="text-xl sm:text-2xl font-black text-slate-900">
-              Cotação de Peças a Granel em Tambor Rotativo
+          class="bg-white border-2 border-blue-200 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-200">
+          <div class="text-center space-y-1">
+            <h3 class="text-lg sm:text-xl font-black text-slate-900">
+              Linha Tambor Rotativo — Fixadores e Miudezas Metálicas
             </h3>
-            <p class="text-xs text-slate-600">Parafusos, porcas, arruelas, molas, presilhas e estampados por quilo:</p>
+            <p class="text-xs text-slate-600">Simule a capacidade por peso para tratamento uniforme em escala:</p>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+          <div class="space-y-6 max-w-lg mx-auto">
+            <!-- Seletor do Tipo de Banho -->
             <div class="space-y-2">
-              <label class="block text-xs font-bold text-slate-700 uppercase">Peso Estimado do Lote (kg):</label>
-              <div class="flex items-center gap-3">
-                <input v-model.number="partWeight" type="number" min="20" step="10"
-                  class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl font-mono text-base font-bold text-slate-900 focus:outline-blue-600" />
-                <span class="text-sm font-bold text-slate-500">kg</span>
-              </div>
-              <p class="text-[11px] text-slate-400">Atendemos desde lotes pilotos de 30kg até toneladas/mês.</p>
-            </div>
-
-            <div class="space-y-2">
-              <label class="block text-xs font-bold text-slate-700 uppercase">Tipo de Banho Desejado:</label>
+              <label class="block text-xs font-black uppercase text-slate-700">Tipo de Banho Desejado:</label>
               <select v-model="selectedBathType"
-                class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-blue-600">
+                class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-600 focus:outline-none">
                 <option v-for="b in bathOptions" :key="b.id" :value="b.id">{{ b.label }}</option>
               </select>
-              <p class="text-[11px] text-slate-400">Passivações azul, amarela bicromatizada, estanho ou níquel.</p>
             </div>
-          </div>
 
-          <div
-            class="p-5 rounded-2xl bg-blue-50/70 border border-blue-200 text-slate-700 text-xs text-center max-w-xl mx-auto">
-            💡 <strong>Preço por Quilo (kg):</strong> Calculamos o valor exato com base na geometria da peça, espessura
-            de camada requerida (microns) e periodicidade de faturamento.
+            <!-- Slider de Peso -->
+            <div class="space-y-3">
+              <div class="flex items-center justify-between font-black text-slate-900 text-sm sm:text-base">
+                <span>Peso Estimado do Lote:</span>
+                <span class="px-4 py-1.5 bg-blue-600 text-white rounded-xl text-lg sm:text-xl font-mono">
+                  {{ partWeight }} kg
+                </span>
+              </div>
+
+              <input v-model.number="partWeight" type="range" min="30" max="1000" step="20"
+                class="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+
+              <div class="flex justify-between text-[11px] text-slate-500 font-semibold">
+                <span>30 kg (lote mínimo)</span>
+                <span>500 kg</span>
+                <span>1.000 kg</span>
+              </div>
+            </div>
           </div>
 
           <div class="text-center pt-2">
             <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
               class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-emerald-600/30 transition-all active:scale-95 cursor-pointer">
               <Phone class="w-4 h-4" />
-              <span>Receber Orçamento por Quilo para {{ partWeight }}kg</span>
+              <span>Cotar Lote de {{ partWeight }}kg no WhatsApp</span>
             </a>
           </div>
         </div>
 
-        <!-- Conteúdo da Aba: Barras e Tubos Longos -->
+        <!-- Conteúdo da Aba: Barras e Perfis -->
         <div v-else-if="activeTab === 'barras'"
-          class="bg-white border-2 border-blue-200 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-300">
-          <div class="text-center space-y-2">
-            <h3 class="text-xl sm:text-2xl font-black text-slate-900">
-              Galvanoplastia de Barras, Tubos e Perfis de até 6 Metros
+          class="bg-white border-2 border-blue-200 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-200">
+          <div class="text-center space-y-1">
+            <h3 class="text-lg sm:text-xl font-black text-slate-900">
+              Linha Gancheira Pesada — Barras, Tubos e Perfis de até 6 Metros
             </h3>
-            <p class="text-xs text-slate-600">Para serralherias, fabricantes de estruturas e implementos industriais:
-            </p>
+            <p class="text-xs text-slate-600">Banho em tanques industriais contínuos sem emendas ou cortes:</p>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-            <div class="space-y-2">
-              <label class="block text-xs font-bold text-slate-700 uppercase">Metragem ou Quantidade Linear:</label>
-              <div class="flex items-center gap-3">
-                <input v-model.number="barMeters" type="number" min="50" step="50"
-                  class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl font-mono text-base font-bold text-slate-900 focus:outline-blue-600" />
-                <span class="text-sm font-bold text-slate-500">metros</span>
+          <div class="space-y-6 max-w-lg mx-auto">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between font-black text-slate-900 text-sm sm:text-base">
+                <span>Metragem Linear Estimada:</span>
+                <span class="px-4 py-1.5 bg-blue-600 text-white rounded-xl text-lg sm:text-xl font-mono">
+                  {{ barMeters }} metros
+                </span>
+              </div>
+
+              <input v-model.number="barMeters" type="range" min="50" max="2000" step="50"
+                class="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+
+              <div class="flex justify-between text-[11px] text-slate-500 font-semibold">
+                <span>50 m</span>
+                <span>1.000 m</span>
+                <span>2.000 m</span>
               </div>
             </div>
-
-            <div class="space-y-2">
-              <label class="block text-xs font-bold text-slate-700 uppercase">Tipo de Perfil:</label>
-              <select v-model="barType"
-                class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-blue-600">
-                <option value="tubos">Tubos Redondos / Quadrados (Metalons)</option>
-                <option value="barras_chatas">Barras Chatas e Cantoneiras</option>
-                <option value="perfis_u">Perfis U e Vigas Estruturais</option>
-                <option value="barramentos">Barramentos Elétricos de Cobre (Estanho)</option>
-              </select>
-            </div>
-          </div>
-
-          <div
-            class="p-5 rounded-2xl bg-slate-100 border border-slate-200 text-slate-700 text-xs text-center max-w-xl mx-auto">
-            📏 <strong>Capacidade de Tanque:</strong> Nossos tanques estáticos acomodam barras e tubos inteiros sem
-            necessidade de cortes preliminares, garantindo cobertura 100% contínua.
           </div>
 
           <div class="text-center pt-2">
             <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
               class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-emerald-600/30 transition-all active:scale-95 cursor-pointer">
               <Phone class="w-4 h-4" />
-              <span>Cotar Banhos para {{ barMeters }}m de Barras</span>
+              <span>Solicitar Cotação para {{ barMeters }} Metros</span>
             </a>
           </div>
         </div>
 
         <!-- Conteúdo da Aba: Peças Técnicas sob Desenho -->
         <div v-else
-          class="bg-white border-2 border-blue-200 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-300">
-          <div class="text-center space-y-2 max-w-lg mx-auto">
-            <h3 class="text-xl sm:text-2xl font-black text-slate-900">
-              Cotação de Peças Especiais com Desenho Técnico
+          class="bg-white border-2 border-blue-200 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-200">
+          <div class="text-center space-y-2 max-w-xl mx-auto">
+            <div
+              class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto border border-blue-200">
+              <FileText class="w-6 h-6" />
+            </div>
+            <h3 class="text-lg sm:text-xl font-black text-slate-900">
+              Cotação Especial sob Desenho Técnico ou Amostra
             </h3>
-            <p class="text-xs text-slate-600">
-              Envie o PDF do projeto mecânico ou fotos da peça para análise direta pelo nosso químico e engenheiro de
-              produção:
+            <p class="text-xs sm:text-sm text-slate-600">
+              Para peças usinadas, barramentos de formatos complexos ou exigências com micragem específica de camada:
             </p>
           </div>
 
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto text-center">
-            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-              <span class="text-2xl">📄</span>
-              <p class="font-extrabold text-slate-900 text-xs">Desenho 2D/3D</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-center max-w-2xl mx-auto">
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+              <p class="font-extrabold text-slate-900 text-xs sm:text-sm">1. Envie o Projeto</p>
               <p class="text-[11px] text-slate-500">Envie por WhatsApp em PDF ou DWG</p>
             </div>
-            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-              <span class="text-2xl">🔬</span>
-              <p class="font-extrabold text-slate-900 text-xs">Espessura (µm)</p>
-              <p class="text-[11px] text-slate-500">Definição de camada e Salt Spray</p>
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+              <p class="font-extrabold text-slate-900 text-xs sm:text-sm">2. Avaliação Química</p>
+              <p class="text-[11px] text-slate-500">Cálculo de área e camada (µm)</p>
             </div>
-            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-              <span class="text-2xl">⏱️</span>
-              <p class="font-extrabold text-slate-900 text-xs">Retorno Rápido</p>
-              <p class="text-[11px] text-slate-500">Resposta de cotação em até 2 horas</p>
+            <div class="p-4 bg-slate-50 border border-slate-200 rounded-2xl space-y-1">
+              <p class="font-extrabold text-slate-900 text-xs sm:text-sm">3. Proposta Técnica</p>
+              <p class="text-[11px] text-slate-500">Retorno rápido com viabilidade</p>
             </div>
           </div>
 
           <div class="text-center pt-2">
             <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
-              class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-emerald-600/30 transition-all active:scale-95 cursor-pointer">
+              class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-blue-600/30 transition-all active:scale-95 cursor-pointer">
               <Phone class="w-4 h-4" />
               <span>Enviar Desenho Técnico via WhatsApp</span>
             </a>
@@ -912,7 +900,7 @@ const galleryImages = [
         <div class="space-y-3">
           <div class="p-5 bg-white border border-slate-200 rounded-2xl shadow-2xs space-y-1.5">
             <h4 class="font-extrabold text-slate-900 text-sm">
-              Qual o comprimento máximo das barras que a Alcalá consegue banhar?
+              Qual o comprimento máximo das barras que a Bama TEC consegue banhar?
             </h4>
             <p class="text-xs text-slate-600 leading-relaxed">
               Nossos tanques estáticos de gancheira comportam barras, tubos e perfis metálicos de até <strong>6 metros
@@ -944,6 +932,15 @@ const galleryImages = [
 
           <div class="p-5 bg-white border border-slate-200 rounded-2xl shadow-2xs space-y-1.5">
             <h4 class="font-extrabold text-slate-900 text-sm">
+              A Bama TEC emite Certificado de Qualidade e laudo técnico de camada (µm)?
+            </h4>
+            <p class="text-xs text-slate-600 leading-relaxed">
+              Sim! Emitimos <strong>Certificado de Qualidade</strong> com laudo de conformidade por lote, incluindo medição precisa de camada de depósito metálico (em micras/µm), verificação de aspecto visual isento de manchas e testes de aderência livre de desplacamento, em conformidade com as exigências de montadoras de painéis e indústrias elétricas.
+            </p>
+          </div>
+
+          <div class="p-5 bg-white border border-slate-200 rounded-2xl shadow-2xs space-y-1.5">
+            <h4 class="font-extrabold text-slate-900 text-sm">
               Como funciona a reforma de carrinhos de supermercado sem desabastecer a loja?
             </h4>
             <p class="text-xs text-slate-600 leading-relaxed">
@@ -963,48 +960,53 @@ const galleryImages = [
           <div class="space-y-3 md:col-span-1">
             <div class="flex items-center gap-2">
               <span class="text-xl">⚙️</span>
-              <span class="font-black text-white text-base">Alcalá Galvanoplastia</span>
+              <span class="font-black text-white text-base">Bama TEC Beneficiamento de Metais</span>
             </div>
             <p class="text-slate-400 text-xs leading-relaxed">
-              Excelência industrial em tratamento de superfícies metálicas, banhos galvânicos em gancheiras e tambores
-              rotativos, e revitalização de frotas comerciais.
+              Com 10 anos de experiência, somos referência em banhos químicos de Estanho, Cobre e Zinco, com rigoroso controle de processo e soluções sob medida para cada desafio industrial.
             </p>
-            <div class="pt-1">
-              <span
-                class="inline-block text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/40">
-                ● Expedição Operacional Ativa
-              </span>
+            <div class="pt-1 space-y-1.5">
+              <div>
+                <span
+                  class="inline-block text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/40">
+                  ● Fábrica Operacional Ativa
+                </span>
+              </div>
+              <p class="text-[11px] text-slate-400">Diretor Bama: <strong class="text-white">(11) 98893-6972</strong></p>
+              <p class="text-[11px] text-slate-400">E-mail: <strong class="text-white">bamatec22@gmail.com</strong></p>
             </div>
           </div>
 
           <!-- Coluna 2: Banhos Oferecidos -->
           <div class="space-y-2">
-            <p class="font-black text-white text-xs uppercase tracking-wider">Processos Galvânicos</p>
+            <p class="font-black text-white text-xs uppercase tracking-wider">Banhos e Tratamentos</p>
             <ul class="space-y-1.5 text-slate-400 text-xs">
-              <li>• Zinco Eletrolítico (Azul e Amarelo)</li>
-              <li>• Níquel Brilhante e Químico</li>
-              <li>• Estanho Eletrolítico (Barramentos)</li>
-              <li>• Decapagem e Desengraxe Químico</li>
-              <li>• Fosfatização ao Manganês e Zinco</li>
+              <li>• <strong>Estanho Eletrolítico</strong> (Barramentos)</li>
+              <li>• <strong>Banho de Cobre</strong> (Cobreamento)</li>
+              <li>• <strong>Zinco Eletrolítico</strong> (Azul e Amarelo)</li>
+              <li>• <strong>Decapagem Química</strong> e Desengraxe</li>
+              <li>• Controle de Camada (µm) e Salt Spray</li>
             </ul>
           </div>
 
           <!-- Coluna 3: Formatos Atendidos -->
           <div class="space-y-2">
-            <p class="font-black text-white text-xs uppercase tracking-wider">Formatos e Capacidade</p>
+            <p class="font-black text-white text-xs uppercase tracking-wider">Formatos & Localização</p>
             <ul class="space-y-1.5 text-slate-400 text-xs">
+              <li>• <strong>Fábrica:</strong> Est. São Miguel Arcanjo, 200/320B</li>
+              <li>• <strong>Bairro:</strong> Veraneio Maracanã</li>
+              <li>• <strong>Cidade:</strong> Itaquaquecetuba – SP</li>
               <li>• Barras e Tubos de até 6 Metros</li>
-              <li>• Fixadores e Miudezas em Tambor (kg)</li>
-              <li>• Peças Técnicas sob Desenho Mecânico</li>
+              <li>• Fixadores e Tambor Rotativo (kg)</li>
               <li>• Frotas de Carrinhos de Supermercado</li>
-              <li>• Aramados e Cestos Industriais</li>
             </ul>
           </div>
 
           <!-- Coluna 4: Contato Comercial -->
           <div class="space-y-3">
-            <p class="font-black text-white text-xs uppercase tracking-wider">Atendimento Comercial</p>
-            <p class="text-slate-300 font-medium">Grande São Paulo, Capital, ABC e Interior</p>
+            <p class="font-black text-white text-xs uppercase tracking-wider">Atendimento Direto</p>
+            <p class="text-slate-300 font-medium">Itaquaquecetuba, Alto Tietê, Grande SP e Interior</p>
+            <p class="text-slate-400 text-[11px]">Site oficial: <strong class="text-white">www.bamatec.com.br</strong></p>
             <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
               class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors">
               <Phone class="w-3.5 h-3.5" />
@@ -1014,7 +1016,7 @@ const galleryImages = [
         </div>
 
         <div class="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px] text-slate-500">
-          <p>© Alcalá Galvanoplastia & Tratamento de Metais. Todos os direitos reservados.</p>
+          <p>© Bama TEC Beneficiamento de Metais Ltda. Todos os direitos reservados. • www.bamatec.com.br</p>
           <p>Desenvolvido com tecnologia Alaska Local • Padrão de Alto Conforto Visual</p>
         </div>
       </div>
