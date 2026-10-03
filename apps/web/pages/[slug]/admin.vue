@@ -2,10 +2,11 @@
 <template>
   <div class="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-emerald-500 selection:text-white">
     <ClientOnly>
-      <!-- 1. Tela de Login por PIN -->
+      <!-- 1. Tela de Login por Credenciais ou PIN (ADR 017) -->
       <AdminLoginCard
         v-if="!isAuthenticated"
         :error-message="errorMessage"
+        :is-submitting="isSubmitting"
         :slug="slug"
         @login="handleLogin"
       />
@@ -50,17 +51,14 @@
           :is-service-store="isServiceStore"
           :is-product-available="isProductAvailable"
           :get-product-price="getProductPrice"
-          @open-price-modal="openPriceModal"
-          @edit-price="openPriceModal"
-          @toggle-avail="handleProductAvailabilityToggle"
-          @open-create-modal="isCreateProductOpen = true"
           @create-product="isCreateProductOpen = true"
-          @delete-product="handleDeleteProduct"
-          @open-options="openOptionsModal"
+          @toggle-product="handleProductAvailabilityToggle"
+          @edit-price="openPriceModal"
           @manage-options="openOptionsModal"
+          @delete-product="handleDeleteProduct"
         />
 
-        <!-- ABA 2: Especialistas / Agenda (Hub & Pro) -->
+        <!-- ABA 2: Equipe & Agenda (Exclusivo Hub & Pro) -->
         <AdminAgendaTab
           v-else-if="activeTab === 'agenda' && isServiceStore"
           :is-health-store="isHealthStore"
@@ -118,7 +116,9 @@
         <AdminSecurityTab
           v-else-if="activeTab === 'security'"
           :pin-success-msg="pinSuccessMsg"
+          :password-success-msg="passwordSuccessMsg"
           @save-pin="saveNewPin"
+          @change-password="handleChangePassword"
         />
 
         <!-- Modais Operacionais -->
@@ -189,9 +189,13 @@ const { themeClasses } = useTenantTheme(tenant)
 
 const {
   isAuthenticated,
+  merchantUser,
+  merchantToken,
+  isSubmitting,
   errorMessage,
   login,
   logout,
+  changePassword,
   changePin,
   getOverrides,
   toggleProductAvailability,
@@ -234,9 +238,9 @@ function showToast(msg: string) {
   }, 2500)
 }
 
-// 2. Autenticação por PIN
-async function handleLogin(pin: string) {
-  const success = await login(pin)
+// 2. Autenticação Corporativa e PIN (ADR 017)
+async function handleLogin(credentialsOrPin: any) {
+  const success = await login(credentialsOrPin)
   if (success) {
     refreshLocalOverrides()
     loadPixAndContactFromOverrides()
@@ -279,8 +283,11 @@ const categories = computed<Category[]>(() => {
 })
 
 function getProductPrice(product: Product): number {
-  const overridePrice = localOverrides.value?.products?.[product.id]?.price
-  return overridePrice !== undefined ? overridePrice : product.price
+  const prodOverrides = localOverrides.value?.products
+  if (prodOverrides?.[product.id]?.price !== undefined) {
+    return prodOverrides[product.id].price!
+  }
+  return product.price
 }
 
 function isProductAvailable(product: Product): boolean {
@@ -312,20 +319,16 @@ async function handleProductAvailabilityToggle(productOrList: any, productId?: s
 // 5. Modais de Catálogo
 const isPriceModalOpen = ref(false)
 const editingProduct = ref<Product | null>(null)
-const editingProductsList = ref<Product[]>([])
 const newPriceInput = ref(0)
 
 function openPriceModal(categoryProductsOrProduct: any, product?: Product) {
-  if (Array.isArray(categoryProductsOrProduct) && product) {
-    editingProductsList.value = categoryProductsOrProduct
+  if (product) {
     editingProduct.value = product
-  } else if (categoryProductsOrProduct && typeof categoryProductsOrProduct === 'object') {
+    newPriceInput.value = getProductPrice(product)
+    isPriceModalOpen.value = true
+  } else if (categoryProductsOrProduct && 'id' in categoryProductsOrProduct) {
     editingProduct.value = categoryProductsOrProduct
-    editingProductsList.value = [categoryProductsOrProduct]
-  }
-  if (editingProduct.value) {
-    const overridePrice = localOverrides.value?.products?.[editingProduct.value.id]?.price
-    newPriceInput.value = overridePrice !== undefined ? overridePrice : editingProduct.value.price
+    newPriceInput.value = getProductPrice(categoryProductsOrProduct)
     isPriceModalOpen.value = true
   }
 }
@@ -404,16 +407,19 @@ function handleProfDayToggle(profId: string, dayIndex: number, name: string) {
     : [...currentDays, dayIndex]
   updateProfessionalDays(profId, updatedDays)
   refreshLocalOverrides()
+  showToast(`Escala semanal de ${name} atualizada!`)
 }
 
 function handleProfWorkHoursChange(profId: string, workHours: { start: string; end: string }, name: string) {
   updateProfessionalHours(profId, workHours)
   refreshLocalOverrides()
+  showToast(`Horário de expediente de ${name} atualizado!`)
 }
 
 function handleProfLunchChange(profId: string, lunchBreak: { start: string; end: string; enabled: boolean }, name: string) {
   updateProfessionalLunch(profId, lunchBreak)
   refreshLocalOverrides()
+  showToast(`Horário de almoço de ${name} atualizado!`)
 }
 
 const isCreateProfOpen = ref(false)
@@ -587,8 +593,10 @@ function saveAnnouncementConfig() {
   showToast('Comunicado salvo!')
 }
 
-// 11. Segurança & PIN
+// 11. Segurança, PIN e Senha Corporativa (ADR 017)
 const pinSuccessMsg = ref('')
+const passwordSuccessMsg = ref('')
+
 async function saveNewPin(newPin: string, currentPin?: string) {
   const ok = await changePin(newPin, currentPin)
   if (ok) {
@@ -597,6 +605,19 @@ async function saveNewPin(newPin: string, currentPin?: string) {
     setTimeout(() => {
       pinSuccessMsg.value = ''
     }, 3000)
+  }
+}
+
+async function handleChangePassword(payload: { currentPassword: string; newPassword: string; confirmPassword: string }) {
+  const res = await changePassword(payload)
+  if (res.success) {
+    passwordSuccessMsg.value = res.message || 'Senha corporativa alterada com sucesso!'
+    showToast('Senha atualizada com sucesso!')
+    setTimeout(() => {
+      passwordSuccessMsg.value = ''
+    }, 3500)
+  } else {
+    showToast(res.message || 'Erro ao alterar senha.')
   }
 }
 

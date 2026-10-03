@@ -12,6 +12,7 @@ Documentação técnica oficial da aplicação front-end Nuxt 3 / Vue 3 do ecoss
 - **Resiliência e Zero Downtime**: Fallback inteligente para dados locais (`~/data/*.json`) e imagens com geração dinâmica de SVGs temáticos (`utils/images.ts`).
 - **Acessibilidade Semântica W3C / WCAG**: Todos os modais e gavetas contam com `role="dialog"`, `aria-modal="true"`, `aria-labelledby`, captura de tecla `Escape` e trava de rolagem via `useBodyScrollLock`.
 - **Mural de Pedidos em Tempo Real (ADR 024)**: Gestão ágil de comandas no balcão e delivery com avanço de status em 1 toque (< 50ms), notificações pré-formatadas para WhatsApp e métricas de faturamento do dia.
+- **Autenticação Corporativa do Lojista (ADR 025 / ADR 017)**: Login com e-mail corporativo, senha com hash seguro e token JWT, com alternância para PIN rápido e gestão de senhas em tempo real.
 
 ---
 
@@ -20,7 +21,7 @@ Documentação técnica oficial da aplicação front-end Nuxt 3 / Vue 3 do ecoss
 | Composable | Responsabilidade Central | Dependências / Integrações |
 | :--- | :--- | :--- |
 | **`useTenant.ts`** | Resolução síncrona e reativa do tenant ativo, cache com `useState`, deduplicação de requisições em voo, debounce de 2s e fallback local. | `useState`, `@alaska/contracts`, `TenantSchema` |
-| **`useMerchantAdmin.ts`** | Gestão operacional mobile (< 50ms): 8 abas operacionais, pausa rápida, criação/exclusão de itens/especialistas, escala 7 dias, Pix e segurança PIN. | `@alaska/contracts`, `useHaptic`, `localStorage` |
+| **`useMerchantAdmin.ts`** | Gestão operacional mobile (< 50ms): autenticação corporativa (e-mail/senha/JWT) e PIN, 8 abas operacionais, pausa rápida, criação/exclusão de itens/especialistas, escala 7 dias, Pix e segurança. | `@alaska/contracts`, `useHaptic`, `localStorage`, `sessionStorage` |
 | **`useOrderDashboard.ts`** | Gestão de pedidos e comandas em tempo real (< 50ms): métricas do dia, transições de status da esteira, WhatsApp, polling e fallback local. | `@alaska/contracts`, `useHaptic`, `localStorage` |
 | **`useCart.ts`** | Sacola isolada por loja (`alaska_cart_<slug>`), múltiplos adicionais, observações e feedback tátil. | `@vueuse/core`, `useHaptic` |
 | **`useOpeningHours.ts`** | Verificação em tempo real do status de atendimento, cálculo do próximo horário de abertura/fechamento e detecção da pausa geral de emergência. | `@alaska/contracts`, `Date` |
@@ -48,7 +49,7 @@ apps/web/components/
 │   └── BottomCartFloatingBar.vue   # Barra fixa flutuante de acesso à sacola (ClientOnly)
 │
 ├── admin/                      # Componentes do Painel do Lojista (8 Abas & 4 Modais)
-│   ├── AdminLoginCard.vue          # Tela de bloqueio por PIN com validação
+│   ├── AdminLoginCard.vue          # Tela de autenticação por E-mail/Senha (ADR 017) ou PIN rápido
 │   ├── AdminTopHeader.vue          # Cabeçalho do painel com status pulse e botão Sair
 │   ├── AdminTabsNav.vue            # Barra de abas com rolagem lateral e setas (badge de novos pedidos)
 │   │
@@ -60,7 +61,7 @@ apps/web/components/
 │   │   ├── AdminHoursTab.vue         # Aba 4: Pausa geral de emergência e escala semanal de 7 dias
 │   │   ├── AdminDeliveryTab.vue      # Aba 5: Taxas de entrega, pedido mínimo e prazos
 │   │   ├── AdminAnnouncementTab.vue  # Aba 6: Banner de comunicado oficial no topo
-│   │   └── AdminSecurityTab.vue      # Aba 7: Troca de PIN de segurança do lojista (ADR 023)
+│   │   └── AdminSecurityTab.vue      # Aba 7: Troca de senha corporativa (ADR 017) e PIN de acesso rápido
 │   │
 │   └── modals/
 │       ├── AdminPriceModal.vue         # Modal de ajuste de preço de produto
@@ -90,6 +91,7 @@ apps/web/components/
 - **[ADR 018: Resiliência de Contratos de Props, Emissão Dual e Defesa Anti-Crash](./adrs/018-resiliencia-de-contratos-props-e-eventos-das-abas-admin.md)** — Blindagem das abas operacionais do Admin e canais sociais.
 - **[ADR 023: Persistência do PIN Administrativo no PostgreSQL](./adrs/023-persistencia-pin-administrativo-postgresql.md)** — Hashing SHA-256 e sincronização autoritativa.
 - **[ADR 024: Mural de Pedidos em Tempo Real e Gestão Operacional (Order Dashboard)](./adrs/024-mural-de-pedidos-e-gestao-em-tempo-real-order-dashboard.md)** — Acompanhamento de comandas, transições de esteira, WhatsApp e métricas diárias.
+- **[ADR 025: Autenticação Corporativa do Lojista, Gestão de Senhas e Sessão JWT](./adrs/025-autenticacao-corporativa-lojista-email-senha.md)** — Login corporativo com e-mail e senha, Bearer token, persistência de sessão e alternância com PIN rápido.
 
 ---
 
