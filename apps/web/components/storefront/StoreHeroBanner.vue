@@ -6,26 +6,20 @@ import { handleImageError } from '~/utils/images'
 
 const props = defineProps<{
   banner?: string
-  storeName: string
+  bannerUrl?: string
+  storeName?: string
   theme?: string
+  themeClasses?: any
   isEmergencyClosed?: boolean
-  announcement?: { enabled?: boolean; message?: string } | string | null
+  announcement?: { enabled?: boolean; message?: string }
 }>()
 
 const emit = defineEmits<{
   (e: 'share'): void
 }>()
 
-const isAnnouncementActive = computed(() => {
-  if (!props.announcement) return false
-  if (typeof props.announcement === 'string') return props.announcement.trim().length > 0
-  return Boolean(props.announcement.enabled && props.announcement.message)
-})
-
-const announcementText = computed(() => {
-  if (!props.announcement) return ''
-  if (typeof props.announcement === 'string') return props.announcement
-  return props.announcement.message || ''
+const effectiveBanner = computed(() => {
+  return props.banner || props.bannerUrl || ''
 })
 </script>
 
@@ -43,20 +37,20 @@ const announcementText = computed(() => {
 
     <!-- Banner de Comunicado Oficial da Loja -->
     <div
-      v-else-if="isAnnouncementActive"
+      v-else-if="announcement?.enabled && announcement?.message"
       class="bg-amber-500 text-slate-950 text-xs font-bold p-2.5 px-4 text-center sticky top-0 z-40 shadow-sm flex items-center justify-center gap-2"
       role="status"
     >
       <span>📢</span>
-      <span>{{ announcementText }}</span>
+      <span>{{ announcement.message }}</span>
     </div>
 
     <!-- Hero Banner Principal com Gradiente Escuro Suave -->
     <div class="relative h-48 sm:h-64 w-full bg-slate-900 overflow-hidden">
       <img
-        v-if="banner"
-        :src="banner"
-        :alt="`Banner de ${storeName}`"
+        v-if="effectiveBanner"
+        :src="effectiveBanner"
+        :alt="`Banner de ${storeName || 'Loja'}`"
         class="w-full h-full object-cover opacity-80"
         @error="handleImageError($event, theme)"
       />
@@ -74,6 +68,7 @@ const announcementText = computed(() => {
 
       <!-- Botão de Compartilhar -->
       <button
+        type="button"
         @click="emit('share')"
         class="absolute top-4 right-4 z-20 p-2 rounded-full bg-black/40 backdrop-blur-md text-white hover:bg-black/60 transition-colors border border-white/10 cursor-pointer"
         aria-label="Compartilhar vitrine da loja"
