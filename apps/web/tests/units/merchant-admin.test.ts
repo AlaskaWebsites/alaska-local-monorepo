@@ -232,4 +232,98 @@ describe('Unit: useMerchantAdmin Composable (ADR 013 & Novas Funcionalidades)', 
       expect(overrides.closedEmergencyMessage).toBe('Pausa técnica para manutenção')
     })
   })
+
+  describe('ADR 017: Autenticação Corporativa do Lojista (E-mail e Senha)', () => {
+    it('deve realizar login corporativo com e-mail e senha válidos', async () => {
+      const admin = useMerchantAdmin(slug)
+      const success = await admin.login({
+        email: 'dono@hamburgueria.com.br',
+        password: 'minhasenhasegura',
+      })
+
+      expect(success).toBe(true)
+      expect(admin.isAuthenticated.value).toBe(true)
+      expect(admin.merchantUser.value).toBeDefined()
+      expect(admin.merchantUser.value?.email).toBe('dono@hamburgueria.com.br')
+      expect(admin.merchantToken.value).toBeDefined()
+    })
+
+    it('deve rejeitar e-mail inválido no login corporativo', async () => {
+      const admin = useMerchantAdmin(slug)
+      const success = await admin.login({
+        email: 'email-invalido',
+        password: 'minhasenhasegura',
+      })
+
+      expect(success).toBe(false)
+      expect(admin.isAuthenticated.value).toBe(false)
+      expect(admin.errorMessage.value).toContain('E-mail corporativo inválido')
+    })
+
+    it('deve rejeitar senha curta no login corporativo', async () => {
+      const admin = useMerchantAdmin(slug)
+      const success = await admin.login({
+        email: 'dono@hamburgueria.com.br',
+        password: '123',
+      })
+
+      expect(success).toBe(false)
+      expect(admin.isAuthenticated.value).toBe(false)
+      expect(admin.errorMessage.value).toContain('mínimo 6 caracteres')
+    })
+
+    it('deve realizar logout limpando sessão corporativa e token', async () => {
+      const admin = useMerchantAdmin(slug)
+      await admin.login({
+        email: 'dono@hamburgueria.com.br',
+        password: 'minhasenhasegura',
+      })
+      expect(admin.isAuthenticated.value).toBe(true)
+
+      admin.logout()
+      expect(admin.isAuthenticated.value).toBe(false)
+      expect(admin.merchantUser.value).toBeNull()
+      expect(admin.merchantToken.value).toBeNull()
+    })
+
+    it('deve alterar senha corporativa com sucesso quando dados são válidos', async () => {
+      const admin = useMerchantAdmin(slug)
+      await admin.login({
+        email: 'dono@hamburgueria.com.br',
+        password: 'minhasenhasegura',
+      })
+
+      const res = await admin.changePassword({
+        currentPassword: 'minhasenhasegura',
+        newPassword: 'NovaSenhaForte2026!',
+        confirmPassword: 'NovaSenhaForte2026!',
+      })
+
+      expect(res.success).toBe(true)
+    })
+
+    it('deve rejeitar troca de senha se confirmação for divergente', async () => {
+      const admin = useMerchantAdmin(slug)
+      const res = await admin.changePassword({
+        currentPassword: 'minhasenhasegura',
+        newPassword: 'NovaSenhaForte2026!',
+        confirmPassword: 'SenhaCompletamenteDiferente',
+      })
+
+      expect(res.success).toBe(false)
+      expect(res.message).toContain('não coincidem')
+    })
+
+    it('deve rejeitar troca de senha se nova senha tiver menos de 8 caracteres', async () => {
+      const admin = useMerchantAdmin(slug)
+      const res = await admin.changePassword({
+        currentPassword: 'minhasenhasegura',
+        newPassword: '12345',
+        confirmPassword: '12345',
+      })
+
+      expect(res.success).toBe(false)
+      expect(res.message).toContain('mínimo 8 caracteres')
+    })
+  })
 })
