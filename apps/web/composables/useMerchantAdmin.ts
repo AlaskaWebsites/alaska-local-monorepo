@@ -1,14 +1,18 @@
 // composables/useMerchantAdmin.ts
-import { ref, computed, isRef, type Ref } from 'vue'
+import { ref, computed, isRef, getCurrentInstance, type Ref } from 'vue'
 import { useRoute } from 'vue-router'
 import type { Product, Category } from '@alaska/contracts'
 import {
-  MerchantLoginSchema,
+  MerchantCredentialsLoginSchema,
+  MerchantUserLoginSchema,
   ChangeMerchantPasswordSchema,
-  type MerchantLoginDto,
+  type MerchantCredentialsLoginDto,
   type ChangeMerchantPasswordDto,
   type MerchantSession,
 } from '@alaska/contracts'
+
+export const MerchantLoginSchema = MerchantCredentialsLoginSchema
+export type MerchantLoginDto = MerchantCredentialsLoginDto
 import { useHaptic } from './useHaptic'
 
 function safeHaptic(duration = 20) {
@@ -144,7 +148,8 @@ function removeSessionItem(key: string): void {
 }
 
 export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | undefined>) {
-  const route = typeof useRoute === 'function' ? useRoute() : null
+  const instance = getCurrentInstance()
+  const route = instance && typeof useRoute === 'function' ? useRoute() : null
   const apiBaseUrl = getApiBaseUrl()
 
   const currentSlug = computed(() => {
@@ -260,7 +265,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
           return false
         }
 
-        const parseResult = MerchantLoginSchema.safeParse({
+        const parseResult = MerchantCredentialsLoginSchema.safeParse({
           email,
           password,
           tenantSlug: currentSlug.value,
