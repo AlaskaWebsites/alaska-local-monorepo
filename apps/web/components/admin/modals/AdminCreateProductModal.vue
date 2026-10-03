@@ -29,7 +29,7 @@ const showManualUrl = ref(false)
 const form = ref({
   name: '',
   price: 0,
-  categoryId: '',
+  categoryId: props.categories[0]?.id || '',
   description: '',
   image: ''
 })
@@ -46,10 +46,8 @@ watch(
         image: ''
       }
       previewUrl.value = null
+      uploadError.value = null
       showManualUrl.value = false
-      if (fileInputRef.value) {
-        fileInputRef.value.value = ''
-      }
     }
   }
 )
@@ -79,15 +77,16 @@ async function onFileSelected(event: Event) {
   previewUrl.value = URL.createObjectURL(file)
 
   const result = await uploadImage(file)
-  if (result?.url) {
+  if (result.success && result.url) {
     form.value.image = result.url
-    previewUrl.value = result.url
+  } else {
+    previewUrl.value = null
   }
 }
 
 function removeImage() {
-  form.value.image = ''
   previewUrl.value = null
+  form.value.image = ''
   if (fileInputRef.value) {
     fileInputRef.value.value = ''
   }
@@ -95,7 +94,6 @@ function removeImage() {
 
 function handleSubmit() {
   if (isUploading.value) return
-  emit('submit', form.value)
   emit('create', form.value)
 }
 </script>
@@ -156,12 +154,12 @@ function handleSubmit() {
           <input
             ref="fileInputRef"
             type="file"
-            accept="image/png, image/jpeg, image/webp"
+            accept="image/png,image/jpeg,image/webp"
             class="hidden"
             @change="onFileSelected"
           />
 
-          <!-- Área de Upload / Seleção Mobile -->
+          <!-- Botão de Upload Customizado -->
           <div
             v-if="!previewUrl && !form.image"
             @click="triggerFileSelect"
@@ -225,8 +223,8 @@ function handleSubmit() {
             ⚠️ {{ uploadError }}
           </p>
 
-          <!-- Fallback: Link manual -->
-          <div class="mt-1.5 flex items-center justify-between">
+          <!-- Input Manual Alternativo Opcional -->
+          <div class="mt-2">
             <button
               type="button"
               @click="showManualUrl = !showManualUrl"
