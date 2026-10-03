@@ -93,7 +93,7 @@ function handleSubmit() {
                 type="email"
                 autocomplete="username"
                 required
-                placeholder="dono@sualoja.com.br"
+                :placeholder="`admin@${slug}.com.br`"
                 class="w-full bg-slate-50 border border-slate-200 focus:bg-white rounded-xl px-3.5 py-2.5 text-xs text-slate-900 outline-none focus:border-slate-400 transition-all"
                 autofocus
               />
@@ -118,10 +118,13 @@ function handleSubmit() {
           </div>
 
           <!-- Dica Demo -->
-          <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-[11px] text-slate-500 space-y-0.5">
+          <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-xl text-[11px] text-slate-500 space-y-1">
             <span class="font-bold text-slate-700">Dica de Demonstração:</span>
             <p>
-              Use <strong class="text-slate-700">{{ slug === 'bamatec' ? 'bamatec22@gmail.com' : 'dono@hamburgueria.com.br' }}</strong> e senha <strong class="text-slate-700">minhasenhasegura</strong>
+              Use <strong class="text-slate-700">{{ slug === 'bamatec' ? 'bamatec22@gmail.com' : `admin@${slug}.com.br` }}</strong> e senha <strong class="text-slate-700">minhasenhasegura</strong>
+            </p>
+            <p class="text-[10px] text-slate-400">
+              Ou acesse em 1 clique pelo <strong class="text-slate-600">PIN 1234</strong> na aba acima.
             </p>
           </div>
         </template>

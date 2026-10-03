@@ -19,9 +19,36 @@ export interface MerchantUserRow {
 
 @Injectable()
 export class PostgresMerchantUserRepository implements IMerchantUserRepository {
+  private schemaEnsured = false;
+
   constructor(
     @Inject(TOKENS.DATABASE_SERVICE) private readonly db: PostgresService,
   ) {}
+
+  private async ensureSchema(): Promise<void> {
+    if (this.schemaEnsured) return;
+    try {
+      await this.db.query(`
+        CREATE TABLE IF NOT EXISTS merchant_users (
+          id VARCHAR(100) PRIMARY KEY,
+          tenant_id VARCHAR(100) NOT NULL,
+          tenant_slug VARCHAR(100) NOT NULL,
+          email VARCHAR(255) NOT NULL,
+          password_hash VARCHAR(255) NOT NULL,
+          name VARCHAR(255),
+          role VARCHAR(50) DEFAULT 'merchant',
+          is_active BOOLEAN DEFAULT true,
+          created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+          updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+          CONSTRAINT uq_merchant_user_tenant_email UNIQUE(tenant_slug, email)
+        );
+        CREATE INDEX IF NOT EXISTS idx_merchant_users_slug_email ON merchant_users(tenant_slug, email);
+      `);
+      this.schemaEnsured = true;
+    } catch {
+      // Ignora erro caso a tabela já exista
+    }
+  }
 
   private toDomain(row: MerchantUserRow): MerchantUser {
     return new MerchantUser({
@@ -39,6 +66,7 @@ export class PostgresMerchantUserRepository implements IMerchantUserRepository {
   }
 
   async findById(id: string): Promise<MerchantUser | null> {
+    await this.ensureSchema();
     const result = await this.db.query<MerchantUserRow>(
       'SELECT * FROM merchant_users WHERE id = $1 LIMIT 1',
       [id],
@@ -48,6 +76,7 @@ export class PostgresMerchantUserRepository implements IMerchantUserRepository {
   }
 
   async findByEmailAndSlug(email: string, tenantSlug: string): Promise<MerchantUser | null> {
+    await this.ensureSchema();
     const result = await this.db.query<MerchantUserRow>(
       'SELECT * FROM merchant_users WHERE LOWER(email) = $1 AND LOWER(tenant_slug) = $2 LIMIT 1',
       [email.toLowerCase().trim(), tenantSlug.toLowerCase().trim()],
@@ -57,6 +86,7 @@ export class PostgresMerchantUserRepository implements IMerchantUserRepository {
   }
 
   async findByTenantId(tenantId: string): Promise<MerchantUser[]> {
+    await this.ensureSchema();
     const result = await this.db.query<MerchantUserRow>(
       'SELECT * FROM merchant_users WHERE tenant_id = $1 ORDER BY created_at ASC',
       [tenantId],
@@ -65,6 +95,7 @@ export class PostgresMerchantUserRepository implements IMerchantUserRepository {
   }
 
   async save(user: MerchantUser): Promise<void> {
+    await this.ensureSchema();
     await this.db.query(
       `INSERT INTO merchant_users (
         id, tenant_id, tenant_slug, email, password_hash, name, role, is_active, created_at, updated_at

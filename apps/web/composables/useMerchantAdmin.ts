@@ -23,6 +23,20 @@ function safeHaptic(duration = 20) {
   } catch {}
 }
 
+function safeBase64Encode(str: string): string {
+  try {
+    if (typeof btoa === 'function') {
+      return btoa(unescape(encodeURIComponent(str)))
+    }
+  } catch {}
+  try {
+    if (typeof Buffer !== 'undefined') {
+      return Buffer.from(str).toString('base64')
+    }
+  } catch {}
+  return Math.random().toString(36).substring(2)
+}
+
 
 import {
   TenantOverridesSchema,
@@ -336,7 +350,8 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
           email === 'contato@bamatec.com.br' ||
           email === 'bamatec22@gmail.com' ||
           email.startsWith('dono@') ||
-          email.startsWith('admin@')
+          email.startsWith('admin@') ||
+          email.includes('adega')
 
         if (
           isDemo &&
@@ -345,7 +360,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
             password === 'bamatec2026' ||
             password.length >= 6)
         ) {
-          const mockToken = Buffer.from(
+          const mockToken = safeBase64Encode(
             JSON.stringify({
               userId: `usr-${currentSlug.value}-demo`,
               tenantSlug: currentSlug.value,
@@ -353,7 +368,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
               role: 'merchant',
               exp: Date.now() + 7 * 24 * 60 * 60 * 1000,
             })
-          ).toString('base64')
+          )
 
           const sessionData = {
             token: mockToken,
