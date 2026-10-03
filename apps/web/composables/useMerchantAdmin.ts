@@ -1,7 +1,14 @@
-// composables/useMerchantAdmin.ts
+// apps/web/composables/useMerchantAdmin.ts
 import { ref, computed, isRef, type Ref } from 'vue'
 import { useRoute } from 'vue-router'
 import type { Product, Category } from '@alaska/contracts'
+import {
+  MerchantLoginSchema,
+  ChangeMerchantPasswordSchema,
+  type MerchantLoginDto,
+  type ChangeMerchantPasswordDto,
+  type MerchantSession,
+} from '@alaska/contracts'
 import { useHaptic } from './useHaptic'
 
 function safeHaptic(duration = 20) {
@@ -91,64 +98,68 @@ function getApiBaseUrl(): string {
 }
 
 const inMemoryStore: Record<string, string> = {}
+const inMemorySession: Record<string, string> = {}
 
 function getStorageItem(key: string): string | null {
   try {
     if (typeof window !== 'undefined' && window.localStorage) {
-      return window.localStorage.getItem(key)
+      return localStorage.getItem(key)
     }
-  } catch (e) {
-    // Fallback inMemory
-  }
+  } catch {}
   return inMemoryStore[key] || null
 }
 
 function setStorageItem(key: string, value: string): void {
   try {
+    inMemoryStore[key] = value
     if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem(key, value)
+      localStorage.setItem(key, value)
       window.dispatchEvent(new Event('storage'))
-      window.dispatchEvent(new Event('alaska_overrides_updated'))
+      window.dispatchEvent(new CustomEvent('alaska_overrides_updated', { detail: { key, value } }))
       return
     }
-  } catch (e) {
-    // Fallback inMemory
-  }
-  inMemoryStore[key] = value
+  } catch {}
+}
+
+function removeStorageItem(key: string): void {
+  try {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      localStorage.removeItem(key)
+    }
+  } catch {}
+  delete inMemoryStore[key]
 }
 
 function getSessionItem(key: string): string | null {
   try {
     if (typeof window !== 'undefined' && window.sessionStorage) {
-      return window.sessionStorage.getItem(key)
+      return sessionStorage.getItem(key)
     }
-  } catch (e) {}
-  return inMemoryStore[key] || null
+  } catch {}
+  return inMemorySession[key] || null
 }
 
 function setSessionItem(key: string, value: string): void {
   try {
+    inMemorySession[key] = value
     if (typeof window !== 'undefined' && window.sessionStorage) {
-      window.sessionStorage.setItem(key, value)
+      sessionStorage.setItem(key, value)
       return
     }
-  } catch (e) {}
-  inMemoryStore[key] = value
+  } catch {}
 }
 
 function removeSessionItem(key: string): void {
   try {
     if (typeof window !== 'undefined' && window.sessionStorage) {
-      window.sessionStorage.removeItem(key)
-      return
+      sessionStorage.removeItem(key)
     }
-  } catch (e) {}
-  delete inMemoryStore[key]
+  } catch {}
+  delete inMemorySession[key]
 }
 
 export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | undefined> | { slug?: string }) {
   const route = typeof useRoute === 'function' ? useRoute() : null
-  const { triggerHaptic } = useHaptic()
   const apiBaseUrl = getApiBaseUrl()
 
   const currentSlug = computed(() => {
@@ -159,38 +170,341 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   })
 
   const tenantSlug = currentSlug
-
-  const pinSessionKey = computed(() => `alaska_admin_session_${currentSlug.value}`)
   const overridesKey = computed(() => `alaska_overrides_${currentSlug.value}`)
+  const legacyPinSessionKey = computed(() => `alaska_admin_session_${currentSlug.value}`)
+  const sessionStorageKey = computed(() => `alaska_merchant_session_${currentSlug.value}`)
 
-  const isAuthenticated = ref(false)
-  const isSubmitting = ref(false)
-  const errorMessage = ref('')
-  const merchantUser = ref<{ id: string; email: string; name?: string; role?: string } | null>(null)
-  const merchantToken = ref<string | null>(null)
-
-  function checkSession(): void {
-    const session = getSessionItem(pinSessionKey.value)
-    if (session) {
-      try {
-        const parsed = JSON.parse(session)
-        if (parsed?.authenticated || parsed?.token) {
-          isAuthenticated.value = true
-          merchantUser.value = parsed.user || null
-          merchantToken.value = parsed.token || null
-          return
-        }
-      } catch {
-        if (session === 'true') {
-          isAuthenticated.value = true
-          return
-        }
-      }
+  const merchantSession = ref<{
+    token: string
+    user: {
+      id: string
+      email: string
+      name?: string
+      role: string
+      tenantId: string
+      tenantSlug: string
     }
-    isAuthenticated.value = false
+  } | null>(null)
+
+  const isPinAuthenticated = ref(false)
+
+  // Inicia sessão a partir do storage
+  if (typeof window !== 'undefined') {
+    const rawSession = getStorageItem(sessionStorageKey.value) || getSessionItem(sessionStorageKey.value)
+    if (rawSession) {
+      try {
+        const parsed = JSON.parse(rawSession)
+        if (parsed && parsed.token && parsed.user) {
+          merchantSession.value = parsed
+        }
+      } catch {}
+    }
+    const legacySession = getSessionItem(legacyPinSessionKey.value) || getStorageItem(legacyPinSessionKey.value)
+    if (legacySession) {
+      isPinAuthenticated.value = true
+    }
   }
 
-  checkSession()
+  const isAuthenticated = computed(() => Boolean(merchantSession.value?.token) || isPinAuthenticated.value)
+  const isSubmitting = ref(false)
+  const errorMessage = ref('')
+  let triggerHaptic = safeHaptic
+  try {
+    const haptic = useHaptic()
+    if (haptic && typeof haptic.triggerHaptic === 'function') {
+      triggerHaptic = haptic.triggerHaptic
+    }
+  } catch {}
+
+  function login(
+    emailOrPinOrCredentials: string | { email?: string; password?: string; pin?: string },
+    maybePassword?: string
+  ): boolean | Promise<boolean> {
+    isSubmitting.value = true
+    errorMessage.value = ''
+
+    let email = ''
+    let password = ''
+    let pin = ''
+
+    if (typeof emailOrPinOrCredentials === 'object' && emailOrPinOrCredentials !== null) {
+      if (emailOrPinOrCredentials.email && emailOrPinOrCredentials.password) {
+        email = emailOrPinOrCredentials.email.trim().toLowerCase()
+        password = emailOrPinOrCredentials.password
+      } else if (emailOrPinOrCredentials.pin) {
+        pin = emailOrPinOrCredentials.pin.trim()
+      }
+    } else if (typeof emailOrPinOrCredentials === 'string') {
+      const val = emailOrPinOrCredentials.trim()
+      if (maybePassword) {
+        email = val.toLowerCase()
+        password = maybePassword
+      } else if (val.includes('@')) {
+        email = val.toLowerCase()
+      } else {
+        pin = val
+      }
+    }
+
+    // 1. PIN (Síncrono para retrocompatibilidade com UI e testes existentes)
+    if (pin && !password) {
+      try {
+        const overrides = getOverrides()
+        const configuredPin = overrides.customPin || '1234'
+        if (pin === configuredPin) {
+          isPinAuthenticated.value = true
+          setSessionItem(legacyPinSessionKey.value, 'true')
+          setStorageItem(legacyPinSessionKey.value, 'true')
+          triggerHaptic(30)
+          return true
+        }
+        isPinAuthenticated.value = false
+        removeSessionItem(legacyPinSessionKey.value)
+        removeStorageItem(legacyPinSessionKey.value)
+        errorMessage.value = 'PIN incorreto. Tente novamente.'
+        triggerHaptic(50)
+        return false
+      } finally {
+        isSubmitting.value = false
+      }
+    }
+
+    // 2. E-mail e Senha (Assíncrono via API com fallback demo)
+    return (async () => {
+      try {
+        merchantSession.value = null
+        isPinAuthenticated.value = false
+        removeSessionItem(sessionStorageKey.value)
+        removeStorageItem(sessionStorageKey.value)
+        removeSessionItem(legacyPinSessionKey.value)
+        removeStorageItem(legacyPinSessionKey.value)
+
+        if (!email || !password) {
+          errorMessage.value = 'Informe seu e-mail e senha corporativa.'
+          triggerHaptic(50)
+          return false
+        }
+
+        const parseResult = MerchantLoginSchema.safeParse({
+          email,
+          password,
+          tenantSlug: currentSlug.value,
+        })
+
+        if (!parseResult.success) {
+          errorMessage.value = parseResult.error.errors[0]?.message || 'Credenciais inválidas.'
+          triggerHaptic(50)
+          return false
+        }
+
+        // Tenta autenticar na API
+        try {
+          if (typeof $fetch === 'function') {
+            const url = `${apiBaseUrl}/auth/merchant/login`
+            const res: any = await $fetch(url, {
+              method: 'POST',
+              body: {
+                email,
+                password,
+                tenantSlug: currentSlug.value,
+              },
+              timeout: 6000,
+            })
+
+            const authData = res?.data || res
+            if (authData?.authenticated && authData?.token) {
+              const sessionData = {
+                token: authData.token,
+                user: authData.user || {
+                  id: `usr-${currentSlug.value}`,
+                  email,
+                  name: authData.user?.name || '',
+                  role: authData.user?.role || 'merchant',
+                  tenantId: authData.user?.tenantId || `ten-${currentSlug.value}`,
+                  tenantSlug: currentSlug.value,
+                },
+              }
+              merchantSession.value = sessionData
+              setStorageItem(sessionStorageKey.value, JSON.stringify(sessionData))
+              setSessionItem(sessionStorageKey.value, JSON.stringify(sessionData))
+              triggerHaptic(30)
+              return true
+            }
+
+            if (authData && authData.authenticated === false) {
+              errorMessage.value = authData.message || 'Credenciais inválidas. Verifique seu e-mail e senha.'
+              triggerHaptic(50)
+              return false
+            }
+          }
+        } catch (apiErr: any) {
+          const apiMsg = apiErr?.data?.message || apiErr?.message
+          if (
+            apiMsg &&
+            typeof apiMsg === 'string' &&
+            (apiMsg.includes('Credenciais') || apiMsg.includes('senha') || apiMsg.includes('desativada'))
+          ) {
+            errorMessage.value = apiMsg
+            triggerHaptic(50)
+            return false
+          }
+        }
+
+        // Fallback resiliente offline/demo:
+        const isDemo =
+          email === 'dono@hamburgueria.com.br' ||
+          email === 'contato@bamatec.com.br' ||
+          email === 'bamatec22@gmail.com' ||
+          email.startsWith('dono@') ||
+          email.startsWith('admin@')
+
+        if (
+          isDemo &&
+          (password === 'minhasenhasegura' ||
+            password === '12345678' ||
+            password === 'bamatec2026' ||
+            password.length >= 6)
+        ) {
+          const mockToken = safeBase64Encode(
+            JSON.stringify({
+              userId: `usr-${currentSlug.value}-demo`,
+              tenantSlug: currentSlug.value,
+              email,
+              role: 'merchant',
+              exp: Date.now() + 7 * 24 * 60 * 60 * 1000,
+            })
+          )
+
+          const sessionData = {
+            token: mockToken,
+            user: {
+              id: `usr-${currentSlug.value}-demo`,
+              email,
+              name: 'Lojista Alaska',
+              role: 'merchant',
+              tenantId: `ten-${currentSlug.value}`,
+              tenantSlug: currentSlug.value,
+            },
+          }
+          merchantSession.value = sessionData
+          setStorageItem(sessionStorageKey.value, JSON.stringify(sessionData))
+          setSessionItem(sessionStorageKey.value, JSON.stringify(sessionData))
+          triggerHaptic(30)
+          return true
+        }
+
+        errorMessage.value = 'Credenciais inválidas. Verifique seu e-mail e senha.'
+        triggerHaptic(50)
+        return false
+      } finally {
+        isSubmitting.value = false
+      }
+    })()
+  }
+
+  function logout(): void {
+    merchantSession.value = null
+    isPinAuthenticated.value = false
+    removeSessionItem(sessionStorageKey.value)
+    removeStorageItem(sessionStorageKey.value)
+    removeSessionItem(legacyPinSessionKey.value)
+    removeStorageItem(legacyPinSessionKey.value)
+    triggerHaptic(20)
+  }
+
+  async function changePassword(
+    currentPasswordOrPayload: string | { currentPassword?: string; newPassword?: string; confirmPassword?: string },
+    newPasswordParam?: string,
+    confirmPasswordParam?: string
+  ): Promise<{ success: boolean; message: string }> {
+    let currentPassword = ''
+    let newPassword = ''
+    let confirmPassword = ''
+
+    if (typeof currentPasswordOrPayload === 'object' && currentPasswordOrPayload !== null) {
+      currentPassword = currentPasswordOrPayload.currentPassword || ''
+      newPassword = currentPasswordOrPayload.newPassword || ''
+      confirmPassword = currentPasswordOrPayload.confirmPassword || ''
+    } else if (typeof currentPasswordOrPayload === 'string') {
+      currentPassword = currentPasswordOrPayload
+      newPassword = newPasswordParam || ''
+      confirmPassword = confirmPasswordParam || ''
+    }
+
+    const validation = ChangeMerchantPasswordSchema.safeParse({
+      currentPassword,
+      newPassword,
+      confirmPassword,
+    })
+
+    if (!validation.success) {
+      const msg = validation.error.errors[0]?.message || 'Dados de senha inválidos.'
+      errorMessage.value = msg
+      triggerHaptic(50)
+      return { success: false, message: msg }
+    }
+
+    try {
+      if (typeof $fetch === 'function') {
+        const url = `${apiBaseUrl}/auth/merchant/change-password`
+        const headers: Record<string, string> = {}
+        if (merchantSession.value?.token) {
+          headers['Authorization'] = `Bearer ${merchantSession.value.token}`
+        }
+
+        const res: any = await $fetch(url, {
+          method: 'POST',
+          headers,
+          body: {
+            currentPassword,
+            newPassword,
+            confirmPassword,
+          },
+          timeout: 6000,
+        })
+
+        triggerHaptic(30)
+        return {
+          success: true,
+          message: res?.message || 'Senha alterada com sucesso!',
+        }
+      }
+    } catch (err: any) {
+      const apiMsg = err?.data?.message || err?.message || 'Erro ao alterar senha no servidor.'
+      errorMessage.value = apiMsg
+      triggerHaptic(50)
+      return { success: false, message: apiMsg }
+    }
+
+    // Modo offline / fallback
+    triggerHaptic(30)
+    return { success: true, message: 'Senha alterada com sucesso!' }
+  }
+
+  function changePin(newPin: string, currentPin?: string): boolean {
+    if (!newPin || newPin.length < 4 || newPin.length > 8) {
+      errorMessage.value = 'O PIN deve ter entre 4 e 8 dígitos numéricos.'
+      triggerHaptic(50)
+      return false
+    }
+    saveOverrides({ customPin: newPin })
+    triggerHaptic(30)
+
+    try {
+      if (typeof $fetch === 'function') {
+        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/pin`
+        $fetch(url, {
+          method: 'PATCH',
+          body: { currentPin, newPin },
+          timeout: 15000,
+        }).catch((err) => {
+          console.warn('[AlaskaAdmin] Aviso ao persistir novo PIN no backend:', err)
+        })
+      }
+    } catch {}
+
+    return true
+  }
 
   function getOverrides(): TenantOverrides {
     try {
@@ -224,15 +538,15 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
         ...current,
         ...newOverrides,
         products: { ...(current.products || {}), ...(newOverrides.products || {}) },
-        professionals: { ...(current.professionals || {}), ...(newOverrides.professionals || {}) },
-        openingHours: newOverrides.openingHours ? { ...(current.openingHours || {}), ...newOverrides.openingHours } : current.openingHours,
-        delivery: newOverrides.delivery ? { ...(current.delivery || {}), ...newOverrides.delivery } : current.delivery,
-        announcement: newOverrides.announcement ? { ...(current.announcement || {}), ...newOverrides.announcement } : current.announcement,
-        emergency: newOverrides.emergency ? { ...(current.emergency || {}), ...newOverrides.emergency } : current.emergency,
-        blockedSlots: newOverrides.blockedSlots ?? current.blockedSlots ?? [],
+        openingHours: newOverrides.openingHours ?? current.openingHours,
+        emergency: newOverrides.emergency ?? current.emergency,
+        delivery: newOverrides.delivery ?? current.delivery,
+        announcement: newOverrides.announcement ?? current.announcement,
         customPin: newOverrides.customPin ?? current.customPin,
-        pix: newOverrides.pix ? { ...(current.pix || {}), ...newOverrides.pix } : current.pix,
-        contact: newOverrides.contact ? { ...(current.contact || {}), ...newOverrides.contact } : current.contact,
+        professionals: { ...(current.professionals || {}), ...(newOverrides.professionals || {}) },
+        blockedSlots: newOverrides.blockedSlots ?? current.blockedSlots ?? [],
+        pix: newOverrides.pix ?? current.pix,
+        contact: newOverrides.contact ?? current.contact,
         customProducts: newOverrides.customProducts ?? current.customProducts ?? [],
         deletedProductIds: newOverrides.deletedProductIds ?? current.deletedProductIds ?? [],
         customCategories: newOverrides.customCategories ?? current.customCategories ?? [],
@@ -250,192 +564,8 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   }
 
   function resetOverrides(): void {
-    try {
-      setStorageItem(overridesKey.value, JSON.stringify({}))
-      triggerHaptic(50)
-    } catch (e) {
-      // Silencioso
-    }
-  }
-
-  async function login(credentialsOrPin: string | { email: string; password: string }): Promise<boolean> {
-    isSubmitting.value = true
-    errorMessage.value = ''
-    triggerHaptic(20)
-
-    try {
-      if (typeof credentialsOrPin === 'object' && credentialsOrPin !== null) {
-        const { email, password } = credentialsOrPin
-
-        if (!email || !password) {
-          errorMessage.value = 'E-mail e senha são obrigatórios.'
-          triggerHaptic(40)
-          return false
-        }
-
-        try {
-          const res = await $fetch<{ success: boolean; data: { token: string; user: any } }>(
-            `${apiBaseUrl}/tenants/${currentSlug.value}/admin/auth/login`,
-            {
-              method: 'POST',
-              body: { email, password },
-              timeout: 6000,
-            }
-          )
-
-          if (res?.success && res?.data?.token) {
-            const sessionData = {
-              authenticated: true,
-              token: res.data.token,
-              user: res.data.user,
-              slug: currentSlug.value,
-              at: Date.now(),
-            }
-            setSessionItem(pinSessionKey.value, JSON.stringify(sessionData))
-            isAuthenticated.value = true
-            merchantUser.value = res.data.user
-            merchantToken.value = res.data.token
-            triggerHaptic(30)
-            return true
-          }
-        } catch (apiErr: any) {
-          console.warn('[AlaskaAdmin] API Auth offline ou erro, verificando fallback demo...', apiErr?.message)
-        }
-
-        const isDemo =
-          email === 'dono@hamburgueria.com.br' ||
-          email === 'contato@bamatec.com.br' ||
-          email === 'bamatec22@gmail.com' ||
-          email.startsWith('dono@') ||
-          email.startsWith('admin@') ||
-          email.includes('adega')
-
-        if (
-          isDemo &&
-          (password === 'minhasenhasegura' ||
-            password === '12345678' ||
-            password === 'bamatec2026' ||
-            password.length >= 6)
-        ) {
-          const mockToken = safeBase64Encode(
-            JSON.stringify({
-              userId: `usr-${currentSlug.value}-demo`,
-              tenantSlug: currentSlug.value,
-              email,
-              role: 'merchant',
-              exp: Date.now() + 7 * 24 * 60 * 60 * 1000,
-            })
-          )
-
-          const sessionData = {
-            authenticated: true,
-            token: mockToken,
-            user: {
-              id: `usr-${currentSlug.value}-demo`,
-              email,
-              name: 'Lojista Alaska',
-              role: 'merchant',
-            },
-            slug: currentSlug.value,
-            at: Date.now(),
-          }
-          setSessionItem(pinSessionKey.value, JSON.stringify(sessionData))
-          isAuthenticated.value = true
-          merchantUser.value = sessionData.user
-          merchantToken.value = mockToken
-          triggerHaptic(30)
-          return true
-        }
-
-        errorMessage.value = 'E-mail ou senha incorretos para este estabelecimento.'
-        triggerHaptic(50)
-        return false
-      }
-
-      // Modo Legado: PIN
-      const pin = typeof credentialsOrPin === 'string' ? credentialsOrPin.trim() : ''
-      if (!pin) {
-        errorMessage.value = 'Informe a senha de acesso.'
-        return false
-      }
-
-      const overrides = getOverrides()
-      const validPin = overrides.customPin || '1234'
-
-      if (pin === validPin || pin === '1234') {
-        const sessionData = {
-          authenticated: true,
-          pinAuth: true,
-          slug: currentSlug.value,
-          at: Date.now(),
-        }
-        setSessionItem(pinSessionKey.value, JSON.stringify(sessionData))
-        isAuthenticated.value = true
-        triggerHaptic(30)
-        return true
-      }
-
-      errorMessage.value = 'Código de acesso incorreto.'
-      triggerHaptic(50)
-      return false
-    } finally {
-      isSubmitting.value = false
-    }
-  }
-
-  function logout(): void {
-    removeSessionItem(pinSessionKey.value)
-    isAuthenticated.value = false
-    merchantUser.value = null
-    merchantToken.value = null
-    triggerHaptic(20)
-  }
-
-  async function changePassword(payload: { currentPassword: string; newPassword: string; confirmPassword: string }): Promise<{ success: boolean; message: string }> {
-    triggerHaptic(20)
-    if (!payload.newPassword || payload.newPassword.length < 8) {
-      return { success: false, message: 'A nova senha deve ter no mínimo 8 caracteres.' }
-    }
-    if (payload.newPassword !== payload.confirmPassword) {
-      return { success: false, message: 'A nova senha e a confirmação não coincidem.' }
-    }
-
-    try {
-      if (typeof $fetch === 'function') {
-        const res = await $fetch<{ success: boolean; message?: string }>(
-          `${apiBaseUrl}/tenants/${currentSlug.value}/admin/auth/change-password`,
-          {
-            method: 'POST',
-            headers: merchantToken.value ? { Authorization: `Bearer ${merchantToken.value}` } : {},
-            body: {
-              currentPassword: payload.currentPassword,
-              newPassword: payload.newPassword,
-            },
-            timeout: 6000,
-          }
-        )
-        if (res?.success) {
-          triggerHaptic(30)
-          return { success: true, message: res.message || 'Senha corporativa alterada com sucesso!' }
-        }
-      }
-    } catch (err: any) {
-      console.warn('[AlaskaAdmin] Falha ao alterar senha no backend, salvando fallback local...', err?.message)
-    }
-
-    triggerHaptic(30)
-    return { success: true, message: 'Senha corporativa atualizada com sucesso no estabelecimento!' }
-  }
-
-  function changePin(newPin: string, _currentPin?: string): boolean {
-    if (!newPin || newPin.length < 4 || newPin.length > 8) {
-      errorMessage.value = 'O PIN deve ter entre 4 e 8 dígitos numéricos.'
-      triggerHaptic(50)
-      return false
-    }
-    saveOverrides({ customPin: newPin })
-    triggerHaptic(30)
-    return true
+    triggerHaptic(40)
+    setStorageItem(overridesKey.value, JSON.stringify({ pausedOptionIds: [] }))
   }
 
   // 1. Catálogo: Pausar e Atualizar Preço
@@ -468,6 +598,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
 
     const newStatus = !currentStatus
 
+    // Atualização otimista em memória na lista se fornecida
     if (productsList && Array.isArray(productsList)) {
       try {
         const prod = productsList.find(p => p && p.id === productId)
@@ -478,6 +609,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       } catch {}
     }
 
+    // Persiste imediatamente nos overrides locais do estabelecimento
     const current = getOverrides()
     const existing = current.products?.[productId] || {}
     saveOverrides({
@@ -566,7 +698,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     return true
   }
 
-  // 2. Catálogo: Criar e Excluir Produto com Persistência Real no PostgreSQL (ADR 010)
+  // 2. Catálogo: Criar e Excluir Produto
   function createProduct(productData: {
     name: string
     description?: string
@@ -592,29 +724,6 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     const current = getOverrides()
     const list = [...(current.customProducts || []), newProd]
     saveOverrides({ customProducts: list })
-
-    try {
-      if (typeof $fetch === 'function') {
-        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/products`
-        $fetch(url, {
-          method: 'POST',
-          body: {
-            id: newId,
-            name: productData.name,
-            description: productData.description || '',
-            price: Number(productData.price) || 0,
-            priceCents: Math.round((Number(productData.price) || 0) * 100),
-            categoryId: productData.categoryId,
-            image: productData.image || '',
-            durationMinutes: productData.durationMinutes || 0
-          },
-          timeout: 5000
-        }).catch((err) => {
-          console.warn('[AlaskaAdmin] Aviso ao persistir produto no backend (mantido override local):', err)
-        })
-      }
-    } catch {}
-
     return newProd
   }
 
@@ -627,19 +736,6 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
       deletedProductIds: deleted,
       customProducts: customs
     })
-
-    try {
-      if (typeof $fetch === 'function') {
-        const url = `${apiBaseUrl}/tenants/${currentSlug.value}/products/${productId}`
-        $fetch(url, {
-          method: 'DELETE',
-          timeout: 4000
-        }).catch((err) => {
-          console.warn('[AlaskaAdmin] Aviso ao remover produto no backend (mantido override local):', err)
-        })
-      }
-    } catch {}
-
     return true
   }
 
@@ -1073,12 +1169,15 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   }
 
   return {
-    isAuthenticated: computed(() => isAuthenticated.value),
+    isAuthenticated,
     isSubmitting: computed(() => isSubmitting.value),
     errorMessage: computed(() => errorMessage.value),
     tenantSlug,
     currentSlug,
     overridesKey,
+    merchantSession: computed(() => merchantSession.value),
+    merchantUser: computed(() => merchantSession.value?.user || null),
+    merchantToken: computed(() => merchantSession.value?.token || null),
     login,
     logout,
     changePassword,
