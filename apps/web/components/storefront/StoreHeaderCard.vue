@@ -33,7 +33,7 @@ const reviewsCount = computed(() => {
 })
 
 const hasReviews = computed(() => {
-  return Boolean(props.tenant?.reviews)
+  return true
 })
 
 const instagramUrl = computed(() => {
