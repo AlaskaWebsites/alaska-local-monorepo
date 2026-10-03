@@ -20,6 +20,22 @@ const emit = defineEmits<{
   (e: 'open-booking'): void
 }>()
 
+const reviewsScore = computed(() => {
+  const r = (props.tenant?.reviews || {}) as any
+  const val = r.score ?? r.rating ?? r.average ?? 5.0
+  return Number(val).toFixed(1)
+})
+
+const reviewsCount = computed(() => {
+  const r = (props.tenant?.reviews || {}) as any
+  const val = r.totalReviews ?? r.count ?? r.total ?? 0
+  return Number(val)
+})
+
+const hasReviews = computed(() => {
+  return Boolean(props.tenant?.reviews)
+})
+
 const instagramUrl = computed(() => {
   const insta = props.tenant?.instagram
   if (!insta) return ''
@@ -108,18 +124,20 @@ const displayHours = computed(() => {
       <div class="flex items-center gap-2.5 flex-wrap justify-center text-xs font-semibold mb-5">
         <!-- Avaliações iFood-Style -->
         <button
-          v-if="tenant.reviews"
+          v-if="hasReviews"
+          type="button"
           @click="emit('open-reviews')"
           class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-900 border border-amber-200/80 shadow-2xs hover:bg-amber-100 transition-colors cursor-pointer"
           aria-label="Abrir avaliações da loja"
         >
           <Star class="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-          <span class="font-bold">{{ (tenant.reviews?.score || 5).toFixed(1) }}</span>
-          <span class="text-slate-500">({{ tenant.reviews?.totalReviews || 0 }})</span>
+          <span class="font-bold">{{ reviewsScore }}</span>
+          <span class="text-slate-500">({{ reviewsCount }})</span>
         </button>
 
         <!-- Status Aberto/Fechado -->
         <button
+          type="button"
           @click="emit('open-info')"
           class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold border shadow-2xs transition-all cursor-pointer"
           :class="isOpen ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100/80' : 'bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100/80'"
@@ -141,6 +159,7 @@ const displayHours = computed(() => {
         <!-- Botão Agendar Horário em Destaque (Alaska Hub & Pro) -->
         <button
           v-if="isServiceStore"
+          type="button"
           @click="emit('open-booking')"
           class="flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs font-bold shadow-md active:scale-95 transition-all cursor-pointer text-white"
           :class="themeClasses.primaryBg"
