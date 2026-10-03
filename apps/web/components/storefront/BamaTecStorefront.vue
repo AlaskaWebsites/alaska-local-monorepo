@@ -17,7 +17,6 @@ import {
   Scale,
   FileText,
   Zap,
-  ChevronLeft,
   Mail,
   Send,
   Building2,
@@ -359,13 +358,8 @@ function resetLeadForm() {
           <a href="#faq" class="hover:text-[#2d7097] transition-colors">Dúvidas Frequentes</a>
         </nav>
 
-        <!-- Ações do Cabeçalho: Voltar à Home e CTA WhatsApp -->
+        <!-- Ações do Cabeçalho: CTA WhatsApp -->
         <div class="flex items-center gap-2.5 sm:gap-3">
-          <NuxtLink to="/" class="hidden sm:inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-[#2d7097] transition-colors p-2 rounded-xl hover:bg-slate-100" title="Ver todos os estabelecimentos no Alaska Local">
-            <ChevronLeft class="w-3.5 h-3.5" />
-            <span>Alaska Local</span>
-          </NuxtLink>
-
           <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
             class="px-4 sm:px-5 py-2.5 bg-[#038c4c] hover:bg-[#02733e] text-white font-bold text-xs rounded-xl flex items-center gap-2 transition-all shadow-xs active:scale-95 cursor-pointer">
             <Phone class="w-3.5 h-3.5" />
