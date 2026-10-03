@@ -91,7 +91,8 @@ const itemsHandled = [
   {
     title: 'Barras, Tubos e Perfis Longos',
     category: 'Linha Gancheira Pesada',
-    desc: 'Tanques industriais compridos preparados para barras de ferro, perfis estruturais, tubulações e estruturas de serralheria de até 6 metros de comprimento sem emendas.',
+    image: '/tenants/bamatec/img/exemplo-escadas-industriais.jpeg',
+    desc: 'Tanques industriais compridos preparados para barras de ferro, perfis estruturais, tubulações, escadas e estruturas de serralheria de até 6 metros de comprimento sem emendas.',
     features: ['Até 6 metros sem cortes', 'Camada uniforme sem escorrimentos', 'Zinco eletrolítico, cobre e decapagem'],
     icon: Factory,
     tag: 'Serralheria & Estruturas'
@@ -99,6 +100,7 @@ const itemsHandled = [
   {
     title: 'Peças Pequenas & Fixadores em Tambor',
     category: 'Linha Tambor Rotativo',
+    image: '/tenants/bamatec/img/Exemplo-tanque-3.jpeg',
     desc: 'Processamento de alta escala para parafusos, porcas, arruelas, molas, presilhas, rebites e miudezas metálicas. Tratamento uniforme com separação e centrifugação.',
     features: ['Alta capacidade por batelada (kg)', 'Zincagem branca e amarela', 'Custo altamente competitivo para escala'],
     icon: Box,
@@ -107,15 +109,17 @@ const itemsHandled = [
   {
     title: 'Componentes Elétricos & Barramentos',
     category: 'Linha Estanho & Cobre',
-    desc: 'Estanhagem e cobreamento eletrolítico de alta precisão para barramentos de cobre, terminais de contato e componentes elétricos que exigem máxima condutividade e zero oxidação.',
+    image: '/tenants/bamatec/img/exemplo-barramentos.jpeg',
+    desc: 'Estanhagem e cobreamento eletrolítico de alta precisão para barramentos de cobre e alumínio, terminais e componentes elétricos que exigem máxima condutividade e zero oxidação.',
     features: ['Alta condutividade elétrica e térmica', 'Excelente soldabilidade técnica', 'Resistência à corrosão por sulfetação'],
     icon: Zap,
     tag: 'Elétrica & Painéis'
   },
   {
-    title: 'Frotas de Carrinhos de Supermercado',
-    category: 'Divisão Frotas & Varejo',
-    desc: 'Engenharia completa de restauração: desmontagem, decapagem química, solda MIG de reforço, alinhamento em gabarito, banho de zinco espelhado e rodízios novos em PU.',
+    title: 'Carrinhos de Supermercado & Atacarejo',
+    category: 'Divisão Frotas & Cargas',
+    image: '/tenants/bamatec/img/exemplo-carrinho-atacarejo-1.jpeg',
+    desc: 'Engenharia de restauração: desmontagem, decapagem química, solda MIG de reforço, alinhamento em gabarito, banho de zinco espelhado e rodízios novos para carrinhos aramados e plataforma.',
     features: ['Economia de até 70% vs novos', 'Substituição de rodas silenciosas', 'Retirada e entrega em lotes programados'],
     icon: RotateCw,
     tag: 'Atacarejos & Supermercados'
@@ -170,24 +174,44 @@ const bathTypes = [
 // Galeria de Carrinhos e Serviços
 const galleryImages = [
   {
-    url: 'https://images.unsplash.com/photo-1525328437458-0c4d4db7cab4?auto=format&fit=crop&w=800&q=80',
-    title: 'Frotas de Carrinhos Zincados',
-    subtitle: 'Acabamento espelhado e rodízios novos para atacarejos'
+    url: '/tenants/bamatec/img/Exemplo-carrinho-1.jpeg',
+    title: 'Frotas de Carrinhos de Supermercado',
+    subtitle: 'Aramado recuperado com zincagem brilhante e alinhamento em gabarito'
   },
   {
-    url: 'https://upload.wikimedia.org/wikipedia/commons/6/62/Lidl_Einkaufswagen.jpg',
-    title: 'Alinhamento em Lotes Industriais',
-    subtitle: 'Estruturas alinhadas em gabarito sem puxar para os lados'
+    url: '/tenants/bamatec/img/exemplo-carrinho-atacarejo-1.jpeg',
+    title: 'Carrinhos Plataforma para Atacarejo',
+    subtitle: 'Chapa de aço zincada e cabeceira tubular para cargas pesadas'
   },
   {
-    url: 'https://upload.wikimedia.org/wikipedia/commons/2/26/Automatic_Crane_lifting_steel_tubes_--_ORITCRANES.jpg',
-    title: 'Barras de Ferro e Tubos Longos',
-    subtitle: 'Tanques de alta extensão para serralherias e perfis pesados'
+    url: '/tenants/bamatec/img/exemplo-barramentos.jpeg',
+    title: 'Barramentos Elétricos Estanhados',
+    subtitle: 'Perfis de alta condutividade para painéis e barramentos blindados'
   },
   {
-    url: 'https://upload.wikimedia.org/wikipedia/commons/c/c3/Aneka_Macam_Mur_dan_Baut.jpg',
-    title: 'Peças e Fixadores de Banho',
-    subtitle: 'Banhos galvânicos em tambor rotativo para parafusos e miudezas'
+    url: '/tenants/bamatec/img/exemplo-escadas-industriais.jpeg',
+    title: 'Escadas Industriais e de Acesso',
+    subtitle: 'Lances de escada zincados sob normas de segurança NR-12 e NR-35'
+  },
+  {
+    url: '/tenants/bamatec/img/exemplo-grades-de-protecao.jpeg',
+    title: 'Grades de Proteção e Venezianas',
+    subtitle: 'Estruturas soldadas de serralheria protegidas contra corrosão e intempéries'
+  },
+  {
+    url: '/tenants/bamatec/img/Exemplo-tanque-2.jpeg',
+    title: 'Tanques Industriais de Tratamento',
+    subtitle: 'Capacidade para imersão de perfis e barras metálicas de grande porte'
+  },
+  {
+    url: '/tenants/bamatec/img/exemplo-carrinho-atacarejo-2.jpeg',
+    title: 'Carrinhos Plataforma em Linha',
+    subtitle: 'Acabamento espelhado resistente ao tráfego pesado de atacadistas'
+  },
+  {
+    url: '/tenants/bamatec/img/Exemplo-carrinho-3.jpeg',
+    title: 'Lotes Finalizados para Entrega',
+    subtitle: 'Revitalização completa com rodízios silenciosos em PU maciço'
   }
 ]
 </script>
@@ -308,11 +332,11 @@ const galleryImages = [
           <!-- Coluna Direita: Painel Visual com Destaques -->
           <div class="lg:col-span-5">
             <div class="relative mx-auto max-w-md lg:max-w-none">
-              <!-- Card Principal com Foto Industrial -->
+              <!-- Card Principal com Foto Industrial dos Tanques Reais -->
               <div
                 class="aspect-[4/3] rounded-3xl overflow-hidden bg-slate-900 border-2 border-slate-200/90 shadow-2xl relative">
-                <img src="https://images.unsplash.com/photo-1525328437458-0c4d4db7cab4?auto=format&fit=crop&w=1000&q=80"
-                  alt="Estruturas e carrinhos metálicos pós galvanoplastia industrial"
+                <img src="/tenants/bamatec/img/Exemplo-tanque-1.jpeg"
+                  alt="Tanques industriais e tratamento químico na Bama TEC"
                   class="w-full h-full object-cover" @error="handleImgError" loading="eager" />
                 <div class="absolute inset-0 bg-gradient-to-t from-slate-950/85 via-transparent to-transparent"></div>
 
@@ -377,33 +401,40 @@ const galleryImages = [
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div v-for="(item, idx) in itemsHandled" :key="idx"
-            class="bg-slate-50 border border-slate-200/90 rounded-3xl p-6 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between space-y-5">
+            class="bg-slate-50 border border-slate-200/90 rounded-3xl p-5 sm:p-6 shadow-2xs hover:shadow-md transition-all flex flex-col justify-between space-y-5">
             <div class="space-y-4">
-              <div class="flex items-center justify-between">
-                <div
-                  class="w-12 h-12 rounded-2xl bg-white text-blue-600 border border-slate-200 flex items-center justify-center shadow-2xs">
-                  <component :is="item.icon" class="w-6 h-6" />
+              <!-- Foto Real de Chão de Fábrica -->
+              <div class="aspect-[16/10] rounded-2xl overflow-hidden bg-slate-900 relative border border-slate-200 shadow-2xs">
+                <img :src="item.image" :alt="item.title" class="w-full h-full object-cover" @error="handleImgError" loading="lazy" />
+                <div class="absolute top-2.5 right-2.5">
+                  <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-900 bg-white/95 backdrop-blur-xs px-2.5 py-1 rounded-lg border border-slate-200 shadow-xs">
+                    {{ item.tag }}
+                  </span>
                 </div>
-                <span
-                  class="text-[10px] font-extrabold uppercase tracking-wider text-slate-700 bg-white px-2.5 py-1 rounded-lg border border-slate-200">
-                  {{ item.tag }}
-                </span>
               </div>
 
-              <div>
-                <span class="text-[11px] font-black uppercase tracking-wider text-blue-600">{{ item.category }}</span>
-                <h3 class="text-lg font-black text-slate-900 mt-0.5 leading-snug">
-                  {{ item.title }}
-                </h3>
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 rounded-xl bg-white text-blue-600 border border-slate-200 flex items-center justify-center shadow-2xs shrink-0">
+                  <component :is="item.icon" class="w-5 h-5" />
+                </div>
+                <div>
+                  <span class="text-[11px] font-black uppercase tracking-wider text-blue-600">
+                    {{ item.category }}
+                  </span>
+                  <h3 class="text-base font-black text-slate-900 leading-snug">
+                    {{ item.title }}
+                  </h3>
+                </div>
               </div>
 
               <p class="text-xs text-slate-600 font-medium leading-relaxed">
                 {{ item.desc }}
               </p>
 
-              <ul class="space-y-1.5 pt-1 text-xs text-slate-700 font-semibold border-t border-slate-200/60">
-                <li v-for="(feat, fIdx) in item.features" :key="fIdx" class="flex items-center gap-1.5">
-                  <Check class="w-3.5 h-3.5 text-blue-600 shrink-0" />
+              <ul class="space-y-2 pt-2 border-t border-slate-200/70 text-xs text-slate-700 font-medium">
+                <li v-for="(feat, fIdx) in item.features" :key="fIdx" class="flex items-center gap-2">
+                  <Check class="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                   <span>{{ feat }}</span>
                 </li>
               </ul>
@@ -486,11 +517,10 @@ const galleryImages = [
             Divisão Frotas & Atacarejos
           </span>
           <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-            Reforma e Zincagem de Carrinhos de Supermercado
+            Reforma e Zincagem de Carrinhos de Supermercado & Atacarejo
           </h2>
           <p class="text-sm sm:text-base text-slate-600 font-medium">
-            Renove sua frota com banho galvânico brilhante, solda de reforço, gabaritagem de chassi e rodas novas em PU,
-            economizando até 70% em relação à compra de novos.
+            Renove sua frota de carrinhos aramados e plataforma com banho galvânico brilhante, solda de reforço, gabaritagem de chassi e rodas novas em PU, economizando até 70% em relação à compra de novos.
           </p>
         </div>
 
@@ -533,8 +563,8 @@ const galleryImages = [
           <!-- Card Depois -->
           <div class="bg-emerald-50/50 border border-emerald-300 rounded-3xl p-6 sm:p-8 space-y-5 shadow-sm">
             <div class="aspect-[16/9] rounded-2xl overflow-hidden bg-slate-900 relative border border-emerald-300">
-              <img src="https://upload.wikimedia.org/wikipedia/commons/8/83/Shopping_cart.jpg"
-                alt="Carrinho recuperado com galvanoplastia espelhada" class="w-full h-full object-cover"
+              <img src="/tenants/bamatec/img/Exemplo-carrinho-2.jpeg"
+                alt="Carrinho reformado com galvanoplastia espelhada e rodízios novos na Bama TEC" class="w-full h-full object-cover bg-white"
                 @error="handleImgError" loading="lazy" />
               <div
                 class="absolute top-3 left-3 bg-emerald-600 text-white text-[11px] font-black uppercase px-2.5 py-1 rounded-lg">
