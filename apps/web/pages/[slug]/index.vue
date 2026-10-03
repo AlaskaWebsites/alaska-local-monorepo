@@ -48,127 +48,49 @@
       :theme="effectiveTenant.theme"
       :theme-classes="themeClasses"
       :is-service-store="isServiceStore"
-      @select-product="openCustomizer"
+      @select-product="handleProductClick"
     />
 
-    <!-- 5. Navegação Horizontal por Categorias / Tabs -->
-    <StoreCategoryChips
-      v-if="!isSearching"
-      :categories="categories"
+    <!-- 5. Navegação por Categorias com CategoryTabs -->
+    <div v-if="!isSearching" class="max-w-4xl mx-auto px-4 mt-6">
+      <CategoryTabs
+        :categories="categories"
+        :theme="effectiveTenant.theme"
+        :theme-classes="themeClasses"
+        @select-category="scrollToCategory"
+      />
+    </div>
+
+    <!-- 6. Listagem de Categorias e Produtos -->
+    <ProductCatalogGrid
+      :categories="filteredCategories"
+      :theme="effectiveTenant.theme"
       :theme-classes="themeClasses"
-      @select="scrollToCategory"
+      :is-searching="isSearching"
+      :search-query="searchQuery"
+      @select-product="handleProductClick"
+      @clear-search="clearSearch"
     />
 
-    <!-- 6. Catálogo Principal por Categorias -->
-    <main class="max-w-4xl mx-auto px-4 mt-8 space-y-10" role="main" aria-label="Catálogo de Produtos">
-      <!-- Caso 1: Resultados Filtrados pela Busca Client-Side -->
-      <template v-if="isSearching">
-        <div v-if="filteredCategories.length === 0" class="text-center py-16 bg-white rounded-3xl border border-slate-200/80 p-8 shadow-2xs">
-          <p class="text-3xl mb-2">🔍</p>
-          <h3 class="text-base font-bold text-slate-900">Nenhum item encontrado</h3>
-          <p class="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
-            Não encontramos resultados para "{{ searchQuery }}". Tente buscar por outros termos.
-          </p>
-        </div>
-
-        <section
-          v-for="category in filteredCategories"
-          :key="category.id"
-          class="space-y-4"
-        >
-          <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-            <span>{{ category.name }}</span>
-            <span class="text-xs font-normal text-slate-400">({{ category.products.length }})</span>
-          </h2>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <ProductCard
-              v-for="product in category.products"
-              :key="product.id"
-              :product="product"
-              :theme="effectiveTenant.theme"
-              :theme-classes="themeClasses"
-              :is-service-store="isServiceStore"
-              @click="openCustomizer(product)"
-            />
-          </div>
-        </section>
-      </template>
-
-      <!-- Caso 2: Visualização Normal do Catálogo Completo -->
-      <template v-else>
-        <section
-          v-for="category in categories"
-          :key="category.id"
-          :id="category.id"
-          class="space-y-4 scroll-mt-24"
-        >
-          <div class="flex items-center justify-between border-b border-slate-200/80 pb-2.5">
-            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
-              <span v-if="category.icon">{{ category.icon }}</span>
-              <span>{{ category.name }}</span>
-              <span class="text-xs font-normal text-slate-400 font-mono">({{ (category.products || []).length }})</span>
-            </h2>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <ProductCard
-              v-for="product in category.products"
-              :key="product.id"
-              :product="product"
-              :theme="effectiveTenant.theme"
-              :theme-classes="themeClasses"
-              :is-service-store="isServiceStore"
-              @click="openCustomizer(product)"
-            />
-          </div>
-        </section>
-      </template>
-    </main>
-
-    <!-- 7. Barra Inferior Flutuante da Sacola de Compras -->
-    <FloatingCartBar
-      v-if="!isServiceStore"
-      :item-count="totalItemsCount"
+    <!-- 7. Barra Fixa Flutuante Inferior (Bottom Bar / Cart CTA) -->
+    <BottomCartFloatingBar
+      :total-items="totalItemsCount"
       :subtotal="cartSubtotal"
-      :theme-classes="themeClasses"
+      :is-booking-open="isBookingOpen"
       @open-cart="isCartDrawerOpen = true"
     />
 
-    <!-- MODAIS E DRAWERS DE CLIENTE -->
-    <!-- Modal de Personalização de Produto -->
+    <!-- 8. Modais do Sistema -->
     <ProductCustomizerModal
-      v-if="selectedProduct"
-      :is-open="Boolean(selectedProduct)"
+      v-if="selectedProduct && effectiveTenant"
+      :is-open="!!selectedProduct"
       :product="selectedProduct"
       :tenant="effectiveTenant"
-      :is-service-store="isServiceStore"
       @close="closeProductModal"
       @add-to-cart="handleAddProductToCart"
       @open-booking="openBookingModalForProduct"
     />
 
-    <!-- Drawer Lateral da Sacola de Pedidos -->
-    <CartDrawerModal
-      v-if="!isServiceStore"
-      :is-open="isCartDrawerOpen"
-      :items="cartItems"
-      :tenant="effectiveTenant"
-      @close="isCartDrawerOpen = false"
-      @remove-item="removeCartItem"
-      @clear-cart="clearCart"
-    />
-
-    <!-- Modal de Avaliações da Loja -->
-    <StoreReviewsModal
-      v-if="effectiveTenant.storeReviews"
-      :is-open="isReviewsOpen"
-      :store-reviews="effectiveTenant.storeReviews"
-      :store-name="effectiveTenant.name"
-      @close="isReviewsOpen = false"
-    />
-
-    <!-- Modal de Informações da Loja -->
     <StoreInfoModal
       :is-open="isInfoOpen"
       :tenant="effectiveTenant"
@@ -177,7 +99,15 @@
       @close="isInfoOpen = false"
     />
 
-    <!-- Modal de Agendamento de Serviços (Alaska Hub & Pro) -->
+    <CartDrawerModal
+      :is-open="isCartDrawerOpen"
+      :items="cartItems"
+      :tenant="effectiveTenant"
+      @close="isCartDrawerOpen = false"
+      @remove-item="removeCartItem"
+      @clear-cart="clearCart"
+    />
+
     <BookingModal
       v-if="isServiceStore"
       :is-open="isBookingOpen"
@@ -185,37 +115,43 @@
       :initial-service="selectedBookingService"
       @close="isBookingOpen = false"
     />
+
+    <StoreReviewsModal
+      v-if="effectiveTenant.storeReviews"
+      :is-open="isReviewsOpen"
+      :store-reviews="effectiveTenant.storeReviews"
+      :store-name="effectiveTenant.name"
+      @close="isReviewsOpen = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute } from '#app'
 import { useTenant } from '~/composables/useTenant'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 import { useOpeningHours } from '~/composables/useOpeningHours'
 import { useProductSearch } from '~/composables/useProductSearch'
 import { useCart } from '~/composables/useCart'
 import { useShare } from '~/composables/useShare'
-import { useMerchantAdmin } from '~/composables/useMerchantAdmin'
-import type { Tenant, Product, BookingService, CartItem } from '~/types'
+import { useMerchantAdmin, type TenantOverrides } from '~/composables/useMerchantAdmin'
 
-// Componentes da Vitrine
-import BamaTecStorefront from '~/components/storefront/BamaTecStorefront.vue'
+import ProductSearchInput from '~/components/ProductSearchInput.vue'
+import CategoryTabs from '~/components/CategoryTabs.vue'
 import StoreHeroBanner from '~/components/storefront/StoreHeroBanner.vue'
 import StoreHeaderCard from '~/components/storefront/StoreHeaderCard.vue'
-import ProductSearchInput from '~/components/storefront/ProductSearchInput.vue'
 import FeaturedProductsCarousel from '~/components/storefront/FeaturedProductsCarousel.vue'
-import StoreCategoryChips from '~/components/storefront/StoreCategoryChips.vue'
-import ProductCard from '~/components/storefront/ProductCard.vue'
-import FloatingCartBar from '~/components/storefront/FloatingCartBar.vue'
-
-// Modais da Vitrine
+import ProductCatalogGrid from '~/components/storefront/ProductCatalogGrid.vue'
+import BottomCartFloatingBar from '~/components/storefront/BottomCartFloatingBar.vue'
 import ProductCustomizerModal from '~/components/ProductCustomizerModal.vue'
+import StoreInfoModal from '~/components/StoreInfoModal.vue'
 import CartDrawerModal from '~/components/CartDrawerModal.vue'
-import StoreReviewsModal from '~/components/storefront/StoreReviewsModal.vue'
-import StoreInfoModal from '~/components/storefront/StoreInfoModal.vue'
 import BookingModal from '~/components/BookingModal.vue'
+import StoreReviewsModal from '~/components/StoreReviewsModal.vue'
+import BamaTecStorefront from '~/components/storefront/BamaTecStorefront.vue'
+
+import type { Product, CartItem, BookingService, Tenant } from '~/types'
 
 const route = useRoute()
 const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
@@ -418,8 +354,12 @@ function openBookingModalForProduct(product: Product) {
   isBookingOpen.value = true
 }
 
-function openCustomizer(product: Product) {
-  selectedProduct.value = product
+function handleProductClick(product: Product) {
+  if (isServiceStore.value) {
+    openBookingModalForProduct(product)
+  } else {
+    selectedProduct.value = product
+  }
 }
 
 function closeProductModal() {
