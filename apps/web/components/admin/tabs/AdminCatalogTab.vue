@@ -1,6 +1,6 @@
 <!-- components/admin/tabs/AdminCatalogTab.vue -->
 <script setup lang="ts">
-import { Plus, Trash2 } from 'lucide-vue-next'
+import { Plus, Trash2, FolderPlus } from 'lucide-vue-next'
 import { formatCurrency } from '~/utils/formatters'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 import type { Category, Product } from '~/types'
@@ -23,6 +23,8 @@ const props = withDefaults(
 const emit = defineEmits<{
   (e: 'create-product'): void
   (e: 'open-create-modal'): void
+  (e: 'create-category'): void
+  (e: 'delete-category', categoryId: string, categoryName: string): void
   (e: 'toggle-product', categoryProducts: Product[], productId: string, currentStatus: boolean): void
   (e: 'toggle-avail', product: Product): void
   (e: 'edit-price', categoryProducts: Product[], product: Product): void
@@ -54,7 +56,8 @@ function handleCreate() {
 }
 
 function handleToggle(categoryProducts: Product[], product: Product) {
-  // Dispara apenas um evento com o produto completo para evitar duplos cliques acidentais
+  const status = checkAvailable(product)
+  emit('toggle-product', categoryProducts, product.id, status)
   emit('toggle-avail', product)
 }
 
@@ -77,7 +80,7 @@ function handleDelete(product: Product) {
   <main class="px-4 mt-4 space-y-6">
     <!-- Banner de Ação Rápida -->
     <div
-      class="border rounded-2xl p-4 flex items-center justify-between gap-3 shadow-2xs"
+      class="border rounded-2xl p-4 flex items-center justify-between gap-3 shadow-2xs flex-wrap sm:flex-nowrap"
       :class="[themeClasses.badgeBg, themeClasses.badgeBorder]"
     >
       <div class="flex items-start gap-3">
@@ -88,26 +91,46 @@ function handleDelete(product: Product) {
         </div>
       </div>
 
-      <button
-        type="button"
-        @click="handleCreate"
-        class="px-3.5 py-2 rounded-xl text-slate-950 font-bold text-xs flex items-center gap-1.5 shrink-0 transition-all cursor-pointer shadow-md active:scale-95"
-        :class="themeClasses.primaryBg"
-      >
-        <Plus class="w-4 h-4 stroke-[2.5]" />
-        <span>Novo Item</span>
-      </button>
+      <div class="flex items-center gap-2 shrink-0">
+        <button
+          type="button"
+          @click="emit('create-category')"
+          class="px-3 py-2 rounded-xl bg-white border border-slate-200/90 text-slate-800 font-bold text-xs flex items-center gap-1.5 transition-all cursor-pointer shadow-2xs hover:bg-slate-50 active:scale-95"
+        >
+          <FolderPlus class="w-4 h-4 text-slate-600" />
+          <span>Nova Categoria</span>
+        </button>
+
+        <button
+          type="button"
+          @click="handleCreate"
+          class="px-3.5 py-2 rounded-xl text-slate-950 font-bold text-xs flex items-center gap-1.5 shrink-0 transition-all cursor-pointer shadow-md active:scale-95"
+          :class="themeClasses.primaryBg"
+        >
+          <Plus class="w-4 h-4" />
+          <span>{{ isServiceStore ? 'Novo Serviço' : 'Novo Item' }}</span>
+        </button>
+      </div>
     </div>
 
     <!-- Categorias & Produtos -->
     <section v-for="category in categories" :key="category.id" class="space-y-3">
       <div class="flex items-center justify-between">
         <h2 class="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-2">
-          <span>{{ category.name }}</span>
+          <span>{{ category.icon ? `${category.icon} ` : '' }}{{ category.name }}</span>
           <span class="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-bold">
             {{ (category.products || []).length }}
           </span>
         </h2>
+        <button
+          v-if="category.id.startsWith('cat-custom-') || (category.products || []).length === 0"
+          type="button"
+          @click="emit('delete-category', category.id, category.name)"
+          class="text-[11px] text-slate-400 hover:text-rose-600 font-medium cursor-pointer p-1"
+          title="Excluir categoria"
+        >
+          <Trash2 class="w-3.5 h-3.5" />
+        </button>
       </div>
 
       <div class="space-y-2.5">
@@ -159,7 +182,7 @@ function handleDelete(product: Product) {
             </div>
           </div>
 
-          <!-- Switch Deslizante com Feedback Imediato -->
+          <!-- Switch de Disponibilidade Imediata -->
           <button
             type="button"
             role="switch"
@@ -176,7 +199,23 @@ function handleDelete(product: Product) {
             />
           </button>
         </div>
+
+        <div v-if="(category.products || []).length === 0" class="p-4 bg-slate-50/80 border border-dashed border-slate-200 rounded-2xl text-center">
+          <p class="text-xs text-slate-400">Nenhum produto cadastrado nesta categoria ainda.</p>
+        </div>
       </div>
     </section>
+
+    <!-- Botão Adicional ao Final da Lista -->
+    <div class="pt-2 text-center">
+      <button
+        type="button"
+        @click="emit('create-category')"
+        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-dashed border-slate-300 hover:border-slate-400 text-xs font-semibold text-slate-600 hover:text-slate-900 transition-colors cursor-pointer bg-white"
+      >
+        <FolderPlus class="w-4 h-4 text-slate-500" />
+        <span>+ Adicionar Outra Categoria</span>
+      </button>
+    </div>
   </main>
 </template>
