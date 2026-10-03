@@ -6,6 +6,7 @@ import { OrderModule } from './order.module'
 import { BookingModule } from './booking.module'
 import { ProductModule } from './product.module'
 import { ProfessionalModule } from './professional.module'
+import { MerchantAuthModule } from './merchant-auth.module'
 import { HealthController } from '../http/controllers/health.controller'
 
 @Module({
@@ -16,7 +17,8 @@ import { HealthController } from '../http/controllers/health.controller'
     OrderModule,
     BookingModule,
     ProductModule,
-    ProfessionalModule
+    ProfessionalModule,
+    MerchantAuthModule,
   ],
   controllers: [HealthController]
 })

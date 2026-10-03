@@ -7,4 +7,5 @@ export const TOKENS = {
   PIX_GATEWAY: Symbol('IPixGateway'),
   PROFESSIONAL_REPOSITORY: Symbol('IProfessionalRepository'),
   PASSWORD_HASHER: Symbol('IPasswordHasher'),
-} as const
+  MERCHANT_USER_REPOSITORY: Symbol('IMerchantUserRepository'),
+} as const;
