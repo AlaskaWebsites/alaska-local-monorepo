@@ -16,20 +16,20 @@ const emit = defineEmits<{
   (e: 'close'): void
   (e: 'open-create-category'): void
   (e: 'create', form: { name: string; price: number; categoryId: string; description: string; image?: string }): void
-  (e: 'submit', form: { name: string; price: number; categoryId: string; description: string; image?: string }): void
 }>()
 
 const { themeClasses } = useTenantTheme()
 const { uploadImage, isUploading, uploadError } = useImageUpload()
 
 const fileInputRef = ref<HTMLInputElement | null>(null)
+const selectedFile = ref<File | null>(null)
 const previewUrl = ref<string | null>(null)
 const showManualUrl = ref(false)
 
 const form = ref({
   name: '',
   price: 0,
-  categoryId: props.categories[0]?.id || '',
+  categoryId: '',
   description: '',
   image: ''
 })
@@ -45,9 +45,16 @@ watch(
         description: '',
         image: ''
       }
+      if (previewUrl.value?.startsWith('blob:')) {
+        URL.revokeObjectURL(previewUrl.value)
+      }
       previewUrl.value = null
+      selectedFile.value = null
       uploadError.value = null
       showManualUrl.value = false
+      if (fileInputRef.value) {
+        fileInputRef.value.value = ''
+      }
     }
   }
 )
@@ -68,32 +75,49 @@ function triggerFileSelect() {
   fileInputRef.value?.click()
 }
 
-async function onFileSelected(event: Event) {
+function onFileSelected(event: Event) {
   const target = event.target as HTMLInputElement
   const file = target.files?.[0]
   if (!file) return
 
-  // Preview local instantâneo
-  previewUrl.value = URL.createObjectURL(file)
-
-  const result = await uploadImage(file)
-  if (result.success && result.url) {
-    form.value.image = result.url
-  } else {
-    previewUrl.value = null
+  // Limpa preview anterior se era blob
+  if (previewUrl.value?.startsWith('blob:')) {
+    URL.revokeObjectURL(previewUrl.value)
   }
+
+  // Apenas armazena o arquivo e exibe o preview local (sem enviar para o Cloudinary ainda)
+  selectedFile.value = file
+  previewUrl.value = URL.createObjectURL(file)
+  uploadError.value = null
 }
 
 function removeImage() {
-  previewUrl.value = null
+  if (previewUrl.value?.startsWith('blob:')) {
+    URL.revokeObjectURL(previewUrl.value)
+  }
   form.value.image = ''
+  previewUrl.value = null
+  selectedFile.value = null
   if (fileInputRef.value) {
     fileInputRef.value.value = ''
   }
 }
 
-function handleSubmit() {
+async function handleSubmit() {
   if (isUploading.value) return
+  if (!form.value.name.trim()) return
+
+  // Faz o upload para o Cloudinary somente no momento do cadastro
+  if (selectedFile.value) {
+    const result = await uploadImage(selectedFile.value)
+    if (result?.url) {
+      form.value.image = result.url
+    } else {
+      // Falha no upload: erro exibido na tela, não cadastra sem sucesso
+      return
+    }
+  }
+
   emit('create', form.value)
 }
 </script>
@@ -147,19 +171,19 @@ function handleSubmit() {
           </select>
         </div>
 
-        <!-- Foto do Produto com Upload Cloudinary -->
+        <!-- Foto do Produto com Preview Local e Upload sob Demanda no Cloudinary -->
         <div>
           <label class="block text-xs font-semibold text-slate-600 mb-1">Foto / Imagem (opcional):</label>
 
           <input
             ref="fileInputRef"
             type="file"
-            accept="image/png,image/jpeg,image/webp"
+            accept="image/png, image/jpeg, image/webp"
             class="hidden"
             @change="onFileSelected"
           />
 
-          <!-- Botão de Upload Customizado -->
+          <!-- Área de Upload / Seleção Mobile -->
           <div
             v-if="!previewUrl && !form.image"
             @click="triggerFileSelect"
@@ -191,17 +215,17 @@ function handleSubmit() {
 
             <div class="flex-1 min-w-0">
               <p class="text-xs font-medium text-slate-900 truncate">
-                {{ isUploading ? 'Enviando e otimizando...' : 'Imagem anexada' }}
+                {{ isUploading ? 'Enviando foto ao Cloudinary...' : (selectedFile ? 'Foto selecionada' : 'Imagem anexada') }}
               </p>
               <p class="text-[10px] text-slate-500 truncate">
-                {{ isUploading ? 'Aguarde a finalização' : 'Pronta para publicação' }}
+                {{ isUploading ? 'Aguarde a otimização...' : (selectedFile ? 'Será enviada ao clicar em Cadastrar' : 'URL externa vinculada') }}
               </p>
               <div class="flex items-center gap-2 mt-1.5">
                 <button
                   type="button"
                   :disabled="isUploading"
                   @click="triggerFileSelect"
-                  class="text-[11px] font-bold text-slate-700 hover:text-slate-950 cursor-pointer"
+                  class="text-[11px] font-bold text-slate-700 hover:text-slate-950 cursor-pointer disabled:opacity-50"
                 >
                   Trocar foto
                 </button>
@@ -210,7 +234,7 @@ function handleSubmit() {
                   type="button"
                   :disabled="isUploading"
                   @click="removeImage"
-                  class="text-[11px] font-bold text-rose-600 hover:text-rose-700 cursor-pointer"
+                  class="text-[11px] font-bold text-rose-600 hover:text-rose-700 cursor-pointer disabled:opacity-50"
                 >
                   Remover
                 </button>
@@ -223,8 +247,8 @@ function handleSubmit() {
             ⚠️ {{ uploadError }}
           </p>
 
-          <!-- Input Manual Alternativo Opcional -->
-          <div class="mt-2">
+          <!-- Fallback: Link manual -->
+          <div class="mt-1.5 flex items-center justify-between">
             <button
               type="button"
               @click="showManualUrl = !showManualUrl"
@@ -270,8 +294,9 @@ function handleSubmit() {
       <div class="flex gap-2 pt-2">
         <button
           type="button"
+          :disabled="isUploading"
           @click="emit('close')"
-          class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-xs transition-colors cursor-pointer"
+          class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold py-2.5 rounded-xl text-xs transition-colors cursor-pointer disabled:opacity-50"
         >
           Cancelar
         </button>
@@ -283,7 +308,7 @@ function handleSubmit() {
           :class="themeClasses.primaryBg"
         >
           <Loader2 v-if="isUploading" class="w-3.5 h-3.5 animate-spin" />
-          <span>{{ isUploading ? 'Enviando...' : 'Cadastrar' }}</span>
+          <span>{{ isUploading ? 'Enviando e cadastrando...' : 'Cadastrar' }}</span>
         </button>
       </div>
     </div>
