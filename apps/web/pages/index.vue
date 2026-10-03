@@ -1,52 +1,46 @@
-<!-- pages/index.vue -->
+<!-- apps/web/pages/index.vue -->
 <template>
-  <div class="min-h-screen bg-slate-50 text-slate-900 pb-16">
-    <!-- Header e Apresentação -->
-    <header class="bg-white border-b border-slate-200/80 py-12 px-4 sm:px-6">
-      <div class="max-w-5xl mx-auto text-center space-y-4">
-        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 border border-slate-200 text-xs font-semibold text-slate-700">
-          <Sparkles class="w-3.5 h-3.5 text-amber-500" aria-hidden="true" />
-          <span>Ecossistema Alaska Local</span>
+  <div class="min-h-screen bg-slate-50 text-slate-800 font-sans selection:bg-rose-500 selection:text-white pb-20">
+    <!-- Hero / Header da Vitrine Multi-Lojas -->
+    <header class="bg-white border-b border-slate-200/80 py-10 px-4 sm:px-6">
+      <div class="max-w-5xl mx-auto text-center space-y-3">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-50 text-rose-600 text-xs font-bold border border-rose-100">
+          <span>🚀</span>
+          <span>Plataforma White-Label para Lojas Locais</span>
         </div>
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-950 tracking-tight">
-          Vitrines Digitais & Catálogos Online
+        <h1 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+          Alaska Local • Vitrines & Cardápios Digitais
         </h1>
-        <p class="text-sm sm:text-base text-slate-600 max-w-2xl mx-auto leading-relaxed">
-          Demonstrações interativas de alta conversão para comércios, lojas e prestadores de serviços com fechamento direto no WhatsApp.
+        <p class="text-sm sm:text-base text-slate-500 max-w-xl mx-auto leading-relaxed">
+          Demonstração de vitrines comerciais personalizadas com pedidos via WhatsApp, catálogo dinâmico, pagamentos Pix integrados e painel de controle para lojistas.
         </p>
-
-        <!-- Filtros por Categoria de Negócio (Semântica de Tablist W3C - Anti-Layout Shift & Anti-Clipping Desktop) -->
-        <div class="flex items-center justify-start sm:justify-center flex-nowrap sm:flex-wrap gap-2 pt-4 overflow-x-auto sm:overflow-x-visible no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0" role="tablist"
-          aria-label="Filtrar demonstrações por categoria de negócio">
-          <button
-            v-for="tab in filterTabs"
-            :key="tab.id"
-            role="tab"
-            :aria-selected="activeCategory === tab.id"
-            :aria-controls="'showcase-grid'"
-            @click="activeCategory = tab.id"
-            class="px-3.5 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-1.5 shrink-0 border"
-            :class="[
-              activeCategory === tab.id
-                ? 'bg-slate-900 text-white border-slate-900 shadow-xs'
-                : 'bg-white text-slate-600 hover:bg-slate-100 hover:text-slate-900 border-slate-200'
-            ]"
-          >
-            <span>{{ tab.emoji }}</span>
-            <span>{{ tab.label }}</span>
-            <span class="text-[11px] px-1.5 py-0.5 rounded-full font-medium"
-              :class="activeCategory === tab.id ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-500'">
-              {{ tab.count }}
-            </span>
-          </button>
-        </div>
       </div>
     </header>
 
-    <!-- Grid de Demonstrações -->
-    <main class="max-w-5xl mx-auto px-4 sm:px-6 pt-10 min-h-[50vh]">
-      <div id="showcase-grid" role="region" aria-label="Lista de estabelecimentos disponíveis"
-        class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Barra de Filtros por Categoria -->
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 mt-8">
+      <div class="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+        <button
+          v-for="tab in filterTabs"
+          :key="tab.id"
+          @click="activeCategory = tab.id"
+          class="flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all cursor-pointer border"
+          :class="activeCategory === tab.id
+            ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
+            : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-100'"
+        >
+          <span>{{ tab.emoji }}</span>
+          <span>{{ tab.label }}</span>
+          <span class="text-[11px] px-1.5 py-0.2 rounded-full font-mono" :class="activeCategory === tab.id ? 'bg-slate-800 text-slate-300' : 'bg-slate-100 text-slate-500'">
+            {{ tab.count }}
+          </span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Grid de Lojas Disponíveis -->
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 mt-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         <NuxtLink
           v-for="store in filteredTenants"
           :key="store.slug"
@@ -55,36 +49,38 @@
           class="group bg-white rounded-2xl border border-slate-200 hover:shadow-md shadow-sm transition-all duration-200 overflow-hidden flex flex-col justify-between cursor-pointer active:scale-[0.99]"
           :class="getStoreBorderHover(store.theme)"
         >
-          <!-- Imagem / Banner do Card -->
-          <div class="relative h-48 w-full bg-slate-100 overflow-hidden">
-            <img
-              v-if="store.banner || store.logo"
-              :src="store.banner || store.logo"
-              :alt="store.name"
-              class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              loading="lazy"
-              @error="handleImageError($event, store.theme)"
-            />
-            <div
-              v-else
-              class="w-full h-full flex items-center justify-center font-bold text-3xl bg-slate-100"
-              :class="getStoreTextColor(store.theme)"
-            >
-              {{ store.name.charAt(0) }}
+          <div>
+            <!-- Banner Superior ou Cor do Tema -->
+            <div class="h-28 w-full bg-slate-100 relative overflow-hidden">
+              <img
+                v-if="store.banner"
+                :src="store.banner"
+                :alt="`Banner de ${store.name}`"
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                @error="handleImageError($event, store.theme)"
+              />
+              <div
+                v-else
+                class="w-full h-full flex items-center justify-center font-bold text-slate-300 text-xl"
+                :class="getStoreHeroFallbackBg(store.theme)"
+              >
+                {{ store.name }}
+              </div>
+
+              <!-- Pílula de Categoria -->
+              <span
+                class="absolute top-3 right-3 text-[10px] font-extrabold uppercase px-2.5 py-1 rounded-full shadow-xs tracking-wider backdrop-blur-xs border"
+                :class="getStoreCategoryBadge(resolveCategory(store))"
+              >
+                {{ getStoreCategoryLabel(resolveCategory(store)) }}
+              </span>
             </div>
 
-            <!-- Badge de Categoria de Negócio -->
-            <span class="absolute top-3 right-3 text-[11px] font-bold px-2.5 py-1 rounded-full shadow-sm backdrop-blur-md"
-              :class="getCategoryBadgeClass(resolveCategory(store))">
-              {{ getStoreCategoryLabel(resolveCategory(store)) }}
-            </span>
-          </div>
-
-          <!-- Informações e Corpo do Card -->
-          <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
-            <div>
-              <div class="flex items-start justify-between gap-2">
-                <h2 class="font-bold text-base text-slate-900 group-hover:text-slate-700 transition-colors line-clamp-1"
+            <!-- Corpo do Card -->
+            <div class="p-5">
+              <div class="flex items-center justify-between gap-2">
+                <h2
+                  class="font-black text-slate-800 text-sm tracking-tight transition-colors line-clamp-1"
                   :class="getStoreTitleHover(store.theme)">
                   {{ store.name }}
                 </h2>
@@ -98,16 +94,23 @@
                 </div>
               </div>
               <p class="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">
-                {{ store.description }}
+                {{ store.description || 'Vitrines online, pedidos rápidos no WhatsApp e pagamento transparente.' }}
               </p>
             </div>
+          </div>
 
-            <!-- Botão de Ação -->
-            <div class="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold"
-              :class="getStoreTextHover(store.theme)">
-              <span>{{ getStoreActionText(resolveCategory(store)) }}</span>
-              <ChevronRight class="w-4 h-4 group-hover:translate-x-1 transition-transform" aria-hidden="true" />
-            </div>
+          <!-- Rodapé do Card -->
+          <div class="px-5 py-3 bg-slate-50/80 border-t border-slate-100 flex items-center justify-between text-xs">
+            <span class="text-slate-400 font-medium truncate max-w-[170px]">
+              {{ store.address ? store.address.split('-')[0] : 'Francisco Morato - SP' }}
+            </span>
+            <span
+              class="font-bold flex items-center gap-1 group-hover:translate-x-0.5 transition-transform"
+              :class="getStoreTextColor(store.theme)"
+            >
+              Ver vitrine
+              <span>→</span>
+            </span>
           </div>
         </NuxtLink>
       </div>
@@ -117,10 +120,9 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { TenantSchema } from '~/types/tenant'
-import type { Tenant, BusinessCategory, StoreReviews } from '~/types/tenant'
+import { Star } from 'lucide-vue-next'
 import { handleImageError } from '~/utils/images'
-import { Sparkles, Star, ChevronRight } from 'lucide-vue-next'
+import { TenantSchema, type Tenant, type BusinessCategory } from '~/types'
 
 type FilterCategory = 'all' | BusinessCategory
 
@@ -128,43 +130,6 @@ const activeCategory = ref<FilterCategory>('all')
 
 const config = useRuntimeConfig()
 const apiBaseUrl = config.public?.apiBaseUrl || 'http://localhost:3333/api/v1'
-
-function resolveReviews(localReviews?: StoreReviews, apiReviews?: any): StoreReviews | undefined {
-  if (!localReviews && !apiReviews) return undefined
-  if (!localReviews) return apiReviews
-  if (!apiReviews) return localReviews
-
-  const hasLocalComments = Array.isArray(localReviews.comments) && localReviews.comments.length > 0
-  const hasApiComments = Array.isArray(apiReviews.comments) && apiReviews.comments.length > 0
-
-  const isApiGenericMock =
-    (apiReviews.count === 42 || apiReviews.totalReviews === 42) &&
-    (!hasApiComments || apiReviews.comments.length === 0)
-
-  if (isApiGenericMock && localReviews.totalReviews && localReviews.totalReviews !== 42) {
-    return {
-      ...localReviews,
-      score: localReviews.score ?? localReviews.rating ?? 4.9,
-      rating: localReviews.rating ?? localReviews.score ?? 4.9,
-      totalReviews: localReviews.totalReviews,
-      count: localReviews.count ?? localReviews.totalReviews,
-    }
-  }
-
-  return {
-    ...localReviews,
-    ...apiReviews,
-    score: apiReviews.score ?? apiReviews.rating ?? localReviews.score ?? 5.0,
-    rating: apiReviews.rating ?? apiReviews.score ?? localReviews.rating ?? 5.0,
-    totalReviews: apiReviews.totalReviews ?? apiReviews.count ?? localReviews.totalReviews ?? 0,
-    count: apiReviews.count ?? apiReviews.totalReviews ?? localReviews.count ?? 0,
-    distribution: (apiReviews.distribution && Object.keys(apiReviews.distribution).length > 0)
-      ? apiReviews.distribution
-      : localReviews.distribution,
-    comments: hasApiComments ? apiReviews.comments : (localReviews.comments || []),
-    serviceQuality: apiReviews.serviceQuality || localReviews.serviceQuality,
-  }
-}
 
 // 1. Carregamento resiliente dos arquivos JSON locais como baseline
 function loadLocalTenants(): Tenant[] {
@@ -185,25 +150,28 @@ const { data: remoteTenants } = await useAsyncData<Tenant[]>('showcase-tenants-l
   const localList = loadLocalTenants()
   if (apiBaseUrl) {
     try {
-      const res = await $fetch<any>(`${apiBaseUrl}/tenants`, { timeout: 4000 })
-      const data = Array.isArray(res) ? res : (Array.isArray(res?.data) ? res.data : null)
-      if (Array.isArray(data) && data.length > 0) {
-        const merged: Tenant[] = []
-        for (const item of data) {
-          const local = localList.find((l) => l.slug?.toLowerCase() === item.slug?.toLowerCase() || l.id === item.id)
-          const mergedData = local
-            ? { ...local, ...item, reviews: resolveReviews(local.reviews, item.reviews) }
-            : item
-          const parsed = TenantSchema.safeParse(mergedData)
-          if (parsed.success) {
-            merged.push(parsed.data)
+      // Busca atualizações para cada tenant conhecido de forma concorrente evitando 404
+      const results = await Promise.allSettled(
+        localList.map((t) => $fetch<any>(`${apiBaseUrl}/tenants/${t.slug}`, { timeout: 4000 }))
+      )
+      const merged: Tenant[] = []
+      for (let i = 0; i < localList.length; i++) {
+        const local = localList[i]
+        const res = results[i]
+        if (res.status === 'fulfilled' && res.value) {
+          const item = (res.value && typeof res.value === 'object') ? (res.value.data || res.value) : null
+          if (item && item.slug) {
+            const mergedData = { ...local, ...item, reviews: item.reviews || local.reviews }
+            const parsed = TenantSchema.safeParse(mergedData)
+            if (parsed.success) {
+              merged.push(parsed.data)
+              continue
+            }
           }
         }
-        if (merged.length > 0) {
-          const missingLocals = localList.filter((l) => !merged.some((m) => m.slug?.toLowerCase() === l.slug?.toLowerCase()))
-          return [...merged, ...missingLocals]
-        }
+        merged.push(local)
       }
+      return merged
     } catch {
       // Fallback gracioso para os JSONs locais caso a API esteja offline
     }
@@ -218,12 +186,12 @@ const tenantsList = computed<Tenant[]>(() => {
 })
 
 function resolveCategory(tenant: Tenant): BusinessCategory {
-  if (tenant.businessCategory) return tenant.businessCategory
-  if (tenant.slug === 'bella-donna' || tenant.slug === 'karine-finardi') return 'shop'
-  if (tenant.slug === 'barbearia-style') return 'hub'
-  if (tenant.slug === 'clinica-sorriso') return 'pro'
-  if (tenant.template === 'hub' || tenant.template === 'booking') return 'hub'
-  if (tenant.template === 'pro') return 'pro'
+  if (tenant.businessCategory) {
+    return tenant.businessCategory
+  }
+  if (tenant.theme === 'barber' || tenant.professionals?.length) {
+    return 'hub'
+  }
   return 'menu'
 }
 
@@ -247,8 +215,8 @@ function hasStoreReviews(store: Tenant): boolean {
 const filterTabs = computed(() => [
   { id: 'all' as const, label: 'Todas as Lojas', emoji: '🌟', count: tenantsList.value.length },
   { id: 'menu' as const, label: 'Food & Delivery', emoji: '🍔', count: tenantsList.value.filter((t) => resolveCategory(t) === 'menu').length },
-  { id: 'shop' as const, label: 'Lojas & Boutiques', emoji: '🛍️', count: tenantsList.value.filter((t) => resolveCategory(t) === 'shop').length },
-  { id: 'hub' as const, label: 'Barbearias & Serviços', emoji: '💈', count: tenantsList.value.filter((t) => resolveCategory(t) === 'hub').length },
+  { id: 'hub' as const, label: 'Serviços & Hub', emoji: '💈', count: tenantsList.value.filter((t) => resolveCategory(t) === 'hub').length },
+  { id: 'shop' as const, label: 'Moda & Vitrine', emoji: '🛍️', count: tenantsList.value.filter((t) => resolveCategory(t) === 'shop').length },
   { id: 'pro' as const, label: 'Clínicas & Profissionais', emoji: '🦷', count: tenantsList.value.filter((t) => resolveCategory(t) === 'pro').length },
 ])
 
@@ -264,52 +232,15 @@ const filteredTenants = computed(() => {
 function getStoreTextColor(theme?: string): string {
   switch (theme) {
     case 'barber':
-      return 'text-amber-500'
+      return 'text-amber-600'
     case 'health':
-      return 'text-teal-600'
+      return 'text-cyan-600'
     case 'drinks':
       return 'text-purple-600'
+    case 'rose':
+      return 'text-rose-600'
     default:
-      return 'text-red-600'
-  }
-}
-
-function getStoreCategoryLabel(cat?: string): string {
-  switch (cat) {
-    case 'shop':
-      return '🛍️ Vitrine & Catálogo'
-    case 'hub':
-      return '💈 Serviços & Agenda'
-    case 'pro':
-      return '🦷 Consultas & Pro'
-    default:
-      return '🍔 Cardápio & Delivery'
-  }
-}
-
-function getCategoryBadgeClass(cat?: string): string {
-  switch (cat) {
-    case 'shop':
-      return 'bg-pink-950/80 text-pink-200 border border-pink-800'
-    case 'hub':
-      return 'bg-amber-950/80 text-amber-200 border border-amber-800'
-    case 'pro':
-      return 'bg-teal-950/80 text-teal-200 border border-teal-800'
-    default:
-      return 'bg-red-950/80 text-red-200 border border-red-800'
-  }
-}
-
-function getStoreActionText(cat?: string): string {
-  switch (cat) {
-    case 'shop':
-      return 'Ver vitrine e produtos'
-    case 'hub':
-      return 'Ver serviços e agendar'
-    case 'pro':
-      return 'Agendar consulta / avaliação'
-    default:
-      return 'Acessar cardápio completo'
+      return 'text-emerald-600'
   }
 }
 
@@ -318,37 +249,73 @@ function getStoreTitleHover(theme?: string): string {
     case 'barber':
       return 'group-hover:text-amber-600'
     case 'health':
-      return 'group-hover:text-teal-600'
+      return 'group-hover:text-cyan-600'
     case 'drinks':
       return 'group-hover:text-purple-600'
+    case 'rose':
+      return 'group-hover:text-rose-600'
     default:
-      return 'group-hover:text-red-600'
+      return 'group-hover:text-emerald-600'
   }
 }
 
 function getStoreBorderHover(theme?: string): string {
   switch (theme) {
     case 'barber':
-      return 'hover:border-amber-400'
+      return 'hover:border-amber-300'
     case 'health':
-      return 'hover:border-teal-400'
+      return 'hover:border-cyan-300'
     case 'drinks':
-      return 'hover:border-purple-400'
+      return 'hover:border-purple-300'
+    case 'rose':
+      return 'hover:border-rose-300'
     default:
-      return 'hover:border-red-400'
+      return 'hover:border-emerald-300'
   }
 }
 
-function getStoreTextHover(theme?: string): string {
+function getStoreHeroFallbackBg(theme?: string): string {
   switch (theme) {
     case 'barber':
-      return 'text-amber-600'
+      return 'bg-amber-950 text-amber-500/40'
     case 'health':
-      return 'text-teal-600'
+      return 'bg-cyan-950 text-cyan-500/40'
     case 'drinks':
-      return 'text-purple-600'
+      return 'bg-purple-950 text-purple-500/40'
+    case 'rose':
+      return 'bg-rose-950 text-rose-500/40'
     default:
-      return 'text-red-600'
+      return 'bg-slate-900 text-slate-500/40'
+  }
+}
+
+function getStoreCategoryLabel(category: BusinessCategory): string {
+  switch (category) {
+    case 'menu':
+      return 'Cardápio Digital'
+    case 'hub':
+      return 'Agendamento & Hub'
+    case 'shop':
+      return 'Vitrine & Moda'
+    case 'pro':
+      return 'Clínica & Consultório'
+    default:
+      return 'Loja Oficial'
+  }
+}
+
+function getStoreCategoryBadge(category: BusinessCategory): string {
+  switch (category) {
+    case 'menu':
+      return 'bg-amber-500/90 text-white border-amber-400/50'
+    case 'hub':
+      return 'bg-slate-900/90 text-amber-400 border-slate-700/50'
+    case 'shop':
+      return 'bg-rose-500/90 text-white border-rose-400/50'
+    case 'pro':
+      return 'bg-cyan-600/90 text-white border-cyan-500/50'
+    default:
+      return 'bg-emerald-600/90 text-white border-emerald-500/50'
   }
 }
 </script>
