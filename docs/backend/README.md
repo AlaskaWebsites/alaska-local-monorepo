@@ -16,20 +16,22 @@
    * Desacoplamento através de tokens de injeção (`TENANT_REPOSITORY`, `PRODUCT_REPOSITORY`, `PIX_GATEWAY`, `MERCHANT_USER_REPOSITORY`).
 3. **Money Pattern Imutável**:
    * Todos os valores monetários são processados e persistidos em centavos inteiros (`cents: number`) via Value Object `Money`, eliminando imprecisão de ponto flutuante IEEE 754.
-4. **Validação Fail-Fast com Zod**:
-   * Interceptação de dados na borda externa via `ZodValidationPipe` e imposição de invariantes no construtor das entidades e Value Objects (`Money`, `PixKey`, `Address`).
+4. **Validação Fail-Fast com Zod e DTOs Tipados (ADR 002 e ADR 014)**:
+   * Interceptação de dados na borda externa via `ZodValidationPipe` consumindo schemas de `@alaska/contracts`. Eliminação total de `@Body() body: any` e imposição de invariantes nos construtores das entidades.
 5. **Erros Padronizados em RFC 7807 (Problem Details)**:
-   * Exceções de domínio (`ValidationError`, `EntityNotFoundError`) convertidas automaticamente pelo `DomainExceptionFilter` para JSON estruturado com status HTTP adequado (400, 404, 500).
+   * Exceções de domínio (`ValidationError`, `EntityNotFoundError`) convertidas automaticamente pelo `DomainExceptionFilter` para JSON estruturado com status HTTP adequado (400, 404, 409, 500).
 6. **Auto-População Resiliente no PostgreSQL (ADR 008)**:
    * Proteção contra vitrines esvaziadas através de auto-seeding transacional de categorias e produtos caso o tenant exista com catálogo vazio.
 7. **Resiliência de Rotas de Catálogo e Fuso Horário de Brasília (ADR 009)**:
    * Tratamento polimórfico de disponibilidade de produtos no PostgreSQL e sincronização horária canônica em `America/Sao_Paulo`.
 8. **Autenticação Corporativa do Lojista e JWT (ADR 013)**:
    * Login com e-mail corporativo, senha com hash seguro e tokens JWT com isolamento estrito por tenant.
+9. **Encapsulamento de Entidades DDD e Ciclo de Vida Canônico (ADR 014)**:
+   * Métodos canônicos `updateStatus()` e `cancel()` em `Order` e `Booking`, impedindo mutações arbitrárias de propriedades internas.
 
 ---
 
-## 🌐 2. Endpoints da API
+## 🚀 2. Rotas Principais da API
 
 Documentação interativa OpenAPI / Swagger disponível em: `http://localhost:3333/api/docs`
 
@@ -41,18 +43,17 @@ Documentação interativa OpenAPI / Swagger disponível em: `http://localhost:33
 | **Tenants** | `GET` | `/api/v1/tenants/:slug` | Dados públicos do estabelecimento, categorias e catálogo. |
 | **Tenants** | `POST` | `/api/v1/tenants` | Criação de novo tenant com validação de slug único. |
 | **Tenants** | `PATCH` | `/api/v1/tenants/:slug/emergency-close` | Pausa emergencial com mensagem personalizada. |
-| **Tenants** | `POST` | `/api/v1/tenants/:slug/hours` | Atualização da grade semanal de funcionamento. |
-| **Tenants** | `PATCH` | `/api/v1/tenants/:slug/pin` | Atualização segura da senha PIN do painel. |
-| **Produtos** | `PATCH` | `/api/v1/tenants/:slug/products/:id/availability` | Pausa ou ativação de produto em tempo real. |
-| **Produtos** | `PUT` | `/api/v1/tenants/:slug/products/:id` | Edição de preço e metadados do item. |
-| **Produtos** | `PATCH` | `/api/v1/tenants/:slug/products/:id/options/:optionId/availability` | Pausa de adicional/opcional específico. |
-| **Pedidos** | `POST` | `/api/v1/orders` | Recepção e persistência do pedido com cálculo de totais. |
-| **Pedidos** | `GET` | `/api/v1/orders/:id` | Consulta de pedido por ID com status de pagamento. |
-| **Pedidos** | `GET` | `/api/v1/orders/tenant/:tenantId` | Listagem de pedidos de um estabelecimento. |
-| **Agendamentos** | `POST` | `/api/v1/bookings` | Registro de agendamento de serviços com cálculo de duração somada. |
-| **Agendamentos** | `GET` | `/api/v1/bookings/:id` | Consulta de agendamento por ID. |
-| **Agendamentos** | `GET` | `/api/v1/bookings/tenant/:tenantId` | Listagem de agendamentos por loja e data de atendimento. |
-| **Agendamentos** | `PATCH` | `/api/v1/bookings/:id/status` | Atualização de status de agendamento (`scheduled`, `confirmed`, `completed`...). |
+| **Produtos** | `POST` | `/api/v1/products` | Cadastro de produto com categoria e preço em centavos. |
+| **Produtos** | `PATCH` | `/api/v1/products/:id/toggle` | Alternância de disponibilidade com propagação imediata. |
+| **Produtos** | `PUT` | `/api/v1/products/:id` | Atualização de dados, preços e categoria de produto. |
+| **Produtos** | `DELETE` | `/api/v1/products/:id` | Exclusão lógica ou física de item do catálogo. |
+| **Pedidos** | `POST` | `/api/v1/orders` | Criação de pedido de delivery/retirada com itens e endereço. |
+| **Pedidos** | `GET` | `/api/v1/orders/:id` | Consulta detalhada de comanda e status operacional. |
+| **Pedidos** | `PATCH` | `/api/v1/orders/:id/status` | Avanço de status na esteira de produção. |
+| **Agendamentos** | `POST` | `/api/v1/bookings` | Criação de agendamento com validação de slot e profissional. |
+| **Agendamentos** | `GET` | `/api/v1/bookings/:id` | Consulta detalhada do agendamento de serviço. |
+| **Agendamentos** | `PATCH` | `/api/v1/bookings/:id/status` | Confirmação, conclusão ou cancelamento de agendamento. |
+| **Pix** | `POST` | `/api/v1/pix/qrcode` | Geração de payload Pix EMV estático/dinâmico e QR Code Base64. |
 
 ---
 
@@ -81,12 +82,6 @@ pnpm test:api
 - **[ADR 011: Persistência de Profissionais e Bloqueio de Agenda no PostgreSQL](./adrs/011-persistencia-profissionais-e-bloqueio-agenda-postgresql.md)** — Escalas, expediente, intervalos de almoço e bloqueios manuais de slots.
 - **[ADR 012: Persistência de Configurações Globais da Loja no PostgreSQL](./adrs/012-persistencia-configuracoes-globais-loja-postgresql.md)** — Grade semanal, emergência, delivery, Pix, canais sociais e comunicados.
 - **[ADR 013: Autenticação Corporativa do Lojista (E-mail e Senha), Hash Seguro e Sessão JWT](./adrs/013-autenticacao-e-perfil-do-lojista-email-senha.md)** — Autenticação corporativa com MerchantUser, RLS por tenant, hash seguro e tokens JWT.
+- **[ADR 014: Blindagem Fail-Fast Total com ZodValidationPipe e Padronização RFC 7807](./adrs/014-blindagem-fail-fast-total-zod-e-padronizacao-rfc7807.md)** — Eliminação definitiva de `@Body() body: any`, encapsulamento DDD nas entidades `Order`/`Booking` e respostas HTTP 400/404 padronizadas.
 
 ---
-
-## 📚 5. Links da Documentação Viva (`docs/backend/`)
-
-- [Mapa Completo de Arquitetura](./architecture/mapa-arquitetura-backend.md)
-- [Padrões de Validação com Zod e Fail-Fast](./architecture/zod-validation-patterns.md)
-- [Guia de Persistência PostgreSQL & Pooling](./architecture/postgresql-persistence-guide.md)
-- [Tratamento de Erros & RFC 7807](./architecture/tratamento-erros-e-rfc7807.md)

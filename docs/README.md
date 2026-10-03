@@ -12,12 +12,12 @@ docs/
 ├── architecture/                          # Guias transversais (Multi-Tenancy, RLS, Deploy)
 ├── frontend/                              # Documentação do Front-end (Nuxt 3 / Vue 3)
 │   ├── README.md                          # Visão geral do Nuxt 3, design system e vitrines
-│   ├── adrs/                              # Architectural Decision Records (001 a 025)
+│   ├── adrs/                              # Architectural Decision Records (001 a 027)
 │   └── architecture/                      # Componentes, acessibilidade, temas e WhatsApp
 └── backend/                               # Documentação do Back-end (NestJS 11)
     ├── README.md                          # Visão geral da API, endpoints e Clean Architecture
     ├── ARCHITECTURE.md                    # Diagramas de camadas e Ports & Adapters
-    ├── adrs/                              # Architectural Decision Records (001 a 013)
+    ├── adrs/                              # Architectural Decision Records (001 a 014)
     ├── architecture/                      # Persistência PostgreSQL, Pix EMV e Erros RFC 7807
     └── commercial/                        # Estratégia de precificação e esteira DFY
 ```
@@ -27,9 +27,12 @@ docs/
 ## 🧭 Guias Rápidos por Domínio
 
 ### 🛡️ Governança & Segurança Monorepo
-* **[Segurança e Isolamento Multi-Tenant](./architecture/seguranca-e-isolamento-multitenant.md)** — Namespacing por slug no navegador, Row Level Security (RLS) no PostgreSQL e autenticação por PIN.
+* **[Segurança e Isolamento Multi-Tenant](./architecture/seguranca-e-isolamento-multitenant.md)** — Namespacing por slug no navegador, Row Level Security (RLS) no PostgreSQL e autenticação corporativa JWT / PIN.
+* **[Diagnóstico de Tipagem, Contratos e Fail-Fast](./architecture/diagnostico-tipagem-contratos-e-fail-fast.md)** — Auditoria de conformidade, eliminação de `@Body() body: any` e tipagem estrita de ponta a ponta.
 
 ### 🌐 Frontend & Experiência do Usuário
+* **[ADR 027: Resiliência de Vitrine, Deduplicação de Produtos e Sincronização de Modais](./frontend/adrs/027-resiliencia-storefront-deduplicacao-e-sincronizacao-modais.md)** — Deduplicação de produtos, upload postergado no Cloudinary, correção de props/emits em `StoreHeaderCard`/`StoreHeroBanner`/`StoreReviewsModal` e eliminação de 404 em `pages/index.vue`.
+* **[ADR 026: Criação Dinâmica de Categorias no Painel do Lojista](./frontend/adrs/026-criacao-dinamica-de-categorias-painel-do-lojista.md)** — Criação e exclusão de categorias diretamente pelo celular com reatividade em tempo real.
 * **[ADR 025: Autenticação Corporativa do Lojista (E-mail e Senha) e Sessão JWT](./frontend/adrs/025-autenticacao-corporativa-lojista-email-senha.md)** — Login corporativo com validação Zod, Bearer token e alternância com PIN rápido.
 * **[ADR 024: Mural de Pedidos em Tempo Real e Gestão Operacional (Order Dashboard)](./frontend/adrs/024-mural-de-pedidos-e-gestao-em-tempo-real-order-dashboard.md)** — Acompanhamento de comandas, transições de esteira, WhatsApp e métricas diárias.
 * **[ADR 018: Resiliência de Contratos de Props, Emissão Dual e Defesa Anti-Crash](./frontend/adrs/018-resiliencia-de-contratos-props-e-eventos-das-abas-admin.md)** — Padrão dual-prop, dual-emit, canais sociais (Instagram), pedido mínimo no checkout e flexbox balanceado.
@@ -40,6 +43,7 @@ docs/
 * **[Guia de Criação de Novos Tenants](./frontend/operations/guia-criacao-novos-tenants.md)** — Checklist e validação via `pnpm validate:tenants`.
 
 ### ⚙️ Backend & Engenharia de Domínio
+* **[ADR 014: Blindagem Fail-Fast Total com ZodValidationPipe e Padronização RFC 7807](./backend/adrs/014-blindagem-fail-fast-total-zod-e-padronizacao-rfc7807.md)** — Eliminação definitiva de `@Body() body: any`, encapsulamento DDD nas entidades `Order`/`Booking` e respostas HTTP 400/404 padronizadas.
 * **[ADR 013: Autenticação Corporativa do Lojista (E-mail e Senha), Hash Seguro e Sessão JWT](./backend/adrs/013-autenticacao-e-perfil-do-lojista-email-senha.md)** — Autenticação corporativa com MerchantUser, RLS por tenant, hash seguro e tokens JWT.
 * **[ADR 012: Persistência de Configurações Globais da Loja no PostgreSQL](./backend/adrs/012-persistencia-configuracoes-globais-loja-postgresql.md)** — Grade semanal, emergência, delivery, Pix, canais sociais e comunicados.
 * **[ADR 011: Persistência de Profissionais e Bloqueio de Agenda no PostgreSQL](./backend/adrs/011-persistencia-profissionais-e-bloqueio-agenda-postgresql.md)** — Escalas, expediente, intervalos de almoço e bloqueios manuais de slots.
