@@ -34,8 +34,9 @@ const props = withDefaults(
 )
 
 const emit = defineEmits<{
-  (e: 'update:activeTab', tab: AdminTabKey): void
   (e: 'update:modelValue', tab: AdminTabKey): void
+  (e: 'update:activeTab', tab: AdminTabKey): void
+  (e: 'tab-change', tab: AdminTabKey): void
 }>()
 
 const route = useRoute()
@@ -78,9 +79,9 @@ function handleNavWheel(e: WheelEvent) {
 }
 
 function selectTab(tab: AdminTabKey) {
-  emit('update:activeTab', tab)
   emit('update:modelValue', tab)
-  nextTick(checkNavScroll)
+  emit('update:activeTab', tab)
+  emit('tab-change', tab)
 }
 
 onMounted(() => {
@@ -141,7 +142,7 @@ onUnmounted(() => {
       <button
         type="button"
         @click="selectTab('catalog')"
-        class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
+        class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer select-none active:scale-95"
         :class="currentTab === 'catalog' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md font-bold'] : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300 shadow-2xs'"
       >
         <span>{{ isServiceStore ? '📋 Serviços & Itens' : '📋 Cardápio & Preços' }}</span>
@@ -152,7 +153,7 @@ onUnmounted(() => {
         v-if="isServiceStore"
         type="button"
         @click="selectTab('agenda')"
-        class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
+        class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer select-none active:scale-95"
         :class="currentTab === 'agenda' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md font-bold'] : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300 shadow-2xs'"
       >
         <span>{{ isHealthStore ? '🩺 Especialistas & Agenda' : '💈 Barbeiros & Agenda' }}</span>
@@ -162,7 +163,7 @@ onUnmounted(() => {
       <button
         type="button"
         @click="selectTab('pix_contact')"
-        class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
+        class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer select-none active:scale-95"
         :class="currentTab === 'pix_contact' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md font-bold'] : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300 shadow-2xs'"
       >
         <span>💠 Pix & Contato</span>
@@ -172,7 +173,7 @@ onUnmounted(() => {
       <button
         type="button"
         @click="selectTab('hours')"
-        class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
+        class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer select-none active:scale-95"
         :class="currentTab === 'hours' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md font-bold'] : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300 shadow-2xs'"
       >
         <span>🕒 Horários & Pausa</span>
@@ -183,7 +184,7 @@ onUnmounted(() => {
         v-if="!isServiceStore"
         type="button"
         @click="selectTab('delivery')"
-        class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
+        class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer select-none active:scale-95"
         :class="currentTab === 'delivery' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md font-bold'] : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300 shadow-2xs'"
       >
         <span>🛵 Delivery & Taxas</span>
@@ -193,20 +194,20 @@ onUnmounted(() => {
       <button
         type="button"
         @click="selectTab('announcement')"
-        class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
+        class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer select-none active:scale-95"
         :class="currentTab === 'announcement' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md font-bold'] : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300 shadow-2xs'"
       >
         <span>📢 Comunicado</span>
       </button>
 
-      <!-- Aba 7: Segurança & PIN -->
+      <!-- Aba 7: Segurança -->
       <button
         type="button"
         @click="selectTab('security')"
-        class="px-3.5 py-2 rounded-xl text-xs font-bold transition-all shrink-0 cursor-pointer select-none active:scale-95 flex items-center gap-1.5"
+        class="px-3.5 py-2 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer select-none active:scale-95"
         :class="currentTab === 'security' ? [themeClasses.primaryBg, 'text-slate-950 shadow-md font-bold'] : 'bg-white text-slate-600 border border-slate-200 hover:text-slate-900 hover:border-slate-300 shadow-2xs'"
       >
-        <span>🔒 PIN & Segurança</span>
+        <span>🔒 Segurança</span>
       </button>
     </div>
 
