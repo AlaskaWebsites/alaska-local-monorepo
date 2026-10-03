@@ -1176,8 +1176,11 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   }
 
   // 11. Resolução Reativa e Efetiva de Categorias e Produtos
-  function getEffectiveCategories(baseCategories: Category[]): Category[] {
-    const overrides = getOverrides()
+  function getEffectiveCategories(
+    baseCategories: Category[],
+    explicitOverrides?: TenantOverrides
+  ): Category[] {
+    const overrides = explicitOverrides || getOverrides()
     const rawCustomProds = (overrides.customProducts || []) as Product[]
     const customCats = (overrides.customCategories || []) as Category[]
     const deletedIds = new Set(overrides.deletedProductIds || [])
@@ -1237,20 +1240,21 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
 
       const prodsForCat = customProds.filter(p => p.categoryId === cat.id && !deletedIds.has(p.id))
       for (const cp of prodsForCat) {
-        const over = productOverrides[cp.id]
+        const clonedCp: Product = JSON.parse(JSON.stringify(cp))
+        const over = productOverrides[clonedCp.id]
         if (over) {
           if (typeof over.isAvailable === 'boolean') {
-            cp.isAvailable = over.isAvailable
-            if ('available' in cp) {
-              ;(cp as any).available = over.isAvailable
+            clonedCp.isAvailable = over.isAvailable
+            if ('available' in clonedCp) {
+              ;(clonedCp as any).available = over.isAvailable
             }
           }
           if (typeof over.price === 'number') {
-            cp.price = over.price
+            clonedCp.price = over.price
           }
         }
         if (!cat.products) cat.products = []
-        cat.products.push(cp)
+        cat.products.push(clonedCp)
       }
     }
 
