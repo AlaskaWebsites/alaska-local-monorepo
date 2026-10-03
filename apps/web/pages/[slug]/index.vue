@@ -1,4 +1,4 @@
-<!-- pages/[slug]/index.vue -->
+<!-- apps/web/pages/[slug]/index.vue -->
 <template>
   <!-- 0. Experiência Especializada B2B / Industrial para o Tenant Bama TEC -->
   <BamaTecStorefront
@@ -7,14 +7,13 @@
   />
 
   <div v-else-if="effectiveTenant" class="min-h-screen bg-slate-50 text-slate-900 font-sans pb-28 sm:pb-32 selection:bg-emerald-500 selection:text-white">
-    <!-- 1. Hero Banner Principal com Alertas e Compartilhamento -->
+    <!-- 1. Hero Banner Principal com Logo Flutuante -->
     <StoreHeroBanner
-      :banner="effectiveTenant.banner"
+      :banner-url="effectiveTenant.banner"
       :store-name="effectiveTenant.name"
       :theme="effectiveTenant.theme"
-      :is-emergency-closed="effectiveTenant.isEmergencyClosed"
-      :announcement="effectiveAnnouncement"
-      @share="shareStore"
+      :theme-classes="themeClasses"
+      @share="handleShare"
     />
 
     <!-- 2. Header & Card de Identidade da Loja -->
@@ -30,20 +29,18 @@
       @open-booking="openBookingModal"
     />
 
-    <!-- 3. Campo de Busca com Normalização Unicode Client-Side (0ms) -->
+    <!-- 3. Campo de Busca de Produtos em Tempo Real -->
     <div class="max-w-4xl mx-auto px-4 mt-6">
       <ProductSearchInput
         v-model="searchQuery"
-        :placeholder="`Buscar em ${effectiveTenant.name}...`"
-        :is-searching="isSearching"
-        :results-count="totalResultsCount"
-        @clear="clearSearch"
+        :placeholder="isServiceStore ? 'Buscar serviços, barbas ou cortes...' : 'Buscar produtos no cardápio...'"
+        :theme="effectiveTenant.theme"
       />
     </div>
 
-    <!-- 4. Carrossel de Destaques -->
+    <!-- 4. Carrossel de Produtos em Destaque -->
     <FeaturedProductsCarousel
-      v-if="!isSearching"
+      v-if="!isSearching && featuredProducts.length > 0"
       :products="featuredProducts"
       :theme="effectiveTenant.theme"
       :theme-classes="themeClasses"
@@ -103,13 +100,13 @@
       :is-open="isCartDrawerOpen"
       :items="cartItems"
       :tenant="effectiveTenant"
-      @close="isCartDrawerOpen = false"
       @remove-item="removeCartItem"
       @clear-cart="clearCart"
+      @close="isCartDrawerOpen = false"
     />
 
     <BookingModal
-      v-if="isServiceStore"
+      v-if="effectiveTenant && isServiceStore"
       :is-open="isBookingOpen"
       :tenant="effectiveTenant"
       :initial-service="selectedBookingService"
@@ -117,10 +114,12 @@
     />
 
     <StoreReviewsModal
-      v-if="effectiveTenant.storeReviews"
+      v-if="effectiveTenant"
       :is-open="isReviewsOpen"
-      :store-reviews="effectiveTenant.storeReviews"
+      :reviews="effectiveTenant.reviews"
       :store-name="effectiveTenant.name"
+      :category="effectiveTenant.category || (effectiveTenant.businessCategory === 'hub' ? 'Barbearia & Estética' : (effectiveTenant.businessCategory === 'shop' ? 'Boutique & Moda' : (effectiveTenant.businessCategory === 'pro' ? 'Saúde & Odontologia' : 'Comércio Local')))"
+      :address="effectiveTenant.address"
       @close="isReviewsOpen = false"
     />
   </div>
@@ -136,7 +135,6 @@ import { useProductSearch } from '~/composables/useProductSearch'
 import { useCart } from '~/composables/useCart'
 import { useShare } from '~/composables/useShare'
 import { useMerchantAdmin, type TenantOverrides } from '~/composables/useMerchantAdmin'
-
 import ProductSearchInput from '~/components/ProductSearchInput.vue'
 import CategoryTabs from '~/components/CategoryTabs.vue'
 import StoreHeroBanner from '~/components/storefront/StoreHeroBanner.vue'
@@ -150,32 +148,32 @@ import CartDrawerModal from '~/components/CartDrawerModal.vue'
 import BookingModal from '~/components/BookingModal.vue'
 import StoreReviewsModal from '~/components/StoreReviewsModal.vue'
 import BamaTecStorefront from '~/components/storefront/BamaTecStorefront.vue'
-
 import type { Product, CartItem, BookingService, Tenant } from '~/types'
 
+// 1. Resolução do Tenant Atual (Retorna referências reativas síncronas)
 const route = useRoute()
-const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
+const { tenant } = useTenant()
 
-// 1. Carregamento dos Dados Canônicos
-const { tenant } = useTenant(slug)
-const { themeClasses } = useTenantTheme(tenant)
-const { getOverrides } = useMerchantAdmin(slug)
-
-const localOverrides = ref(getOverrides())
-
+// Reatividade local para overrides do Lojista (localStorage)
+const localOverrides = ref<TenantOverrides>({})
 function reloadLocalOverrides() {
-  localOverrides.value = getOverrides()
+  if (typeof window === 'undefined') return
+  try {
+    const raw = localStorage.getItem(`alaska_overrides_${route.params.slug}`)
+    localOverrides.value = raw ? JSON.parse(raw) : {}
+  } catch {
+    localOverrides.value = {}
+  }
 }
 
 onMounted(() => {
   reloadLocalOverrides()
   if (typeof window !== 'undefined') {
-    window.addEventListener('alaska_overrides_updated', reloadLocalOverrides)
     window.addEventListener('storage', reloadLocalOverrides)
   }
 })
 
-// 2. Mesclagem Reativa em Memória: Dados Canônicos + Overrides do Admin
+// 2. Mesclagem Reativa do Tenant com Overrides Locais (Sem sobrescrever categorias reais)
 const effectiveTenant = computed<Tenant | null>(() => {
   if (!tenant.value) return null
   const ov = localOverrides.value || {}
@@ -186,14 +184,12 @@ const effectiveTenant = computed<Tenant | null>(() => {
   const rawCustomProds = (ov.customProducts || []) as Product[]
 
   // Deduplica produtos customizados duplicados acidentalmente (mesmo nome, categoria e preco)
-  const seenCustom = new Set<string>()
+  const seenProds = new Set<string>()
   const customProds: Product[] = []
   for (const p of rawCustomProds) {
     const key = `${(p as any).categoryId}_${p.name.trim().toLowerCase()}_${p.price}`
-    if (p.id.startsWith('prod-custom-')) {
-      if (seenCustom.has(key)) continue
-      seenCustom.add(key)
-    }
+    if (seenProds.has(key)) continue
+    seenProds.add(key)
     customProds.push(p)
   }
 
@@ -215,45 +211,32 @@ const effectiveTenant = computed<Tenant | null>(() => {
 
     return {
       ...cat,
-      products: combined.map((p) => {
-        const prodOv = ov.products?.[p.id]
-        if (!prodOv) return p
-        return {
-          ...p,
-          price: prodOv.price !== undefined ? prodOv.price : p.price,
-          isAvailable: prodOv.isAvailable !== undefined ? prodOv.isAvailable : p.isAvailable,
-          available: prodOv.isAvailable !== undefined ? prodOv.isAvailable : p.available
-        }
-      })
+      products: combined
     }
   })
 
-  // Profissionais mesclados
-  const deletedProfIds = ov.deletedProfessionalIds || []
-  const customProfs = (ov.customProfessionals || []) as any[]
-  const baseProfs = (tenant.value.professionals || []).filter((p: any) => !deletedProfIds.includes(p.id))
-  const effectiveProfessionals = [...baseProfs, ...customProfs].map((p: any) => {
-    const profOv = ov.professionals?.[p.id]
-    if (!profOv) return p
-    return {
-      ...p,
-      isAvailable: profOv.isAvailable !== undefined ? profOv.isAvailable : p.isAvailable,
-      availableDays: profOv.availableDays || p.availableDays,
-      workHours: profOv.workHours || p.workHours
-    }
-  })
+  // Profissionais de Agendamento (Alaska Hub & Pro)
+  const effectiveProfessionals = tenant.value.professionals || []
 
-  const effectivePhone = ov.contact?.whatsapp || tenant.value.phoneWhatsApp || (tenant.value as any).whatsapp
-  const effectivePix = ov.pix || tenant.value.pixConfig
+  // Contato e Chave Pix
+  const effectivePhone = ov.contact?.whatsapp || tenant.value.phoneWhatsApp || tenant.value.whatsapp || ''
+  const effectivePix = {
+    key: ov.pix?.key || tenant.value.pixConfig?.key || '',
+    keyType: (ov.pix?.keyType || tenant.value.pixConfig?.keyType || 'phone') as 'phone' | 'cpf' | 'cnpj' | 'email' | 'random',
+    beneficiary: ov.pix?.beneficiary || tenant.value.pixConfig?.beneficiary || tenant.value.name,
+    city: ov.pix?.city || tenant.value.pixConfig?.city || 'São Paulo'
+  }
 
-  const ovDelivery = ov.delivery || {}
-  const effectiveDeliveryFee = ovDelivery.deliveryFee !== undefined
-    ? Number(ovDelivery.deliveryFee)
-    : (tenant.value.deliveryFee !== undefined ? Number(tenant.value.deliveryFee) : 6)
-  const effectiveMinOrderValue = ovDelivery.minOrderValue !== undefined
-    ? Number(ovDelivery.minOrderValue)
-    : (tenant.value.minOrderValue !== undefined ? Number(tenant.value.minOrderValue) : 0)
-  const effectiveEstimatedTime = ovDelivery.estimatedTime || tenant.value.estimatedTime || '30-45 min'
+  // Entrega
+  const effectiveDeliveryFee = ov.delivery?.fee !== undefined
+    ? ov.delivery.fee
+    : (tenant.value.deliveryFee ?? ((tenant.value.deliveryFeeCents || 0) / 100))
+
+  const effectiveMinOrderValue = ov.delivery?.minOrder !== undefined
+    ? ov.delivery.minOrder
+    : (tenant.value.minOrderValue ?? ((tenant.value.minOrderValueCents || 0) / 100))
+
+  const effectiveEstimatedTime = ov.delivery?.estimatedTime || tenant.value.estimatedTime || '30-45 min'
 
   return {
     ...tenant.value,
@@ -263,91 +246,89 @@ const effectiveTenant = computed<Tenant | null>(() => {
       ...tenant.value.openingHours,
       ...overrideHours
     },
+    phoneWhatsApp: effectivePhone,
+    phone: effectivePhone,
+    instagram: ov.contact?.instagram || (tenant.value as any).instagram || '',
+    pixConfig: effectivePix,
+    pix: effectivePix,
     categories: effectiveCategories,
     professionals: effectiveProfessionals,
-    phoneWhatsApp: effectivePhone,
-    pixConfig: effectivePix,
     deliveryFee: effectiveDeliveryFee,
     minOrderValue: effectiveMinOrderValue,
-    estimatedTime: effectiveEstimatedTime
-  }
+    estimatedTime: effectiveEstimatedTime,
+    delivery: {
+      deliveryFee: effectiveDeliveryFee,
+      minOrderValue: effectiveMinOrderValue,
+      estimatedTime: effectiveEstimatedTime
+    }
+  } as Tenant
 })
 
-// 3. Comunicado Efetivo
-const effectiveAnnouncement = computed(() => {
-  const ovAnn = localOverrides.value?.announcement
-  if (ovAnn && typeof ovAnn.enabled === 'boolean') {
-    return ovAnn
-  }
-  return effectiveTenant.value?.announcement || null
-})
+// 3. Tema Dinâmico do Tenant
+const tenantThemeRef = computed(() => effectiveTenant.value?.theme || 'emerald')
+const { themeClasses } = useTenantTheme(tenantThemeRef)
 
-// 4. Status de Abertura / Horários
+// 4. Horários de Funcionamento em Tempo Real
+const openingHoursRef = computed(() => effectiveTenant.value?.openingHours)
+const isClosedEmergencyRef = computed(() => effectiveTenant.value?.isEmergencyClosed || effectiveTenant.value?.isClosedEmergency)
+const emergencyMessageRef = computed(() => effectiveTenant.value?.closedEmergencyMessage)
+
 const {
   isOpen,
   statusText,
   openingAriaLabel
-} = useOpeningHours(
-  computed(() => effectiveTenant.value?.openingHours),
-  computed(() => effectiveTenant.value?.isEmergencyClosed || false)
-)
+} = useOpeningHours(openingHoursRef, isClosedEmergencyRef, emergencyMessageRef)
 
-const isServiceStore = computed(() => {
-  if (!effectiveTenant.value) return false
-  const cat = effectiveTenant.value.businessCategory
-  return cat === 'hub' || cat === 'pro' || effectiveTenant.value.slug === 'barbearia-style' || effectiveTenant.value.slug === 'clinica-sorriso'
-})
-
-// 5. Busca de Produtos com Normalização Unicode Client-Side
+// 5. Categorias e Catálogo de Produtos
 const categories = computed(() => effectiveTenant.value?.categories || [])
+
+// 6. Busca de Produtos em Tempo Real
 const {
   searchQuery,
-  filteredCategories,
   isSearching,
-  totalResultsCount,
+  filteredCategories,
   clearSearch
 } = useProductSearch(categories)
 
-function scrollToCategory(catId: string) {
-  if (typeof document !== 'undefined') {
-    const el = document.getElementById(catId)
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    }
-  }
-}
+// 7. Modais da Vitrine
+const isInfoOpen = ref(false)
+const isCartDrawerOpen = ref(false)
+const isBookingOpen = ref(false)
+const isReviewsOpen = ref(false)
 
-// 6. Sacola de Compras Namespaced por Tenant
+// 8. Produto Selecionado para Personalização
+const selectedProduct = ref<Product | null>(null)
+const selectedBookingService = ref<BookingService | null>(null)
+
+// 9. Carrinho de Compras
 const {
   items: cartItems,
   addItem: addToCart,
   removeItem: removeCartItem,
   clearCart,
   totalItemsCount,
-  cartSubtotal
-} = useCart(effectiveTenant)
+  subtotal: cartSubtotal
+} = useCart()
 
-const { shareStore } = useShare(effectiveTenant)
+// 10. Compartilhamento do Estabelecimento
+const { shareStore } = useShare()
 
-// 8. SEO & OpenGraph Dinâmico com Guardas Defensivas de SSR
-useSeoMeta({
-  title: () => effectiveTenant.value ? `${effectiveTenant.value.name} — Vitrine & Pedidos Online` : 'Alaska Local',
-  description: () => effectiveTenant.value?.description || 'Faça seu pedido ou agende seu horário online de forma rápida pelo WhatsApp.',
-  ogTitle: () => effectiveTenant.value ? `${effectiveTenant.value.name} — Vitrine & Pedidos Online` : 'Alaska Local',
-  ogDescription: () => effectiveTenant.value?.description || 'Atendimento digital via WhatsApp.',
-  ogImage: () => effectiveTenant.value?.banner || effectiveTenant.value?.logo || '/og-image.png',
-  twitterCard: 'summary_large_image'
+function handleShare() {
+  if (!effectiveTenant.value) return
+  shareStore({
+    title: effectiveTenant.value.name,
+    text: effectiveTenant.value.description || `Confira o catálogo de ${effectiveTenant.value.name}!`,
+    url: typeof window !== 'undefined' ? window.location.href : ''
+  })
+}
+
+// 11. Modal de Agendamento
+const isServiceStore = computed(() => {
+  if (!effectiveTenant.value) return false
+  return effectiveTenant.value.businessCategory === 'hub' ||
+         effectiveTenant.value.businessCategory === 'pro' ||
+         (effectiveTenant.value.professionals && effectiveTenant.value.professionals.length > 0)
 })
-
-// 9. Estados de Modais
-const isReviewsOpen = ref(false)
-const isInfoOpen = ref(false)
-const isCartDrawerOpen = ref(false)
-const selectedProduct = ref<Product | null>(null)
-
-// Estados do Módulo de Agendamento (Alaska Hub & Pro)
-const isBookingOpen = ref(false)
-const selectedBookingService = ref<BookingService | null>(null)
 
 function openBookingModal() {
   selectedBookingService.value = null
@@ -358,10 +339,9 @@ function openBookingModalForProduct(product: Product) {
   selectedBookingService.value = {
     id: product.id,
     name: product.name,
-    description: product.description || '',
-    price: product.price,
-    durationMinutes: product.durationMinutes || 30,
-    professionalIds: []
+    description: product.description,
+    priceCents: Math.round(product.price * 100),
+    durationMinutes: product.durationMinutes || 30
   }
   isBookingOpen.value = true
 }
@@ -378,14 +358,24 @@ function closeProductModal() {
   selectedProduct.value = null
 }
 
-function handleAddProductToCart(item: CartItem) {
-  if (typeof addToCart === 'function') {
-    addToCart(item)
-  }
+function handleAddProductToCart(item: any) {
+  addToCart(item)
   closeProductModal()
+  isCartDrawerOpen.value = true
 }
 
-// 10. Destaques Dinâmicos com iterador seguro
+// 12. Navegação Horizontal por Categorias
+function scrollToCategory(categoryId: string) {
+  if (typeof document === 'undefined') return
+  const element = document.getElementById(categoryId)
+  if (element) {
+    const yOffset = -90
+    const y = element.getBoundingClientRect().top + window.pageYOffset + yOffset
+    window.scrollTo({ top: y, behavior: 'smooth' })
+  }
+}
+
+// 13. Produtos em Destaque no Topo
 const featuredProducts = computed(() => {
   const all: Product[] = []
   for (const cat of categories.value) {
@@ -396,6 +386,3 @@ const featuredProducts = computed(() => {
   return all.slice(0, 6)
 })
 </script>
-
-<style scoped>
-</style>
