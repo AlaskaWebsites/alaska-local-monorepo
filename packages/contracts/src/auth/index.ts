@@ -1,9 +1,15 @@
 import { z } from 'zod'
 
-export const MerchantLoginSchema = z.object({
-  email: z.string().email('E-mail corporativo inválido').toLowerCase().trim(),
+export const MerchantCredentialsLoginSchema = z.object({
+  email: z.preprocess(
+    (val) => (typeof val === 'string' ? val.trim().toLowerCase() : val),
+    z.string().email('E-mail corporativo inválido')
+  ),
   password: z.string().min(6, 'A senha deve ter no mínimo 6 caracteres'),
-  tenantSlug: z.string().min(2, 'Slug do estabelecimento é obrigatório').toLowerCase().trim(),
+  tenantSlug: z.preprocess(
+    (val) => (typeof val === 'string' ? val.trim().toLowerCase() : val),
+    z.string().min(2, 'Slug do estabelecimento é obrigatório')
+  ),
 })
 
 export const ChangeMerchantPasswordSchema = z
@@ -18,8 +24,14 @@ export const ChangeMerchantPasswordSchema = z
   })
 
 export const CreateMerchantUserSchema = z.object({
-  email: z.string().email('E-mail corporativo inválido').toLowerCase().trim(),
-  tenantSlug: z.string().min(2, 'Slug do estabelecimento é obrigatório').toLowerCase().trim(),
+  email: z.preprocess(
+    (val) => (typeof val === 'string' ? val.trim().toLowerCase() : val),
+    z.string().email('E-mail corporativo inválido')
+  ),
+  tenantSlug: z.preprocess(
+    (val) => (typeof val === 'string' ? val.trim().toLowerCase() : val),
+    z.string().min(2, 'Slug do estabelecimento é obrigatório')
+  ),
   initialPassword: z.string().min(8, 'A senha inicial deve ter no mínimo 8 caracteres').optional(),
   name: z.string().min(2, 'Nome do responsável deve ter no mínimo 2 caracteres').optional(),
 })
@@ -34,7 +46,10 @@ export const MerchantSessionSchema = z.object({
   expiresAt: z.union([z.string(), z.number()]),
 })
 
-export type MerchantLoginDto = z.infer<typeof MerchantLoginSchema>
+export const MerchantUserLoginSchema = MerchantCredentialsLoginSchema
+
+export type MerchantCredentialsLoginDto = z.infer<typeof MerchantCredentialsLoginSchema>
+export type MerchantUserLoginDto = MerchantCredentialsLoginDto
 export type ChangeMerchantPasswordDto = z.infer<typeof ChangeMerchantPasswordSchema>
 export type CreateMerchantUserDto = z.infer<typeof CreateMerchantUserSchema>
 export type MerchantSession = z.infer<typeof MerchantSessionSchema>

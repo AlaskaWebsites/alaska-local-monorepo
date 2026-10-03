@@ -1,20 +1,20 @@
 import { describe, it, expect } from 'vitest'
 import {
-  MerchantLoginSchema,
+  MerchantCredentialsLoginSchema,
   ChangeMerchantPasswordSchema,
   CreateMerchantUserSchema,
   MerchantSessionSchema,
 } from '../src/auth'
 
 describe('Merchant Auth Schemas (@alaska/contracts/auth)', () => {
-  describe('MerchantLoginSchema', () => {
+  describe('MerchantCredentialsLoginSchema', () => {
     it('deve validar login com e-mail, senha e slug válidos', () => {
       const payload = {
         email: '  DONO@HAMBURGUERIA.COM.BR  ',
         password: 'minhasenhasegura',
         tenantSlug: '  HAMBURGUERIA-X  ',
       }
-      const parsed = MerchantLoginSchema.parse(payload)
+      const parsed = MerchantCredentialsLoginSchema.parse(payload)
       expect(parsed.email).toBe('dono@hamburgueria.com.br')
       expect(parsed.tenantSlug).toBe('hamburgueria-x')
       expect(parsed.password).toBe('minhasenhasegura')
@@ -26,7 +26,7 @@ describe('Merchant Auth Schemas (@alaska/contracts/auth)', () => {
         password: '12345678',
         tenantSlug: 'hamburgueria-x',
       }
-      expect(() => MerchantLoginSchema.parse(invalid)).toThrow('E-mail corporativo inválido')
+      expect(() => MerchantCredentialsLoginSchema.parse(invalid)).toThrow('E-mail corporativo inválido')
     })
 
     it('deve rejeitar senha com menos de 6 caracteres', () => {
@@ -35,7 +35,7 @@ describe('Merchant Auth Schemas (@alaska/contracts/auth)', () => {
         password: '123',
         tenantSlug: 'hamburgueria-x',
       }
-      expect(() => MerchantLoginSchema.parse(invalid)).toThrow('A senha deve ter no mínimo 6 caracteres')
+      expect(() => MerchantCredentialsLoginSchema.parse(invalid)).toThrow('A senha deve ter no mínimo 6 caracteres')
     })
   })
 
