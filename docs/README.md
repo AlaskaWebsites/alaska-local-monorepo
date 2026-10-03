@@ -1,26 +1,23 @@
-# 🏔️ Alaska Local — Living Architecture & Engineering Documentation
+# 🏔️ Alaska Local — Documentação de Engenharia & Arquitetura
 
-> **Plataforma Multi-Tenant de Vitrines Digitais, Cardápios, Agendamentos e Pedidos no WhatsApp para Comércios Locais**  
-> Nuxt 3 • NestJS 11 • Tailwind CSS • Turborepo • Clean Architecture • Zod • PostgreSQL • Docker
+Bem-vindo à documentação técnica oficial do **Alaska Local**, um ecossistema multi-tenant de comércio local projetado para máxima performance, resiliência e conversão comercial sem intermediários.
 
 ---
 
-## 🏛️ Estrutura da Documentação Centralizada
+## 📁 Estrutura da Documentação
 
 ```
 docs/
-├── README.md                              # Este índice mestre de navegação arquitetural
-├── architecture/                          # Guias transversais e segurança do monorepo
-├── operations/                            # Runbooks operacionais, deploy Vercel e scripts
-├── frontend/                              # Documentação do Front-end (Nuxt 3)
-│   ├── README.md                          # Visão geral, composables e componentes desacoplados
-│   ├── adrs/                              # Architectural Decision Records (001 a 024)
-│   ├── architecture/                      # Design system, agendamentos, performance e W3C
-│   └── operations/                        # Runbooks de novos estabelecimentos e demos
+├── README.md                              # Índice mestre e visão geral de governança
+├── architecture/                          # Guias transversais (Multi-Tenancy, RLS, Deploy)
+├── frontend/                              # Documentação do Front-end (Nuxt 3 / Vue 3)
+│   ├── README.md                          # Visão geral do Nuxt 3, design system e vitrines
+│   ├── adrs/                              # Architectural Decision Records (001 a 025)
+│   └── architecture/                      # Componentes, acessibilidade, temas e WhatsApp
 └── backend/                               # Documentação do Back-end (NestJS 11)
     ├── README.md                          # Visão geral da API, endpoints e Clean Architecture
     ├── ARCHITECTURE.md                    # Diagramas de camadas e Ports & Adapters
-    ├── adrs/                              # Architectural Decision Records (001 a 009)
+    ├── adrs/                              # Architectural Decision Records (001 a 013)
     ├── architecture/                      # Persistência PostgreSQL, Pix EMV e Erros RFC 7807
     └── commercial/                        # Estratégia de precificação e esteira DFY
 ```
@@ -33,8 +30,8 @@ docs/
 * **[Segurança e Isolamento Multi-Tenant](./architecture/seguranca-e-isolamento-multitenant.md)** — Namespacing por slug no navegador, Row Level Security (RLS) no PostgreSQL e autenticação por PIN.
 
 ### 🌐 Frontend & Experiência do Usuário
-* **[ADR 024: Mural de Pedidos em Tempo Real (Order Dashboard)](./frontend/adrs/024-mural-de-pedidos-e-gestao-em-tempo-real-order-dashboard.md)** — Gestão de comandas, avanço de status da esteira (< 50ms), notificações WhatsApp e métricas de faturamento do dia.
-* **[ADR 023: Persistência do PIN Administrativo no PostgreSQL](./frontend/adrs/023-persistencia-pin-administrativo-postgresql.md)** — Hashing SHA-256 e sincronização autoritativa.
+* **[ADR 025: Autenticação Corporativa do Lojista (E-mail e Senha) e Sessão JWT](./frontend/adrs/025-autenticacao-corporativa-lojista-email-senha.md)** — Login corporativo com validação Zod, Bearer token e alternância com PIN rápido.
+* **[ADR 024: Mural de Pedidos em Tempo Real e Gestão Operacional (Order Dashboard)](./frontend/adrs/024-mural-de-pedidos-e-gestao-em-tempo-real-order-dashboard.md)** — Acompanhamento de comandas, transições de esteira, WhatsApp e métricas diárias.
 * **[ADR 018: Resiliência de Contratos de Props, Emissão Dual e Defesa Anti-Crash](./frontend/adrs/018-resiliencia-de-contratos-props-e-eventos-das-abas-admin.md)** — Padrão dual-prop, dual-emit, canais sociais (Instagram), pedido mínimo no checkout e flexbox balanceado.
 * **[Protocolo de Despacho WhatsApp](./frontend/architecture/protocolo-despacho-whatsapp.md)** — Motor comercial de fechamento de vendas, mensagens determinísticas, delivery e agendamentos com upsell.
 * **[Resiliência Visual e Placeholders SVG](./frontend/architecture/resiliencia-visual-e-imagens.md)** — Prevenção de erros 404, eliminação de CLS e geração de Data URIs vetoriais por tema.
@@ -43,8 +40,12 @@ docs/
 * **[Guia de Criação de Novos Tenants](./frontend/operations/guia-criacao-novos-tenants.md)** — Checklist e validação via `pnpm validate:tenants`.
 
 ### ⚙️ Backend & Engenharia de Domínio
-* **[ADR 008: Auto-População Resiliente no PostgreSQL e Tolerância a Cold-Start](./backend/adrs/008-auto-populacao-resiliente-catalogo-postgresql-e-cold-start.md)** — Seed resiliente de catálogo relacional e persistência otimista.
+* **[ADR 013: Autenticação Corporativa do Lojista (E-mail e Senha), Hash Seguro e Sessão JWT](./backend/adrs/013-autenticacao-e-perfil-do-lojista-email-senha.md)** — Autenticação corporativa com MerchantUser, RLS por tenant, hash seguro e tokens JWT.
+* **[ADR 012: Persistência de Configurações Globais da Loja no PostgreSQL](./backend/adrs/012-persistencia-configuracoes-globais-loja-postgresql.md)** — Grade semanal, emergência, delivery, Pix, canais sociais e comunicados.
+* **[ADR 011: Persistência de Profissionais e Bloqueio de Agenda no PostgreSQL](./backend/adrs/011-persistencia-profissionais-e-bloqueio-agenda-postgresql.md)** — Escalas, expediente, intervalos de almoço e bloqueios manuais de slots.
+* **[ADR 010: Persistência de Criação e Exclusão de Produtos no PostgreSQL](./backend/adrs/010-persistencia-produtos-e-catalogo-postgresql.md)** — Gestão de catálogo relacional com mutações atômicas no PostgreSQL 16.
 * **[ADR 009: Resiliência de Rotas de Catálogo, Disponibilidade e Fuso Horário](./backend/adrs/009-resiliencia-de-rotas-de-catalogo-disponibilidade-e-fuso-horario-brasilia.md)** — Tratamento polimórfico de disponibilidade, eliminação de 404 e sincronização no fuso oficial de Brasília (`America/Sao_Paulo`).
+* **[ADR 008: Auto-População Resiliente no PostgreSQL e Tolerância a Cold-Start](./backend/adrs/008-auto-populacao-resiliente-catalogo-postgresql-e-cold-start.md)** — Seed resiliente de catálogo relacional e persistência otimista.
 * **[Ciclo de Vida de Pedidos e Agendamentos](./backend/architecture/ciclo-pedidos-e-agendamentos.md)** — Máquinas de estados de `Order` e `Booking`, invariantes de domínio e rotas de status.
 * **[Protocolo Pix BACEN EMV & LocalPixGateway](./backend/architecture/protocolo-pix-emv.md)** — Montagem TLV (Tags 00 a 63), CRC-16 CCITT e QR Code assíncrono.
 * **[Tratamento de Erros & RFC 7807](./backend/architecture/tratamento-erros-e-rfc7807.md)** — Exceções puras de domínio e padronização HTTP Problem Details.
