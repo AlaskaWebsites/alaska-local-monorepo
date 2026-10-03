@@ -28,6 +28,8 @@
    * Login com e-mail corporativo, senha com hash seguro e tokens JWT com isolamento estrito por tenant.
 9. **Encapsulamento de Entidades DDD e Ciclo de Vida Canônico (ADR 014)**:
    * Métodos canônicos `updateStatus()` e `cancel()` em `Order` e `Booking`, impedindo mutações arbitrárias de propriedades internas.
+10. **Governança de Escopo Cirúrgico e Anti-Regressão (ADR 015)**:
+   * Modificações estritas ao escopo solicitado, preservação total de invariantes de domínio e proteção contra alterações colaterais.
 
 ---
 
@@ -83,5 +85,6 @@ pnpm test:api
 - **[ADR 012: Persistência de Configurações Globais da Loja no PostgreSQL](./adrs/012-persistencia-configuracoes-globais-loja-postgresql.md)** — Grade semanal, emergência, delivery, Pix, canais sociais e comunicados.
 - **[ADR 013: Autenticação Corporativa do Lojista (E-mail e Senha), Hash Seguro e Sessão JWT](./adrs/013-autenticacao-e-perfil-do-lojista-email-senha.md)** — Autenticação corporativa com MerchantUser, RLS por tenant, hash seguro e tokens JWT.
 - **[ADR 014: Blindagem Fail-Fast Total com ZodValidationPipe e Padronização RFC 7807](./adrs/014-blindagem-fail-fast-total-zod-e-padronizacao-rfc7807.md)** — Eliminação definitiva de `@Body() body: any`, encapsulamento DDD nas entidades `Order`/`Booking` e respostas HTTP 400/404 padronizadas.
+- **[ADR 015: Governança de Escopo Cirúrgico e Prevenção de Regressões no Backend](./adrs/015-governanca-de-escopo-cirurgico-e-prevencao-de-regressoes.md)** — Protocolo contra alterações colaterais, leitura obrigatória da main e proteção de use cases e entidades.
 
 ---

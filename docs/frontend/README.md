@@ -15,6 +15,7 @@ Documentação técnica oficial da aplicação front-end Nuxt 3 / Vue 3 do ecoss
 - **Autenticação Corporativa do Lojista (ADR 025)**: Login com e-mail corporativo, senha com hash seguro e token JWT, com alternância para PIN rápido e gestão de senhas em tempo real.
 - **Criação e Gestão Dinâmica de Categorias (ADR 026)**: Criação instantânea de novas seções de catálogo diretamente pelo smartphone via `AdminCreateCategoryModal.vue` e `useMerchantAdmin.ts`.
 - **Resiliência de Vitrine e Modais (ADR 027)**: Deduplicação ativa de produtos, upload postergado no Cloudinary, sincronização estrita de props/emits em `StoreHeaderCard`, `StoreHeroBanner`, `StoreReviewsModal` e eliminação de 404 em `pages/index.vue`.
+- **Governança de Escopo Cirúrgico e Anti-Regressão (ADR 028)**: Trava obrigatória contra alucinações de LLM, preservação integral de código anterior e modificação estritamente cirúrgica.
 
 ---
 
@@ -63,6 +64,7 @@ Documentação técnica oficial da aplicação front-end Nuxt 3 / Vue 3 do ecoss
 - **[ADR 025: Autenticação Corporativa do Lojista, Gestão de Senhas e Sessão JWT](./adrs/025-autenticacao-corporativa-lojista-email-senha.md)** — Login corporativo com e-mail e senha, Bearer token, persistência de sessão e alternância com PIN rápido.
 - **[ADR 026: Criação Dinâmica de Categorias no Painel do Lojista](./adrs/026-criacao-dinamica-de-categorias-painel-do-lojista.md)** — Criação instantânea de seções pelo smartphone via `AdminCreateCategoryModal.vue` e sincronização no catálogo.
 - **[ADR 027: Resiliência de Vitrine, Deduplicação de Produtos e Sincronização de Modais](./adrs/027-resiliencia-storefront-deduplicacao-e-sincronizacao-modais.md)** — Deduplicação de produtos, upload postergado no Cloudinary, sincronização de props/emits em `StoreHeaderCard`/`StoreHeroBanner`/`StoreReviewsModal` e eliminação de 404 em `pages/index.vue`.
+- **[ADR 028: Governança de Escopo Cirúrgico e Prevenção de Regressões](./adrs/028-governanca-de-escopo-cirurgico-e-prevencao-de-regressoes.md)** — Trava de isolamento de escopo, preservação cumulativa de código e leitura obrigatória do HEAD.
 
 ---
 
