@@ -685,22 +685,43 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     image?: string
     durationMinutes?: number
   }): Product {
-    triggerHaptic(30)
+    triggerHaptic(35)
+    const current = getOverrides()
+    const existingList = current.customProducts || []
+
+    // Prevenção contra duplicação acidental (mesmo produto criado em menos de 2 segundos)
+    const normalizedName = productData.name.trim().toLowerCase()
+    const isDuplicate = existingList.some(p => {
+      if (p.name.trim().toLowerCase() !== normalizedName) return false
+      if (p.categoryId !== productData.categoryId) return false
+      if (Math.abs(p.price - Number(productData.price)) >= 0.01) return false
+      if (p.id.startsWith('prod-custom-')) {
+        const timestamp = Number(p.id.replace('prod-custom-', ''))
+        if (!isNaN(timestamp) && Date.now() - timestamp < 2000) {
+          return true
+        }
+      }
+      return false
+    })
+
+    if (isDuplicate) {
+      return existingList[existingList.length - 1]
+    }
+
     const newId = `prod-custom-${Date.now()}`
     const newProd: Product = {
       id: newId,
       name: productData.name,
       description: productData.description || '',
       price: Number(productData.price) || 0,
-      priceCents: Math.round((Number(productData.price) || 0) * 100),
       categoryId: productData.categoryId,
-      image: productData.image || '',
       isAvailable: true,
-      durationMinutes: productData.durationMinutes || 0
+      image: productData.image || '',
+      durationMinutes: productData.durationMinutes || 0,
+      optionGroups: []
     }
 
-    const current = getOverrides()
-    const list = [...(current.customProducts || []), newProd]
+    const list = [...existingList, newProd]
     saveOverrides({ customProducts: list })
     return newProd
   }
@@ -708,7 +729,7 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   function deleteProduct(productId: string): boolean {
     triggerHaptic(40)
     const current = getOverrides()
-    const deleted = [...(current.deletedProductIds || []), productId]
+    const deleted = Array.from(new Set([...(current.deletedProductIds || []), productId]))
     const customs = (current.customProducts || []).filter(p => p.id !== productId)
     saveOverrides({
       deletedProductIds: deleted,
@@ -1157,12 +1178,24 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
   // 11. Resolução Reativa e Efetiva de Categorias e Produtos
   function getEffectiveCategories(baseCategories: Category[]): Category[] {
     const overrides = getOverrides()
-    const customProds = overrides.customProducts || []
+    const rawCustomProds = (overrides.customProducts || []) as Product[]
     const customCats = (overrides.customCategories || []) as Category[]
     const deletedIds = new Set(overrides.deletedProductIds || [])
     const deletedCatIds = new Set(overrides.deletedCategoryIds || [])
     const productOverrides = overrides.products || {}
     const pausedOptions = new Set(overrides.pausedOptionIds || [])
+
+    // Deduplica produtos customizados duplicados acidentalmente (mesmo nome, categoria e preco)
+    const seenCustom = new Set<string>()
+    const customProds: Product[] = []
+    for (const p of rawCustomProds) {
+      const key = `${p.categoryId}_${p.name.trim().toLowerCase()}_${p.price}`
+      if (p.id.startsWith('prod-custom-')) {
+        if (seenCustom.has(key)) continue
+        seenCustom.add(key)
+      }
+      customProds.push(p)
+    }
 
     const clonedBase: Category[] = JSON.parse(JSON.stringify(baseCategories || []))
       .filter((c: Category) => !deletedCatIds.has(c.id))
@@ -1173,31 +1206,52 @@ export function useMerchantAdmin(slugOrSource?: string | Ref<string | null | und
     const allCategories = [...clonedBase, ...clonedCustom]
 
     for (const cat of allCategories) {
-      const originalProducts = cat.products || []
-      const activeProducts = originalProducts.filter(p => !deletedIds.has(p.id))
-      const extraProducts = customProds.filter(p => p.categoryId === cat.id && !deletedIds.has(p.id))
+      cat.products = (cat.products || []).filter(p => !deletedIds.has(p.id))
 
-      cat.products = [...activeProducts, ...extraProducts].map(p => {
-        const override = productOverrides[p.id]
-        const effectivePrice = override?.price !== undefined ? override.price : p.price
-        const effectiveAvailable = override?.isAvailable !== undefined ? override.isAvailable : (p.isAvailable ?? true)
-
-        let processedOptions = p.options
-        if (processedOptions && Array.isArray(processedOptions)) {
-          processedOptions = processedOptions.map(opt => ({
-            ...opt,
-            isAvailable: !pausedOptions.has(opt.id)
-          }))
+      for (const prod of cat.products) {
+        const over = productOverrides[prod.id]
+        if (over) {
+          if (typeof over.isAvailable === 'boolean') {
+            prod.isAvailable = over.isAvailable
+            if ('available' in prod) {
+              ;(prod as any).available = over.isAvailable
+            }
+          }
+          if (typeof over.price === 'number') {
+            prod.price = over.price
+          }
         }
 
-        return {
-          ...p,
-          price: effectivePrice,
-          priceCents: Math.round(effectivePrice * 100),
-          isAvailable: effectiveAvailable,
-          options: processedOptions
+        if (prod.optionGroups && Array.isArray(prod.optionGroups)) {
+          for (const og of prod.optionGroups) {
+            const items = (og as any).items || (og as any).options || []
+            for (const item of items) {
+              if (pausedOptions.has(item.id)) {
+                item.isAvailable = false
+                item.available = false
+              }
+            }
+          }
         }
-      })
+      }
+
+      const prodsForCat = customProds.filter(p => p.categoryId === cat.id && !deletedIds.has(p.id))
+      for (const cp of prodsForCat) {
+        const over = productOverrides[cp.id]
+        if (over) {
+          if (typeof over.isAvailable === 'boolean') {
+            cp.isAvailable = over.isAvailable
+            if ('available' in cp) {
+              ;(cp as any).available = over.isAvailable
+            }
+          }
+          if (typeof over.price === 'number') {
+            cp.price = over.price
+          }
+        }
+        if (!cat.products) cat.products = []
+        cat.products.push(cp)
+      }
     }
 
     return allCategories
