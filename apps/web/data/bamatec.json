@@ -1,0 +1,289 @@
+{
+  "id": "ten-bamatec",
+  "slug": "bamatec",
+  "name": "Bama TEC — Galvanoplastia & Tratamento de Metais",
+  "description": "Mais de 10 anos de excelência em tratamento de superfícies e banhos químicos: Estanho (barramentos e telecomunicações), Cobre, Zinco eletrolítico, tambor rotativo, barras longas e reforma de frotas de carrinhos em Itaquaquecetuba e Grande SP.",
+  "logo": "/tenants/bamatec/img/exemplo-barramentos.jpeg",
+  "banner": "https://images.unsplash.com/photo-1525328437458-0c4d4db7cab4?auto=format&fit=crop&w=1200&q=80",
+  "phoneWhatsApp": "11988936972",
+  "whatsapp": "11988936972",
+  "address": "Est. São Miguel Arcanjo, 200/320B - Veraneio Maracanã, Itaquaquecetuba - SP, CEP 08599-000",
+  "currency": "R$",
+  "deliveryFee": 0,
+  "minOrderValue": 0,
+  "theme": "blue",
+  "businessCategory": "pro",
+  "category": "Galvanoplastia & Beneficiamento de Metais",
+  "distance": "Itaquaquecetuba - SP",
+  "priceRange": "$$$",
+  "paymentMethods": [
+    "Pix",
+    "Faturamento B2B / Boleto",
+    "Transferência Bancária",
+    "Cartão de Crédito"
+  ],
+  "openingHours": {
+    "open": "07:30",
+    "close": "17:30",
+    "monday": {
+      "open": "07:30",
+      "close": "17:30",
+      "closed": false
+    },
+    "tuesday": {
+      "open": "07:30",
+      "close": "17:30",
+      "closed": false
+    },
+    "wednesday": {
+      "open": "07:30",
+      "close": "17:30",
+      "closed": false
+    },
+    "thursday": {
+      "open": "07:30",
+      "close": "17:30",
+      "closed": false
+    },
+    "friday": {
+      "open": "07:30",
+      "close": "17:30",
+      "closed": false
+    },
+    "saturday": {
+      "open": "08:00",
+      "close": "12:00",
+      "closed": true
+    },
+    "sunday": {
+      "open": "08:00",
+      "close": "12:00",
+      "closed": true
+    }
+  },
+  "pixConfig": {
+    "key": "11988936972",
+    "keyType": "phone",
+    "beneficiary": "Bama TEC Beneficiamento de Metais Ltda",
+    "city": "ITAQUAQUECETUBA",
+    "allowTestCent": true,
+    "depositPercentage": 30
+  },
+  "reviews": {
+    "score": 5.0,
+    "rating": 5.0,
+    "count": 28,
+    "totalReviews": 28,
+    "badge": "Nota Máxima no Google (5.0★)",
+    "distribution": {
+      "5": 28,
+      "4": 0,
+      "3": 0,
+      "2": 0,
+      "1": 0
+    },
+    "comments": [
+      {
+        "id": "rev-1",
+        "author": "Engenharia de Painéis Elétricos SP",
+        "rating": 5,
+        "date": "há 2 semanas",
+        "comment": "Estanhagem impecável nos barramentos de cobre. Camada uniforme medida em micras e laudo técnico emitido no prazo.",
+        "itemsOrdered": [
+          "Banho de Estanho Eletrolítico para Barramentos de Cobre"
+        ]
+      },
+      {
+        "id": "rev-2",
+        "author": "Gerência de Operações Atacadista",
+        "rating": 5,
+        "date": "há 1 mês",
+        "comment": "Reformamos um lote de 120 carrinhos de compras. Economizamos mais de 65% em comparação com a compra de novos e as rodinhas em PU são super silenciosas.",
+        "itemsOrdered": [
+          "Reforma Completa de Carrinho de Supermercado Aramado"
+        ]
+      },
+      {
+        "id": "rev-3",
+        "author": "Serralheria Industrial Itaqua",
+        "rating": 5,
+        "date": "há 3 semanas",
+        "comment": "Tanque gigante de 6 metros facilita demais. Nossos perfis e grades saíram com zincagem perfeita sem precisar de emendas.",
+        "itemsOrdered": [
+          "Zinco Eletrolítico em Barras e Perfis de até 6m"
+        ]
+      }
+    ]
+  },
+  "professionals": [
+    {
+      "id": "prof-1",
+      "name": "Engenharia & Responsável Técnico",
+      "role": "Engenheiro Químico / Metalúrgico",
+      "isAvailable": true,
+      "availableDays": [
+        1,
+        2,
+        3,
+        4,
+        5
+      ],
+      "workHours": {
+        "start": "07:30",
+        "end": "17:30"
+      },
+      "lunchBreak": {
+        "start": "12:00",
+        "end": "13:00",
+        "enabled": true
+      }
+    }
+  ],
+  "categories": [
+    {
+      "id": "cat-barras-longas",
+      "name": "📏 Barras, Tubos e Perfis Longos (Até 6m)",
+      "icon": "factory",
+      "products": [
+        {
+          "id": "prod-zinco-barras-longas",
+          "name": "Zinco Eletrolítico em Barras e Perfis de até 6m",
+          "description": "Imersão contínua em tanques estáticos compridos sem cortes ou emendas. Camada uniforme com passivação azul ou amarela.",
+          "price": 18.0,
+          "image": "/tenants/bamatec/img/exemplo-escadas-industriais.jpeg",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 120,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-galvano-tubos-estruturas",
+          "name": "Galvanoplastia de Tubulações e Metalons Industriais",
+          "description": "Tratamento anticorrosivo de alta aderência para serralherias, estruturas metálicas e tubos industriais.",
+          "price": 22.0,
+          "image": "/tenants/bamatec/img/exemplo-grades-de-protecao.jpeg",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 120,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cat-tambor-rotativo",
+      "name": "🔩 Peças Pequenas e Fixadores em Tambor",
+      "icon": "box",
+      "products": [
+        {
+          "id": "prod-zinco-tambor-rotativo",
+          "name": "Zincagem Eletrolítica em Tambor Rotativo (kg)",
+          "description": "Processamento em alta escala para parafusos, porcas, arruelas, molas e presilhas. Tratamento homogêneo com centrifugação.",
+          "price": 6.5,
+          "image": "/tenants/bamatec/img/Exemplo-tanque-3.jpeg",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 60,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-passivacao-amarela",
+          "name": "Passivação Trivalente Amarela / Bicromatizado (kg)",
+          "description": "Proteção extra anticorrosiva com passivação amarela isenta de cromo hexavalente (conformidade RoHS).",
+          "price": 7.2,
+          "image": "/tenants/bamatec/img/Exemplo-tanque-1.jpeg",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 60,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cat-barramentos-eletricos",
+      "name": "⚡ Estanho e Cobre para Barramentos Elétricos",
+      "icon": "zap",
+      "products": [
+        {
+          "id": "prod-estanho-barramentos",
+          "name": "Banho de Estanho Eletrolítico para Barramentos de Cobre",
+          "description": "Estanhagem brilhante de alta condutividade elétrica e térmica, protegendo contra oxidação e sulfetação em painéis elétricos.",
+          "price": 45.0,
+          "image": "/tenants/bamatec/img/exemplo-barramentos.jpeg",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 90,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-cobreamento-tecnico",
+          "name": "Cobreamento Eletrolítico Técnico & Contatos Elétricos",
+          "description": "Camada de alta condutividade e ancoragem intermediária para barramentos e componentes de transmissão de energia.",
+          "price": 38.0,
+          "image": "/tenants/bamatec/img/Exemplo-tanque-2.jpeg",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 90,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cat-reforma-carrinhos",
+      "name": "🛒 Reforma e Zincagem de Carrinhos de Supermercado",
+      "icon": "rotate-cw",
+      "products": [
+        {
+          "id": "prod-reforma-carrinho-supermercado",
+          "name": "Reforma Completa de Carrinho de Supermercado Aramado",
+          "description": "Desmontagem, decapagem química, solda MIG de reforço, alinhamento em gabarito, banho de zinco espelhado e rodízios novos em PU maciço.",
+          "price": 230.0,
+          "image": "/tenants/bamatec/img/Exemplo-carrinho-2.jpeg",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 180,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-reforma-carrinho-atacarejo",
+          "name": "Revitalização de Carrinho Plataforma para Atacarejo",
+          "description": "Chapa zincada reforçada para cargas pesadas, alinhamento estrutural e rodízios industriais silenciosos.",
+          "price": 280.0,
+          "image": "/tenants/bamatec/img/exemplo-carrinho-atacarejo-1.jpeg",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 180,
+          "optionGroups": []
+        }
+      ]
+    },
+    {
+      "id": "cat-tratamentos-quimicos",
+      "name": "🧪 Decapagem, Desengraxe e Fosfatização",
+      "icon": "shield-check",
+      "products": [
+        {
+          "id": "prod-decapagem-quimica",
+          "name": "Decapagem Química Ácida e Limpeza de Soldas",
+          "description": "Remoção profunda de carepas de laminação, ferrugens consolidadas e óleos industriais para preparação superficial.",
+          "price": 12.0,
+          "image": "/tenants/bamatec/img/Exemplo-tanque-2.jpeg",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 60,
+          "optionGroups": []
+        },
+        {
+          "id": "prod-fosfatizacao-zinco",
+          "name": "Fosfatização ao Manganês e Zinco para Ancoragem",
+          "description": "Tratamento de superfície para retenção de lubrificantes protetivos e base de alta aderência para pintura.",
+          "price": 15.0,
+          "image": "/tenants/bamatec/img/Exemplo-carrinho-3.jpeg",
+          "isAvailable": true,
+          "available": true,
+          "durationMinutes": 60,
+          "optionGroups": []
+        }
+      ]
+    }
+  ]
+}

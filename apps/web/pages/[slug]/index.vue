@@ -1,6 +1,12 @@
 <!-- pages/[slug]/index.vue -->
 <template>
-  <div v-if="effectiveTenant" class="min-h-screen bg-slate-50 text-slate-900 font-sans pb-28 sm:pb-32 selection:bg-emerald-500 selection:text-white">
+  <!-- 0. Experiência Especializada B2B / Industrial para o Tenant Bama TEC -->
+  <BamaTecStorefront
+    v-if="effectiveTenant?.slug === 'bamatec'"
+    :tenant="effectiveTenant"
+  />
+
+  <div v-else-if="effectiveTenant" class="min-h-screen bg-slate-50 text-slate-900 font-sans pb-28 sm:pb-32 selection:bg-emerald-500 selection:text-white">
     <!-- 1. Hero Banner Principal com Alertas e Compartilhamento -->
     <StoreHeroBanner
       :banner="effectiveTenant.banner"
@@ -28,8 +34,9 @@
     <div class="max-w-4xl mx-auto px-4 mt-6">
       <ProductSearchInput
         v-model="searchQuery"
-        :total-results="totalResultsCount"
+        :placeholder="`Buscar em ${effectiveTenant.name}...`"
         :is-searching="isSearching"
+        :results-count="totalResultsCount"
         @clear="clearSearch"
       />
     </div>
@@ -47,8 +54,9 @@
     <!-- 5. Navegação por Categorias com CategoryTabs -->
     <div v-if="!isSearching" class="max-w-4xl mx-auto px-4 mt-6">
       <CategoryTabs
-        :categories="filteredCategories"
+        :categories="categories"
         :theme="effectiveTenant.theme"
+        :theme-classes="themeClasses"
         @select-category="scrollToCategory"
       />
     </div>
@@ -122,7 +130,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute } from '#app'
 import { useTenant } from '~/composables/useTenant'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 import { useOpeningHours } from '~/composables/useOpeningHours'
@@ -142,25 +150,29 @@ import StoreInfoModal from '~/components/StoreInfoModal.vue'
 import CartDrawerModal from '~/components/CartDrawerModal.vue'
 import BookingModal from '~/components/BookingModal.vue'
 import StoreReviewsModal from '~/components/StoreReviewsModal.vue'
+import BamaTecStorefront from '~/components/storefront/BamaTecStorefront.vue'
 import type { Product, CartItem, BookingService, Tenant } from '~/types'
 
 // 1. Resolução do Tenant Atual (Retorna referências reativas síncronas)
 const route = useRoute()
-const slug = computed(() => (route.params.slug as string) || 'default')
-const { tenant } = useTenant(slug)
-const { getOverrides } = useMerchantAdmin(slug)
+const { tenant } = useTenant()
 
+// Reatividade local para overrides do Lojista (localStorage)
 const localOverrides = ref<TenantOverrides>({})
-
-function refreshLocalOverrides() {
-  localOverrides.value = getOverrides()
+function reloadLocalOverrides() {
+  if (typeof window === 'undefined') return
+  try {
+    const raw = localStorage.getItem(`alaska_overrides_${route.params.slug}`)
+    localOverrides.value = raw ? JSON.parse(raw) : {}
+  } catch {
+    localOverrides.value = {}
+  }
 }
 
 onMounted(() => {
-  refreshLocalOverrides()
+  reloadLocalOverrides()
   if (typeof window !== 'undefined') {
-    window.addEventListener('storage', refreshLocalOverrides)
-    window.addEventListener('alaska_overrides_updated', refreshLocalOverrides)
+    window.addEventListener('storage', reloadLocalOverrides)
   }
 })
 
@@ -171,64 +183,40 @@ const effectiveTenant = computed<Tenant | null>(() => {
   const overrideHours = ov.openingHours || {}
   const deletedIds = ov.deletedProductIds || []
   const customProds = (ov.customProducts || []) as Product[]
-  const prodOverrides = ov.products || {}
 
-  const effectiveCategories = (tenant.value.categories || []).map((cat: any) => {
-    const baseProds = (cat.products || []).filter((p: any) => !deletedIds.includes(p.id))
-    const matchingCustom = customProds.filter(p => p.categoryId === cat.id && !deletedIds.includes(p.id))
-    const mergedProds = [...baseProds, ...matchingCustom].map(p => {
-      const o = prodOverrides[p.id]
-      const resolvedAvailable = o?.isAvailable !== undefined
-        ? Boolean(o.isAvailable)
-        : (p.isAvailable !== undefined ? Boolean(p.isAvailable) : (p.available !== undefined ? Boolean(p.available) : true))
-      return {
-        ...p,
-        isAvailable: resolvedAvailable,
-        available: resolvedAvailable,
-        price: o?.price !== undefined ? o.price : p.price
-      }
-    })
-    return { ...cat, products: mergedProds }
-  })
-
-  // Especialistas com Overrides de Disponibilidade, Escala e Horários (ADR 013 / ADR 017)
-  const baseProfs = (tenant.value.professionals || []) as any[]
-  const profOverrides = ov.professionals || {}
-  const deletedProfIds = ov.deletedProfessionalIds || []
-  const customProfs = ov.customProfessionals || []
-
-  const effectiveProfessionals = [
-    ...baseProfs.filter((p: any) => !deletedProfIds.includes(p.id)),
-    ...customProfs.filter((p: any) => !deletedProfIds.includes(p.id))
-  ].map((p: any) => {
-    const pOv = profOverrides[p.id] || {}
-    const isAvail = pOv.isAvailable !== undefined
-      ? Boolean(pOv.isAvailable)
-      : (p.isAvailable !== undefined ? Boolean(p.isAvailable) : true)
-    const days = pOv.availableDays
-      ? [...pOv.availableDays]
-      : (p.availableDays ? [...p.availableDays] : [1, 2, 3, 4, 5, 6])
-    const startHour = pOv.workHours?.start || p.workHours?.start || '08:00'
-    const endHour = pOv.workHours?.end || p.workHours?.end || '18:00'
-    const lunchStart = pOv.lunchBreak?.start || p.lunchBreak?.start || '12:00'
-    const lunchEnd = pOv.lunchBreak?.end || p.lunchBreak?.end || '13:00'
-    const lunchEnabled = pOv.lunchBreak?.enabled !== undefined
-      ? Boolean(pOv.lunchBreak.enabled)
-      : (p.lunchBreak?.enabled !== undefined ? Boolean(p.lunchBreak.enabled) : true)
+  // Categorias com produtos mesclados e customizados do lojista
+  const effectiveCategories = (tenant.value.categories || []).map((cat) => {
+    const baseProds = (cat.products || []).filter((p) => !deletedIds.includes(p.id))
+    const extraProds = customProds.filter((p) => (p as any).categoryId === cat.id)
+    const combined = [...baseProds, ...extraProds]
 
     return {
+      ...cat,
+      products: combined.map((p) => {
+        const prodOv = ov.products?.[p.id]
+        if (!prodOv) return p
+        return {
+          ...p,
+          price: prodOv.price !== undefined ? prodOv.price : p.price,
+          isAvailable: prodOv.isAvailable !== undefined ? prodOv.isAvailable : p.isAvailable,
+          available: prodOv.isAvailable !== undefined ? prodOv.isAvailable : p.available
+        }
+      })
+    }
+  })
+
+  // Profissionais mesclados
+  const deletedProfIds = ov.deletedProfessionalIds || []
+  const customProfs = (ov.customProfessionals || []) as any[]
+  const baseProfs = (tenant.value.professionals || []).filter((p: any) => !deletedProfIds.includes(p.id))
+  const effectiveProfessionals = [...baseProfs, ...customProfs].map((p: any) => {
+    const profOv = ov.professionals?.[p.id]
+    if (!profOv) return p
+    return {
       ...p,
-      isAvailable: isAvail,
-      availableDays: days,
-      workHours: {
-        start: startHour,
-        end: endHour
-      },
-      lunchBreak: {
-        start: lunchStart,
-        end: lunchEnd,
-        enabled: lunchEnabled
-      }
+      isAvailable: profOv.isAvailable !== undefined ? profOv.isAvailable : p.isAvailable,
+      availableDays: profOv.availableDays || p.availableDays,
+      workHours: profOv.workHours || p.workHours
     }
   })
 
@@ -402,8 +390,8 @@ function handleAddProductToCart(item: CartItem) {
 const featuredProducts = computed(() => {
   const all: Product[] = []
   for (const cat of categories.value) {
-    if (cat.products && Array.isArray(cat.products)) {
-      all.push(...cat.products)
+    for (const p of cat.products || []) {
+      all.push(p)
     }
   }
   return all.slice(0, 6)
