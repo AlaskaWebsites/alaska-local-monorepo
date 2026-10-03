@@ -24,7 +24,7 @@ describe('Unit: AuthenticateMerchantCredentialsUseCase (ADR 017)', () => {
         id: 'ten-hamburgueria-x',
         slug: 'hamburgueria-x',
         name: 'Hamburgueria X',
-        phoneWhatsApp: '11999999999',
+        whatsapp: '11999999999',
         businessCategory: 'menu',
         theme: 'food',
       })
@@ -102,6 +102,8 @@ describe('Unit: AuthenticateMerchantCredentialsUseCase (ADR 017)', () => {
   });
 
   it('deve auto-provisionar e autenticar loja demo conhecida no primeiro login', async () => {
+    userRepo.clear();
+
     const result = await useCase.execute({
       email: 'dono@hamburgueria.com.br',
       password: 'minhasenhasegura',
@@ -110,6 +112,22 @@ describe('Unit: AuthenticateMerchantCredentialsUseCase (ADR 017)', () => {
 
     expect(result.authenticated).toBe(true);
     expect(result.token).toBeDefined();
+
+    const saved = await userRepo.findByEmailAndSlug('dono@hamburgueria.com.br', 'hamburgueria-x');
+    expect(saved).toBeDefined();
+    expect(saved?.email).toBe('dono@hamburgueria.com.br');
+  });
+
+  it('deve autenticar usuário de demonstração pré-semeado no repositório', async () => {
+    const result = await useCase.execute({
+      email: 'dono@hamburgueria.com.br',
+      password: 'minhasenhasegura',
+      tenantSlug: 'hamburgueria-x',
+    });
+
+    expect(result.authenticated).toBe(true);
+    expect(result.token).toBeDefined();
+    expect(result.user?.email).toBe('dono@hamburgueria.com.br');
   });
 
   it('deve lançar EntityNotFoundError se o tenant não existir', async () => {

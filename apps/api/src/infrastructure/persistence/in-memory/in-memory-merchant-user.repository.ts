@@ -11,7 +11,8 @@ export class InMemoryMerchantUserRepository implements IMerchantUserRepository {
   }
 
   private seed(): void {
-    const defaultHash = '8541a4a6e38b30d35091720875ea0d9c02506b3e64f7cbe5fecff8110b98eb79';
+    // Hash SHA-256 ('minhasenhasegura:alaska_local_salt_v1') via SimplePasswordHasher
+    const defaultHash = '6fffe30bc4ad8439ec6b641302cfbb5644a565653c2d3172cab055f8cecd8292';
 
     this.users.push(
       new MerchantUser({
