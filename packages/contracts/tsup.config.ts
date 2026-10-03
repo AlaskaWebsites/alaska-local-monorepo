@@ -9,6 +9,7 @@ export default defineConfig({
     'src/booking/index.ts',
     'src/pix/index.ts',
     'src/common/index.ts',
+    'src/auth/index.ts',
   ],
   format: ['esm', 'cjs'],
   dts: true,

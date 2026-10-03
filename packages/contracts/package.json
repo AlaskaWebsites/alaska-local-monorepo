@@ -40,6 +40,11 @@
       "types": "./dist/common/index.d.ts",
       "import": "./dist/common/index.mjs",
       "require": "./dist/common/index.js"
+    },
+    "./auth": {
+      "types": "./dist/auth/index.d.ts",
+      "import": "./dist/auth/index.mjs",
+      "require": "./dist/auth/index.js"
     }
   },
   "scripts": {
