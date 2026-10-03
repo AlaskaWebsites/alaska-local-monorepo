@@ -9,6 +9,11 @@
   "whatsapp": "11988936972",
   "email": "bamatec22@gmail.com",
   "website": "https://www.bamatec.com.br",
+  "customDomain": "bamatec.com.br",
+  "customDomains": [
+    "bamatec.com.br",
+    "www.bamatec.com.br"
+  ],
   "address": "Est. São Miguel Arcanjo, 200/320B - Veraneio Maracanã, Itaquaquecetuba - SP, CEP 08599-000",
   "theme": "blue",
   "businessCategory": "pro",
