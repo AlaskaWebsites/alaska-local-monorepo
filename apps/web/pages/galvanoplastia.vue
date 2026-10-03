@@ -95,7 +95,9 @@ const itemsHandled = [
     desc: 'Tanques industriais compridos preparados para barras de ferro, perfis estruturais, tubulações, escadas e estruturas de serralheria de até 6 metros de comprimento sem emendas.',
     features: ['Até 6 metros sem cortes', 'Camada uniforme sem escorrimentos', 'Zinco eletrolítico, cobre e decapagem'],
     icon: Factory,
-    tag: 'Serralheria & Estruturas'
+    tag: 'Serralheria & Estruturas',
+    colorClass: 'text-[#2d7097]',
+    borderClass: 'border-[#2d7097]/30 hover:bg-[#2d7097]/10'
   },
   {
     title: 'Peças Pequenas & Fixadores em Tambor',
@@ -104,7 +106,9 @@ const itemsHandled = [
     desc: 'Processamento de alta escala para parafusos, porcas, arruelas, molas, presilhas, rebites e miudezas metálicas. Tratamento uniforme com separação e centrifugação.',
     features: ['Alta capacidade por batelada (kg)', 'Zincagem branca e amarela', 'Custo altamente competitivo para escala'],
     icon: Box,
-    tag: 'Autopeças & Metalúrgica'
+    tag: 'Autopeças & Metalúrgica',
+    colorClass: 'text-[#008b73]',
+    borderClass: 'border-[#008b73]/30 hover:bg-[#008b73]/10'
   },
   {
     title: 'Componentes Elétricos & Barramentos',
@@ -113,7 +117,9 @@ const itemsHandled = [
     desc: 'Estanhagem e cobreamento eletrolítico de alta precisão para barramentos de cobre e alumínio, terminais e componentes elétricos que exigem máxima condutividade e zero oxidação.',
     features: ['Alta condutividade elétrica e térmica', 'Excelente soldabilidade técnica', 'Resistência à corrosão por sulfetação'],
     icon: Zap,
-    tag: 'Elétrica & Painéis'
+    tag: 'Elétrica & Painéis',
+    colorClass: 'text-[#5d5f85]',
+    borderClass: 'border-[#5d5f85]/30 hover:bg-[#5d5f85]/10'
   },
   {
     title: 'Carrinhos de Supermercado & Atacarejo',
@@ -122,7 +128,9 @@ const itemsHandled = [
     desc: 'Engenharia de restauração: desmontagem, decapagem química, solda MIG de reforço, alinhamento em gabarito, banho de zinco espelhado e rodízios novos para carrinhos aramados e plataforma.',
     features: ['Economia de até 70% vs novos', 'Substituição de rodas silenciosas', 'Retirada e entrega em lotes programados'],
     icon: RotateCw,
-    tag: 'Atacarejos & Supermercados'
+    tag: 'Atacarejos & Supermercados',
+    colorClass: 'text-[#038c4c]',
+    borderClass: 'border-[#038c4c]/30 hover:bg-[#038c4c]/10'
   }
 ]
 
@@ -131,7 +139,9 @@ const bathTypes = [
   {
     name: 'Zinco Eletrolítico (Zincagem)',
     badge: 'Proteção Anticorrosiva',
-    color: 'border-blue-200 bg-blue-50/50 text-blue-900',
+    color: 'border-[#2d7097]/30 bg-[#2d7097]/5 text-slate-900',
+    badgeColor: 'border-[#2d7097]/30 bg-white text-[#2d7097]',
+    numberColor: 'bg-[#2d7097]/15 text-[#2d7097]',
     desc: 'O tratamento mais versátil do mercado industrial. Garante proteção catódica ao aço contra oxidação, umidade e intempéries.',
     variants: [
       { name: 'Passivação Azul (Brilhante)', note: 'Aspecto cromado/espelhado de alta estética' },
@@ -142,7 +152,9 @@ const bathTypes = [
   {
     name: 'Banho de Cobre (Cobreamento Eletrolítico)',
     badge: 'Condutividade & Base Técnica',
-    color: 'border-amber-200 bg-amber-50/50 text-amber-950',
+    color: 'border-[#5d5f85]/30 bg-[#5d5f85]/5 text-slate-900',
+    badgeColor: 'border-[#5d5f85]/30 bg-white text-[#5d5f85]',
+    numberColor: 'bg-[#5d5f85]/15 text-[#5d5f85]',
     desc: 'Excelente condutividade elétrica, térmica e maleabilidade mecânica. Aplicado como camada intermediária de alta aderência para outros banhos ou acabamento técnico para componentes de transmissão elétrica.',
     variants: [
       { name: 'Cobre Alcalino e Ácido', note: 'Nivelamento uniforme de superfícies e ancoragem' },
@@ -152,7 +164,9 @@ const bathTypes = [
   {
     name: 'Estanho Eletrolítico (Estanhagem)',
     badge: 'Especialidade Bama TEC',
-    color: 'border-blue-200 bg-blue-50/60 text-blue-950',
+    color: 'border-[#008b73]/30 bg-[#008b73]/5 text-slate-900',
+    badgeColor: 'border-[#008b73]/30 bg-white text-[#008b73]',
+    numberColor: 'bg-[#008b73]/15 text-[#008b73]',
     desc: 'Processo de tratamento superficial que confere proteção anticorrosiva superior, condutividade elétrica e térmica de alta precisão. Ideal para barramentos de cobre, telecomunicações e indústrias de alta tecnologia.',
     variants: [
       { name: 'Estanho para Barramentos Blindados', note: 'Alta capacidade de corrente e proteção à sulfetação' },
@@ -162,7 +176,9 @@ const bathTypes = [
   {
     name: 'Decapagem, Desengraxe & Fosfatização',
     badge: 'Preparação & Ancoragem',
-    color: 'border-emerald-200 bg-emerald-50/40 text-emerald-950',
+    color: 'border-[#038c4c]/30 bg-[#038c4c]/5 text-slate-900',
+    badgeColor: 'border-[#038c4c]/30 bg-white text-[#038c4c]',
+    numberColor: 'bg-[#038c4c]/15 text-[#038c4c]',
     desc: 'Remoção química profunda de carepas de laminação, ferrugens consolidadas e óleos industriais, criando a rugosidade ideal para pintura ou proteção oleosa.',
     variants: [
       { name: 'Fosfatização ao Manganês e Zinco', note: 'Retenção de lubrificantes e base para pintura' },
@@ -217,7 +233,7 @@ const galleryImages = [
 </script>
 
 <template>
-  <div class="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-blue-600 selection:text-white">
+  <div class="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-[#2d7097] selection:text-white">
     <!-- 1. BARRA SUPERIOR INSTITUCIONAL / HEADER -->
     <header
       class="sticky top-0 z-40 py-2 sm:py-0 mt-4 sm:mt-0 bg-white/95 backdrop-blur-md border-b border-slate-200/90 shadow-2xs">
@@ -225,16 +241,16 @@ const galleryImages = [
         <!-- Logo e Posicionamento -->
         <div class="flex items-center gap-3">
           <div
-            class="w-10 h-10 rounded-xl bg-slate-900 text-white flex items-center justify-center font-black text-lg shadow-sm">
+            class="w-10 h-10 rounded-xl bg-[#5d5f85] text-white flex items-center justify-center font-black text-lg shadow-sm border border-[#5d5f85]/30">
             ⚙️
           </div>
           <div>
             <div class="flex items-center gap-2">
               <span class="text-base sm:text-xl font-black tracking-tight text-slate-900">
-                Bama <span class="text-blue-600">TEC</span>
+                Bama <span class="text-[#2d7097]">TEC</span>
               </span>
               <span
-                class="hidden md:inline-block text-[10px] font-bold text-blue-700 uppercase tracking-widest bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                class="hidden md:inline-block text-[10px] font-bold text-[#2d7097] uppercase tracking-widest bg-[#2d7097]/10 px-2 py-0.5 rounded-full border border-[#2d7097]/25">
                 Beneficiamento de Metais
               </span>
             </div>
@@ -246,17 +262,17 @@ const galleryImages = [
 
         <!-- Links de Navegação Desktop -->
         <nav class="hidden lg:flex items-center gap-6 text-xs font-bold text-slate-600">
-          <a href="#itens" class="hover:text-blue-600 transition-colors">O Que Banham</a>
-          <a href="#banhos" class="hover:text-blue-600 transition-colors">Tipos de Banhos</a>
-          <a href="#carrinhos" class="hover:text-blue-600 transition-colors">Carrinhos de Supermercado</a>
-          <a href="#simulador" class="hover:text-blue-600 transition-colors">Simulador de Custos</a>
-          <a href="#qualidade" class="hover:text-blue-600 transition-colors">Normas & Laudos</a>
+          <a href="#itens" class="hover:text-[#2d7097] transition-colors">O Que Banham</a>
+          <a href="#banhos" class="hover:text-[#2d7097] transition-colors">Tipos de Banhos</a>
+          <a href="#carrinhos" class="hover:text-[#2d7097] transition-colors">Carrinhos de Supermercado</a>
+          <a href="#simulador" class="hover:text-[#2d7097] transition-colors">Simulador de Custos</a>
+          <a href="#qualidade" class="hover:text-[#2d7097] transition-colors">Normas & Laudos</a>
         </nav>
 
         <!-- CTA Direto WhatsApp -->
         <div class="flex items-center gap-3">
           <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
-            class="px-4 sm:px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center gap-2 transition-all shadow-xs active:scale-95 cursor-pointer">
+            class="px-4 sm:px-5 py-2.5 bg-[#038c4c] hover:bg-[#02733e] text-white font-bold text-xs rounded-xl flex items-center gap-2 transition-all shadow-xs active:scale-95 cursor-pointer">
             <Phone class="w-3.5 h-3.5" />
             <span class="hidden sm:inline">Solicitar Orçamento B2B</span>
             <span class="sm:hidden">Orçamento</span>
@@ -273,14 +289,14 @@ const galleryImages = [
           <!-- Textos Principais -->
           <div class="lg:col-span-7 space-y-6 text-center lg:text-left">
             <div
-              class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-50 border border-blue-200/80 text-blue-700 text-xs font-bold shadow-2xs">
-              <Sparkles class="w-3.5 h-3.5 text-blue-600" />
+              class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#008b73]/10 border border-[#008b73]/25 text-[#008b73] text-xs font-bold shadow-2xs">
+              <Sparkles class="w-3.5 h-3.5 text-[#008b73]" />
               <span>Tratamento de Metais & Banhos Químicos • 10 Anos de Mercado</span>
             </div>
 
             <h1 class="text-3xl sm:text-5xl lg:text-5xl font-black text-slate-900 tracking-tight leading-[1.15]">
               Galvanoplastia Completa:<br />
-              <span class="text-blue-600 bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              <span class="bg-gradient-to-r from-[#2d7097] via-[#008b73] to-[#2d7097] bg-clip-text text-transparent">
                 De Barras e Peças Técnicas
               </span><br />
               a Frotas de Supermercado.
@@ -293,19 +309,19 @@ const galleryImages = [
             <!-- 4 Badges de Capacidade Fabril -->
             <div class="grid grid-cols-2 sm:grid-cols-2 gap-2.5 pt-2 text-xs font-semibold text-slate-700 text-left">
               <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-2.5 shadow-2xs">
-                <CheckCircle2 class="w-4 h-4 text-emerald-600 shrink-0" />
+                <CheckCircle2 class="w-4 h-4 text-[#038c4c] shrink-0" />
                 <span><strong>Estanho, Cobre & Zinco</strong> sob norma técnica</span>
               </div>
               <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-2.5 shadow-2xs">
-                <CheckCircle2 class="w-4 h-4 text-emerald-600 shrink-0" />
+                <CheckCircle2 class="w-4 h-4 text-[#038c4c] shrink-0" />
                 <span><strong>Barras de até 6m</strong> em tanques estáticos</span>
               </div>
               <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-2.5 shadow-2xs">
-                <CheckCircle2 class="w-4 h-4 text-emerald-600 shrink-0" />
+                <CheckCircle2 class="w-4 h-4 text-[#038c4c] shrink-0" />
                 <span><strong>Tambor Rotativo</strong> para peças e fixadores</span>
               </div>
               <div class="flex items-center gap-2 bg-white border border-slate-200 rounded-xl p-2.5 shadow-2xs">
-                <CheckCircle2 class="w-4 h-4 text-emerald-600 shrink-0" />
+                <CheckCircle2 class="w-4 h-4 text-[#038c4c] shrink-0" />
                 <span><strong>Fábrica em Itaquaquecetuba</strong> com logística SP</span>
               </div>
             </div>
@@ -313,14 +329,14 @@ const galleryImages = [
             <!-- Botões de Ação Hero -->
             <div class="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-4">
               <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
-                class="w-full sm:w-auto px-7 py-4 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-blue-600/25 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer">
+                class="w-full sm:w-auto px-7 py-4 bg-[#2d7097] hover:bg-[#245b7a] text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-[#2d7097]/25 flex items-center justify-center gap-2 transition-all active:scale-95 cursor-pointer">
                 <span>Falar com o Responsável Técnico</span>
                 <ArrowRight class="w-4 h-4" />
               </a>
 
               <a href="#simulador"
-                class="w-full sm:w-auto px-6 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-all shadow-2xs">
-                <Sliders class="w-4 h-4 text-blue-600" />
+                class="w-full sm:w-auto px-6 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 hover:border-[#2d7097]/40 font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-all shadow-2xs">
+                <Sliders class="w-4 h-4 text-[#2d7097]" />
                 <span>Simulador de Lotes & Banhos</span>
               </a>
             </div>
@@ -340,7 +356,7 @@ const galleryImages = [
                 <div class="absolute bottom-4 left-4 right-4 text-white space-y-1">
                   <div class="flex items-center gap-2">
                     <span
-                      class="text-[10px] font-bold uppercase tracking-wider text-blue-400 bg-blue-950/80 px-2.5 py-0.5 rounded-md border border-blue-500/40">
+                      class="text-[10px] font-bold uppercase tracking-wider text-slate-200 bg-[#5d5f85]/80 px-2.5 py-0.5 rounded-md border border-[#2d7097]/40">
                       Capacidade Fabril
                     </span>
                     <span class="text-[10px] font-bold text-slate-300">Tanque & Tambor</span>
@@ -354,7 +370,7 @@ const galleryImages = [
               <!-- Selo Flutuante 1 (Topo Direito) -->
               <div
                 class="absolute -top-3 -right-3 bg-white border border-slate-200 rounded-2xl p-3 shadow-xl flex items-center gap-2.5 text-xs font-black text-slate-900">
-                <div class="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center text-sm">
+                <div class="w-8 h-8 rounded-xl bg-[#2d7097]/15 text-[#2d7097] flex items-center justify-center text-sm">
                   ⚡
                 </div>
                 <div>
@@ -367,7 +383,7 @@ const galleryImages = [
               <div
                 class="hidden sm:flex absolute -bottom-4 -left-4 bg-white border border-slate-200 rounded-2xl p-3 shadow-xl items-center gap-2.5 text-xs font-black text-slate-900">
                 <div
-                  class="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-sm">
+                  class="w-8 h-8 rounded-xl bg-[#038c4c]/15 text-[#038c4c] flex items-center justify-center text-sm">
                   ✨
                 </div>
                 <div>
@@ -386,7 +402,7 @@ const galleryImages = [
       <div class="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
         <div class="text-center space-y-3 max-w-3xl mx-auto">
           <span
-            class="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200/80">
+            class="text-xs font-bold uppercase tracking-wider text-[#5d5f85] bg-[#5d5f85]/10 px-3 py-1 rounded-full border border-[#5d5f85]/20">
             Versatilidade de Produção
           </span>
           <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
@@ -414,11 +430,11 @@ const galleryImages = [
 
               <div class="flex items-center gap-3">
                 <div
-                  class="w-10 h-10 rounded-xl bg-white text-blue-600 border border-slate-200 flex items-center justify-center shadow-2xs shrink-0">
+                  :class="['w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center shadow-2xs shrink-0', item.colorClass]">
                   <component :is="item.icon" class="w-5 h-5" />
                 </div>
                 <div>
-                  <span class="text-[11px] font-black uppercase tracking-wider text-blue-600">
+                  <span :class="['text-[11px] font-black uppercase tracking-wider', item.colorClass]">
                     {{ item.category }}
                   </span>
                   <h3 class="text-base font-black text-slate-900 leading-snug">
@@ -433,7 +449,7 @@ const galleryImages = [
 
               <ul class="space-y-2 pt-2 border-t border-slate-200/70 text-xs text-slate-700 font-medium">
                 <li v-for="(feat, fIdx) in item.features" :key="fIdx" class="flex items-center gap-2">
-                  <Check class="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <Check class="w-3.5 h-3.5 text-[#038c4c] shrink-0" />
                   <span>{{ feat }}</span>
                 </li>
               </ul>
@@ -441,7 +457,7 @@ const galleryImages = [
 
             <div class="pt-2">
               <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
-                class="w-full py-2.5 px-3 bg-white hover:bg-blue-50 text-blue-600 border border-blue-200 text-xs font-bold rounded-xl flex items-center justify-center gap-1.5 transition-colors">
+                :class="['w-full py-2.5 px-3 bg-white text-xs font-bold rounded-xl border flex items-center justify-center gap-1.5 transition-colors', item.colorClass, item.borderClass]">
                 <span>Cotar Este Formato</span>
                 <ChevronRight class="w-3.5 h-3.5" />
               </a>
@@ -456,7 +472,7 @@ const galleryImages = [
       <div class="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
         <div class="text-center space-y-3 max-w-3xl mx-auto">
           <span
-            class="text-xs font-bold uppercase tracking-wider text-blue-600 bg-white px-3 py-1 rounded-full border border-slate-200">
+            class="text-xs font-bold uppercase tracking-wider text-[#008b73] bg-[#008b73]/10 px-3 py-1 rounded-full border border-[#008b73]/25">
             Química de Superfície
           </span>
           <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
@@ -474,7 +490,7 @@ const galleryImages = [
             <div class="flex items-start justify-between gap-4">
               <div>
                 <span
-                  class="text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg bg-slate-100 border border-slate-200 text-slate-700">
+                  :class="['text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-lg border shadow-2xs', bath.badgeColor]">
                   {{ bath.badge }}
                 </span>
                 <h3 class="text-xl sm:text-2xl font-black text-slate-900 mt-2">
@@ -482,7 +498,7 @@ const galleryImages = [
                 </h3>
               </div>
               <div
-                class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center font-bold text-slate-700 shrink-0">
+                :class="['w-10 h-10 rounded-xl flex items-center justify-center font-bold shrink-0', bath.numberColor]">
                 0{{ idx + 1 }}
               </div>
             </div>
@@ -513,7 +529,7 @@ const galleryImages = [
       <div class="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
         <div class="text-center space-y-3 max-w-3xl mx-auto">
           <span
-            class="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
+            class="text-xs font-bold uppercase tracking-wider text-[#038c4c] bg-[#038c4c]/10 px-3 py-1 rounded-full border border-[#038c4c]/20">
             Divisão Frotas & Atacarejos
           </span>
           <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
@@ -563,32 +579,32 @@ const galleryImages = [
           </div>
 
           <!-- Card Depois -->
-          <div class="bg-emerald-50/50 border border-emerald-300 rounded-3xl p-6 sm:p-8 space-y-5 shadow-sm">
-            <div class="aspect-[16/9] rounded-2xl overflow-hidden bg-slate-900 relative border border-emerald-300">
+          <div class="bg-[#038c4c]/5 border border-[#038c4c]/30 rounded-3xl p-6 sm:p-8 space-y-5 shadow-sm">
+            <div class="aspect-[16/9] rounded-2xl overflow-hidden bg-slate-900 relative border border-[#038c4c]/30">
               <img src="/tenants/bamatec/img/Exemplo-carrinho-2.jpeg"
                 alt="Carrinho recuperado com galvanoplastia espelhada" class="w-full h-full object-cover"
                 @error="handleImgError" loading="lazy" />
               <div
-                class="absolute top-3 left-3 bg-emerald-600 text-white text-[11px] font-black uppercase px-2.5 py-1 rounded-lg">
+                class="absolute top-3 left-3 bg-[#038c4c] text-white text-[11px] font-black uppercase px-2.5 py-1 rounded-lg">
                 Depois: Banho Galvânico & Rodízios Novos
               </div>
             </div>
 
             <div class="space-y-3">
-              <h3 class="font-extrabold text-emerald-950 text-base sm:text-lg">Frota Bama TEC Galvanizada</h3>
+              <h3 class="font-extrabold text-slate-900 text-base sm:text-lg">Frota Bama TEC Galvanizada</h3>
               <ul class="space-y-2 text-xs sm:text-sm text-slate-700">
                 <li class="flex items-start gap-2">
-                  <span class="text-emerald-600 font-bold">✓</span>
+                  <span class="text-[#038c4c] font-bold">✓</span>
                   <span><strong>Zincagem espelhada profunda:</strong> Brilho impecável com proteção duradoura contra
                     maresia.</span>
                 </li>
                 <li class="flex items-start gap-2">
-                  <span class="text-emerald-600 font-bold">✓</span>
+                  <span class="text-[#038c4c] font-bold">✓</span>
                   <span><strong>Rodas silenciosas em PU:</strong> Rolamento blindado para deslizamento suave sem
                     travar.</span>
                 </li>
                 <li class="flex items-start gap-2">
-                  <span class="text-emerald-600 font-bold">✓</span>
+                  <span class="text-[#038c4c] font-bold">✓</span>
                   <span><strong>Economia de ~70%:</strong> Renove 100 carrinhos pelo custo de comprar apenas 30
                     novos.</span>
                 </li>
@@ -620,7 +636,7 @@ const galleryImages = [
       <div class="max-w-5xl mx-auto px-4 sm:px-6 space-y-8">
         <div class="text-center space-y-2">
           <span
-            class="text-xs font-extrabold uppercase tracking-wider text-blue-700 bg-blue-100 px-3 py-1 rounded-full">
+            class="text-xs font-extrabold uppercase tracking-wider text-[#2d7097] bg-[#2d7097]/10 px-3 py-1 rounded-full border border-[#2d7097]/20">
             Simulador de Cotação Rápida
           </span>
           <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
@@ -636,25 +652,25 @@ const galleryImages = [
           class="flex flex-wrap items-center justify-center gap-2 p-1.5 bg-slate-200/80 rounded-2xl max-w-2xl mx-auto">
           <button @click="activeTab = 'carrinhos'" :class="[
             'px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer',
-            activeTab === 'carrinhos' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-700 hover:text-slate-900'
+            activeTab === 'carrinhos' ? 'bg-white text-[#2d7097] shadow-xs' : 'text-slate-700 hover:text-slate-900'
           ]">
             🛒 Frotas de Carrinhos
           </button>
           <button @click="activeTab = 'peças'" :class="[
             'px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer',
-            activeTab === 'peças' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-700 hover:text-slate-900'
+            activeTab === 'peças' ? 'bg-white text-[#008b73] shadow-xs' : 'text-slate-700 hover:text-slate-900'
           ]">
             🔩 Peças em Tambor (kg)
           </button>
           <button @click="activeTab = 'barras'" :class="[
             'px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer',
-            activeTab === 'barras' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-700 hover:text-slate-900'
+            activeTab === 'barras' ? 'bg-white text-[#2d7097] shadow-xs' : 'text-slate-700 hover:text-slate-900'
           ]">
             📏 Barras & Tubos Longos
           </button>
           <button @click="activeTab = 'tecnicas'" :class="[
             'px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer',
-            activeTab === 'tecnicas' ? 'bg-white text-blue-600 shadow-xs' : 'text-slate-700 hover:text-slate-900'
+            activeTab === 'tecnicas' ? 'bg-white text-[#5d5f85] shadow-xs' : 'text-slate-700 hover:text-slate-900'
           ]">
             📐 Peças Técnicas sob Desenho
           </button>
@@ -662,7 +678,7 @@ const galleryImages = [
 
         <!-- Conteúdo da Aba: Carrinhos -->
         <div v-if="activeTab === 'carrinhos'"
-          class="bg-white border-2 border-blue-200 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-300">
+          class="bg-white border-2 border-[#2d7097]/30 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-300">
           <div class="text-center space-y-2">
             <h3 class="text-xl sm:text-2xl font-black text-slate-900">
               Simulador de Economia de Frotas de Supermercado
@@ -673,13 +689,13 @@ const galleryImages = [
           <div class="space-y-4 max-w-lg mx-auto">
             <div class="flex items-center justify-between font-black text-slate-900 text-sm sm:text-base">
               <span>Quantidade de carrinhos:</span>
-              <span class="px-4 py-1.5 bg-blue-600 text-white rounded-xl text-lg sm:text-xl font-mono">
+              <span class="px-4 py-1.5 bg-[#2d7097] text-white rounded-xl text-lg sm:text-xl font-mono">
                 {{ cartQuantity }} unidades
               </span>
             </div>
 
             <input v-model.number="cartQuantity" type="range" min="20" max="500" step="10"
-              class="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600" />
+              class="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#2d7097]" />
 
             <div class="flex justify-between text-[11px] text-slate-500 font-semibold">
               <span>20 un</span>
@@ -699,25 +715,25 @@ const galleryImages = [
             </div>
 
             <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center space-y-1">
-              <span class="text-[11px] font-bold text-slate-500 uppercase">Comprando Reforma Bama TEC</span>
-              <p class="text-lg sm:text-xl font-extrabold text-blue-700 font-mono">
+              <span class="text-[11px] font-bold text-slate-500 uppercase">Com Reforma Bama TEC</span>
+              <p class="text-lg sm:text-xl font-extrabold text-[#2d7097] font-mono">
                 {{ formatBRL(estimatedReformCost) }}
               </p>
               <span class="text-[10px] text-slate-500">Média R$ 230/un completo</span>
             </div>
 
-            <div class="bg-emerald-50 border-2 border-emerald-400 rounded-2xl p-4 text-center space-y-1 shadow-xs">
-              <span class="text-[11px] font-black text-emerald-800 uppercase">Sua Economia Real</span>
-              <p class="text-xl sm:text-2xl font-black text-emerald-700 font-mono">
+            <div class="bg-[#038c4c]/10 border-2 border-[#038c4c]/40 rounded-2xl p-4 text-center space-y-1 shadow-xs">
+              <span class="text-[11px] font-black text-[#038c4c] uppercase">Sua Economia Real</span>
+              <p class="text-xl sm:text-2xl font-black text-[#038c4c] font-mono">
                 {{ formatBRL(estimatedSavings) }}
               </p>
-              <span class="text-[10px] font-bold text-emerald-700">~69% de economia no caixa</span>
+              <span class="text-[10px] font-bold text-[#038c4c]">~69% de economia no caixa</span>
             </div>
           </div>
 
           <div class="text-center pt-2">
             <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
-              class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-emerald-600/30 transition-all active:scale-95 cursor-pointer">
+              class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-[#038c4c] hover:bg-[#02733e] text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-[#038c4c]/25 transition-all active:scale-95 cursor-pointer">
               <Phone class="w-4 h-4" />
               <span>Solicitar Cotação para {{ cartQuantity }} Carrinhos</span>
             </a>
@@ -726,7 +742,7 @@ const galleryImages = [
 
         <!-- Conteúdo da Aba: Peças Pequenas / Tambor -->
         <div v-else-if="activeTab === 'peças'"
-          class="bg-white border-2 border-blue-200 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-300">
+          class="bg-white border-2 border-[#2d7097]/30 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-300">
           <div class="text-center space-y-2">
             <h3 class="text-xl sm:text-2xl font-black text-slate-900">
               Cotação de Peças a Granel em Tambor Rotativo
@@ -739,7 +755,7 @@ const galleryImages = [
               <label class="block text-xs font-bold text-slate-700 uppercase">Peso Estimado do Lote (kg):</label>
               <div class="flex items-center gap-3">
                 <input v-model.number="partWeight" type="number" min="20" step="10"
-                  class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl font-mono text-base font-bold text-slate-900 focus:outline-blue-600" />
+                  class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl font-mono text-base font-bold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-[#008b73] focus:border-[#008b73]" />
                 <span class="text-sm font-bold text-slate-500">kg</span>
               </div>
               <p class="text-[11px] text-slate-400">Atendemos desde lotes pilotos de 30kg até toneladas/mês.</p>
@@ -748,7 +764,7 @@ const galleryImages = [
             <div class="space-y-2">
               <label class="block text-xs font-bold text-slate-700 uppercase">Tipo de Banho Desejado:</label>
               <select v-model="selectedBathType"
-                class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-blue-600">
+                class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#008b73] focus:border-[#008b73]">
                 <option v-for="b in bathOptions" :key="b.id" :value="b.id">{{ b.label }}</option>
               </select>
               <p class="text-[11px] text-slate-400">Passivações azul, amarela bicromatizada, estanho ou níquel.</p>
@@ -756,14 +772,14 @@ const galleryImages = [
           </div>
 
           <div
-            class="p-5 rounded-2xl bg-blue-50/70 border border-blue-200 text-slate-700 text-xs text-center max-w-xl mx-auto">
+            class="p-5 rounded-2xl bg-[#008b73]/10 border border-[#008b73]/25 text-slate-800 text-xs text-center max-w-xl mx-auto">
             💡 <strong>Preço por Quilo (kg):</strong> Calculamos o valor exato com base na geometria da peça, espessura
             de camada requerida (microns) e periodicidade de faturamento.
           </div>
 
           <div class="text-center pt-2">
             <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
-              class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-emerald-600/30 transition-all active:scale-95 cursor-pointer">
+              class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-[#038c4c] hover:bg-[#02733e] text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-[#038c4c]/25 transition-all active:scale-95 cursor-pointer">
               <Phone class="w-4 h-4" />
               <span>Receber Orçamento por Quilo para {{ partWeight }}kg</span>
             </a>
@@ -772,7 +788,7 @@ const galleryImages = [
 
         <!-- Conteúdo da Aba: Barras e Tubos Longos -->
         <div v-else-if="activeTab === 'barras'"
-          class="bg-white border-2 border-blue-200 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-300">
+          class="bg-white border-2 border-[#2d7097]/30 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-300">
           <div class="text-center space-y-2">
             <h3 class="text-xl sm:text-2xl font-black text-slate-900">
               Galvanoplastia de Barras, Tubos e Perfis de até 6 Metros
@@ -786,7 +802,7 @@ const galleryImages = [
               <label class="block text-xs font-bold text-slate-700 uppercase">Metragem ou Quantidade Linear:</label>
               <div class="flex items-center gap-3">
                 <input v-model.number="barMeters" type="number" min="50" step="50"
-                  class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl font-mono text-base font-bold text-slate-900 focus:outline-blue-600" />
+                  class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl font-mono text-base font-bold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-[#2d7097] focus:border-[#2d7097]" />
                 <span class="text-sm font-bold text-slate-500">metros</span>
               </div>
             </div>
@@ -794,7 +810,7 @@ const galleryImages = [
             <div class="space-y-2">
               <label class="block text-xs font-bold text-slate-700 uppercase">Tipo de Perfil:</label>
               <select v-model="barType"
-                class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-blue-600">
+                class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#2d7097] focus:border-[#2d7097]">
                 <option value="tubos">Tubos Redondos / Quadrados (Metalons)</option>
                 <option value="barras_chatas">Barras Chatas e Cantoneiras</option>
                 <option value="perfis_u">Perfis U e Vigas Estruturais</option>
@@ -811,7 +827,7 @@ const galleryImages = [
 
           <div class="text-center pt-2">
             <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
-              class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-emerald-600/30 transition-all active:scale-95 cursor-pointer">
+              class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-[#038c4c] hover:bg-[#02733e] text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-[#038c4c]/25 transition-all active:scale-95 cursor-pointer">
               <Phone class="w-4 h-4" />
               <span>Cotar Banhos para {{ barMeters }}m de Barras</span>
             </a>
@@ -820,7 +836,7 @@ const galleryImages = [
 
         <!-- Conteúdo da Aba: Peças Técnicas sob Desenho -->
         <div v-else
-          class="bg-white border-2 border-blue-200 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-300">
+          class="bg-white border-2 border-[#2d7097]/30 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-300">
           <div class="text-center space-y-2 max-w-lg mx-auto">
             <h3 class="text-xl sm:text-2xl font-black text-slate-900">
               Cotação de Peças Especiais com Desenho Técnico
@@ -851,7 +867,7 @@ const galleryImages = [
 
           <div class="text-center pt-2">
             <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
-              class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-emerald-600/30 transition-all active:scale-95 cursor-pointer">
+              class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-[#038c4c] hover:bg-[#02733e] text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-[#038c4c]/25 transition-all active:scale-95 cursor-pointer">
               <Phone class="w-4 h-4" />
               <span>Enviar Desenho Técnico via WhatsApp</span>
             </a>
@@ -865,7 +881,7 @@ const galleryImages = [
       <div class="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
         <div class="text-center space-y-3 max-w-3xl mx-auto">
           <span
-            class="text-xs font-bold uppercase tracking-wider text-blue-600 bg-blue-50 px-3 py-1 rounded-full border border-blue-200/80">
+            class="text-xs font-bold uppercase tracking-wider text-[#5d5f85] bg-[#5d5f85]/10 px-3 py-1 rounded-full border border-[#5d5f85]/20">
             Garantia Técnica Industrial
           </span>
           <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
@@ -878,8 +894,8 @@ const galleryImages = [
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div class="bg-slate-50 border border-slate-200/90 rounded-3xl p-6 space-y-3 shadow-2xs">
-            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+          <div class="bg-slate-50 border border-slate-200/90 rounded-3xl p-6 space-y-3 shadow-2xs hover:border-[#2d7097]/40 transition-colors">
+            <div class="w-10 h-10 rounded-xl bg-[#2d7097]/15 text-[#2d7097] flex items-center justify-center">
               <ShieldCheck class="w-5 h-5" />
             </div>
             <h3 class="font-black text-slate-900 text-base">Câmara Salt Spray</h3>
@@ -889,8 +905,8 @@ const galleryImages = [
             </p>
           </div>
 
-          <div class="bg-slate-50 border border-slate-200/90 rounded-3xl p-6 space-y-3 shadow-2xs">
-            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+          <div class="bg-slate-50 border border-slate-200/90 rounded-3xl p-6 space-y-3 shadow-2xs hover:border-[#008b73]/40 transition-colors">
+            <div class="w-10 h-10 rounded-xl bg-[#008b73]/15 text-[#008b73] flex items-center justify-center">
               <Scale class="w-5 h-5" />
             </div>
             <h3 class="font-black text-slate-900 text-base">Medição de Camada (µm)</h3>
@@ -900,8 +916,8 @@ const galleryImages = [
             </p>
           </div>
 
-          <div class="bg-slate-50 border border-slate-200/90 rounded-3xl p-6 space-y-3 shadow-2xs">
-            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+          <div class="bg-slate-50 border border-slate-200/90 rounded-3xl p-6 space-y-3 shadow-2xs hover:border-[#5d5f85]/40 transition-colors">
+            <div class="w-10 h-10 rounded-xl bg-[#5d5f85]/15 text-[#5d5f85] flex items-center justify-center">
               <FileText class="w-5 h-5" />
             </div>
             <h3 class="font-black text-slate-900 text-base">Laudos & Certificados</h3>
@@ -911,8 +927,8 @@ const galleryImages = [
             </p>
           </div>
 
-          <div class="bg-slate-50 border border-slate-200/90 rounded-3xl p-6 space-y-3 shadow-2xs">
-            <div class="w-10 h-10 rounded-xl bg-blue-100 text-blue-700 flex items-center justify-center">
+          <div class="bg-slate-50 border border-slate-200/90 rounded-3xl p-6 space-y-3 shadow-2xs hover:border-[#038c4c]/40 transition-colors">
+            <div class="w-10 h-10 rounded-xl bg-[#038c4c]/15 text-[#038c4c] flex items-center justify-center">
               <Truck class="w-5 h-5" />
             </div>
             <h3 class="font-black text-slate-900 text-base">Logística com Frota Própria</h3>
@@ -929,7 +945,7 @@ const galleryImages = [
     <section class="py-16 sm:py-20 border-b border-slate-200 bg-slate-50">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 space-y-8">
         <div class="text-center space-y-2">
-          <h2 class="text-xs font-bold uppercase tracking-wider text-blue-600">Dúvidas Frequentes</h2>
+          <h2 class="text-xs font-bold uppercase tracking-wider text-[#2d7097] bg-[#2d7097]/10 inline-block px-3 py-1 rounded-full border border-[#2d7097]/20">Dúvidas Frequentes</h2>
           <p class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
             Perguntas comuns sobre nossos serviços industriais
           </p>
@@ -1006,7 +1022,7 @@ const galleryImages = [
             <div class="pt-1 space-y-1.5">
               <div>
                 <span
-                  class="inline-block text-[10px] font-bold text-emerald-400 bg-emerald-950/80 px-2 py-0.5 rounded border border-emerald-500/40">
+                  class="inline-block text-[10px] font-bold text-[#038c4c] bg-[#038c4c]/15 px-2 py-0.5 rounded border border-[#038c4c]/30">
                   ● Fábrica Operacional Ativa
                 </span>
               </div>
@@ -1046,7 +1062,7 @@ const galleryImages = [
             <p class="text-slate-300 font-medium">Itaquaquecetuba, Alto Tietê, Grande SP e Interior</p>
             <p class="text-slate-400 text-[11px]">Site oficial: <strong class="text-white">www.bamatec.com.br</strong></p>
             <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
-              class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl transition-colors">
+              class="inline-flex items-center gap-2 px-4 py-2.5 bg-[#038c4c] hover:bg-[#02733e] text-white font-bold rounded-xl transition-colors">
               <Phone class="w-3.5 h-3.5" />
               <span>Chamar no WhatsApp</span>
             </a>
