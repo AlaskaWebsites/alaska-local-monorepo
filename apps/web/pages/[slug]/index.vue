@@ -180,7 +180,9 @@ const effectiveTenant = computed<Tenant | null>(() => {
   if (!tenant.value) return null
   const ov = localOverrides.value || {}
   const overrideHours = ov.openingHours || {}
-  const deletedIds = ov.deletedProductIds || []
+  const deletedCatIds = new Set(ov.deletedCategoryIds || [])
+  const customCats = (ov.customCategories || []) as any[]
+  const deletedIds = new Set(ov.deletedProductIds || [])
   const rawCustomProds = (ov.customProducts || []) as Product[]
 
   // Deduplica produtos customizados duplicados acidentalmente (mesmo nome, categoria e preco)
@@ -195,10 +197,20 @@ const effectiveTenant = computed<Tenant | null>(() => {
     customProds.push(p)
   }
 
+  // Filtra categorias canônicas excluindo as deletadas pelo lojista (ADR 013 / ADR 026)
+  const baseCats = (tenant.value.categories || [])
+    .filter((cat) => !deletedCatIds.has(cat.id))
+
+  // Categorias customizadas criadas pelo lojista (não deletadas e sem duplicar com base)
+  const extraCats = customCats
+    .filter((cat) => !deletedCatIds.has(cat.id) && !baseCats.some((b) => b.id === cat.id))
+
+  const allCats = [...baseCats, ...extraCats]
+
   // Categorias com produtos mesclados e customizados do lojista
-  const effectiveCategories = (tenant.value.categories || []).map((cat) => {
-    const baseProds = (cat.products || []).filter((p) => !deletedIds.includes(p.id))
-    const extraProds = customProds.filter((p) => (p as any).categoryId === cat.id)
+  const effectiveCategories = allCats.map((cat) => {
+    const baseProds = (cat.products || []).filter((p) => !deletedIds.has(p.id))
+    const extraProds = customProds.filter((p) => (p as any).categoryId === cat.id && !deletedIds.has(p.id))
     const combined = [...baseProds, ...extraProds]
 
     return {
