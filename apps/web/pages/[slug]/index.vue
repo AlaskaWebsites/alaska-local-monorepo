@@ -48,130 +48,193 @@
       :theme="effectiveTenant.theme"
       :theme-classes="themeClasses"
       :is-service-store="isServiceStore"
-      @select-product="handleProductClick"
+      @select-product="openCustomizer"
     />
 
-    <!-- 5. Navegação por Categorias com CategoryTabs -->
-    <div v-if="!isSearching" class="max-w-4xl mx-auto px-4 mt-6">
-      <CategoryTabs
-        :categories="categories"
-        :theme="effectiveTenant.theme"
-        :theme-classes="themeClasses"
-        @select-category="scrollToCategory"
-      />
-    </div>
-
-    <!-- 6. Listagem de Categorias e Produtos -->
-    <ProductCatalogGrid
-      :categories="filteredCategories"
-      :theme="effectiveTenant.theme"
+    <!-- 5. Navegação Horizontal por Categorias / Tabs -->
+    <StoreCategoryChips
+      v-if="!isSearching"
+      :categories="categories"
       :theme-classes="themeClasses"
-      :is-searching="isSearching"
-      :search-query="searchQuery"
-      @select-product="handleProductClick"
-      @clear-search="clearSearch"
+      @select="scrollToCategory"
     />
 
-    <!-- 7. Barra Fixa Flutuante Inferior (Bottom Bar / Cart CTA) -->
-    <BottomCartFloatingBar
-      :total-items="totalItemsCount"
+    <!-- 6. Catálogo Principal por Categorias -->
+    <main class="max-w-4xl mx-auto px-4 mt-8 space-y-10" role="main" aria-label="Catálogo de Produtos">
+      <!-- Caso 1: Resultados Filtrados pela Busca Client-Side -->
+      <template v-if="isSearching">
+        <div v-if="filteredCategories.length === 0" class="text-center py-16 bg-white rounded-3xl border border-slate-200/80 p-8 shadow-2xs">
+          <p class="text-3xl mb-2">🔍</p>
+          <h3 class="text-base font-bold text-slate-900">Nenhum item encontrado</h3>
+          <p class="text-xs text-slate-500 mt-1 max-w-xs mx-auto">
+            Não encontramos resultados para "{{ searchQuery }}". Tente buscar por outros termos.
+          </p>
+        </div>
+
+        <section
+          v-for="category in filteredCategories"
+          :key="category.id"
+          class="space-y-4"
+        >
+          <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+            <span>{{ category.name }}</span>
+            <span class="text-xs font-normal text-slate-400">({{ category.products.length }})</span>
+          </h2>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <ProductCard
+              v-for="product in category.products"
+              :key="product.id"
+              :product="product"
+              :theme="effectiveTenant.theme"
+              :theme-classes="themeClasses"
+              :is-service-store="isServiceStore"
+              @click="openCustomizer(product)"
+            />
+          </div>
+        </section>
+      </template>
+
+      <!-- Caso 2: Visualização Normal do Catálogo Completo -->
+      <template v-else>
+        <section
+          v-for="category in categories"
+          :key="category.id"
+          :id="category.id"
+          class="space-y-4 scroll-mt-24"
+        >
+          <div class="flex items-center justify-between border-b border-slate-200/80 pb-2.5">
+            <h2 class="text-sm font-bold text-slate-900 uppercase tracking-wider flex items-center gap-2">
+              <span v-if="category.icon">{{ category.icon }}</span>
+              <span>{{ category.name }}</span>
+              <span class="text-xs font-normal text-slate-400 font-mono">({{ (category.products || []).length }})</span>
+            </h2>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <ProductCard
+              v-for="product in category.products"
+              :key="product.id"
+              :product="product"
+              :theme="effectiveTenant.theme"
+              :theme-classes="themeClasses"
+              :is-service-store="isServiceStore"
+              @click="openCustomizer(product)"
+            />
+          </div>
+        </section>
+      </template>
+    </main>
+
+    <!-- 7. Barra Inferior Flutuante da Sacola de Compras -->
+    <FloatingCartBar
+      v-if="!isServiceStore"
+      :item-count="totalItemsCount"
       :subtotal="cartSubtotal"
-      :is-booking-open="isBookingOpen"
+      :theme-classes="themeClasses"
       @open-cart="isCartDrawerOpen = true"
     />
 
-    <!-- 8. Modais do Sistema -->
+    <!-- MODAIS E DRAWERS DE CLIENTE -->
+    <!-- Modal de Personalização de Produto -->
     <ProductCustomizerModal
-      v-if="selectedProduct && effectiveTenant"
-      :is-open="!!selectedProduct"
+      v-if="selectedProduct"
+      :is-open="Boolean(selectedProduct)"
       :product="selectedProduct"
       :tenant="effectiveTenant"
+      :is-service-store="isServiceStore"
       @close="closeProductModal"
       @add-to-cart="handleAddProductToCart"
+      @open-booking="openBookingModalForProduct"
     />
 
+    <!-- Drawer Lateral da Sacola de Pedidos -->
+    <CartDrawerModal
+      v-if="!isServiceStore"
+      :is-open="isCartDrawerOpen"
+      :items="cartItems"
+      :tenant="effectiveTenant"
+      @close="isCartDrawerOpen = false"
+      @remove-item="removeCartItem"
+      @clear-cart="clearCart"
+    />
+
+    <!-- Modal de Avaliações da Loja -->
+    <StoreReviewsModal
+      v-if="effectiveTenant.storeReviews"
+      :is-open="isReviewsOpen"
+      :store-reviews="effectiveTenant.storeReviews"
+      :store-name="effectiveTenant.name"
+      @close="isReviewsOpen = false"
+    />
+
+    <!-- Modal de Informações da Loja -->
     <StoreInfoModal
-      v-if="effectiveTenant"
       :is-open="isInfoOpen"
       :tenant="effectiveTenant"
       :is-open-now="isOpen"
       :status-text="statusText"
-      :theme="effectiveTenant.theme"
       @close="isInfoOpen = false"
     />
 
-    <CartDrawerModal
-      v-if="effectiveTenant"
-      :is-open="isCartDrawerOpen"
-      :tenant="effectiveTenant"
-      :items="cartItems"
-      @remove-item="removeCartItem"
-      @clear-cart="clearCart"
-      @close="isCartDrawerOpen = false"
-    />
-
+    <!-- Modal de Agendamento de Serviços (Alaska Hub & Pro) -->
     <BookingModal
-      v-if="effectiveTenant && isServiceStore"
+      v-if="isServiceStore"
       :is-open="isBookingOpen"
       :tenant="effectiveTenant"
       :initial-service="selectedBookingService"
       @close="isBookingOpen = false"
-    />
-
-    <StoreReviewsModal
-      v-if="effectiveTenant"
-      :is-open="isReviewsOpen"
-      :reviews="effectiveTenant.reviews"
-      :store-name="effectiveTenant.name"
-      @close="isReviewsOpen = false"
     />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useRoute } from '#app'
+import { useRoute } from 'vue-router'
 import { useTenant } from '~/composables/useTenant'
 import { useTenantTheme } from '~/composables/useTenantTheme'
 import { useOpeningHours } from '~/composables/useOpeningHours'
 import { useProductSearch } from '~/composables/useProductSearch'
 import { useCart } from '~/composables/useCart'
 import { useShare } from '~/composables/useShare'
-import { useMerchantAdmin, type TenantOverrides } from '~/composables/useMerchantAdmin'
-import ProductSearchInput from '~/components/ProductSearchInput.vue'
-import CategoryTabs from '~/components/CategoryTabs.vue'
+import { useMerchantAdmin } from '~/composables/useMerchantAdmin'
+import type { Tenant, Product, BookingService, CartItem } from '~/types'
+
+// Componentes da Vitrine
+import BamaTecStorefront from '~/components/storefront/BamaTecStorefront.vue'
 import StoreHeroBanner from '~/components/storefront/StoreHeroBanner.vue'
 import StoreHeaderCard from '~/components/storefront/StoreHeaderCard.vue'
+import ProductSearchInput from '~/components/storefront/ProductSearchInput.vue'
 import FeaturedProductsCarousel from '~/components/storefront/FeaturedProductsCarousel.vue'
-import ProductCatalogGrid from '~/components/storefront/ProductCatalogGrid.vue'
-import BottomCartFloatingBar from '~/components/storefront/BottomCartFloatingBar.vue'
+import StoreCategoryChips from '~/components/storefront/StoreCategoryChips.vue'
+import ProductCard from '~/components/storefront/ProductCard.vue'
+import FloatingCartBar from '~/components/storefront/FloatingCartBar.vue'
+
+// Modais da Vitrine
 import ProductCustomizerModal from '~/components/ProductCustomizerModal.vue'
-import StoreInfoModal from '~/components/StoreInfoModal.vue'
 import CartDrawerModal from '~/components/CartDrawerModal.vue'
+import StoreReviewsModal from '~/components/storefront/StoreReviewsModal.vue'
+import StoreInfoModal from '~/components/storefront/StoreInfoModal.vue'
 import BookingModal from '~/components/BookingModal.vue'
-import StoreReviewsModal from '~/components/StoreReviewsModal.vue'
-import BamaTecStorefront from '~/components/storefront/BamaTecStorefront.vue'
-import type { Product, CartItem, BookingService, Tenant } from '~/types'
 
-// 1. Resolução do Tenant Atual (Retorna referências reativas síncronas)
 const route = useRoute()
-const { tenant } = useTenant()
+const slug = computed(() => (route.params.slug as string) || 'hamburgueria-x')
 
-// Reatividade local para overrides do Lojista (localStorage)
-const localOverrides = ref<TenantOverrides>({})
+// 1. Carregamento dos Dados Canônicos
+const { tenant } = useTenant(slug)
+const { themeClasses } = useTenantTheme(tenant)
+const { getOverrides } = useMerchantAdmin(slug)
+
+const localOverrides = ref(getOverrides())
+
 function reloadLocalOverrides() {
-  if (typeof window === 'undefined') return
-  try {
-    const raw = localStorage.getItem(`alaska_overrides_${route.params.slug}`)
-    localOverrides.value = raw ? JSON.parse(raw) : {}
-  } catch {
-    localOverrides.value = {}
-  }
+  localOverrides.value = getOverrides()
 }
 
 onMounted(() => {
   reloadLocalOverrides()
   if (typeof window !== 'undefined') {
+    window.addEventListener('alaska_overrides_updated', reloadLocalOverrides)
     window.addEventListener('storage', reloadLocalOverrides)
   }
 })
@@ -182,7 +245,19 @@ const effectiveTenant = computed<Tenant | null>(() => {
   const ov = localOverrides.value || {}
   const overrideHours = ov.openingHours || {}
   const deletedIds = ov.deletedProductIds || []
-  const customProds = (ov.customProducts || []) as Product[]
+  const rawCustomProds = (ov.customProducts || []) as Product[]
+
+  // Deduplica produtos customizados duplicados acidentalmente (mesmo nome, categoria e preco)
+  const seenCustom = new Set<string>()
+  const customProds: Product[] = []
+  for (const p of rawCustomProds) {
+    const key = `${(p as any).categoryId}_${p.name.trim().toLowerCase()}_${p.price}`
+    if (p.id.startsWith('prod-custom-')) {
+      if (seenCustom.has(key)) continue
+      seenCustom.add(key)
+    }
+    customProds.push(p)
+  }
 
   // Categorias com produtos mesclados e customizados do lojista
   const effectiveCategories = (tenant.value.categories || []).map((cat) => {
@@ -240,54 +315,26 @@ const effectiveTenant = computed<Tenant | null>(() => {
       ...tenant.value.openingHours,
       ...overrideHours
     },
-    phoneWhatsApp: effectivePhone,
-    phone: effectivePhone,
-    instagram: ov.contact?.instagram || (tenant.value as any).instagram || '',
-    pixConfig: effectivePix,
-    pix: effectivePix,
     categories: effectiveCategories,
     professionals: effectiveProfessionals,
+    phoneWhatsApp: effectivePhone,
+    pixConfig: effectivePix,
     deliveryFee: effectiveDeliveryFee,
     minOrderValue: effectiveMinOrderValue,
-    estimatedTime: effectiveEstimatedTime,
-    delivery: {
-      deliveryFee: effectiveDeliveryFee,
-      minOrderValue: effectiveMinOrderValue,
-      estimatedTime: effectiveEstimatedTime
-    }
-  } as Tenant
+    estimatedTime: effectiveEstimatedTime
+  }
 })
 
+// 3. Comunicado Efetivo
 const effectiveAnnouncement = computed(() => {
-  const ov = localOverrides.value?.announcement
-  if (ov && typeof ov === 'object') {
-    return {
-      enabled: Boolean(ov.enabled),
-      message: ov.message || ''
-    }
+  const ovAnn = localOverrides.value?.announcement
+  if (ovAnn && typeof ovAnn.enabled === 'boolean') {
+    return ovAnn
   }
-  const tAnnounce = (tenant.value as any)?.announcement
-  if (tAnnounce && typeof tAnnounce === 'object') {
-    return {
-      enabled: Boolean(tAnnounce.enabled),
-      message: tAnnounce.message || ''
-    }
-  }
-  const tMsg = (tenant.value as any)?.announcementMessage
-  const tEnabled = (tenant.value as any)?.announcementEnabled
-  if (tMsg) {
-    return {
-      enabled: Boolean(tEnabled),
-      message: tMsg
-    }
-  }
-  return { enabled: false, message: '' }
+  return effectiveTenant.value?.announcement || null
 })
 
-// 3. Tema Visual Dinâmico da Loja
-const { themeClasses } = useTenantTheme(effectiveTenant)
-
-// 4. Horários de Funcionamento em Tempo Real
+// 4. Status de Abertura / Horários
 const {
   isOpen,
   statusText,
@@ -354,25 +401,25 @@ const selectedProduct = ref<Product | null>(null)
 const isBookingOpen = ref(false)
 const selectedBookingService = ref<BookingService | null>(null)
 
-function handleProductClick(product: Product) {
-  if (isServiceStore.value) {
-    selectedBookingService.value = {
-      id: product.id,
-      name: product.name,
-      description: product.description || '',
-      price: product.price,
-      durationMinutes: 35,
-      professionalIds: []
-    }
-    isBookingOpen.value = true
-  } else {
-    selectedProduct.value = product
-  }
-}
-
 function openBookingModal() {
   selectedBookingService.value = null
   isBookingOpen.value = true
+}
+
+function openBookingModalForProduct(product: Product) {
+  selectedBookingService.value = {
+    id: product.id,
+    name: product.name,
+    description: product.description || '',
+    price: product.price,
+    durationMinutes: product.durationMinutes || 30,
+    professionalIds: []
+  }
+  isBookingOpen.value = true
+}
+
+function openCustomizer(product: Product) {
+  selectedProduct.value = product
 }
 
 function closeProductModal() {
