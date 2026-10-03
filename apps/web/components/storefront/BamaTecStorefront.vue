@@ -18,7 +18,12 @@ import {
   FileText,
   Zap,
   Store,
-  ChevronLeft
+  ChevronLeft,
+  Mail,
+  Send,
+  Building2,
+  User,
+  MessageSquare
 } from 'lucide-vue-next'
 
 const props = defineProps<{
@@ -209,6 +214,112 @@ const galleryImages = [
     subtitle: 'Revitalização completa com rodízios silenciosos em PU maciço'
   }
 ]
+
+const storeEmail = computed(() => props.tenant?.email || 'bamatec22@gmail.com')
+
+// Estado do Formulário de Cotação de Leads B2B
+const leadForm = ref({
+  name: '',
+  company: '',
+  email: '',
+  phone: '',
+  service: 'Estanho Eletrolítico (Barramentos / Painéis Elétricos)',
+  details: ''
+})
+
+const isSubmitting = ref(false)
+const isSubmitted = ref(false)
+const formError = ref('')
+
+const availableServices = [
+  'Estanho Eletrolítico (Barramentos / Painéis Elétricos)',
+  'Banho de Cobre (Cobreamento Técnico e Contatos)',
+  'Zinco Eletrolítico em Barras Longas (Até 6m)',
+  'Zinco em Tambor Rotativo (Fixadores e Peças em kg)',
+  'Reforma de Frotas de Carrinhos (Supermercados/Atacarejos)',
+  'Decapagem Química, Desengraxe ou Fosfatização',
+  'Outro Tratamento Galvânico / Projeto Sob Demanda'
+]
+
+const mailtoUrl = computed(() => {
+  const subject = `[Cotação B2B Bama TEC] ${leadForm.value.company || leadForm.value.name} - ${leadForm.value.service}`
+  const body = `Olá, equipe técnica e comercial da Bama TEC!
+
+Gostaria de solicitar uma cotação para serviços de galvanoplastia e tratamento de superfícies:
+
+DADOS DE CONTATO:
+• Nome: ${leadForm.value.name}
+• Empresa: ${leadForm.value.company || 'Não informada'}
+• E-mail: ${leadForm.value.email}
+• Telefone/WhatsApp: ${leadForm.value.phone}
+
+ESPECIFICAÇÕES DO SERVIÇO:
+• Tipo de Serviço/Banho: ${leadForm.value.service}
+• Detalhes da Demanda (dimensões, peso em kg, lote ou requisitos de micras):
+${leadForm.value.details || 'A combinar'}
+
+---
+Solicitação gerada através da vitrine digital Bama TEC (Alaska Local).`
+
+  return `mailto:${storeEmail.value}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+})
+
+const leadWhatsappUrl = computed(() => {
+  const msg = `Olá! Enviei uma solicitação de cotação para o e-mail da Bama TEC:
+• Empresa: ${leadForm.value.company || leadForm.value.name}
+• Contato: ${leadForm.value.name} (${leadForm.value.phone})
+• E-mail: ${leadForm.value.email}
+• Serviço: ${leadForm.value.service}
+${leadForm.value.details ? `• Detalhes: ${leadForm.value.details}` : ''}
+Gostaria de confirmar o recebimento e solicitar retorno da equipe técnica.`
+
+  return `https://wa.me/${whatsappNumber.value}?text=${encodeURIComponent(msg)}`
+})
+
+function submitLeadForm() {
+  formError.value = ''
+
+  if (!leadForm.value.name.trim()) {
+    formError.value = 'Por favor, informe seu nome.'
+    return
+  }
+  if (!leadForm.value.email.trim() || !leadForm.value.email.includes('@')) {
+    formError.value = 'Por favor, informe um e-mail corporativo válido.'
+    return
+  }
+  if (!leadForm.value.phone.trim()) {
+    formError.value = 'Por favor, informe seu telefone ou WhatsApp de contato.'
+    return
+  }
+
+  isSubmitting.value = true
+
+  try {
+    if (typeof window !== 'undefined') {
+      window.location.href = mailtoUrl.value
+    }
+  } catch (err) {
+    console.error('Erro ao acionar mailto:', err)
+  }
+
+  setTimeout(() => {
+    isSubmitting.value = false
+    isSubmitted.value = true
+  }, 300)
+}
+
+function resetLeadForm() {
+  leadForm.value = {
+    name: '',
+    company: '',
+    email: '',
+    phone: '',
+    service: 'Estanho Eletrolítico (Barramentos / Painéis Elétricos)',
+    details: ''
+  }
+  isSubmitted.value = false
+  formError.value = ''
+}
 </script>
 
 <template>
@@ -243,7 +354,8 @@ const galleryImages = [
         <nav class="hidden lg:flex items-center gap-6 text-xs font-bold text-slate-600">
           <a href="#itens" class="hover:text-[#2d7097] transition-colors">O Que Banham</a>
           <a href="#banhos" class="hover:text-[#2d7097] transition-colors">Tipos de Banhos</a>
-          <a href="#carrinhos" class="hover:text-[#2d7097] transition-colors">Carrinhos de Supermercado</a>
+          <a href="#carrinhos" class="hover:text-[#2d7097] transition-colors">Carrinhos</a>
+          <a href="#cotacao" class="hover:text-[#2d7097] transition-colors text-[#2d7097] font-black">Solicitar Cotação</a>
           <a href="#qualidade" class="hover:text-[#2d7097] transition-colors">Normas & Laudos</a>
           <a href="#faq" class="hover:text-[#2d7097] transition-colors">Dúvidas Frequentes</a>
         </nav>
@@ -322,10 +434,10 @@ const galleryImages = [
                 <ArrowRight class="w-4 h-4" />
               </a>
 
-              <a href="#itens"
+              <a href="#cotacao"
                 class="w-full sm:w-auto px-6 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 hover:border-[#2d7097]/40 font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-all shadow-2xs">
-                <Factory class="w-4 h-4 text-[#2d7097]" />
-                <span>Conhecer Nossos Processos</span>
+                <Mail class="w-4 h-4 text-[#2d7097]" />
+                <span>Solicitar Cotação por E-mail</span>
               </a>
             </div>
           </div>
@@ -619,7 +731,228 @@ const galleryImages = [
       </div>
     </section>
 
-        <!-- 7. CONTROLE DE QUALIDADE, NORMAS TÉCNICAS E LAUDOS -->
+    <!-- 6. FORMULÁRIO DE COTAÇÃO & CAPTURA DE LEADS B2B -->
+    <section id="cotacao" class="py-16 sm:py-24 border-b border-slate-200 bg-slate-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
+        <div class="text-center space-y-3 max-w-3xl mx-auto">
+          <span
+            class="text-xs font-bold uppercase tracking-wider text-[#2d7097] bg-[#2d7097]/10 px-3 py-1 rounded-full border border-[#2d7097]/25">
+            Orçamento Rápido para Indústrias & Compradores
+          </span>
+          <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            Solicite uma Cotação Técnica Direta
+          </h2>
+          <p class="text-sm sm:text-base text-slate-600 font-medium">
+            Envie as especificações do seu lote ou projeto. Nossa equipe de engenharia e atendimento comercial receberá sua solicitação em <strong>{{ storeEmail }}</strong> para responder com agilidade.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start max-w-6xl mx-auto">
+          <!-- Coluna Esquerda: O Formulário -->
+          <div class="lg:col-span-7 bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-2xs">
+            <!-- Estado Sucesso pós envio -->
+            <div v-if="isSubmitted" class="space-y-6 text-center py-6">
+              <div class="w-16 h-16 bg-[#038c4c]/10 text-[#038c4c] rounded-2xl flex items-center justify-center mx-auto border border-[#038c4c]/20">
+                <CheckCircle2 class="w-8 h-8" />
+              </div>
+              <div class="space-y-2">
+                <h3 class="text-xl font-black text-slate-900">Solicitação Pronta para Envio!</h3>
+                <p class="text-xs sm:text-sm text-slate-600 max-w-md mx-auto">
+                  Os dados foram formatados e direcionados para <strong>{{ storeEmail }}</strong>. Caso seu aplicativo de e-mail não tenha aberto automaticamente, use os botões abaixo:
+                </p>
+              </div>
+
+              <div class="flex flex-col sm:flex-row gap-3 justify-center pt-2">
+                <a :href="mailtoUrl"
+                  class="px-5 py-3 bg-[#2d7097] hover:bg-[#245b7a] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer">
+                  <Mail class="w-4 h-4" />
+                  <span>Abrir no Aplicativo de E-mail</span>
+                </a>
+                <a :href="leadWhatsappUrl" target="_blank" rel="noopener noreferrer"
+                  class="px-5 py-3 bg-[#038c4c] hover:bg-[#02733e] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer">
+                  <Phone class="w-3.5 h-3.5" />
+                  <span>Enviar Também no WhatsApp</span>
+                </a>
+              </div>
+
+              <div class="pt-4 border-t border-slate-100">
+                <button type="button" @click="resetLeadForm" class="text-xs text-slate-500 hover:text-slate-800 font-semibold underline cursor-pointer">
+                  Preencher nova solicitação
+                </button>
+              </div>
+            </div>
+
+            <!-- Formulário Ativo -->
+            <form v-else @submit.prevent="submitLeadForm" class="space-y-4 text-left">
+              <div v-if="formError" class="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-center gap-2">
+                <span>⚠️</span>
+                <span>{{ formError }}</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                  <label for="lead-name" class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <User class="w-3.5 h-3.5 text-slate-400" />
+                    <span>Seu Nome *</span>
+                  </label>
+                  <input
+                    id="lead-name"
+                    v-model="leadForm.name"
+                    type="text"
+                    required
+                    placeholder="Ex: Carlos Eduardo"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-[#2d7097] focus:ring-2 focus:ring-[#2d7097]/15 transition-all"
+                  />
+                </div>
+
+                <div class="space-y-1.5">
+                  <label for="lead-company" class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <Building2 class="w-3.5 h-3.5 text-slate-400" />
+                    <span>Empresa / Razão Social</span>
+                  </label>
+                  <input
+                    id="lead-company"
+                    v-model="leadForm.company"
+                    type="text"
+                    placeholder="Ex: Indústria Metalmecânica Ltda"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-[#2d7097] focus:ring-2 focus:ring-[#2d7097]/15 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="space-y-1.5">
+                  <label for="lead-email" class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <Mail class="w-3.5 h-3.5 text-slate-400" />
+                    <span>E-mail Corporativo *</span>
+                  </label>
+                  <input
+                    id="lead-email"
+                    v-model="leadForm.email"
+                    type="email"
+                    required
+                    placeholder="seu.email@empresa.com.br"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-[#2d7097] focus:ring-2 focus:ring-[#2d7097]/15 transition-all"
+                  />
+                </div>
+
+                <div class="space-y-1.5">
+                  <label for="lead-phone" class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                    <Phone class="w-3.5 h-3.5 text-slate-400" />
+                    <span>Telefone / WhatsApp *</span>
+                  </label>
+                  <input
+                    id="lead-phone"
+                    v-model="leadForm.phone"
+                    type="tel"
+                    required
+                    placeholder="(11) 98888-7777"
+                    class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-[#2d7097] focus:ring-2 focus:ring-[#2d7097]/15 transition-all"
+                  />
+                </div>
+              </div>
+
+              <div class="space-y-1.5">
+                <label for="lead-service" class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <Factory class="w-3.5 h-3.5 text-slate-400" />
+                  <span>Tipo de Tratamento / Serviço Desejado *</span>
+                </label>
+                <select
+                  id="lead-service"
+                  v-model="leadForm.service"
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 focus:bg-white focus:outline-hidden focus:border-[#2d7097] focus:ring-2 focus:ring-[#2d7097]/15 transition-all cursor-pointer"
+                >
+                  <option v-for="(svc, sIdx) in availableServices" :key="sIdx" :value="svc">
+                    {{ svc }}
+                  </option>
+                </select>
+              </div>
+
+              <div class="space-y-1.5">
+                <label for="lead-details" class="block text-xs font-bold text-slate-700 flex items-center gap-1.5">
+                  <MessageSquare class="w-3.5 h-3.5 text-slate-400" />
+                  <span>Detalhes do Lote / Peças (Opcional)</span>
+                </label>
+                <textarea
+                  id="lead-details"
+                  v-model="leadForm.details"
+                  rows="3"
+                  placeholder="Ex: Lote de 200kg de parafusos para zinco amarelo, ou 50 barras de 4 metros, espessura mínima de 8 micras, prazo estimado..."
+                  class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-hidden focus:border-[#2d7097] focus:ring-2 focus:ring-[#2d7097]/15 transition-all resize-y"
+                ></textarea>
+              </div>
+
+              <div class="pt-2">
+                <button
+                  type="submit"
+                  :disabled="isSubmitting"
+                  class="w-full py-3.5 px-6 bg-[#2d7097] hover:bg-[#245b7a] active:scale-98 text-white font-extrabold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 transition-all shadow-md shadow-[#2d7097]/20 cursor-pointer disabled:opacity-50"
+                >
+                  <Send class="w-4 h-4" />
+                  <span>{{ isSubmitting ? 'Preparando Envio...' : 'Enviar Solicitação para o E-mail da Bama TEC' }}</span>
+                </button>
+                <p class="text-[11px] text-slate-500 text-center mt-2 font-medium">
+                  A mensagem será endereçada para <strong>{{ storeEmail }}</strong> com cópia para seu registro.
+                </p>
+              </div>
+            </form>
+          </div>
+
+          <!-- Coluna Direita: Informações & Contato Direto -->
+          <div class="lg:col-span-5 space-y-4 text-left">
+            <div class="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-2xs space-y-4">
+              <span class="text-[10px] font-black uppercase tracking-wider text-[#038c4c] bg-[#038c4c]/10 px-2.5 py-1 rounded-lg border border-[#038c4c]/20">
+                Atendimento Técnico B2B
+              </span>
+              <h3 class="text-lg font-black text-slate-900">
+                Por que cotar diretamente com a Bama TEC?
+              </h3>
+              <ul class="space-y-3 text-xs sm:text-sm text-slate-600 font-medium">
+                <li class="flex items-start gap-2.5">
+                  <CheckCircle2 class="w-4 h-4 text-[#038c4c] shrink-0 mt-0.5" />
+                  <span><strong>Resposta Técnica Rápida:</strong> Análise de viabilidade por engenheiro químico e metalúrgico.</span>
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <CheckCircle2 class="w-4 h-4 text-[#038c4c] shrink-0 mt-0.5" />
+                  <span><strong>Laudos Laboratoriais:</strong> Medição de micras (µm) e ensaios de Salt Spray (ASTM B117 / NBR 8094).</span>
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <CheckCircle2 class="w-4 h-4 text-[#038c4c] shrink-0 mt-0.5" />
+                  <span><strong>Logística com Frota Própria:</strong> Retirada e entrega programada na Grande São Paulo e Interior.</span>
+                </li>
+                <li class="flex items-start gap-2.5">
+                  <CheckCircle2 class="w-4 h-4 text-[#038c4c] shrink-0 mt-0.5" />
+                  <span><strong>Condições B2B:</strong> Faturamento para indústrias cadastradas e pagamento facilitado.</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- Card WhatsApp Direto Alternativo -->
+            <div class="bg-gradient-to-br from-[#038c4c]/10 via-white to-slate-50 border border-[#038c4c]/30 rounded-3xl p-6 shadow-2xs space-y-3">
+              <div class="flex items-center gap-2.5">
+                <div class="w-9 h-9 rounded-xl bg-[#038c4c] text-white flex items-center justify-center shadow-xs">
+                  <Phone class="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 class="font-black text-slate-900 text-sm">Prefere falar agora no WhatsApp?</h4>
+                  <p class="text-[11px] text-slate-500 font-medium">Atendimento direto com o time comercial</p>
+                </div>
+              </div>
+              <p class="text-xs text-slate-600 leading-relaxed">
+                Envie fotos de peças, desenhos técnicos em PDF ou tire dúvidas instantaneamente pelo canal corporativo da fábrica.
+              </p>
+              <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
+                class="w-full py-2.5 px-4 bg-[#038c4c] hover:bg-[#02733e] text-white font-bold text-xs rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs cursor-pointer">
+                <span>Chamar no WhatsApp da Fábrica</span>
+                <ArrowRight class="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. CONTROLE DE QUALIDADE, NORMAS TÉCNICAS E LAUDOS -->
     <section id="qualidade" class="py-16 sm:py-24 border-b border-slate-200 bg-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
         <div class="text-center space-y-3 max-w-3xl mx-auto">
