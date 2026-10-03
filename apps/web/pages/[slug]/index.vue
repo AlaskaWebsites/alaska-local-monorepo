@@ -9,10 +9,13 @@
   <div v-else-if="effectiveTenant" class="min-h-screen bg-slate-50 text-slate-900 font-sans pb-28 sm:pb-32 selection:bg-emerald-500 selection:text-white">
     <!-- 1. Hero Banner Principal com Logo Flutuante -->
     <StoreHeroBanner
+      :banner="effectiveTenant.banner"
       :banner-url="effectiveTenant.banner"
       :store-name="effectiveTenant.name"
       :theme="effectiveTenant.theme"
       :theme-classes="themeClasses"
+      :is-emergency-closed="effectiveTenant.isEmergencyClosed"
+      :announcement="effectiveAnnouncement"
       @share="handleShare"
     />
 
@@ -267,6 +270,15 @@ const effectiveTenant = computed<Tenant | null>(() => {
 // 3. Tema Dinâmico do Tenant
 const tenantThemeRef = computed(() => effectiveTenant.value?.theme || 'emerald')
 const { themeClasses } = useTenantTheme(tenantThemeRef)
+
+// 3.1 Comunicado Efetivo
+const effectiveAnnouncement = computed(() => {
+  const ovAnn = localOverrides.value?.announcement
+  if (ovAnn && typeof ovAnn.enabled === 'boolean') {
+    return ovAnn
+  }
+  return effectiveTenant.value?.announcement || null
+})
 
 // 4. Horários de Funcionamento em Tempo Real
 const openingHoursRef = computed(() => effectiveTenant.value?.openingHours)
