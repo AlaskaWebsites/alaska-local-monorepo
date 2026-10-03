@@ -14,7 +14,6 @@ import {
   Check,
   Factory,
   Box,
-  Sliders,
   Scale,
   FileText,
   Zap,
@@ -41,35 +40,7 @@ useHead({
   ]
 })
 
-// Abas do Simulador B2B
-const activeTab = ref<'carrinhos' | 'peças' | 'barras' | 'tecnicas'>('carrinhos')
-
-// Parâmetros do Simulador: Carrinhos
-const cartQuantity = ref(100)
-const estimatedNewCost = computed(() => cartQuantity.value * 750)
-const estimatedReformCost = computed(() => cartQuantity.value * 230)
-const estimatedSavings = computed(() => estimatedNewCost.value - estimatedReformCost.value)
-
-// Parâmetros do Simulador: Peças Pequenas / Tambor
-const partWeight = ref(150) // em kg
-const selectedBathType = ref('zinco_azul')
-const bathOptions = [
-  { id: 'estanho', label: 'Estanho Eletrolítico (Barramentos / Alta Condutividade)' },
-  { id: 'cobre', label: 'Banho de Cobre (Cobreamento Eletrolítico)' },
-  { id: 'zinco_azul', label: 'Zinco Branco/Azul (Eletrolítico Brilhante)' },
-  { id: 'zinco_amarelo', label: 'Zinco Amarelo (Trivalente/Bicromatizado)' },
-  { id: 'decapagem', label: 'Decapagem Química & Desengraxe de Metais' }
-]
-
-// Parâmetros do Simulador: Barras e Perfis Longos
-const barMeters = ref(300) // metros lineares
-const barType = ref('tubos')
-
-function formatBRL(val: number): string {
-  return val.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 })
-}
-
-// WhatsApp link generator contextualizado
+// WhatsApp link generator contextualizado para B2B
 const whatsappNumber = computed(() => {
   const raw = props.tenant?.phoneWhatsApp || props.tenant?.whatsapp || '5511988936972'
   const digits = String(raw).replace(/\D/g, '')
@@ -77,21 +48,14 @@ const whatsappNumber = computed(() => {
 })
 
 const whatsappUrl = computed(() => {
-  let msg = 'Olá! Visitei a página da Bama TEC Galvanoplastia e gostaria de solicitar um orçamento.'
-
-  if (activeTab.value === 'carrinhos') {
-    msg = `Olá! Gostaria de uma cotação para reforma, alinhamento e zincagem de uma frota de aproximadamente ${cartQuantity.value} carrinhos de compras.`
-  } else if (activeTab.value === 'peças') {
-    const bathLabel = bathOptions.find(b => b.id === selectedBathType.value)?.label || 'Galvanoplastia'
-    msg = `Olá! Preciso de cotação para banho em tambor rotativo para cerca de ${partWeight.value}kg de peças/fixadores. Banho desejado: ${bathLabel}.`
-  } else if (activeTab.value === 'barras') {
-    msg = `Olá! Gostaria de um orçamento para tratamento e galvanoplastia de aproximadamente ${barMeters.value} metros de barras/perfis metálicos.`
-  } else {
-    msg = 'Olá! Gostaria de enviar um desenho técnico / fotos de peças especiais para cotação de banho galvânico.'
-  }
-
+  const msg = 'Olá! Visitei a página da Bama TEC e gostaria de solicitar um orçamento para tratamento de superfícies e banhos químicos.'
   return `https://wa.me/${whatsappNumber.value}?text=${encodeURIComponent(msg)}`
 })
+
+function getServiceWhatsappUrl(serviceTitle: string) {
+  const msg = `Olá! Gostaria de solicitar uma cotação técnica para o serviço de ${serviceTitle} com a Bama TEC.`
+  return `https://wa.me/${whatsappNumber.value}?text=${encodeURIComponent(msg)}`
+}
 
 // Fallback de imagem industrial
 function handleImgError(e: Event) {
@@ -280,8 +244,8 @@ const galleryImages = [
           <a href="#itens" class="hover:text-[#2d7097] transition-colors">O Que Banham</a>
           <a href="#banhos" class="hover:text-[#2d7097] transition-colors">Tipos de Banhos</a>
           <a href="#carrinhos" class="hover:text-[#2d7097] transition-colors">Carrinhos de Supermercado</a>
-          <a href="#simulador" class="hover:text-[#2d7097] transition-colors">Simulador de Custos</a>
           <a href="#qualidade" class="hover:text-[#2d7097] transition-colors">Normas & Laudos</a>
+          <a href="#faq" class="hover:text-[#2d7097] transition-colors">Dúvidas Frequentes</a>
         </nav>
 
         <!-- Ações do Cabeçalho: Voltar à Home, Painel Admin e CTA WhatsApp -->
@@ -358,10 +322,10 @@ const galleryImages = [
                 <ArrowRight class="w-4 h-4" />
               </a>
 
-              <a href="#simulador"
+              <a href="#itens"
                 class="w-full sm:w-auto px-6 py-4 bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 hover:border-[#2d7097]/40 font-bold text-sm rounded-2xl flex items-center justify-center gap-2 transition-all shadow-2xs">
-                <Sliders class="w-4 h-4 text-[#2d7097]" />
-                <span>Simulador de Lotes & Banhos</span>
+                <Factory class="w-4 h-4 text-[#2d7097]" />
+                <span>Conhecer Nossos Processos</span>
               </a>
             </div>
           </div>
@@ -480,7 +444,7 @@ const galleryImages = [
             </div>
 
             <div class="pt-2">
-              <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
+              <a :href="getServiceWhatsappUrl(item.title)" target="_blank" rel="noopener noreferrer"
                 :class="['w-full py-2.5 px-3 bg-white text-xs font-bold rounded-xl border flex items-center justify-center gap-1.5 transition-colors', item.colorClass, item.borderClass]">
                 <span>Cotar Este Formato</span>
                 <ChevronRight class="w-3.5 h-3.5" />
@@ -655,252 +619,7 @@ const galleryImages = [
       </div>
     </section>
 
-    <!-- 6. SIMULADOR INTERATIVO B2B (COM ABAS: CARRINHOS, BARRAS, PEÇAS PEQUENAS E ESPECIAIS) -->
-    <section id="simulador" class="py-16 sm:py-24 border-b border-slate-200 bg-gradient-to-b from-white to-slate-50">
-      <div class="max-w-5xl mx-auto px-4 sm:px-6 space-y-8">
-        <div class="text-center space-y-2">
-          <span
-            class="text-xs font-extrabold uppercase tracking-wider text-[#2d7097] bg-[#2d7097]/10 px-3 py-1 rounded-full border border-[#2d7097]/20">
-            Simulador de Cotação Rápida
-          </span>
-          <h2 class="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
-            Calcule ou configure sua demanda em segundos
-          </h2>
-          <p class="text-xs sm:text-sm text-slate-600 font-medium max-w-xl mx-auto">
-            Escolha o tipo de serviço que você precisa para pré-configurar os dados para nossa equipe técnica:
-          </p>
-        </div>
-
-        <!-- Seletor de Abas -->
-        <div
-          class="flex flex-wrap items-center justify-center gap-2 p-1.5 bg-slate-200/80 rounded-2xl max-w-2xl mx-auto">
-          <button @click="activeTab = 'carrinhos'" :class="[
-            'px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer',
-            activeTab === 'carrinhos' ? 'bg-white text-[#2d7097] shadow-xs' : 'text-slate-700 hover:text-slate-900'
-          ]">
-            🛒 Frotas de Carrinhos
-          </button>
-          <button @click="activeTab = 'peças'" :class="[
-            'px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer',
-            activeTab === 'peças' ? 'bg-white text-[#008b73] shadow-xs' : 'text-slate-700 hover:text-slate-900'
-          ]">
-            🔩 Peças em Tambor (kg)
-          </button>
-          <button @click="activeTab = 'barras'" :class="[
-            'px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer',
-            activeTab === 'barras' ? 'bg-white text-[#2d7097] shadow-xs' : 'text-slate-700 hover:text-slate-900'
-          ]">
-            📏 Barras & Tubos Longos
-          </button>
-          <button @click="activeTab = 'tecnicas'" :class="[
-            'px-4 py-2.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer',
-            activeTab === 'tecnicas' ? 'bg-white text-[#5d5f85] shadow-xs' : 'text-slate-700 hover:text-slate-900'
-          ]">
-            📐 Peças Técnicas sob Desenho
-          </button>
-        </div>
-
-        <!-- Conteúdo da Aba: Carrinhos -->
-        <div v-if="activeTab === 'carrinhos'"
-          class="bg-white border-2 border-[#2d7097]/30 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-300">
-          <div class="text-center space-y-2">
-            <h3 class="text-xl sm:text-2xl font-black text-slate-900">
-              Simulador de Economia de Frotas de Supermercado
-            </h3>
-            <p class="text-xs text-slate-600">Arraste a barra para selecionar a quantidade de carrinhos:</p>
-          </div>
-
-          <div class="space-y-4 max-w-lg mx-auto">
-            <div class="flex items-center justify-between font-black text-slate-900 text-sm sm:text-base">
-              <span>Quantidade de carrinhos:</span>
-              <span class="px-4 py-1.5 bg-[#2d7097] text-white rounded-xl text-lg sm:text-xl font-mono">
-                {{ cartQuantity }} unidades
-              </span>
-            </div>
-
-            <input v-model.number="cartQuantity" type="range" min="20" max="500" step="10"
-              class="w-full h-3 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-[#2d7097]" />
-
-            <div class="flex justify-between text-[11px] text-slate-500 font-semibold">
-              <span>20 un</span>
-              <span>250 un</span>
-              <span>500 un</span>
-            </div>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center space-y-1">
-              <span class="text-[11px] font-bold text-slate-500 uppercase">Comprando Novos</span>
-              <p
-                class="text-lg sm:text-xl font-extrabold text-slate-700 font-mono line-through decoration-rose-500 decoration-2">
-                {{ formatBRL(estimatedNewCost) }}
-              </p>
-              <span class="text-[10px] text-slate-400">Média R$ 750/un</span>
-            </div>
-
-            <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-center space-y-1">
-              <span class="text-[11px] font-bold text-slate-500 uppercase">Com Reforma Bama TEC</span>
-              <p class="text-lg sm:text-xl font-extrabold text-[#2d7097] font-mono">
-                {{ formatBRL(estimatedReformCost) }}
-              </p>
-              <span class="text-[10px] text-slate-500">Média R$ 230/un completo</span>
-            </div>
-
-            <div class="bg-[#038c4c]/10 border-2 border-[#038c4c]/40 rounded-2xl p-4 text-center space-y-1 shadow-xs">
-              <span class="text-[11px] font-black text-[#038c4c] uppercase">Sua Economia Real</span>
-              <p class="text-xl sm:text-2xl font-black text-[#038c4c] font-mono">
-                {{ formatBRL(estimatedSavings) }}
-              </p>
-              <span class="text-[10px] font-bold text-[#038c4c]">~69% de economia no caixa</span>
-            </div>
-          </div>
-
-          <div class="text-center pt-2">
-            <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
-              class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-[#038c4c] hover:bg-[#02733e] text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-[#038c4c]/25 transition-all active:scale-95 cursor-pointer">
-              <Phone class="w-4 h-4" />
-              <span>Solicitar Cotação para {{ cartQuantity }} Carrinhos</span>
-            </a>
-          </div>
-        </div>
-
-        <!-- Conteúdo da Aba: Peças Pequenas / Tambor -->
-        <div v-else-if="activeTab === 'peças'"
-          class="bg-white border-2 border-[#2d7097]/30 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-300">
-          <div class="text-center space-y-2">
-            <h3 class="text-xl sm:text-2xl font-black text-slate-900">
-              Cotação de Peças a Granel em Tambor Rotativo
-            </h3>
-            <p class="text-xs text-slate-600">Parafusos, porcas, arruelas, molas, presilhas e estampados por quilo:</p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-            <div class="space-y-2">
-              <label class="block text-xs font-bold text-slate-700 uppercase">Peso Estimado do Lote (kg):</label>
-              <div class="flex items-center gap-3">
-                <input v-model.number="partWeight" type="number" min="20" step="10"
-                  class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl font-mono text-base font-bold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-[#008b73] focus:border-[#008b73]" />
-                <span class="text-sm font-bold text-slate-500">kg</span>
-              </div>
-              <p class="text-[11px] text-slate-400">Atendemos desde lotes pilotos de 30kg até toneladas/mês.</p>
-            </div>
-
-            <div class="space-y-2">
-              <label class="block text-xs font-bold text-slate-700 uppercase">Tipo de Banho Desejado:</label>
-              <select v-model="selectedBathType"
-                class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#008b73] focus:border-[#008b73]">
-                <option v-for="b in bathOptions" :key="b.id" :value="b.id">{{ b.label }}</option>
-              </select>
-              <p class="text-[11px] text-slate-400">Passivações azul, amarela bicromatizada, estanho ou níquel.</p>
-            </div>
-          </div>
-
-          <div
-            class="p-5 rounded-2xl bg-[#008b73]/10 border border-[#008b73]/25 text-slate-800 text-xs text-center max-w-xl mx-auto">
-            💡 <strong>Preço por Quilo (kg):</strong> Calculamos o valor exato com base na geometria da peça, espessura
-            de camada requerida (microns) e periodicidade de faturamento.
-          </div>
-
-          <div class="text-center pt-2">
-            <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
-              class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-[#038c4c] hover:bg-[#02733e] text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-[#038c4c]/25 transition-all active:scale-95 cursor-pointer">
-              <Phone class="w-4 h-4" />
-              <span>Receber Orçamento por Quilo para {{ partWeight }}kg</span>
-            </a>
-          </div>
-        </div>
-
-        <!-- Conteúdo da Aba: Barras e Tubos Longos -->
-        <div v-else-if="activeTab === 'barras'"
-          class="bg-white border-2 border-[#2d7097]/30 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-300">
-          <div class="text-center space-y-2">
-            <h3 class="text-xl sm:text-2xl font-black text-slate-900">
-              Galvanoplastia de Barras, Tubos e Perfis de até 6 Metros
-            </h3>
-            <p class="text-xs text-slate-600">Para serralherias, fabricantes de estruturas e implementos industriais:
-            </p>
-          </div>
-
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
-            <div class="space-y-2">
-              <label class="block text-xs font-bold text-slate-700 uppercase">Metragem ou Quantidade Linear:</label>
-              <div class="flex items-center gap-3">
-                <input v-model.number="barMeters" type="number" min="50" step="50"
-                  class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl font-mono text-base font-bold text-slate-900 focus:outline-hidden focus:ring-2 focus:ring-[#2d7097] focus:border-[#2d7097]" />
-                <span class="text-sm font-bold text-slate-500">metros</span>
-              </div>
-            </div>
-
-            <div class="space-y-2">
-              <label class="block text-xs font-bold text-slate-700 uppercase">Tipo de Perfil:</label>
-              <select v-model="barType"
-                class="w-full px-4 py-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-[#2d7097] focus:border-[#2d7097]">
-                <option value="tubos">Tubos Redondos / Quadrados (Metalons)</option>
-                <option value="barras_chatas">Barras Chatas e Cantoneiras</option>
-                <option value="perfis_u">Perfis U e Vigas Estruturais</option>
-                <option value="barramentos">Barramentos Elétricos de Cobre (Estanho)</option>
-              </select>
-            </div>
-          </div>
-
-          <div
-            class="p-5 rounded-2xl bg-slate-100 border border-slate-200 text-slate-700 text-xs text-center max-w-xl mx-auto">
-            📏 <strong>Capacidade de Tanque:</strong> Nossos tanques estáticos acomodam barras e tubos inteiros sem
-            necessidade de cortes preliminares, garantindo cobertura 100% contínua.
-          </div>
-
-          <div class="text-center pt-2">
-            <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
-              class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-[#038c4c] hover:bg-[#02733e] text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-[#038c4c]/25 transition-all active:scale-95 cursor-pointer">
-              <Phone class="w-4 h-4" />
-              <span>Cotar Banhos para {{ barMeters }}m de Barras</span>
-            </a>
-          </div>
-        </div>
-
-        <!-- Conteúdo da Aba: Peças Técnicas sob Desenho -->
-        <div v-else
-          class="bg-white border-2 border-[#2d7097]/30 rounded-3xl p-6 sm:p-10 shadow-xl space-y-8 animate-in fade-in duration-300">
-          <div class="text-center space-y-2 max-w-lg mx-auto">
-            <h3 class="text-xl sm:text-2xl font-black text-slate-900">
-              Cotação de Peças Especiais com Desenho Técnico
-            </h3>
-            <p class="text-xs text-slate-600">
-              Envie o PDF do projeto mecânico ou fotos da peça para análise direta pelo nosso químico e engenheiro de
-              produção:
-            </p>
-          </div>
-
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-2xl mx-auto text-center">
-            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-              <span class="text-2xl">📄</span>
-              <p class="font-extrabold text-slate-900 text-xs">Desenho 2D/3D</p>
-              <p class="text-[11px] text-slate-500">Envie por WhatsApp em PDF ou DWG</p>
-            </div>
-            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-              <span class="text-2xl">🔬</span>
-              <p class="font-extrabold text-slate-900 text-xs">Espessura (µm)</p>
-              <p class="text-[11px] text-slate-500">Definição de camada e Salt Spray</p>
-            </div>
-            <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
-              <span class="text-2xl">⏱️</span>
-              <p class="font-extrabold text-slate-900 text-xs">Retorno Rápido</p>
-              <p class="text-[11px] text-slate-500">Resposta de cotação em até 2 horas</p>
-            </div>
-          </div>
-
-          <div class="text-center pt-2">
-            <a :href="whatsappUrl" target="_blank" rel="noopener noreferrer"
-              class="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-8 py-4 bg-[#038c4c] hover:bg-[#02733e] text-white font-extrabold text-sm sm:text-base rounded-2xl shadow-lg shadow-[#038c4c]/25 transition-all active:scale-95 cursor-pointer">
-              <Phone class="w-4 h-4" />
-              <span>Enviar Desenho Técnico via WhatsApp</span>
-            </a>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- 7. CONTROLE DE QUALIDADE, NORMAS TÉCNICAS E LAUDOS -->
+        <!-- 7. CONTROLE DE QUALIDADE, NORMAS TÉCNICAS E LAUDOS -->
     <section id="qualidade" class="py-16 sm:py-24 border-b border-slate-200 bg-white">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 space-y-12">
         <div class="text-center space-y-3 max-w-3xl mx-auto">
@@ -966,7 +685,7 @@ const galleryImages = [
     </section>
 
     <!-- 8. FAQ TÉCNICO B2B INSTITUCIONAL -->
-    <section class="py-16 sm:py-20 border-b border-slate-200 bg-slate-50">
+    <section id="faq" class="py-16 sm:py-20 border-b border-slate-200 bg-slate-50">
       <div class="max-w-4xl mx-auto px-4 sm:px-6 space-y-8">
         <div class="text-center space-y-2">
           <h2 class="text-xs font-bold uppercase tracking-wider text-[#2d7097] bg-[#2d7097]/10 inline-block px-3 py-1 rounded-full border border-[#2d7097]/20">Dúvidas Frequentes</h2>
