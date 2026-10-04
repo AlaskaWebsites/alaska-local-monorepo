@@ -31,7 +31,6 @@ export default defineConfig({
       '@core': path.resolve(__dirname, './src/core'),
       '@infra': path.resolve(__dirname, './src/infrastructure'),
       '@config': path.resolve(__dirname, './src/config'),
-      '@alaska/contracts': path.resolve(__dirname, '../../packages/contracts/src/index.ts'),
       '@': path.resolve(__dirname, './src'),
     },
   },
