@@ -6,7 +6,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'node',
-    include: ['tests/**/*.{test,spec}.ts', 'src/**/*.{test,spec}.ts'],
+    include: ['tests/**/*.test.ts', 'src/**/*.spec.ts', 'src/**/*.test.ts'],
     exclude: ['node_modules/**', 'dist/**'],
     coverage: {
       provider: 'v8',
@@ -17,21 +17,22 @@ export default defineConfig({
         '**/*.d.ts',
         '**/*.interface.ts',
         '**/*.module.ts',
-        'src/main.ts'
-      ]
-    }
+        'src/main.ts',
+      ],
+    },
   },
   plugins: [
     swc.vite({
-      module: { type: 'es6' }
-    })
+      module: { type: 'es6' },
+    }),
   ],
   resolve: {
     alias: {
       '@core': path.resolve(__dirname, './src/core'),
       '@infra': path.resolve(__dirname, './src/infrastructure'),
       '@config': path.resolve(__dirname, './src/config'),
-      '@': path.resolve(__dirname, './src')
-    }
-  }
+      '@alaska/contracts': path.resolve(__dirname, '../../packages/contracts/src/index.ts'),
+      '@': path.resolve(__dirname, './src'),
+    },
+  },
 })
